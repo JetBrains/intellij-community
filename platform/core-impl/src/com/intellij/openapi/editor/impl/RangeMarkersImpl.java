@@ -50,7 +50,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
     }
   }
 
-  @ApiStatus.Internal
+  /** Returns the root store for an instance that uses snapshot markers. */
   public @NotNull SnapshotMarkerRootStore<?> rootStore() {
     return mySnapshotMarkerRootStore;
   }
@@ -95,10 +95,11 @@ public final class RangeMarkersImpl implements RangeMarkers {
     return treeFor(rangeMarker).removeInterval(rangeMarker);
   }
 
+  /** Visits all live snapshot markers, including markers beyond the document end. The legacy path queries the document range. */
   @Override
   public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
     if (myRangeMarkerTree == null) {
-      return mySnapshotMarkerRootStore.processAllRangeMarkers(myDocument.getCore().snapshot(), processor);
+      return rootStore().processAllRangeMarkers(myDocument.getCore().snapshot(), processor);
     }
     return processRangeMarkersOverlappingWith(0, myDocument.getTextLength(), processor);
   }
@@ -108,6 +109,10 @@ public final class RangeMarkersImpl implements RangeMarkers {
     return processDeliciousRangeMarkersOverlappingWith(start, end, (byte)0, processor);
   }
 
+  /**
+   * Queries the current snapshot root or merges the two legacy marker trees.
+   * Returns {@code false} if {@code processor} stops the traversal.
+   */
   @Override
   public boolean processDeliciousRangeMarkersOverlappingWith(int start,
                                                              int end,
@@ -115,7 +120,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
                                                              @NotNull Processor<? super RangeMarker> processor) {
     RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
     if (rangeMarkerTree == null) {
-      return mySnapshotMarkerRootStore.processRangeMarkersOverlappingWith(
+      return rootStore().processRangeMarkersOverlappingWith(
         myDocument.getCore().snapshot(), start, end, tastePreference, processor
       );
     }
@@ -145,6 +150,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
   public static <E extends Throwable> void usePMarkerImplementationIn(@NotNull ThrowableRunnable<E> runnable) throws E {
     usePMarkerImplementationIn(true, runnable);
   }
+  /** Runs a test with the requested marker implementation and restores the previous setting on exit. */
   @TestOnly
   public static <E extends Throwable> void usePMarkerImplementationIn(boolean usePMarkerImpl, @NotNull ThrowableRunnable<E> runnable) throws E {
     boolean old = Holder.USE_PMARKER_IMPLEMENTATION;

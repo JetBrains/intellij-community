@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRelocationRoot.Insertions
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
@@ -18,7 +17,6 @@ import java.util.function.Consumer
  * Once the insertion direction is established, a change of direction also materializes the tree.
  * [SnapshotMarkerRootStore.runInBatch] creates the buffer and completes its pending updates.
  */
-@ApiStatus.Internal
 class PMarkerInsertionRoot internal constructor(
   /** Stores marker ranges before the buffered insertions. */
   private val base: PMarkerDirectRoot,
@@ -117,6 +115,7 @@ class PMarkerInsertionRoot internal constructor(
     return true
   }
 
+  /** Finds candidates in base offsets, then checks them again in current offsets. */
   override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {
     require(startOffset in 0..endOffset) { "The query range is invalid" }
     val offsets = insertions ?: return base.overlappingIterator(startOffset, endOffset, tastePreference)
@@ -142,6 +141,7 @@ class PMarkerInsertionRoot internal constructor(
     entry.marker?.cacheResolution(this, TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd))
   }
 
+  /** Applies the ancestor shift first, then translates both endpoints through the insertion log. */
   private fun shifted(entry: MarkerEntry, delta: Int): MarkerEntry {
     val start = entry.nodeStart + delta
     val end = entry.nodeEnd + delta

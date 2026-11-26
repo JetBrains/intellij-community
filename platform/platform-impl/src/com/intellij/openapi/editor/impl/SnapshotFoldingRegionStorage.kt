@@ -112,6 +112,7 @@ internal class SnapshotFoldingRegionStorage(
 
   override fun size(): Int = registeredRegions.size
 
+  /** Lets an empty store buffer ordered insertions. Otherwise runs [runnable] directly. */
   override fun runInFoldingBatch(runnable: Runnable) {
     if (registeredRegions.isEmpty()) {
       rootStore.runInAppendBatch(runnable)
@@ -217,6 +218,7 @@ internal class SnapshotFoldingRegionStorage(
     return true
   }
 
+  /** Marks regions whose text changes and records the pre-edit sizes of collapsed regions for duplicate removal. */
   override fun beforeDocumentChange(event: DocumentEvent) {
     val changeStart = event.offset
     val changeEnd = changeStart + event.oldLength
@@ -250,6 +252,7 @@ internal class SnapshotFoldingRegionStorage(
     }
   }
 
+  /** Removes duplicate regions after the edit. Reports the surviving affected custom regions to the folding model. */
   private fun processAffectedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion>>) {
     val regions = ArrayList<SnapshotFoldRegion>(handles.size)
     @Suppress("ReplaceManualRangeWithIndicesCalls")
@@ -267,6 +270,10 @@ internal class SnapshotFoldingRegionStorage(
     sizesBeforeUpdate = emptyMap()
   }
 
+  /**
+   * Keeps one region from each group with the same range and kind.
+   * The largest pre-edit collapsed length wins. The smallest marker ID breaks ties.
+   */
   private fun removeDuplicateRegions(regions: List<SnapshotFoldRegion>) {
     var index = 0
     while (index < regions.size) {
@@ -300,6 +307,7 @@ internal class SnapshotFoldingRegionStorage(
 
   private fun sizeBeforeUpdate(region: SnapshotFoldRegion): Int = sizesBeforeUpdate[region.markerHandle] ?: 0
 
+  /** Unregisters each invalidated region once and reports its removal to the folding model. */
   private fun processInvalidatedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion>>) {
     val size = handles.size
     for (index in 0 until size) {
@@ -562,6 +570,7 @@ private class FoldRegionMarkerPolicy(
     return alignAndValidate(MarkerTransformResult(entry), text)
   }
 
+  /** Moves endpoints out of character pairs and reports the alignment. Rejects the resulting range if it is empty. */
   private fun alignAndValidate(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
     val alignedRange = alignToCharacterBoundaries(range, text)
     if (alignedRange != range) onRangeAligned()
@@ -594,6 +603,7 @@ private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
     return validateLineBoundaries(MarkerTransformResult(entry), text)
   }
 
+  /** Requires a nonempty range that starts at a line start and ends at a line end. */
   private fun validateLineBoundaries(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
     if (range.startOffset >= range.endOffset) {
       return MarkerTransformResult(MarkerTransformError.EMPTY_CUSTOM_FOLD_REGION)

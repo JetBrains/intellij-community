@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -177,7 +178,7 @@ public class RangeMarkerTest {
 
   @SuppressWarnings("SameParameterValue")
   private static PsiFile createFile(@NonNls @NotNull String fileName, @NonNls @NotNull String text) {
-    var fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject())
       .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }
@@ -1266,7 +1267,7 @@ public class RangeMarkerTest {
     Ref<RangeMarkerEx> markerRef = new Ref<>(createMarker("0123456789", 2, 5));
     long markerId = markerRef.get().getId();
     boolean snapshotMarker = markerRef.get() instanceof SnapshotRangeMarkerImpl;
-    var handle = snapshotMarker ? ((SnapshotRangeMarkerImpl)markerRef.get()).getMarkerHandle() : null;
+    SnapshotMarkerReference<?> handle = snapshotMarker ? ((SnapshotRangeMarkerImpl)markerRef.get()).getMarkerHandle() : null;
     deleteString(document, 1, 6);
     assertFalse(markerRef.get().isValid());
 
@@ -1284,7 +1285,7 @@ public class RangeMarkerTest {
       return true;
     });
     if (snapshotMarker) {
-      var documentImpl = (DocumentImpl)document;
+      DocumentImpl documentImpl = (DocumentImpl)document;
       assertFalse(documentImpl.getRangeMarkers().rootStore().purgeMany(documentImpl.getCore().snapshot(), List.of(handle)));
     }
   }
@@ -1831,7 +1832,7 @@ public class RangeMarkerTest {
     Benchmark.newBenchmark(classPlusTestName(), () -> {
       replaceString(doc.get(), text.length() / 4, text.length(), "replacement\n");
     }).setup(() -> {
-      markers.forEach(RangeMarker::dispose);
+      markers.forEach(marker -> marker.dispose());
       markers.clear();
       doc.set(new DocumentImpl(text));
       for (int i = 0; i < N; i++) {
@@ -1839,7 +1840,7 @@ public class RangeMarkerTest {
         markers.add(doc.get().createRangeMarker(offset, offset + 5));
       }
     }).runAsStressTest().start();
-    assertEquals(N / 4, markers.stream().filter(RangeMarker::isValid).count());
+    assertEquals(N / 4, markers.stream().filter(marker -> marker.isValid()).count());
   }
 
   @PerformanceUnitTest
@@ -2187,7 +2188,7 @@ public class RangeMarkerTest {
   private static void checkCreateRemove(@NotNull Supplier<? extends RangeMarkerEx> creator, @NotNull Consumer<? super RangeMarker> remover) {
     RangeMarkerEx marker = creator.get();
     assertTrue(marker.isValid());
-    var initialRange = marker.getTextRange();
+    TextRange initialRange = marker.getTextRange();
     insertString(marker.getDocument(), 0, "x");
     TextRange range = marker.getTextRange();
     assertEquals(initialRange.shiftRight(1), range);

@@ -27,12 +27,10 @@ class VirtualFileMarkerRoot private constructor(
   @Volatile
   private var documentReference: WeakReference<DocumentImpl>? = null
 
-  override val document: DocumentImpl?
-    get() = documentReference?.get()
-
   override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*> =
     SnapshotMarkerReference.create(marker, retainStrong)
 
+  /** Returns the live document's root reference when available. Otherwise returns the last reference retained for the file. */
   override fun currentRootReference(): PMarkerRootReference {
     val observedDocumentReference = documentReference ?: return rootReference
     val document = observedDocumentReference.get() ?: return rootReference
@@ -43,9 +41,13 @@ class VirtualFileMarkerRoot private constructor(
     return currentRootReference
   }
 
+  /**
+   * Updates the file's marker root under the same monitor as [attach] and [restoreAndAttach].
+   * The live document's store publishes the update while the document is attached.
+   */
   @Synchronized
   override fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
-    val document = document ?: return updateRootAtomically(rootReference, update)
+    val document = documentReference?.get() ?: return updateRootAtomically(rootReference, update)
     try {
       return document.rangeMarkers.rootStore().updateCurrentRoot(update)
     }
@@ -56,9 +58,6 @@ class VirtualFileMarkerRoot private constructor(
   }
 
   @Synchronized
-  override fun purgeCollected(handles: Collection<SnapshotMarkerReference<*>>): Boolean = purgeCollected(document, handles)
-
-  @Synchronized
   private fun attach(document: DocumentImpl) {
     rootReference = markerRoot(document)
     if (documentReference?.get() !== document) {
@@ -67,6 +66,10 @@ class VirtualFileMarkerRoot private constructor(
     }
   }
 
+  /**
+   * Converts pending line and column positions to document offsets.
+   * Installs the resulting root in the document before attaching it.
+   */
   @Synchronized
   private fun restoreAndAttach(document: DocumentImpl, tabSize: Int) {
     val sourceRoot = rootReference.get()
@@ -103,13 +106,15 @@ class VirtualFileMarkerRoot private constructor(
   companion object {
     private val FILE_MARKER_ROOT_REF_KEY: Key<Reference<VirtualFileMarkerRoot>> = Key.create("snapshot.range.marker.root")
 
+    /** Returns the root for the file associated with [document], or `null` when the file or its document service is unavailable. */
     internal fun getOrCreate(document: DocumentImpl): VirtualFileMarkerRoot? {
       val fileDocumentManager = ApplicationManager.getApplication()?.getService(FileDocumentManager::class.java) ?: return null
       val file = fileDocumentManager.getFile(document) ?: return null
       return getOrCreate(file, document)
     }
 
-    internal fun getOrCreate(file: VirtualFile): VirtualFileMarkerRoot {
+    /** Reuses or creates the root for [file]. Checks for a cached document without loading it. */
+    fun getOrCreate(file: VirtualFile): VirtualFileMarkerRoot {
       val document = FileDocumentManager.getInstance().getCachedDocument(file) as? DocumentImpl
       return getOrCreate(file, document)
     }
@@ -129,6 +134,7 @@ class VirtualFileMarkerRoot private constructor(
       }
     }
 
+    /** Transfers the retained marker root for [file] to [document], when such a root exists. */
     @JvmStatic
     fun restoreRangeMarkersFromFile(document: DocumentImpl, file: VirtualFile, tabSize: Int) {
       SnapshotMarkerReference.processQueue()
@@ -136,6 +142,7 @@ class VirtualFileMarkerRoot private constructor(
       fileRoot.restoreAndAttach(document, tabSize)
     }
 
+    /** Checks whether a live file root remains after processing collected markers. */
     @JvmStatic
     fun areRangeMarkersRetainedFor(file: VirtualFile): Boolean {
       SnapshotMarkerReference.processQueue()

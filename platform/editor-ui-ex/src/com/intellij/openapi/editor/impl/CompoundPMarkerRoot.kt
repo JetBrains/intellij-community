@@ -45,6 +45,7 @@ open class CompoundPMarkerRoot private constructor(
   private fun advanceChildResolution(root: PMarkerRoot, handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long =
     if (previousIdentity === root.resolutionCacheIdentity) resolution else root.advanceResolution(handle, previousIdentity, resolution)
 
+  /** Restores each entry in the child root where its handle is valid. */
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot {
     return withRoots(exactRangeRoot.restoreEntries(entries.filter { exactRangeRoot.isValid(it.handle) }),
                      linesInRangeRoot.restoreEntries(entries.filter { linesInRangeRoot.isValid(it.handle) }))
@@ -111,6 +112,7 @@ open class CompoundPMarkerRoot private constructor(
     }
   }
 
+  /** Groups the entries by highlighter target area, then inserts each group into its child root. */
   override fun insertMany(entries: List<MarkerEntry>): PMarkerRoot {
     if (entries.isEmpty()) return this
     val exactEntries = ArrayList<MarkerEntry>()
@@ -196,6 +198,10 @@ open class CompoundPMarkerRoot private constructor(
       null -> null
     }
 
+  /**
+   * Updates the child root for the marker's target area.
+   * If the target area is unavailable, tries the exact-range root first and uses the line-range root only if the first root stays the same.
+   */
   private inline fun updateMarker(handle: SnapshotMarkerReference<*>, update: (PMarkerRoot) -> PMarkerRoot): CompoundPMarkerRoot {
     when (targetArea(handle)) {
       HighlighterTargetArea.EXACT_RANGE -> return withRoots(update(exactRangeRoot), linesInRangeRoot)

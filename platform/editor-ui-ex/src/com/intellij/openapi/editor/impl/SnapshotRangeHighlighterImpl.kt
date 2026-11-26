@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.Consumer
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import java.lang.invoke.MethodHandles
@@ -70,6 +69,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   internal val isRegistered: Boolean
     get() = registered
 
+  /** Claims the registration before the storage publishes this highlighter. */
   internal fun register() {
     check(REGISTERED_HANDLE.compareAndSet(this, false, true)) { "Highlighter $id is already registered" }
   }
@@ -258,6 +258,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
     }
   }
 
+  /** Records the change in the current batch or notifies listeners immediately. Updates the marker's flavor flags in either case. */
   override fun fireChanged(renderersChanged: Boolean, fontStyleChanged: Boolean, foregroundColorChanged: Boolean) {
     storage.assertMayChange()
     if (inBatchChange) {
@@ -290,8 +291,11 @@ internal class SnapshotRangeHighlighterImpl private constructor(
     return minOf(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1)
   }
 
+  /**
+   * Applies [change] and returns a mask of attribute changes for the caller to report.
+   * Suppresses attribute notifications during the batch while the root's flavor flags still update.
+   */
   @Synchronized
-  @ApiStatus.Internal
   fun changeAttributesNoEvents(change: Consumer<in RangeHighlighterEx>): Byte {
     check(!inBatchChange)
     inBatchChange = true
@@ -361,6 +365,9 @@ internal class SnapshotRangeHighlighterImpl private constructor(
       return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, specMask, persistent = false)
     }
 
+    /**
+     * Creates a highlighter from [offset] or its line start. Uses the target area's policy to translate the range through document edits.
+     */
     @JvmStatic
     fun createPersistent(
       storage: SnapshotHighlighterStorage,

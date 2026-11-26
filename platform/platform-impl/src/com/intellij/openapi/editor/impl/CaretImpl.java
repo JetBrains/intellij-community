@@ -498,6 +498,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     return null;
   }
 
+  /** Updates the caret marker to match the logical position. Moves an existing valid snapshot marker without changing its ID. */
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
     PositionMarker oldMarker = myPositionMarker;
@@ -1743,7 +1744,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     private final SnapshotCaretMarkerStorage storage;
 
     private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset) {
-      super(storage, offset, offset, storage.positionSpec(), storage.positionPolicy());
+      super(storage, offset, offset, SnapshotCaretMarkerStorage.POSITION_SPEC, CaretPositionMarkerPolicy.INSTANCE);
       this.storage = storage;
     }
 
@@ -1794,7 +1795,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     private int endVirtualOffset;
 
     private SnapshotSelectionMarker(@NotNull SnapshotCaretMarkerStorage storage, int startOffset, int endOffset) {
-      super(storage, startOffset, endOffset, storage.selectionSpec(), storage.selectionPolicy());
+      super(storage, startOffset, endOffset, SnapshotCaretMarkerStorage.SELECTION_SPEC, CaretSelectionMarkerPolicy.INSTANCE);
     }
 
     @Override

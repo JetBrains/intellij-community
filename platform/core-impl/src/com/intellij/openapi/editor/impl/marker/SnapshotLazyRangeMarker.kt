@@ -48,6 +48,7 @@ internal class SnapshotLazyRangeMarker(
     return TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
   }
 
+  /** Discards the saved line and column data after restoration installs the offsets. */
   internal fun markInitialRangeResolved() {
     initialLineColumns = null
   }

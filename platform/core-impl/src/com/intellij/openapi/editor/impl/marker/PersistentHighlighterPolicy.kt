@@ -55,6 +55,10 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     }
   }
 
+  /**
+   * Ends the range at the line end. Starts exact-range highlighters at the line start.
+   * Starts line-range highlighters after indentation when the line contains other characters.
+   */
   private fun normalizeLine(text: DocumentText, line: Int): MarkerTransformResult {
     val lineStart = text.lineStartOffset(line)
     val lineEnd = text.lineEndOffset(line)

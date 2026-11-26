@@ -17,6 +17,7 @@ internal class SnapshotGuardedBlock private constructor(
   override fun getFlavorFlags(): Byte = GuardedBlock.GUARD_BLOCK_FLAVOR_FLAG
 
   companion object {
+    /** Registers a persistent guard and asks the root to retain it strongly. */
     @JvmStatic
     fun create(document: DocumentImpl, startOffset: Int, endOffset: Int): SnapshotGuardedBlock {
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)

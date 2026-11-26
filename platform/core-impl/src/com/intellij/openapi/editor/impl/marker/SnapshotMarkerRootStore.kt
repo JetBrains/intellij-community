@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities
+import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.Processor
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.ReferenceQueueable
-import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -45,7 +45,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
 ) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
-  override val document: DocumentImpl?
+  internal val document: DocumentImpl?
     get() = documentReference.get()
 
   private val roots: ConcurrentMap<DocumentSnapshot, RootState> = Java11Shim.INSTANCE.createConcurrentWeakMap(HashingStrategy.identity())
@@ -213,7 +213,6 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    * The scope that installs the buffer materializes the current root in `finally`, including when [runnable] throws.
    * Runs [runnable] directly when the current root cannot start a batch.
    */
-  @ApiStatus.Internal
   fun runInBatch(runnable: Runnable) {
     val started = updateCurrentRoot { root ->
       if (root is PMarkerDirectRoot && !root.isEmpty() && !root.hasPersistentMarkers) PMarkerInsertionRoot(root) else root
@@ -229,7 +228,6 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   }
 
   /** Buffers ordered, disjoint new markers in an empty root. Queries see each marker as soon as it is added. */
-  @ApiStatus.Internal
   fun runInAppendBatch(runnable: Runnable) {
     val started = updateCurrentRoot { root ->
       if (root is PMarkerDirectRoot && root.isEmpty()) PMarkerAppendRoot(root) else root
@@ -256,29 +254,34 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    * Passes the selected snapshot and root to [update] outside the commit gate.
    * Retries if the snapshot or root changes before publication. [update] must have no side effects.
    *
-   * @return the new root, or `null` if the store is disposed or [update] returns the input root
+   * @return the new root, or `null` if the document is unavailable, the store is disposed, or [update] returns the input root
    */
   internal fun updateCurrentRoot(update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
     val initialRoot = emptyRoot
-    val document = documentReference.get()
-    val markerStores = document!!.snapshotMarkerStores
-    while (true) {
-      processQueue()
-      val snapshot = document.core.snapshot()
-      val reference: PMarkerRootReference
-      val oldRoot: PMarkerRoot
-      synchronized(markerStores) {
-        if (disposed) return null
-        reference = rootState(snapshot, initialRoot).rootReference
-        oldRoot = reference.get()
-      }
-      val newRoot = update(snapshot, oldRoot)
-      synchronized(markerStores) {
-        if (disposed) return null
-        if (document.core.snapshot() === snapshot && reference.compareAndSet(oldRoot, newRoot)) {
-          return if (newRoot === oldRoot) null else newRoot
+    val document = documentReference.get() ?: return null
+    val markerStores = document.snapshotMarkerStores
+    try {
+      while (true) {
+        processQueue()
+        val snapshot = document.core.snapshot()
+        val reference: PMarkerRootReference
+        val oldRoot: PMarkerRoot
+        synchronized(markerStores) {
+          if (disposed) return null
+          reference = rootState(snapshot, initialRoot).rootReference
+          oldRoot = reference.get()
+        }
+        val newRoot = update(snapshot, oldRoot)
+        synchronized(markerStores) {
+          if (disposed) return null
+          if (document.core.snapshot() === snapshot && reference.compareAndSet(oldRoot, newRoot)) {
+            return if (newRoot === oldRoot) null else newRoot
+          }
         }
       }
+    }
+    finally {
+      ObjectUtilsRt.reachabilityFence(document)
     }
   }
 

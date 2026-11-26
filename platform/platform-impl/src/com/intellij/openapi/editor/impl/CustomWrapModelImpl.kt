@@ -156,6 +156,7 @@ class CustomWrapModelImpl internal constructor(private val editor: EditorImpl) :
 
   private var wrapsAtCaret: List<CustomWrap> = emptyList()
 
+  /** Uses the caret's visual line to select which side of an insertion retains custom wraps at the caret. */
   override fun beforeDocumentChange(event: DocumentEvent) {
     if (document.isInBulkUpdate) return
     LOG.assertTrue(!isInsideBatchMutation, "Document must not be modified inside batch mutation")

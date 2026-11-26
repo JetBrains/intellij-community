@@ -16,10 +16,10 @@ import java.util.function.Consumer
 @UsePMarkerImplementation
 internal class PMarkerRelocationRootTest {
   @Test
-  fun `descending edits preserve every intermediate root and affected marker`() = checkTyping(reverse = true)
+  fun `descending edits preserve every intermediate root and affected marker`(): Unit = checkTyping(reverse = true)
 
   @Test
-  fun `ascending edits preserve every intermediate root and affected marker`() = checkTyping(reverse = false)
+  fun `ascending edits preserve every intermediate root and affected marker`(): Unit = checkTyping(reverse = false)
 
   @Test
   fun `ordered insertions without caret moves match an eager tree`(): Unit = withEntries { document, entries ->
@@ -99,7 +99,7 @@ internal class PMarkerRelocationRootTest {
   }
 
   @Test
-  fun `conflicting edits match an eager tree`() = withEntries { document, entries ->
+  fun `conflicting edits match an eager tree`(): Unit = withEntries { document, entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val replacements = entries.take(3).map { it.copy(nodeStart = it.nodeStart + 1, nodeEnd = it.nodeEnd + 1) }
     val eager = original.restoreEntries(replacements)
@@ -169,7 +169,7 @@ internal class PMarkerRelocationRootTest {
   }
 
   @Test
-  fun `queries and subsequent moves preserve pending positions`() = withEntries { document, entries ->
+  fun `queries and subsequent moves preserve pending positions`(): Unit = withEntries { document, entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val first = entries.last().copy(nodeStart = 150, nodeEnd = 150)
     val pending = PMarkerRelocationRoot.move(original, first)
@@ -186,7 +186,7 @@ internal class PMarkerRelocationRootTest {
   }
 
   @Test
-  fun `direct roots merge pending positions`() = withEntries { _, entries ->
+  fun `direct roots merge pending positions`(): Unit = withEntries { _, entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries.dropLast(1))
     val entry = entries.last()
     val other = PMarkerDirectRoot.empty().insertMany(listOf(entry))

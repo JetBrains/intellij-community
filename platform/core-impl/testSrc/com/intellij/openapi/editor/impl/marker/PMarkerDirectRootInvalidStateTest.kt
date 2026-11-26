@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 @UsePMarkerImplementation
 internal class PMarkerDirectRootInvalidStateTest {
   @Test
-  fun `invalid states survive later insertions and shifts`() = withEntries { entries ->
+  fun `invalid states survive later insertions and shifts`(): Unit = withEntries { entries ->
     val before = DocumentImpl("x".repeat(200), true).core.snapshot().text()
     val deletion = DocumentPatch.simple(0, 100, "", 1, false)
     val after = before.replace(0, 100, "")
@@ -38,7 +38,7 @@ internal class PMarkerDirectRootInvalidStateTest {
   }
 
   @Test
-  fun `removal tombstones and bulk purges preserve branches`() = withEntries { entries ->
+  fun `removal tombstones and bulk purges preserve branches`(): Unit = withEntries { entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     for (count in listOf(1, 3)) {
       val removedEntries = entries.take(count)

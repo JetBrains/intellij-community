@@ -341,6 +341,7 @@ internal class PMarkerNodeHistory<T : Any> {
     val isEmpty: Boolean
       get() = records.size() == 0
 
+    /** Returns the closest surviving value at or before [number] on this branch. */
     fun get(number: Long): T? {
       trimHead()
       var index = floorIndex(number)
@@ -358,6 +359,7 @@ internal class PMarkerNodeHistory<T : Any> {
       else records.addLast(reference)
     }
 
+    /** Drops cleared records from the head. Compacts the remaining records after enough collection notifications. */
     fun collect() {
       collectedSinceCompaction++
       trimHead()

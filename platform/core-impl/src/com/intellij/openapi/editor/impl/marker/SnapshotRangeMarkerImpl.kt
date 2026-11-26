@@ -73,11 +73,13 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Volatile
   private var disposalState: Int = ACTIVE
 
+  /** Supplies the initial offsets until disposal saves the current offsets. */
   @Volatile
   private var fallbackRange: Long = initialRange
 
   fun isDisposed(): Boolean = disposalState == DISPOSED
 
+  /** Saves the current offsets before marking this marker disposed. The caller controls removal from the root. */
   @Synchronized
   fun markDisposed() {
     if (isDisposed()) return
@@ -89,6 +91,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     return markerHandle.id
   }
 
+  /** Returns the document. Loads it through the file document manager when this marker stores only a virtual file. */
   override fun getDocument(): Document {
     val documentOrFile = documentOrFile
     return if (documentOrFile is VirtualFile) {
@@ -122,6 +125,7 @@ open class SnapshotRangeMarkerImpl private constructor(
            (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
   }
 
+  /** Checks validity in [root]. Reuses a cached resolution or advances it across edits when possible. */
   protected open fun isValidInRoot(root: PMarkerRoot): Boolean {
     val cached = cachedResolution
     if (cached != null) {
@@ -153,6 +157,7 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   fun isStickingToRight(): Boolean = MarkerSpec.isStickingToRight(specMask)
 
+  /** Claims disposal before running the callbacks and removing the marker. If the first callback throws, a later call can retry. */
   override fun dispose() {
     if (DISPOSAL_STATE_UPDATER.compareAndSet(this, ACTIVE, DISPOSING)) {
       try {
@@ -167,9 +172,11 @@ open class SnapshotRangeMarkerImpl private constructor(
     }
   }
 
+  /** Runs before disposal captures the offsets and removes the marker. */
   protected open fun beforeDispose() {
   }
 
+  /** Runs after disposal captures the offsets and removes the marker. */
   protected open fun afterDispose() {
   }
 
@@ -178,7 +185,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     SnapshotMarkerReference.processQueue()
     val handle = markerHandle
     markDisposed()
-    return updateCurrentRoot { it.remove(handle) }
+    return rootStorage.updateCurrentRoot { it.remove(handle) } != null
   }
 
   /**
@@ -206,8 +213,10 @@ open class SnapshotRangeMarkerImpl private constructor(
       val newSpecMask = transform(oldSpec)
       if (newSpecMask == oldSpec) return
 
-      if (!updateCurrentRoot { root -> if (isDisposed()) root else root.updateSpec(markerHandle, newSpecMask) }) return
-      specMask = newSpecMask
+      val updatedRoot = rootStorage.updateCurrentRoot { root ->
+        if (isDisposed()) root else root.updateSpec(markerHandle, newSpecMask)
+      }
+      if (updatedRoot != null) specMask = newSpecMask
     }
   }
 
@@ -215,6 +224,9 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Volatile
   private var cachedResolution: CachedResolution? = null
 
+  /**
+   * Returns cached offsets and validity when the current root has the cached identity. Otherwise returns [PMarkerResolution.UNRESOLVED].
+   */
   private fun cachedCurrentResolution(): Long {
     val identity = currentRootCache?.rootIdentity ?: currentRootReference().get().resolutionCacheIdentity
     val cached = cachedResolution
@@ -234,6 +246,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   private fun rangeOrFallback(resolution: Long): Long =
     if (PMarkerResolution.isAbsent(resolution)) fallbackRange else resolution
 
+  /** Caches [resolution] with the identity of [root] so readers can check them together. */
   internal fun cacheResolution(root: PMarkerRoot, resolution: Long) {
     cachedResolution = CachedResolution(root.resolutionCacheIdentity, resolution)
   }
@@ -259,10 +272,6 @@ open class SnapshotRangeMarkerImpl private constructor(
     }
     cacheResolution(root, resolution)
     return resolution
-  }
-
-  internal fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean {
-    return rootStorage.updateCurrentRoot(update) != null
   }
 
   fun currentRootReference(): PMarkerRootReference = currentRootCache?.reference ?: rootStorage.currentRootReference()
@@ -330,6 +339,10 @@ open class SnapshotRangeMarkerImpl private constructor(
       return marker
     }
 
+    /**
+     * Registers a point marker for [file] without loading its document.
+     * For a persistent marker in an unloaded file, saves valid line and column positions for restoration.
+     */
     @JvmStatic
     fun createRangeMarkerForVirtualFile(
       file: VirtualFile,

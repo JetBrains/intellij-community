@@ -18,6 +18,7 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
     rootStore.dispose(document.snapshotMarkerStores)
   }
 
+  /** Creates a region that excludes insertions at its boundaries. An empty region moves to the right of an insertion at its offset. */
   fun create(startOffset: Int, endOffset: Int): SnapshotFocusRegion {
     SnapshotMarkerReference.processQueue()
     val snapshot = currentSnapshot()
@@ -39,6 +40,7 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
     return true
   }
 
+  /** Visits regions containing [offset], including either endpoint. Returns `false` when [processor] stops the traversal. */
   fun processContaining(offset: Int, processor: Processor<in RangeMarkerEx>): Boolean {
     return processOverlapping(offset, offset) { region ->
       if (region.startOffset <= offset && offset <= region.endOffset) processor.process(region) else true

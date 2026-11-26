@@ -26,10 +26,11 @@ internal interface PersistentLongMap<V : Any> {
   /** Returns the number of entries. */
   fun size(): Int
 
+  /** Starts a batch of updates that shares nodes with this map. */
   fun builder(): PersistentLongMapBuilder<V>
 
   /** Calls [action] for each entry in ascending key order. */
-  fun forEachEntry(action: (Long, V) -> Unit)
+  fun forEachEntry(action: (Long, V) -> Unit): Unit
 
   companion object {
     fun <V : Any> empty(implementation: PersistentLongMapImplementation = PersistentLongMapImplementation.VECTOR_64): PersistentLongMap<V> =
@@ -49,10 +50,11 @@ internal interface PersistentLongMapBuilder<V : Any> {
   /** Returns the value for a caller-validated non-negative [key]. */
   fun getUnchecked(key: Long): V?
 
-  fun put(key: Long, value: V)
+  fun put(key: Long, value: V): Unit
 
-  fun remove(key: Long)
+  fun remove(key: Long): Unit
 
+  /** Publishes the pending updates and closes this builder. */
   fun build(): PersistentLongMap<V>
 }
 
@@ -106,10 +108,10 @@ internal abstract class PersistentLongMapEditor<V : Any>(
 
   protected abstract fun find(key: Long): V?
 
-  abstract fun putUnchecked(key: Long, value: V)
+  abstract fun putUnchecked(key: Long, value: V): Unit
 
   /** Removes [key], which the caller has verified to be present. */
-  abstract fun removeExisting(key: Long)
+  abstract fun removeExisting(key: Long): Unit
 
   abstract fun result(): PersistentLongMap<V>
 
@@ -261,6 +263,7 @@ internal class PersistentVector<V : Any> private constructor(
 
     override fun find(key: Long): V? = source.find(root, shift, key)
 
+    /** Grows the tree when [key] lies outside its current span. Copies shared nodes along the path to the leaf. */
     override fun putUnchecked(key: Long, value: V) {
       val current = root
       var s: Int
@@ -486,6 +489,7 @@ internal class PersistentLongChampMap<V : Any> private constructor(
 
     private fun slot(hash: Long, shift: Int): Int = (hash ushr shift).toInt() and ((1 shl bits) - 1)
 
+    /** Inserts the entry in its hash slot. On a collision between distinct keys, replaces the slot with a child that holds both entries. */
     private fun put(node: Node?, shift: Int, key: Long, hash: Long, value: Any): Node {
       val bit = 1L shl slot(hash, shift)
       if (node == null) {
@@ -565,6 +569,7 @@ internal class PersistentLongChampMap<V : Any> private constructor(
       return result
     }
 
+    /** Builds a shared path until the two hashes select different slots. */
     private fun merge(firstKey: Long, firstValue: Any, firstHash: Long, secondKey: Long, secondValue: Any, secondHash: Long, shift: Int): Node {
       check(shift < Long.SIZE_BITS) { "Distinct long keys produced the same mixed hash" }
       val firstSlot = slot(firstHash, shift)

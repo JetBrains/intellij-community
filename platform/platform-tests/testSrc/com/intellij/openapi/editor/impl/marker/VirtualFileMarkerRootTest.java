@@ -4,6 +4,8 @@ package com.intellij.openapi.editor.impl.marker;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentPatch;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightVirtualFile;
@@ -33,12 +35,12 @@ final class VirtualFileMarkerRootTest {
 
   @Test
   void documentFullTraversalIncludesFileMarkersBeyondTheDocumentLength() {
-    var file = new LightVirtualFile("test.txt", "abcdef");
-    var fileMarker = LazyRangeMarkerFactory.getInstance(projectFixture.get()).createRangeMarker(file, 10);
-    var document = new DocumentImpl("abcdef", true);
+    LightVirtualFile file = new LightVirtualFile("test.txt", "abcdef");
+    RangeMarker fileMarker = LazyRangeMarkerFactory.getInstance(projectFixture.get()).createRangeMarker(file, 10);
+    DocumentImpl document = new DocumentImpl("abcdef", true);
     VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
-    var documentMarker = document.createRangeMarker(1, 2);
-    var visited = new ArrayList<RangeMarker>();
+    RangeMarker documentMarker = document.createRangeMarker(1, 2);
+    List<RangeMarker> visited = new ArrayList<>();
 
     assertTrue(document.processRangeMarkers(marker -> {
       visited.add(marker);
@@ -50,16 +52,15 @@ final class VirtualFileMarkerRootTest {
 
   @Test
   void restorationComparesResolvedMarkerOffsetsInsteadOfJustMarkerEntryNodeStart() {
-    var file = new LightVirtualFile("test.txt", "abcdef");
-    var firstMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
-    var middleMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 3, 0, 3, 0, 3, true);
-    var lastMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 5, 0, 5, 0, 5, true);
-    //noinspection KotlinInternalInJava
-    var fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
-    var document = new DocumentImpl("abcdef", true);
-    var beforeText = document.getCore().snapshot().text();
-    var patch = DocumentPatch.simple(0, 0, "xx", 1, false);
-    var afterText = beforeText.replace(patch.startOffset(), patch.endOffset(), patch.newFragment());
+    LightVirtualFile file = new LightVirtualFile("test.txt", "abcdef");
+    RangeMarkerEx firstMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
+    RangeMarkerEx middleMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 3, 0, 3, 0, 3, true);
+    RangeMarkerEx lastMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 5, 0, 5, 0, 5, true);
+    VirtualFileMarkerRoot fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate(file);
+    DocumentImpl document = new DocumentImpl("abcdef", true);
+    DocumentText beforeText = document.getCore().snapshot().text();
+    DocumentPatch patch = DocumentPatch.simple(0, 0, "xx", 1, false);
+    DocumentText afterText = beforeText.replace(patch.startOffset(), patch.endOffset(), patch.newFragment());
 
     fileRoot.updateCurrentRoot(root ->
       root.applyPatch(patch, beforeText, afterText, PMarkerRoot.EMPTY_HANDLE_CONSUMER, PMarkerRoot.EMPTY_HANDLE_CONSUMER)
@@ -75,11 +76,11 @@ final class VirtualFileMarkerRootTest {
   @ParameterizedTest
   @ValueSource(ints = {3, 5})
   void restorationResolvesUnchangedMarkersBeforeLaterRestores(int initialOffset) {
-    var file = new LightVirtualFile("test.txt", "abcdef");
-    var unchangedMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
-    var restoredMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, initialOffset, 0, 3, 0, 3, true);
-    var offsetMarker = LazyRangeMarkerFactory.getInstance(projectFixture.get()).createRangeMarker(file, 5);
-    var document = new DocumentImpl("abcdef", true);
+    LightVirtualFile file = new LightVirtualFile("test.txt", "abcdef");
+    RangeMarkerEx unchangedMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
+    RangeMarkerEx restoredMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, initialOffset, 0, 3, 0, 3, true);
+    RangeMarker offsetMarker = LazyRangeMarkerFactory.getInstance(projectFixture.get()).createRangeMarker(file, 5);
+    DocumentImpl document = new DocumentImpl("abcdef", true);
 
     VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
 
@@ -95,17 +96,21 @@ final class VirtualFileMarkerRootTest {
     assertEquals(6, offsetMarker.getStartOffset());
   }
 
+  /**
+   * Pauses a root update while it holds the file root monitor.
+   * Starts attachment during the update to check that both operations use the same monitor.
+   */
   @Test
   @Timeout(60)
   void attachmentWaitsForAFileRootUpdate() throws Exception {
     LightVirtualFile file = new LightVirtualFile("test.txt", "abcdef");
-    //noinspection KotlinInternalInJava
-    VirtualFileMarkerRoot fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
+    VirtualFileMarkerRoot fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate(file);
     DocumentImpl document = new DocumentImpl("abcdef", true);
     CountDownLatch updateStarted = new CountDownLatch(1);
     CountDownLatch finishUpdate = new CountDownLatch(1);
-    var marker = (SnapshotRangeMarkerImpl)LazyRangeMarkerFactory.getInstance(projectFixture.get()).createRangeMarker(file, 0);
-    var handle = SnapshotMarkerReference.create(marker, false);
+    LazyRangeMarkerFactory factory = LazyRangeMarkerFactory.getInstance(projectFixture.get());
+    SnapshotRangeMarkerImpl marker = (SnapshotRangeMarkerImpl)factory.createRangeMarker(file, 0);
+    SnapshotMarkerReference<SnapshotRangeMarkerImpl> handle = SnapshotMarkerReference.create(marker, false);
 
     FutureTask<Boolean> updateTask = new FutureTask<>(() ->
       fileRoot.updateCurrentRoot(root -> {

@@ -22,6 +22,7 @@ import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Timeout;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
@@ -63,9 +64,9 @@ public class SnapshotMarkerEngineBenchmark {
   /** Creates the marker population in a persistent root. */
   @Benchmark
   public Object create50KRootMarkers(RootCreateState state) {
-    var root = state.root;
+    PMarkerRoot root = state.root;
     for (int index = 0; index < MARKER_COUNT; index++) {
-      var start = markerStart(index);
+      int start = markerStart(index);
       root =
         root.insert(SnapshotMarkerReference.create(state.markerForHandles, false), start, start + MARKER_LENGTH, NON_GREEDY_SPEC, (byte)0,
                     0, DefaultMarkerPolicy.INSTANCE);
@@ -84,7 +85,7 @@ public class SnapshotMarkerEngineBenchmark {
   /** Removes 1,000 markers while preserving the input root. */
   @Benchmark
   public Object remove1KRootMarkers(RootState state) {
-    var root = state.root;
+    PMarkerRoot root = state.root;
     for (int index = 0; index < ROOT_UPDATES; index++) root = root.remove(state.handles[state.resolveOrder[index]]);
     return root;
   }
@@ -93,7 +94,7 @@ public class SnapshotMarkerEngineBenchmark {
   @Benchmark
   public Object update1KRootSpecs(RootState state) {
     byte spec = MarkerSpec.create(true, true, false);
-    var root = state.root;
+    PMarkerRoot root = state.root;
     for (int index = 0; index < ROOT_UPDATES; index++) root = root.updateSpec(state.handles[state.resolveOrder[index]], spec);
     return root;
   }
@@ -128,7 +129,7 @@ public class SnapshotMarkerEngineBenchmark {
 
     @Setup(Level.Trial)
     public void setUp() {
-      var population = createRootPopulation();
+      RootPopulation population = createRootPopulation();
       root = population.root();
       markerForHandles = population.markerForHandles();
       handles = population.handles();
@@ -295,7 +296,7 @@ public class SnapshotMarkerEngineBenchmark {
     /** Builds the root and deterministic query workload once per parameter value and fork. */
     @Setup(Level.Trial)
     public void setUp() {
-      var population = createRootPopulation();
+      RootPopulation population = createRootPopulation();
       root = population.root();
       markerForHandles = population.markerForHandles();
 
@@ -424,12 +425,12 @@ public class SnapshotMarkerEngineBenchmark {
   static void main(String[] args) throws Exception {
     System.setProperty("jmh.separateClasspathJAR", "true");
 
-    var options = new OptionsBuilder().parent(new CommandLineOptions(args));
+    ChainedOptionsBuilder options = new OptionsBuilder().parent(new CommandLineOptions(args));
     if (args.length == 0) {
       options.include("\\W" + SnapshotMarkerEngineBenchmark.class.getSimpleName() + ".*");
     }
-    var classpath = System.getProperty("java.class.path");
-    var classpathJar = createClasspathJar(classpath);
+    String classpath = System.getProperty("java.class.path");
+    Path classpathJar = createClasspathJar(classpath);
     try {
       System.setProperty("java.class.path", classpathJar.toString());
       new Runner(options.build()).run();
@@ -440,18 +441,19 @@ public class SnapshotMarkerEngineBenchmark {
     }
   }
 
+  /** Records the classpath in a JAR manifest for the forked benchmark JVMs. */
   private static Path createClasspathJar(String classpath) throws IOException {
-    var entries = new StringJoiner(" ");
-    for (var entry : classpath.split(File.pathSeparator)) {
+    StringJoiner entries = new StringJoiner(" ");
+    for (String entry : classpath.split(File.pathSeparator)) {
       entries.add(new File(entry).toURI().toASCIIString());
     }
-    var manifest = new Manifest();
-    var attributes = manifest.getMainAttributes();
+    Manifest manifest = new Manifest();
+    Attributes attributes = manifest.getMainAttributes();
     attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
     attributes.put(Attributes.Name.CLASS_PATH, entries.toString());
-    var jar = Files.createTempFile("snapshot-marker-benchmark-", ".jar");
+    Path jar = Files.createTempFile("snapshot-marker-benchmark-", ".jar");
     jar.toFile().deleteOnExit();
-    try (var output = new JarOutputStream(Files.newOutputStream(jar), manifest)) {
+    try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(jar), manifest)) {
       output.finish();
     }
     return jar;
@@ -466,12 +468,13 @@ public class SnapshotMarkerEngineBenchmark {
     );
   }
 
+  /** Builds the root and keeps one marker alive as the referent for every weak handle. */
   private static RootPopulation createRootPopulation() {
-    var root = PMarkerRoot.empty();
-    var markerForHandles = createMarkerForHandles();
-    var handles = new SnapshotMarkerReference<?>[MARKER_COUNT];
+    PMarkerRoot root = PMarkerRoot.empty();
+    SnapshotRangeMarkerImpl markerForHandles = createMarkerForHandles();
+    SnapshotMarkerReference<?>[] handles = new SnapshotMarkerReference<?>[MARKER_COUNT];
     for (int index = 0; index < MARKER_COUNT; index++) {
-      var start = markerStart(index);
+      int start = markerStart(index);
       handles[index] = SnapshotMarkerReference.create(markerForHandles, false);
       root = root.insert(handles[index], start, start + MARKER_LENGTH, NON_GREEDY_SPEC, (byte)0,
                          0, DefaultMarkerPolicy.INSTANCE);

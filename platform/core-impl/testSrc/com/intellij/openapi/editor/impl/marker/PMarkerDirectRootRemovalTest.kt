@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 @UsePMarkerImplementation
 internal class PMarkerDirectRootRemovalTest {
   @Test
-  fun `removal hints preserve identity and offsets across branches and lazy shifts`() = withEntries { document, entries ->
+  fun `removal hints preserve identity and offsets across branches and lazy shifts`(): Unit = withEntries { document, entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(0, 0, "xxx", 1, false)
@@ -44,7 +44,7 @@ internal class PMarkerDirectRootRemovalTest {
   }
 
   @Test
-  fun `removal hints preserve invalid and absent states`() = withEntries { document, entries ->
+  fun `removal hints preserve invalid and absent states`(): Unit = withEntries { document, entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(0, before.length(), "", 1, false)

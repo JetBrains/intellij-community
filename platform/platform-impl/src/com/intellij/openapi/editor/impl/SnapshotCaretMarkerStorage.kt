@@ -34,10 +34,12 @@ internal class SnapshotCaretMarkerStorage(
     onMarkersAffected = { affectedHandles = it },
   )
 
+  /** Captures the root that supplies the caret offsets before the edit. */
   fun beforeDocumentChange() {
     rootBeforeChange = rootStore.root(currentSnapshot())
   }
 
+  /** Notifies live affected carets that overlap the old edit range. Passes the start offset from the captured root. */
   private fun documentChanged(event: DocumentEvent) {
     val beforeRoot = rootBeforeChange
     val affected = affectedHandles
@@ -89,14 +91,6 @@ internal class SnapshotCaretMarkerStorage(
     }
   }
 
-  fun positionSpec(): Byte = POSITION_SPEC
-
-  fun selectionSpec(): Byte = SELECTION_SPEC
-
-  fun positionPolicy(): MarkerPolicy = CaretPositionMarkerPolicy
-
-  fun selectionPolicy(): MarkerPolicy = CaretSelectionMarkerPolicy
-
   fun add(marker: SnapshotCaretMarker, startOffset: Int, endOffset: Int, specMask: Byte, policy: MarkerPolicy) {
     rootStore.updateRoot(currentSnapshot()) {
       it.insert(marker.markerHandle, startOffset, endOffset, specMask, marker.flavorFlags, policy = policy)
@@ -106,8 +100,11 @@ internal class SnapshotCaretMarkerStorage(
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   companion object {
-    private val POSITION_SPEC: Byte = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-    private val SELECTION_SPEC: Byte = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    @JvmField
+    val POSITION_SPEC: Byte = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+
+    @JvmField
+    val SELECTION_SPEC: Byte = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
   }
 }
 
@@ -125,10 +122,11 @@ internal abstract class SnapshotCaretMarker(
     storage.add(this, startOffset, endOffset, specMask, policy)
   }
 
-  abstract fun documentChanged(event: DocumentEvent, oldOffset: Int)
+  /** Handles a document change that affects this marker. [oldOffset] is the marker's start before the change. */
+  abstract fun documentChanged(event: DocumentEvent, oldOffset: Int): Unit
 }
 
-private object CaretPositionMarkerPolicy : MarkerPolicy {
+internal object CaretPositionMarkerPolicy : MarkerPolicy {
   override fun transform(
     entry: PMarkerRoot.MarkerEntry,
     patch: DocumentPatch,
@@ -155,7 +153,7 @@ private object CaretPositionMarkerPolicy : MarkerPolicy {
   }
 }
 
-private object CaretSelectionMarkerPolicy : MarkerPolicy {
+internal object CaretSelectionMarkerPolicy : MarkerPolicy {
   override fun transform(
     entry: PMarkerRoot.MarkerEntry,
     patch: DocumentPatch,

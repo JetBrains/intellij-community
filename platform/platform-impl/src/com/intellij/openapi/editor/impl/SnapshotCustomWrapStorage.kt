@@ -87,6 +87,7 @@ internal class SnapshotCustomWrapStorage(
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
+  /** Reports removal only while the wrap still belongs to the registry. */
   fun afterDisposed(wrap: SnapshotCustomWrap) {
     if (registeredWraps.remove(wrap.markerHandle)) model.notifyRemoved(wrap)
   }
@@ -149,6 +150,7 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
   }
 }
 
+/** Requires an offset inside a line. Rejects an offset that splits a CRLF sequence or a surrogate pair. */
 private fun isValidCustomWrapOffset(offset: Int, text: DocumentText): Boolean {
   if (offset < 0 || offset > text.length()) return false
   if (offset > 0 && offset < text.length()) {

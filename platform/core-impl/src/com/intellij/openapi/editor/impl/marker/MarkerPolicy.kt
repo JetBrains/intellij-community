@@ -96,6 +96,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
     }
   }
 
+  /** Invalidates points strictly inside a replaced range. At a pure insertion, applies right greediness before right stickiness. */
   private fun transformPoint(entry: MarkerEntry, patch: DocumentPatch): MarkerTransformResult {
     val point = entry.nodeStart
     val editStart = patch.startOffset()
@@ -122,6 +123,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
     return MarkerTransformResult(entry)
   }
 
+  /** Moves or resizes a range around the edit. For an insertion trimmed from a replacement, uses the original edit boundaries. */
   private fun transformRange(entry: MarkerEntry, patch: DocumentPatch): MarkerTransformResult {
     val startOffset = entry.nodeStart
     val endOffset = entry.nodeEnd

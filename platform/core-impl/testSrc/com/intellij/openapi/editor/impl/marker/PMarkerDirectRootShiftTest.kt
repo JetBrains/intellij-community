@@ -83,7 +83,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `edits before all markers share both subtrees and preserve snapshots`() = withEntries { entries ->
+  fun `edits before all markers share both subtrees and preserve snapshots`(): Unit = withEntries { entries ->
     val root = PMarkerDirectRoot.empty().insertMany(entries)
     for (entry in entries) root.resolve(entry.handle)
     for (patch in listOf(
@@ -108,7 +108,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `edits at non greedy range starts share both subtrees`() = withEntries { entries ->
+  fun `edits at non greedy range starts share both subtrees`(): Unit = withEntries { entries ->
     val root = PMarkerDirectRoot.empty().insertMany(entries)
     for (patch in listOf(
       DocumentPatch.simple(20, 20, "xx", 1, false),
@@ -122,7 +122,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `boundary flags and point markers retain their policy behavior`() = withEntries { entries ->
+  fun `boundary flags and point markers retain their policy behavior`(): Unit = withEntries { entries ->
     for (point in listOf(false, true)) {
       val ranges = entries.mapIndexed { index, entry -> if (point && index == 1) entry.copy(nodeEnd = entry.nodeStart) else entry }
       val original = PMarkerDirectRoot.empty().insertMany(ranges)
@@ -150,7 +150,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `boundary edits report affected markers and run custom policies`() = withEntries { entries ->
+  fun `boundary edits report affected markers and run custom policies`(): Unit = withEntries { entries ->
     val root = PMarkerDirectRoot.empty().insertMany(entries)
     val patch = DocumentPatch.simple(20, 20, "xx", 1, false)
     val affected = ArrayList<SnapshotMarkerReference<*>>()
@@ -175,7 +175,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `persistent traversals and text moves bypass the whole tree shift`() = withEntries { entries ->
+  fun `persistent traversals and text moves bypass the whole tree shift`(): Unit = withEntries { entries ->
     var transformed = 0
     val persistent = entries[1].copy(policy = object : MarkerPolicy {
       override val isPersistent: Boolean = true
@@ -205,7 +205,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `repeated shifts preserve metadata queries and later insertions and removals`() = withEntries { entries ->
+  fun `repeated shifts preserve metadata queries and later insertions and removals`(): Unit = withEntries { entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val patch = DocumentPatch.simple(0, 0, "xx", 1, false)
     var shifted = original
@@ -224,7 +224,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `cached offsets survive edits and unrelated marker creation and removal`() = withEntries { entries ->
+  fun `cached offsets survive edits and unrelated marker creation and removal`(): Unit = withEntries { entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     val edited = apply(original, DocumentPatch.simple(10, 10, "xx", 1, false))
     val added = entries.first().copy(
@@ -252,7 +252,7 @@ internal class PMarkerDirectRootShiftTest {
   }
 
   @Test
-  fun `old cached offsets require resolution after many edits`() = withEntries { entries ->
+  fun `old cached offsets require resolution after many edits`(): Unit = withEntries { entries ->
     val original = PMarkerDirectRoot.empty().insertMany(entries)
     var previous = original
     var current = original

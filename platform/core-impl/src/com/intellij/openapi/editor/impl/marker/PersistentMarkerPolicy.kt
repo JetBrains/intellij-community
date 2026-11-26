@@ -15,6 +15,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
   override val isPersistent: Boolean
     get() = true
 
+  /** Reports whether a root with persistent markers must visit the entries to apply this edit. */
   fun requiresFullTraversal(
       patch: DocumentPatch,
       beforeText: DocumentText,
@@ -39,6 +40,10 @@ object PersistentMarkerPolicy : MarkerPolicy {
     }
   }
 
+  /**
+   * Translates the marker's start and end lines through the diff and preserves their columns.
+   * Returns an invalid result when translation fails or produces an invalid range.
+   */
   private fun translate(
       entry: MarkerEntry,
       patch: DocumentPatch,
@@ -75,6 +80,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
     return MarkerTransformResult(startOffset, endOffset)
   }
 
+  /** Uses the diff for whole-document replacements and for large edits that strictly overlap the marker. */
   internal fun MarkerEntry.shouldTranslateViaDiff(
       patch: DocumentPatch,
       beforeText: DocumentText,

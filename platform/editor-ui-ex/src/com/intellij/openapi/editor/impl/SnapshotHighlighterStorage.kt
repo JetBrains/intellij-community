@@ -47,6 +47,7 @@ internal class SnapshotHighlighterStorage(
     model.invalidateHighlighterCache()
   }
 
+  /** Registers and inserts the highlighter in the current root. Clears its registration if the insertion does not publish a root. */
   fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, specMask: Byte, policy: MarkerPolicy) {
     assertMayChange()
     require(startOffset >= 0) { "startOffset must be non-negative" }
@@ -85,6 +86,10 @@ internal class SnapshotHighlighterStorage(
     model.fireAttributesChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged)
   }
 
+  /**
+   * Notifies listeners before removal with structural changes disabled on this thread.
+   * Keeps the guard active until [afterRemoved], or releases it immediately if a listener throws.
+   */
   fun beforeRemoved(highlighter: SnapshotRangeHighlighterImpl) {
     assertMayChange()
     if (!disposed && highlighter.isRegistered) {
@@ -100,6 +105,7 @@ internal class SnapshotHighlighterStorage(
     }
   }
 
+  /** Clears the registration and releases the mutation guard before notifying listeners. */
   fun afterRemoved(highlighter: SnapshotRangeHighlighterImpl) {
     var removed = false
     try {
@@ -116,6 +122,7 @@ internal class SnapshotHighlighterStorage(
     }
   }
 
+  /** Rejects structural changes on this thread during traversal or before-removal callbacks. */
   fun assertMayChange() {
     if (removalDepth.get() > 0) {
       throw IncorrectOperationException("Cannot change range highlighters during removal")
@@ -125,6 +132,7 @@ internal class SnapshotHighlighterStorage(
     }
   }
 
+  /** Collects valid, registered highlighters and sorts them by affected start offset, descending layer, and ID. */
   fun collectAll(): List<RangeHighlighterEx> {
     val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<RangeHighlighterEx>()
@@ -137,6 +145,10 @@ internal class SnapshotHighlighterStorage(
     return result
   }
 
+  /**
+   * Merges exact and whole-line matches in affected start order.
+   * Dispose the iterator on the thread that creates it to release the mutation guard.
+   */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Byte): MarkupIterator<RangeHighlighterEx> {
     val snapshot = currentSnapshot()
     val roots = rootStore.root(snapshot) as? CompoundPMarkerRoot ?: return MarkupIterator.emptyIterator()
@@ -147,6 +159,10 @@ internal class SnapshotHighlighterStorage(
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
   }
 
+  /**
+   * Visits overlapping highlighters in affected start order. Rounds the query to line boundaries for line highlighters.
+   * Returns `false` when [processor] stops the traversal.
+   */
   fun processRangeHighlightersOverlappingWith(
     startOffset: Int,
     endOffset: Int,
@@ -217,6 +233,7 @@ internal class SnapshotHighlighterStorage(
     }
   }
 
+  /** Sends removal notifications for invalidated highlighters. Clears all their registrations even if a listener throws. */
   private fun highlightersChanged(invalidatedHandles: List<SnapshotMarkerReference<SnapshotRangeHighlighterImpl>>) {
     val size = invalidatedHandles.size
     if (size == 0) return
@@ -267,7 +284,7 @@ internal class SnapshotHighlighterStorage(
     val iterator = object : PMarkerDirectRoot.OverlappingEntryTraversal(root, startOffset, endOffset, tastePreference.toInt()),
                             MarkupIterator<RangeHighlighterEx> {
       private var nextHighlighter: RangeHighlighterEx? = null
-      private var disposed = false
+      private var disposed: Boolean = false
 
       override fun dispose() {
         if (disposed) return

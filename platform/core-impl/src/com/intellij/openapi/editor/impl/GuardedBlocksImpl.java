@@ -50,6 +50,7 @@ final class GuardedBlocksImpl implements GuardedBlocks {
     myCachedGuardedBlocks = null;
   }
 
+  /** Reuses the cached list while all its blocks are valid. Rebuilds the list from the marker store after invalidation. */
   @Override
   public @NotNull @UnmodifiableView List<RangeMarker> getGuardedBlocks() {
     List<RangeMarker> cachedBlocks = myCachedGuardedBlocks;
@@ -66,6 +67,7 @@ final class GuardedBlocksImpl implements GuardedBlocks {
     return getRangeGuard(offset, offset);
   }
 
+  /** Returns the first guard that intersects the range. At a shared endpoint, the guard must be greedy at that boundary. */
   @Override
   public @Nullable RangeMarker getRangeGuard(int start, int end) {
     Ref<RangeMarker> blockRef = new Ref<>();

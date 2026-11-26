@@ -334,7 +334,7 @@ internal class PersistentLongMapTest {
   private fun value(index: Int): String = "value-$index"
 
   companion object {
-    private val KEYS = longArrayOf(
+    private val KEYS: LongArray = longArrayOf(
       0,
       1,
       15,

@@ -246,8 +246,8 @@ public class DocumentRangeMarkerBenchmark {
       RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
         document = new DocumentImpl(BULK_EDIT_TEXT, true);
         markers = new RangeMarker[markerCount];
-        for (var index = 0; index < markerCount; index++) {
-          var start = (int)((long)index * BULK_EDIT_TEXT.length() / markerCount);
+        for (int index = 0; index < markerCount; index++) {
+          int start = (int)((long)index * BULK_EDIT_TEXT.length() / markerCount);
           markers[index] = document.createRangeMarker(start, start + MARKER_LENGTH);
         }
         switch (edit) {
@@ -270,25 +270,25 @@ public class DocumentRangeMarkerBenchmark {
     @TearDown(Level.Invocation)
     public void verify() {
       RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
-        var delta = replacement.length() - (editEnd - editStart);
+        int delta = replacement.length() - (editEnd - editStart);
         if (document.getTextLength() != BULK_EDIT_TEXT.length() + delta) {
           throw new IllegalStateException("The edit produced an unexpected document length");
         }
-        for (var index = 0; index < markerCount; index++) {
-          var start = (int)((long)index * BULK_EDIT_TEXT.length() / markerCount);
-          var valid = start < editStart || start >= editEnd;
-          var marker = markers[index];
+        for (int index = 0; index < markerCount; index++) {
+          int start = (int)((long)index * BULK_EDIT_TEXT.length() / markerCount);
+          boolean valid = start < editStart || start >= editEnd;
+          RangeMarker marker = markers[index];
           if (marker.isValid() != valid) {
             throw new IllegalStateException("Unexpected validity for marker " + index);
           }
           if (valid) {
-            var expectedStart = start < editStart ? start : start + delta;
+            int expectedStart = start < editStart ? start : start + delta;
             if (marker.getStartOffset() != expectedStart || marker.getEndOffset() != expectedStart + MARKER_LENGTH) {
               throw new IllegalStateException("Unexpected offsets for marker " + index);
             }
           }
         }
-        var accumulator = new RangeMarkerAccumulator();
+        RangeMarkerAccumulator accumulator = new RangeMarkerAccumulator();
         if (!document.processRangeMarkersOverlappingWith(0, document.getTextLength(), accumulator) ||
             accumulator.getCount() != markerCount / 4) {
           throw new IllegalStateException("The overlap query returned an unexpected number of surviving markers");
@@ -319,9 +319,9 @@ public class DocumentRangeMarkerBenchmark {
       RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
         document = new DocumentImpl(BULK_EDIT_TEXT, true);
         markers = new RangeMarker[MARKER_COUNT];
-        for (var index = 0; index < MARKER_COUNT; index++) {
-          var start = index * MARKER_STRIDE;
-          var end = index < overlappingMarkerCount ? MOVE_TARGET + MARKER_STRIDE + index : start + MARKER_LENGTH;
+        for (int index = 0; index < MARKER_COUNT; index++) {
+          int start = index * MARKER_STRIDE;
+          int end = index < overlappingMarkerCount ? MOVE_TARGET + MARKER_STRIDE + index : start + MARKER_LENGTH;
           markers[index] = document.createRangeMarker(start, end);
         }
       });
@@ -331,7 +331,7 @@ public class DocumentRangeMarkerBenchmark {
     @TearDown(Level.Invocation)
     public void verify() {
       RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
-        var delta = switch (edit) {
+        int delta = switch (edit) {
           case "type" -> 1;
           case "backspace" -> -1;
           case "replaceSelection", "move" -> 0;
@@ -340,8 +340,8 @@ public class DocumentRangeMarkerBenchmark {
         if (document.getTextLength() != BULK_EDIT_TEXT.length() + delta) {
           throw new IllegalStateException("The edit produced an unexpected document length");
         }
-        for (var index = 0; index < MARKER_COUNT; index++) {
-          var start = index * MARKER_STRIDE;
+        for (int index = 0; index < MARKER_COUNT; index++) {
+          int start = index * MARKER_STRIDE;
           int end;
           if (index < overlappingMarkerCount) {
             end = MOVE_TARGET + MARKER_STRIDE + index + delta;
@@ -352,12 +352,12 @@ public class DocumentRangeMarkerBenchmark {
             }
             end = start + MARKER_LENGTH;
           }
-          var marker = markers[index];
+          RangeMarker marker = markers[index];
           if (!marker.isValid() || marker.getStartOffset() != start || marker.getEndOffset() != end) {
             throw new IllegalStateException("Unexpected range for marker " + index);
           }
         }
-        var accumulator = new RangeMarkerAccumulator();
+        RangeMarkerAccumulator accumulator = new RangeMarkerAccumulator();
         if (!document.processRangeMarkersOverlappingWith(0, document.getTextLength(), accumulator) ||
             accumulator.getCount() != MARKER_COUNT) {
           throw new IllegalStateException("The overlap query returned an unexpected number of markers");

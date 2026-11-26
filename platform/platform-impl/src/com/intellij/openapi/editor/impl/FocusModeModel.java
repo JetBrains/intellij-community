@@ -145,7 +145,8 @@ public final class FocusModeModel implements Disposable {
 
   void clearFocusMode() {
     myFocusModeUpdatePending = false;
-    myFocusModeMarkup.forEach(myEditor.getMarkupModel()::removeHighlighter);
+    MarkupModel markupModel = myEditor.getMarkupModel();
+    myFocusModeMarkup.forEach(highlighter -> markupModel.removeHighlighter(highlighter));
     myFocusModeMarkup.clear();
     if (myFocusModeRange != null) {
       myFocusModeRange.dispose();
@@ -186,6 +187,7 @@ public final class FocusModeModel implements Disposable {
     return found[0];
   }
 
+  /** Notifies listeners only when the marker is removed from its storage. */
   @ApiStatus.Internal
   public void removeFocusRegion(@NotNull RangeMarker marker) {
     boolean removed;

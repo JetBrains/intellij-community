@@ -38,6 +38,7 @@ internal class SnapshotInlayStorage(
     onDocumentChanged = ::processInvalidatedMarkers,
   )
   private var invalidatedHandles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>>> = emptyList()
+  /** Keeps queries on the pre-edit root until the document change callback clears this field. */
   private var querySnapshot: DocumentSnapshot? = null
 
   fun <R : EditorCustomElementRenderer> createInline(
@@ -88,6 +89,7 @@ internal class SnapshotInlayStorage(
     return register(marker, offset, specMask)
   }
 
+  /** Registers a point marker whose measure is the block inlay height. */
   fun <R : EditorCustomElementRenderer> createBlock(
     offset: Int,
     relatesToPrecedingText: Boolean,
@@ -115,6 +117,10 @@ internal class SnapshotInlayStorage(
     return register(marker, offset, specMask, marker.heightInPixels)
   }
 
+  /**
+   * Captures the snapshot for queries during the change.
+   * For a deletion, preserves the order of inline inlays from both endpoints when their offsets merge.
+   */
   fun beforeDocumentChange(event: DocumentEvent) {
     querySnapshot = currentSnapshot()
     if (event.oldLength == 0 || event.newLength != 0) return
@@ -153,6 +159,7 @@ internal class SnapshotInlayStorage(
     }
   }
 
+  /** Sums the block inlay heights at or before [offset] in the snapshot used for queries. */
   fun getBlockHeightUpToOffset(offset: Int): Int {
     return rootStore.root(snapshotForQueries())?.getPrefixAggregate(offset) ?: 0
   }
@@ -195,6 +202,10 @@ internal class SnapshotInlayStorage(
     invalidatedHandles = handles
   }
 
+  /**
+   * Uses the new root for queries and removes the invalidated inlays from the registry.
+   * Defers notification for inline inlays invalidated by the insertion phase of a move.
+   */
   private fun processInvalidatedMarkers(event: DocumentEvent) {
     querySnapshot = null
     val handles = invalidatedHandles
@@ -219,6 +230,10 @@ internal class SnapshotInlayStorage(
     return found
   }
 
+  /**
+   * Collects inlays from the query snapshot and sorts them before converting the results.
+   * Sorts by start offset first, then by [SnapshotInlayMarker.iterationOrder].
+   */
   private fun <T> collect(
     startOffset: Int,
     endOffset: Int,
@@ -279,6 +294,7 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
     storage.afterDisposed(this)
   }
 
+  /** Saves the inlay's offset and ID before removing its marker. Disposes its children before notifying listeners. */
   final override fun dispose() {
     EditorImpl.assertIsDispatchThread()
     if (!isValid()) return
@@ -292,6 +308,7 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
     editor.inlayModel.notifyRemoved(this)
   }
 
+  /** Lets a subtype capture additional state before the marker leaves the root. */
   protected open fun beforeInlayDispose() {
   }
 }
@@ -430,6 +447,7 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
     return validateOffset(MarkerTransformResult(entry), text)
   }
 
+  /** Invalidates an inline inlay when its offset splits a surrogate pair. */
   private fun validateOffset(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
     val offset = range.startOffset
     if (offset <= 0 || offset >= text.length()) return range

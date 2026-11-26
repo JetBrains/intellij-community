@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.util.ObjectUtilsRt
 import java.lang.ref.WeakReference
 
 /**
@@ -13,9 +11,6 @@ import java.lang.ref.WeakReference
 abstract class MarkerRootUpdater {
   internal val weakReference: WeakReference<MarkerRootUpdater> = WeakReference(this)
 
-  /** Returns the current document, or `null` if it is unavailable. */
-  internal abstract val document: DocumentImpl?
-
   /**
    * Creates a handle for [marker] with this updater's ownership policy.
    * This method does not insert the marker into a root.
@@ -25,29 +20,12 @@ abstract class MarkerRootUpdater {
   internal abstract fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*>
 
   /**
-   * Purges collected [handles] from the current root when [document] is available.
+   * Purges collected [handles] from the current root.
    *
    * @return `true` if the purge publishes a new root
    */
-  internal open fun purgeCollected(handles: Collection<SnapshotMarkerReference<*>>): Boolean {
-    val document = document ?: return false
-    return purgeCollected(document, handles)
-  }
-
-  /**
-   * Purges [handles] from the current root.
-   * Keeps a non-null [document] reachable until the update finishes.
-   *
-   * @return `true` if the purge publishes a new root
-   */
-  protected fun purgeCollected(document: DocumentImpl?, handles: Collection<SnapshotMarkerReference<*>>): Boolean {
-    try {
-      return updateCurrentRoot { it.purgeMany(handles) } != null
-    }
-    finally {
-      if (document != null) ObjectUtilsRt.reachabilityFence(document)
-    }
-  }
+  internal fun purgeCollected(handles: Collection<SnapshotMarkerReference<*>>): Boolean =
+    updateCurrentRoot { root -> root.purgeMany(handles) } != null
 
   /**
    * Returns the atomic reference for the current document state.

@@ -10,7 +10,6 @@ import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.IdentityHashMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -323,6 +322,7 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
+  /** Records the removal in the new version so a later merge skips this handle. */
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerDirectRoot = keepingRootAlive {
     val previous = state(handle) ?: return@keepingRootAlive this
     val offsets = resolveState(previous)
@@ -474,6 +474,7 @@ class PMarkerDirectRoot private constructor(
     return false
   }
 
+  /** Sums the measures of markers that start at or before [offset]. Uses subtree totals as it follows the search path. */
   override fun getPrefixAggregate(offset: Int): Int {
     var node = root
     var delta = 0
@@ -523,23 +524,23 @@ class PMarkerDirectRoot private constructor(
   }
 
   /** Traverses a direct root in place and delegates to the root's iterator for other root types. */
-  @ApiStatus.Internal
   abstract class OverlappingEntryTraversal protected constructor(
     root: PMarkerRoot,
     private val startOffset: Int,
     private val endOffset: Int,
     tastePreference: Int,
   ) {
-    private val directRoot = root as? PMarkerDirectRoot
-    private val entries = if (directRoot == null) root.overlappingIterator(startOffset, endOffset, tastePreference) else null
-    private val flags = tastePreference and 0xFF
+    private val directRoot: PMarkerDirectRoot? = root as? PMarkerDirectRoot
+    private val entries: Iterator<MarkerEntry>? =
+      if (directRoot == null) root.overlappingIterator(startOffset, endOffset, tastePreference) else null
+    private val flags: Int = tastePreference and 0xFF
 
     /** Pending nodes. [shifts] stores the ancestor shift at each index. */
     private val nodes: Array<PMarkerNode?>
     private val shifts: IntArray
-    private var stackSize = 0
+    private var stackSize: Int = 0
     private var nextEntry: MarkerEntry? = null
-    private var nextShift = 0
+    private var nextShift: Int = 0
 
     init {
       if (directRoot != null) require(startOffset in 0..endOffset) { "The query range is invalid" }
@@ -576,6 +577,7 @@ class PMarkerDirectRoot private constructor(
       return entry.shifted(nextShift)
     }
 
+    /** Queues overlap candidates along the left path. Prunes subtrees by end offset and flavor flags. */
     private fun pushLeft(initial: PMarkerNode?, initialDelta: Int) {
       var node = initial
       var delta = initialDelta
@@ -592,8 +594,8 @@ class PMarkerDirectRoot private constructor(
     }
 
     private companion object {
-      val EMPTY_NODES = emptyArray<PMarkerNode?>()
-      val EMPTY_SHIFTS = IntArray(0)
+      val EMPTY_NODES: Array<PMarkerNode?> = emptyArray()
+      val EMPTY_SHIFTS: IntArray = IntArray(0)
     }
   }
 
@@ -678,6 +680,7 @@ class PMarkerDirectRoot private constructor(
     operator fun get(id: Long): Long =
       if (id == firstId) firstResolution else completeResolutions?.get(id) ?: additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
 
+    /** Allocates a concurrent cache when a marker needs an entry beyond the first cached resolution. */
     fun put(id: Long, resolution: Long) {
       if (id == firstId || allMarkersCached) return
       var cache = additionalResolutions
@@ -884,6 +887,7 @@ class PMarkerDirectRoot private constructor(
       }
     }
 
+    /** Restores the AVL height balance with one or two rotations. */
     private fun balance(node: PMarkerNode): PMarkerNode {
       val factor = (node.left?.height ?: 0) - (node.right?.height ?: 0)
       if (factor > 1) {
