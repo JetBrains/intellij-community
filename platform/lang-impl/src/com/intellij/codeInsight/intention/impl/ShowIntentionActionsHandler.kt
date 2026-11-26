@@ -360,7 +360,7 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
 
     IntentionsUI.getInstance(project).hide()
 
-    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) {
+    if (performCurrentQuestionAction()) {
       return
     }
 
@@ -375,6 +375,16 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
     showIntentionHint(project, editor, file, showFeedbackOnEmptyMenu)
     val elapsed = System.currentTimeMillis() - start
     IntentionFUSCollector.reportPopupDelay(project, elapsed, file.getFileType())
+  }
+
+  /**
+   * Runs the action of the visible question hint, for example of an import hint.
+   *
+   * @return `true` if the question hint took this invocation. The intention menu then stays closed.
+   */
+  @ApiStatus.Internal
+  protected open fun performCurrentQuestionAction(): Boolean {
+    return HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()
   }
 
   protected open fun showIntentionHint(
