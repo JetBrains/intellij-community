@@ -1456,6 +1456,9 @@ def platform_values_error(main_module, platforms, platform_values, platform_plan
                 return "%s on %s: %s" % (main_module, platform, error)
     return None
 
+# The package of the plan corpus test in the main repository. It reads every plan file that `dist_complex_plugin` reads.
+_PLAN_CORPUS_PACKAGE = "@@//build/dist-tools/plan-corpus:__pkg__"
+
 def dist_complex_plugin(
         main_module,
         descriptor,
@@ -1562,6 +1565,14 @@ def dist_complex_plugin(
     descriptor_id = "descriptor:" + main_module
     plan_stem = plan_package + ":" + main_module + ("." + plan_class if plan_class else "")
     chain_stem = main_module + ("." + chain_class if chain_class else "")
+
+    # The plan corpus test of the ultimate root reads every plan file through a filegroup `<plan file>` without `.json`.
+    # Two calls of one package can read one plan file, so the first call declares the filegroup.
+    if not plan_package:
+        for platform in platforms or [None]:
+            plan_file = plan_stem.removeprefix(":") + ("." + platform if platform and platform_plans else "") + ".dev-plan.json"
+            if not native.existing_rule(plan_file.removesuffix(".json")):
+                native.filegroup(name = plan_file.removesuffix(".json"), srcs = [plan_file], visibility = [_PLAN_CORPUS_PACKAGE])
     for platform in platforms or [None]:
         projection = plan_stem + ("." + platform if platform and platform_plans else "") + ".dev-plan.json"
         chain_descriptor = _for_platform(descriptor, platform)

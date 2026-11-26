@@ -187,6 +187,9 @@ private fun listLaunchModels(projectRoot: Path): List<String> {
 }
 private const val DIST_FRAGMENT_INPUTS_RELATIVE_PATH: String = "build/dist_fragment_inputs.bzl"
 private const val DIST_MODULE_SETS_RELATIVE_PATH: String = "build/dist_module_sets.bzl"
+
+/** The label of every plan file of the half. The corpus test of the plan readers reads each listed file. */
+internal const val DIST_PLAN_FILES_RELATIVE_PATH: String = "build/dist-tools/plan_files.bzl"
 /**
  * The file of `DIST_PLUGIN_COMPONENTS`, the component label of every plugin. A component of its own packs each
  * plugin, so the platform payload tables name no plugin jar. The `dist_complex_plugin` call of a complex plugin
@@ -475,6 +478,7 @@ internal fun computeDistPlan(
       add(DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, communityProducts))
       add(DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
       add(DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(moduleSets, upstreamModuleSets, half))
+      add(DIST_PLAN_FILES_RELATIVE_PATH to renderDistPlanFiles(pluginPlans.updates.results.map { it.relativePath }, half.generatedByHeader))
       add(DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half, sections.updatePluginModules))
       add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(
         rows = runConfigurations,

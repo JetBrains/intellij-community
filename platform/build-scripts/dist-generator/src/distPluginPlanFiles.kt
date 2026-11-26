@@ -654,3 +654,21 @@ private fun collectObsoleteProjections(projectRoot: Path, relativeDirectory: Str
   }
   return obsolete.sorted()
 }
+
+/**
+ * The `.bzl` text that lists a label for every plan file in [relativePaths], in path order. `dist_complex_plugin` declares
+ * the filegroup `<plan file>` without `.json` in the package of the plan home, so the directory is the package of the
+ * label.
+ */
+internal fun renderDistPlanFiles(relativePaths: Collection<String>, generatedByHeader: String): String = buildString {
+  append(generatedByHeader)
+  append("#\n")
+  append("# The filegroup of every plan file of this half, in path order. The corpus test of the plan readers,\n")
+  append("# `//build/dist-tools/plan-corpus` of the ultimate root, reads each listed file.\n")
+  append("\n")
+  append("DIST_PLAN_FILES = [\n")
+  for (relativePath in relativePaths.sorted()) {
+    append("    \"//").append(relativePath.substringBeforeLast('/', "")).append(':').append(relativePath.substringAfterLast('/').removeSuffix(".json")).append("\",\n")
+  }
+  append("]\n")
+}
