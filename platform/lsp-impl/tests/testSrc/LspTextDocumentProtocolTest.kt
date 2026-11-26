@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.core.CoreBundle
 import com.intellij.find.usages.impl.DefaultUsageSearchParameters
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
+import com.intellij.model.search.SearchService
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.lsp.api.LspClientManager
@@ -30,6 +32,7 @@ import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -74,6 +77,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
@@ -613,6 +617,34 @@ internal class LspTextDocumentProtocolTest {
       val searchTarget = LspSearchTarget(lspClients, virtualFile, position)
       val params = DefaultUsageSearchParameters(project, searchTarget, GlobalSearchScope.projectScope(project))
       LspUsageSearcher().collectSearchRequest(params)?.forEach { }
+
+      serverSession.awaitExpected()
+    }
+
+    @Test
+    fun `textDocument references -- references requested in the dumb mode`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("refs.txt", "hello <caret>world").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.REFERENCES, { it.textDocument.uri == fileUri }) {
+        emptyList()
+      }
+
+      val lspClients = LspClientManager.getInstance(project).getClients(fakeLspIntegration.providerClass)
+      val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)!! }
+      val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
+      val position = readAction { getLsp4jPosition(document, offset) }
+
+      // The target must be dumb-aware: the dumb mode drops every other search target, and JetBrains Light never leaves it
+      val searchTarget = LspSearchTarget(lspClients, virtualFile, position)
+      assertTrue(DumbService.isDumbAware(searchTarget))
+
+      // SearchService applies the dumb filter to the searchers, so a non-dumb-aware LspUsageSearcher sends no request here
+      val params = DefaultUsageSearchParameters(project, searchTarget, GlobalSearchScope.projectScope(project))
+      DumbModeTestUtils.runInDumbModeSynchronously(project) {
+        SearchService.getInstance().searchParameters(params).forEach { true }
+      }
 
       serverSession.awaitExpected()
     }

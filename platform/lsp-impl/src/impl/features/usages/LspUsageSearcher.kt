@@ -6,6 +6,7 @@ import com.intellij.find.usages.api.UsageSearchParameters
 import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lsp.impl.documentMapping
 import com.intellij.platform.lsp.impl.mapLocation
 import com.intellij.platform.lsp.util.getOffsetInDocument
@@ -21,9 +22,11 @@ import org.eclipse.lsp4j.ReferenceParams
  * Helps to implement the 'Find Usages' and 'Show Usages' features backed by an LSP server
  * ([textDocument/references](https://microsoft.github.io/language-server-protocol/specification/#textDocument_references) request).
  *
+ * [DumbAware]: the search of the dumb-aware [LspSearchTarget] runs only a dumb-aware searcher in the dumb mode.
+ *
  * @see LspSearchTargetsRule
  */
-internal class LspUsageSearcher : UsageSearcher {
+internal class LspUsageSearcher : UsageSearcher, DumbAware {
   override fun collectSearchRequest(parameters: UsageSearchParameters): Query<Usage>? {
     val lspSearchTarget = parameters.target as? LspSearchTarget ?: return null
     return LspReferencesQuery(lspSearchTarget)

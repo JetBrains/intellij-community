@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
@@ -82,8 +83,10 @@ internal fun LspClientImpl.isFindReferencesEnabledFor(file: VirtualFile): Boolea
  * can resolve a reference to it when the caret is on a declaration.
  * The symbol has no navigation targets, so the 'Go To Declaration or Usages' action falls back to 'Show Usages'.
  * It must not implement `NavigationTarget` or `NavigatableSymbol`: that would turn the fallback back into a self-navigation.
+ *
+ * Also [DumbAware]: the dumb mode offers only a dumb-aware target, and the server answers references without the indexes.
  */
-internal class LspSearchTarget(val lspClients: Collection<LspClient>, val file: VirtualFile, val position: Position) : SearchTarget, Symbol {
+internal class LspSearchTarget(val lspClients: Collection<LspClient>, val file: VirtualFile, val position: Position) : SearchTarget, Symbol, DumbAware {
   override fun createPointer(): Pointer<out LspSearchTarget> = Pointer.hardPointer(this)
 
   // It would be great to have something more meaningful here. For example, guess a word at caret.
