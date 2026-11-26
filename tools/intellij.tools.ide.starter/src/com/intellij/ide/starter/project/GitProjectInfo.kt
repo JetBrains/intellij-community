@@ -16,6 +16,7 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.OS
 import org.kodein.di.instance
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
@@ -110,7 +111,10 @@ data class GitProjectInfo(
   private fun setupRepositoryState(repoRoot: Path) {
     Git.setRemoteUrlIfDifferent(repoRoot, repositoryUrl)
 
-    if (!isReusable) {
+    if (isReusable) {
+      resetReusableCheckoutOnFirstUse(repoRoot)
+    }
+    else {
       Git.reset(repositoryDirectory = repoRoot)
       Git.clean(repoRoot)
     }
@@ -186,6 +190,9 @@ data class GitProjectInfo(
     val targetRoot = repositoryRootDir
     if (isInWslGuest(targetRoot)) {
       checkoutInTarget(hostRoot, targetRoot, cleanWorkingTree = !isReusable)
+      if (isReusable) {
+        resetReusableCheckoutOnFirstUse(targetRoot)
+      }
     }
     check(isCheckout(targetRoot)) {
       "The project directory $targetRoot has no checkout of $repositoryUrl. Its environment is ${targetRoot.getEelDescriptor()}. " +
@@ -249,4 +256,22 @@ data class GitProjectInfo(
 
   /** The name of the project directory. It holds the sub-folder of [projectHomeRelativePath], so it needs no clone. */
   override fun getName(): String = projectPath.fileName.toString()
+}
+
+/** The checkouts of a reusable project that this process has reset. */
+private val resetReusableCheckouts: MutableSet<Path> = ConcurrentHashMap.newKeySet()
+
+/**
+ * Resets the tracked files of the checkout in [repoRoot] and removes its untracked and ignored files, once for each checkout
+ * in the process.
+ *
+ * A test can leave its edits in a reusable checkout, and the next test process would take them as the clean project.
+ * Later calls in the same process keep the checkout as it is.
+ */
+internal fun resetReusableCheckoutOnFirstUse(repoRoot: Path) {
+  if (!resetReusableCheckouts.add(repoRoot.toAbsolutePath().normalize())) {
+    return
+  }
+  Git.reset(repositoryDirectory = repoRoot)
+  Git.clean(repoRoot, includeIgnored = true)
 }

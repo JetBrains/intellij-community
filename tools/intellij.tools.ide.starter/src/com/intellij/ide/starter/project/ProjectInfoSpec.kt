@@ -6,7 +6,8 @@ import kotlin.time.Duration
 
 interface ProjectInfoSpec {
   /**
-   * "true" - the same project data can be shared between tests
+   * "true" - the same project data can be shared between the tests of one process.
+   * A [GitProjectInfo] resets its tracked files and removes its untracked and ignored files once per process, at its first use.
    * "false" - before each test the project will be removed and unpacked from scratch/cleaned (depends on the implementation of [ProjectInfoSpec]).
    * */
   val isReusable: Boolean
