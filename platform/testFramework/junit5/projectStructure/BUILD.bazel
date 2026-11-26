@@ -94,6 +94,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/lang-api:lang",
         "//platform/testFramework/junit5/projectStructure",
+        "//platform/testFramework",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure.tests` end

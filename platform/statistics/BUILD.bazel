@@ -132,6 +132,7 @@ jvm_library(
         "//platform/testFramework/core",
         "//libraries/assertj-core",
         "//libraries/fus-ap-validation",
+        "//platform/testFramework",
     ],
 )
 ### auto-generated section `build intellij.platform.statistics.tests` end

@@ -88,6 +88,7 @@ jvm_library(
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//platform/testFramework/junit5",
         "//libraries/junit6",
+        "//platform/testFramework",
     ],
 )
 ### auto-generated section `build intellij.platform.discoverability.tests` end
