@@ -1,5 +1,7 @@
 load("@community//build:jps_module.bzl", "jps_module")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//platform/build-scripts/bazel-rules:dist_plugin.bzl", "dist_plugin")
 
 ### auto-generated section `dev intellij.gradle.plugin` start
@@ -33,14 +35,24 @@ dist_plugin(
 )
 ### auto-generated section `dev intellij.gradle.plugin` end
 
+# the Ant jars in the `lib/ant` directory, as `withProjectLibrary("Ant", ..., STANDALONE_SEPARATE)` in CommunityRepositoryModules.kt packs them
+pkg_files(
+    name = "ant_lib",
+    srcs = ["@lib//ant/lib:ant"],
+    prefix = "lib/ant",
+)
+
 ### auto-generated section `build intellij.gradle.plugin` start
-jvm_library(
+ij_plugin_module(
     name = "plugin",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.gradle.plugin",
+    # manually written attribute
+    non_classpath_data = [":ant_lib"],
+    packed_deps = ["@lib//:gradle-plugin-groovy"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -50,10 +62,49 @@ jvm_library(
 )
 ### auto-generated section `build intellij.gradle.plugin` end
 
+### auto-generated section `plugin intellij.gradle.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin_plugin_module",
+    content_modules = [
+        # do not sort,
+        "//libraries/gradle:gradle_plugin_module",
+        "//libraries/groovy/ant:ant_plugin_module",
+        "//plugins/gradle",
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//plugins/gradle/tooling-proxy",
+        "//plugins/gradle/completion",
+        "//plugins/gradle/completion/kotlin",
+        "//plugins/gradle/completion/toml",
+        "//plugins/gradle/properties",
+        "//plugins/gradle/settings",
+        "//plugins/gradle/backend",
+        "//plugins/gradle/codeInsight",
+        "//plugins/gradle/codeInsight/backend",
+        "//plugins/gradle/codeInsight/kotlin",
+        "//plugins/gradle/codeInsight/kotlin/backend",
+        "//plugins/gradle/codeInsight/groovy",
+        "//plugins/gradle/codeInsight/groovy/backend",
+        "//plugins/gradle/codeInsight/toml",
+        "//plugins/gradle/codeInsight/toml/backend",
+        "//plugins/gradle/codeInsight/properties",
+        "//plugins/gradle/codeInsight/properties/backend",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//plugins/gradle/completion/ex",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.gradle.plugin` end
+
 ### auto-generated section `iml intellij.gradle.plugin` start
 jps_module(
     name = "intellij.gradle.plugin",
     descriptors = ["resources/META-INF/plugin.xml"],
+    plugin = True,
     target = "plugin",
 )
 ### auto-generated section `iml intellij.gradle.plugin` end
