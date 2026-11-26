@@ -2635,6 +2635,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.codehaus.groovy/groovy-3.0.25.jar_copy",
+    src = "@org_codehaus_groovy-groovy-3_0_25_http//file",
+    out = "org.codehaus.groovy/groovy-3.0.25.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "gradle-plugin-groovy",
+    jar = "@org_codehaus_groovy-groovy-3_0_25_http//file",
+    source_jar = "@org_codehaus_groovy-groovy-3_0_25-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jeasy/easy-random-core-4.2.0.jar_copy",
     src = "@org_jeasy-easy-random-core-4_2_0_http//file",
     out = "org.jeasy/easy-random-core-4.2.0.jar",
@@ -9038,14 +9053,6 @@ jvm_import(
     name = "libraries-groovy-ant-groovy-ant",
     jar = "@org_codehaus_groovy-groovy-ant-3_0_25_http//file",
     source_jar = "@org_codehaus_groovy-groovy-ant-3_0_25-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.codehaus.groovy/groovy-3.0.25.jar_copy",
-    src = "@org_codehaus_groovy-groovy-3_0_25_http//file",
-    out = "org.codehaus.groovy/groovy-3.0.25.jar",
-    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 

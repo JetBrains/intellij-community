@@ -2010,6 +2010,20 @@ http_file(
 )
 
 http_file(
+    name = "org_codehaus_groovy-groovy-3_0_25_http",
+    downloaded_file_path = "groovy-3.0.25.jar",
+    sha256 = "ad009e985dd84e4f524f4ed1751866da5bef816b691851bfbcefa48a01180a07",
+    url = "https://cache-redirector.jetbrains.com/maven-central/org/codehaus/groovy/groovy/3.0.25/groovy-3.0.25.jar",
+)
+
+http_file(
+    name = "org_codehaus_groovy-groovy-3_0_25-sources_http",
+    downloaded_file_path = "groovy-3.0.25-sources.jar",
+    sha256 = "67e2e1e4bddaa943847d2cc61b9aa8d5ea53e25bb5e9661d01120c28869ef098",
+    url = "https://cache-redirector.jetbrains.com/maven-central/org/codehaus/groovy/groovy/3.0.25/groovy-3.0.25-sources.jar",
+)
+
+http_file(
     name = "org_jeasy-easy-random-core-4_2_0_http",
     downloaded_file_path = "easy-random-core-4.2.0.jar",
     sha256 = "e37f9fd2680da69e6e4e0fef6472b53240a935a18804e957ef60ef20f36281de",
@@ -7194,20 +7208,6 @@ http_file(
     downloaded_file_path = "groovy-ant-3.0.25-sources.jar",
     sha256 = "765c5cc21e387e760a68ef873c1790290131080e8525551a84ea0360284d8d39",
     url = "https://cache-redirector.jetbrains.com/maven-central/org/codehaus/groovy/groovy-ant/3.0.25/groovy-ant-3.0.25-sources.jar",
-)
-
-http_file(
-    name = "org_codehaus_groovy-groovy-3_0_25_http",
-    downloaded_file_path = "groovy-3.0.25.jar",
-    sha256 = "ad009e985dd84e4f524f4ed1751866da5bef816b691851bfbcefa48a01180a07",
-    url = "https://cache-redirector.jetbrains.com/maven-central/org/codehaus/groovy/groovy/3.0.25/groovy-3.0.25.jar",
-)
-
-http_file(
-    name = "org_codehaus_groovy-groovy-3_0_25-sources_http",
-    downloaded_file_path = "groovy-3.0.25-sources.jar",
-    sha256 = "67e2e1e4bddaa943847d2cc61b9aa8d5ea53e25bb5e9661d01120c28869ef098",
-    url = "https://cache-redirector.jetbrains.com/maven-central/org/codehaus/groovy/groovy/3.0.25/groovy-3.0.25-sources.jar",
 )
 
 http_file(

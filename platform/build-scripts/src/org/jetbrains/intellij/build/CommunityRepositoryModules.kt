@@ -170,7 +170,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         "intellij.gradle.plugin",
       )
     ) { spec ->
-      spec.withModule("intellij.libraries.groovy", "groovy.jar")
       spec.withModule("intellij.libraries.groovy.ant", "groovy-ant.jar")
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },

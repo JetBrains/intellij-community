@@ -12,5 +12,7 @@ val compileOnlyDependenciesInCommunity: List<Pair<String, String>> = listOf(
   "*" to "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin", // dependency is needed for serialization compiler plugin
   "intellij.kotlin.jvm.debugger.coroutines" to "intellij.java.rt", // module is used to compile debugger helper classes for external processes
   "intellij.platform.util" to "intellij.platform.util.troveCompileOnly", //used only for compilation of deprecated FileUtil.FILE_HASHING_STRATEGY left for compatibility
+  "intellij.gradle" to "intellij.libraries.groovy", // the embedded module gets Groovy from the 'groovy' module library of intellij.gradle.plugin
+  "intellij.gradle.toolingExtension.impl" to "intellij.libraries.groovy", // the embedded module gets Groovy from the 'groovy' module library of intellij.gradle.plugin
   "intellij.platform.buildScripts.downloader" to "intellij.libraries.zstd.jni", //zstd-jni is a private library of the Big Data Tools plugin and must not be packed into the platform, see IJPL-125; the library is needed at runtime, so the published Maven artifact declares it anyway, see COMPILE_ONLY_DEPENDENCIES_TO_PUBLISH in MavenArtifactsBuilder
 )

@@ -96,8 +96,7 @@ dev_plugin(
             "intellij.gradle.plugin",
         ],
         "lib/groovy.jar": [
-            "intellij.libraries.groovy",
-            "@lib//:libraries-groovy-groovy",
+            "@lib//:gradle-plugin-groovy",
         ],
         "lib/groovy-ant.jar": [
             "intellij.libraries.groovy.ant",
@@ -183,9 +182,9 @@ dev_plugin(
         ],
     },
     libraries = [
+        "@lib//:gradle-plugin-groovy",
         "@lib//:libraries-gradle-_gradle",
         "@lib//:libraries-groovy-ant-groovy-ant",
-        "@lib//:libraries-groovy-groovy",
         "@lib//ant/lib:ant-antlr.jar",
         "@lib//ant/lib:ant-apache-bcel.jar",
         "@lib//ant/lib:ant-apache-bsf.jar",
@@ -223,7 +222,6 @@ dev_plugin(
     },
     modules = {
         "//libraries/gradle": "intellij.libraries.gradle",
-        "//libraries/groovy": "intellij.libraries.groovy",
         "//libraries/groovy/ant": "intellij.libraries.groovy.ant",
         "//plugins/gradle/plugin": "intellij.gradle.plugin",
     },

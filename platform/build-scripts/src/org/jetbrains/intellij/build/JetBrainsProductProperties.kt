@@ -40,8 +40,6 @@ fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
 
 val knownMissingModuleDependencies: List<String> = java.util.List.of(
   "intellij.rider.plugins.fsharp",
-  // included using `withModule`
-  "intellij.libraries.groovy",
   "intellij.python.frontend",
 )
 

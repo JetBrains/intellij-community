@@ -26,7 +26,6 @@ dist_plugin(
         "intellij.gradle.codeInsight.toml.backend": "//plugins/gradle/codeInsight/toml/backend",
         "intellij.gradle.codeInsight.properties": "//plugins/gradle/codeInsight/properties",
         "intellij.gradle.codeInsight.properties.backend": "//plugins/gradle/codeInsight/properties/backend",
-        "intellij.libraries.groovy": "//libraries/groovy",
         "intellij.libraries.groovy.ant": "//libraries/groovy/ant",
     },
     main_module = "intellij.gradle.plugin",
@@ -47,6 +46,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:gradle-plugin-groovy"],
 )
 ### auto-generated section `build intellij.gradle.plugin` end
 
