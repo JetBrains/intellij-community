@@ -50,7 +50,7 @@ pub(crate) struct ComposeOptions {
     /// The product of the composition, from the composition spec.
     pub(crate) platform_prefix: String,
     pub(crate) plugin_classpath_prefix: Option<PathBuf>,
-    pub(crate) expected_fragments: Vec<String>,
+    pub(crate) expected_components: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
     /// The main modules of the bundled plugin components. [`compose_with_merge`] checks each one against the components.
     pub(crate) bundled_modules: Vec<String>,
@@ -74,7 +74,7 @@ pub(crate) struct ComposedBuild {
 ///
 /// Each manifest passed `manifest::validate_manifest` when `manifest::read_component_manifest` read it, so the checks
 /// here concern the components together.
-pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fragments: &[String]) -> Result<()> {
+pub(crate) fn validate_components(components: &[DevBuildComponent], expected_components: &[String]) -> Result<()> {
     if components.is_empty() {
         bail!("At least one dev-build component is required");
     }
@@ -117,22 +117,22 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
     let (present, duplicates) = count_kinds(&kinds);
     if !duplicates.is_empty() {
         bail!(
-            "Dev-build fragment kinds must be unique, but these occur more than once: {}",
+            "Dev-build component kinds must be unique, but these occur more than once: {}",
             duplicates.join(", ")
         );
     }
-    if !expected_fragments.is_empty() {
-        let (expected, duplicate_expected) = count_kinds(expected_fragments);
+    if !expected_components.is_empty() {
+        let (expected, duplicate_expected) = count_kinds(expected_components);
         if !duplicate_expected.is_empty() {
             bail!(
-                "Expected dev-build fragment kinds must be unique, but these occur more than once: {}",
+                "Expected dev-build component kinds must be unique, but these occur more than once: {}",
                 duplicate_expected.join(", ")
             );
         }
         let missing = sorted_difference(&expected, &present);
         let unexpected = sorted_difference(&present, &expected);
         if !missing.is_empty() || !unexpected.is_empty() {
-            let mut message = String::from("Dev-build fragments do not match the expected composition");
+            let mut message = String::from("Dev-build components do not match the expected composition");
             if !missing.is_empty() {
                 message.push_str(&format!("; missing: {}", missing.join(", ")));
             }
@@ -201,7 +201,7 @@ pub(crate) fn compose_with_merge<M>(
 where
     M: FnOnce(&[DevBuildComponent], &Path) -> Result<()>,
 {
-    validate_components(components, &options.expected_fragments)?;
+    validate_components(components, &options.expected_components)?;
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
     validate_destinations(&manifests)?;
     let bundled_modules = bundled_modules(&manifests, &options.bundled_modules)?;

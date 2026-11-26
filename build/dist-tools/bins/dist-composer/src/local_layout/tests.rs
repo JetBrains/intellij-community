@@ -39,10 +39,10 @@ fn compose_in_directories(components: &[DevBuildComponent], target: &Path, direc
 }
 
 #[track_caller]
-fn require_layout(target: &Path, fragments: &[&str]) -> String {
+fn require_layout(target: &Path, parts: &[&str]) -> String {
     let layout = read_text(target.join("local-layout.json"));
-    for fragment in fragments {
-        assert!(layout.contains(fragment), "the local layout has no {fragment}: {layout}");
+    for part in parts {
+        assert!(layout.contains(part), "the local layout has no {part}: {layout}");
     }
     layout
 }
@@ -144,7 +144,7 @@ fn local_composition_reads_metadata_without_staging_payload() {
     ];
     let target = directory.path().join("metadata");
     let options = ComposeOptions {
-        expected_fragments: vec!["platform".into(), "packed".into()],
+        expected_components: vec!["platform".into(), "packed".into()],
         source_runfiles: Some(runfiles(&[(&app, "_main/tree/lib/app.jar"), (&packed, "community+/packed.jar")])),
         ..ComposeOptions::default()
     };

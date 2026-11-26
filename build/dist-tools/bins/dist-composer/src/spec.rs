@@ -30,7 +30,7 @@ pub(crate) struct CompositionSpec {
     /// The `build/dev-build.json` key of the product. The IDE config states it as `platform.prefix`, and the fingerprint
     /// hashes it. No component manifest states a product.
     pub(crate) platform_prefix: String,
-    pub(crate) expected_fragments: Vec<String>,
+    pub(crate) expected_components: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
     /// The main modules of the bundled plugin components. The IDE config states them as `bundled.modules`.
     pub(crate) bundled_modules: Vec<String>,

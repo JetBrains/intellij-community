@@ -33,24 +33,24 @@ fn full_cli_args(extra: &[&str]) -> Vec<String> {
 /// A full distribution gets the source bindings file that the Starlark rule writes. Launch metadata gets the source
 /// runfiles instead.
 fn write_cli_fixture(local_launch: bool) {
-    write_file("fragments/core/lib/app.jar", "app");
-    write_file("fragments/core/lib/util.jar", "util");
-    write_file("fragments/core/bin/idea.properties", "properties");
+    write_file("components/core/lib/app.jar", "app");
+    write_file("components/core/lib/util.jar", "util");
+    write_file("components/core/bin/idea.properties", "properties");
     write_file("inputs/packed.jar", "packed");
-    write_file("fragments/prefix.bin", [3, 1]);
-    write_file("fragments/plugins.part", [7]);
+    write_file("components/prefix.bin", [3, 1]);
+    write_file("components/plugins.part", [7]);
     write_file(
-        "fragments/core.json",
+        "components/core.json",
         concat!(
             r#"{"kind":"platform_core","os":"linux","arch":"x64","plugin":false,"#,
             r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":["#,
-            r#"{"type":"component-file","relativePath":"bin/idea.properties","hash":1,"source":"fragments/core/bin/idea.properties"},"#,
-            r#"{"type":"component-file","relativePath":"lib/app.jar","hash":4,"source":"fragments/core/lib/app.jar"},"#,
-            r#"{"type":"component-file","relativePath":"lib/util.jar","hash":2,"source":"fragments/core/lib/util.jar"}]}"#
+            r#"{"type":"component-file","relativePath":"bin/idea.properties","hash":1,"source":"components/core/bin/idea.properties"},"#,
+            r#"{"type":"component-file","relativePath":"lib/app.jar","hash":4,"source":"components/core/lib/app.jar"},"#,
+            r#"{"type":"component-file","relativePath":"lib/util.jar","hash":2,"source":"components/core/lib/util.jar"}]}"#
         ),
     );
     write_file(
-        "fragments/plugins.json",
+        "components/plugins.json",
         concat!(
             r#"{"kind":"plugins","os":"","arch":"","plugin":true,"#,
             r#""mainClass":null,"coreClassPath":[],"entries":["#,
@@ -58,10 +58,10 @@ fn write_cli_fixture(local_launch: bool) {
         ),
     );
     let bindings = [
-        ("fragments/core.json", "fragments/core/bin/idea.properties"),
-        ("fragments/core.json", "fragments/core/lib/app.jar"),
-        ("fragments/core.json", "fragments/core/lib/util.jar"),
-        ("fragments/plugins.json", "inputs/packed.jar"),
+        ("components/core.json", "components/core/bin/idea.properties"),
+        ("components/core.json", "components/core/lib/app.jar"),
+        ("components/core.json", "components/core/lib/util.jar"),
+        ("components/plugins.json", "inputs/packed.jar"),
     ]
     .map(|(component, source)| binding_line(component, source, source, "file", &[]))
     .join("\n");
@@ -69,9 +69,9 @@ fn write_cli_fixture(local_launch: bool) {
     let (source_runfiles, source_bindings) = if local_launch {
         (
             concat!(
-                r#"{"fragments/core/bin/idea.properties":"_main/fragments/core/bin/idea.properties","#,
-                r#""fragments/core/lib/app.jar":"_main/fragments/core/lib/app.jar","#,
-                r#""fragments/core/lib/util.jar":"_main/fragments/core/lib/util.jar","inputs/packed.jar":"_main/inputs/packed.jar"}"#
+                r#"{"components/core/bin/idea.properties":"_main/components/core/bin/idea.properties","#,
+                r#""components/core/lib/app.jar":"_main/components/core/lib/app.jar","#,
+                r#""components/core/lib/util.jar":"_main/components/core/lib/util.jar","inputs/packed.jar":"_main/inputs/packed.jar"}"#
             ),
             "null",
         )
@@ -82,11 +82,11 @@ fn write_cli_fixture(local_launch: bool) {
         "composition.json",
         format!(
             concat!(
-                r#"{{"platformPrefix":"idea","expectedFragments":["platform_core","plugins"],"#,
+                r#"{{"platformPrefix":"idea","expectedComponents":["platform_core","plugins"],"#,
                 r#""additionalModules":["intellij.packed","intellij.bundled"],"bundledModules":["plugins"],"components":["#,
-                r#"{{"manifest":"fragments/core.json","pluginClasspathPart":null}},"#,
-                r#"{{"manifest":"fragments/plugins.json","pluginClasspathPart":"fragments/plugins.part"}}],"#,
-                r#""pluginClasspathPrefix":"fragments/prefix.bin","sourceRunfiles":{},"sourceDirectoryRunfiles":{{}},"sourceBindings":{}}}"#
+                r#"{{"manifest":"components/core.json","pluginClasspathPart":null}},"#,
+                r#"{{"manifest":"components/plugins.json","pluginClasspathPart":"components/plugins.part"}}],"#,
+                r#""pluginClasspathPrefix":"components/prefix.bin","sourceRunfiles":{},"sourceDirectoryRunfiles":{{}},"sourceBindings":{}}}"#
             ),
             source_runfiles, source_bindings
         ),
@@ -165,12 +165,12 @@ fn compose_cli_writes_local_launch_metadata_without_payload() {
     assert_eq!(code, 0, "{errors}");
     require_absent("out/dist/lib");
     let layout = read_text("out/dist/local-layout.json");
-    for fragment in [
-        r#""runfile":"_main/fragments/core/lib/util.jar""#,
+    for part in [
+        r#""runfile":"_main/components/core/lib/util.jar""#,
         r#""runfile":"_main/inputs/packed.jar""#,
         r#""metadata":["core-classpath.txt","fingerprint.txt","plugins/plugin-classpath.txt"]"#,
     ] {
-        assert!(layout.contains(fragment), "the local layout has no {fragment}: {layout}");
+        assert!(layout.contains(part), "the local layout has no {part}: {layout}");
     }
     assert_eq!(read_text("out/dist/plugins/plugin-classpath.txt"), "\x03\x01\x00\x01\x07");
 }
@@ -239,15 +239,15 @@ fn compose_cli_writes_local_launch_metadata_below_the_home_prefix() {
 fn compose_cli_checks_the_product_info_below_the_home_prefix() {
     let _directory = WorkingDirectory::enter();
     write_cli_fixture(false);
-    let core = read_text("fragments/core.json").replace(
+    let core = read_text("components/core.json").replace(
         r#""entries":["#,
-        r#""entries":[{"type":"component-file","relativePath":"Resources/product-info.json","hash":5,"source":"fragments/core/product-info.json"},"#,
+        r#""entries":[{"type":"component-file","relativePath":"Resources/product-info.json","hash":5,"source":"components/core/product-info.json"},"#,
     );
-    write_file("fragments/core.json", core);
+    write_file("components/core.json", core);
     let binding = binding_line(
-        "fragments/core.json",
-        "fragments/core/product-info.json",
-        "fragments/core/product-info.json",
+        "components/core.json",
+        "components/core/product-info.json",
+        "components/core/product-info.json",
         "file",
         &[],
     );
@@ -257,7 +257,7 @@ fn compose_cli_checks_the_product_info_below_the_home_prefix() {
     );
     let launch = |names: &str| format!(r#"{{"launch":[{{"mainClass":"com.intellij.idea.Main","bootClassPathJarNames":[{names}]}}]}}"#);
 
-    write_file("fragments/core/product-info.json", launch(r#""app.jar""#));
+    write_file("components/core/product-info.json", launch(r#""app.jar""#));
     let (code, errors) = run_cli(&full_cli_args(&["--home-prefix=Contents"]));
     assert_eq!(code, 1);
     assert!(
@@ -265,7 +265,7 @@ fn compose_cli_checks_the_product_info_below_the_home_prefix() {
         "errors = {errors:?}"
     );
 
-    write_file("fragments/core/product-info.json", launch(r#""app.jar","util.jar""#));
+    write_file("components/core/product-info.json", launch(r#""app.jar","util.jar""#));
     let (code, errors) = run_cli(&full_cli_args(&["--home-prefix=Contents"]));
     assert_eq!(code, 0, "{errors}");
     assert!(read_text("out/dist/Contents/Resources/product-info.json").contains("util.jar"));
@@ -362,13 +362,13 @@ fn compose_cli_refuses_an_invalid_manifest_before_it_removes_the_output() {
     let _directory = WorkingDirectory::enter();
     write_cli_fixture(false);
     write_file("out/dist/stale.txt", "stale");
-    let core = read_text("fragments/core.json").replace(r#""hash":1,"#, r#""hash":1,"mode":493,"#);
-    write_file("fragments/core.json", core);
+    let core = read_text("components/core.json").replace(r#""hash":1,"#, r#""hash":1,"mode":493,"#);
+    write_file("components/core.json", core);
     let (code, errors) = run_cli(&full_cli_args(&[]));
     assert_eq!(code, 1);
     let message = format!(
         "{}: Dev-build component entry 'bin/idea.properties' has an invalid or conflicting file mode: 493\n",
-        component::paths::from_slash("fragments/core.json")
+        component::paths::from_slash("components/core.json")
     );
     assert!(errors.starts_with("ERROR: ") && errors.ends_with(&message), "errors = {errors:?}");
     assert_eq!(read_text("out/dist/stale.txt"), "stale");
@@ -401,7 +401,7 @@ fn compose_cli_refuses_the_mac_binaries_for_local_launch_metadata() {
 fn compose_cli_writes_only_the_executable_list_of_a_context_plugin_pool() {
     let _directory = WorkingDirectory::enter();
     write_file(
-        "fragments/tool.json",
+        "components/tool.json",
         concat!(
             r#"{"kind":"tool","os":"","arch":"","plugin":true,"#,
             r#""mainClass":null,"coreClassPath":[],"entries":["#,
@@ -412,7 +412,7 @@ fn compose_cli_writes_only_the_executable_list_of_a_context_plugin_pool() {
     );
     let args = [
         "--context-plugin-executables=pool.context-plugin-executables.txt",
-        "--component-manifest=fragments/tool.json",
+        "--component-manifest=components/tool.json",
     ]
     .map(str::to_owned);
     let (code, errors) = run_cli(&args);

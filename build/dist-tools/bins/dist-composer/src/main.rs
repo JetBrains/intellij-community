@@ -3,7 +3,7 @@
 //! `dist-composer` assembles the components of a distribution into one tree, or into launch metadata only.
 //! Then it writes the files that start the IDE.
 //!
-//! The rule `intellij_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
+//! The rule `intellij_components_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
 //! `--fingerprint` and an optional `--trace-file`, each in the `--key=value` form. A full distribution also needs
 //! `--mac-binaries`, which gets the Mach-O files of the home, see [`mac_binaries`]. Launch metadata can also name
 //! `--core-classpath-file` and `--plugin-classpath-file`, which get a copy of the two metadata files of the output.
@@ -165,7 +165,7 @@ fn compose_distribution(mut options: cli::Options, root: &trace::Span) -> Result
             Some(prefix) => Some(paths::absolute_path(prefix)?),
             None => None,
         },
-        expected_fragments: spec.expected_fragments,
+        expected_components: spec.expected_components,
         additional_modules: spec.additional_modules,
         bundled_modules: spec.bundled_modules,
         source_runfiles: match &spec.source_runfiles {

@@ -648,7 +648,7 @@ def _compose(ctx, component_targets):
         composition_spec,
         json.encode({
             "platformPrefix": ctx.attr.platform_prefix,
-            "expectedFragments": ctx.attr.expect_components,
+            "expectedComponents": ctx.attr.expect_components,
             "additionalModules": ctx.attr.additional_modules,
             "bundledModules": ctx.attr.bundled_modules,
             "components": [

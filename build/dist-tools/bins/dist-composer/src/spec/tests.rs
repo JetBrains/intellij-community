@@ -12,7 +12,7 @@ fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
 
 /// The shape of `json.encode` in `intellij_dist.bzl`: every key, with `null` for an absent file or map.
 const STARLARK_SPEC: &str = concat!(
-    r#"{"platformPrefix":"idea","expectedFragments":["platform_core","intellij.java.plugin"],"#,
+    r#"{"platformPrefix":"idea","expectedComponents":["platform_core","intellij.java.plugin"],"#,
     r#""additionalModules":["intellij.air.plugin"],"#,
     r#""bundledModules":["intellij.java.plugin"],"#,
     r#""components":[{"manifest":"core.json","pluginClasspathPart":null},{"manifest":"plugins.json","pluginClasspathPart":"plugins.part"}],"#,
@@ -24,7 +24,7 @@ fn composition_spec_decodes_the_starlark_shape() {
     let directory = TempDir::new();
     let spec = read_composition_spec(&write_spec(&directory, STARLARK_SPEC)).unwrap();
     assert_eq!(spec.platform_prefix, "idea");
-    assert_eq!(spec.expected_fragments, ["platform_core", "intellij.java.plugin"]);
+    assert_eq!(spec.expected_components, ["platform_core", "intellij.java.plugin"]);
     assert_eq!(spec.additional_modules, ["intellij.air.plugin"]);
     assert_eq!(spec.bundled_modules, ["intellij.java.plugin"]);
     assert_eq!(spec.plugin_classpath_prefix.as_deref(), Some("prefix.bin"));
@@ -89,8 +89,8 @@ fn composition_spec_rejects_invalid_content() {
             "unknown field `root`",
         ),
         (
-            r#""expectedFragments":["platform_core","intellij.java.plugin"]"#,
-            r#""expectedFragments":null"#,
+            r#""expectedComponents":["platform_core","intellij.java.plugin"]"#,
+            r#""expectedComponents":null"#,
             "invalid type: null",
         ),
         (
@@ -109,8 +109,8 @@ fn composition_spec_rejects_invalid_content() {
             "invalid type: null",
         ),
         (
-            r#""expectedFragments":["platform_core","#,
-            r#""expectedFragments":[1,"#,
+            r#""expectedComponents":["platform_core","#,
+            r#""expectedComponents":[1,"#,
             "invalid type: integer `1`, expected a string",
         ),
         (r#""sourceRunfiles":null"#, r#""sourceRunfiles":{"a":1}"#, "expected a string"),

@@ -213,7 +213,7 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
         (
             vec![core()],
             vec!["platform_core", "platform_resources"],
-            "Dev-build fragments do not match the expected composition; missing: platform_resources; present: platform_core",
+            "Dev-build components do not match the expected composition; missing: platform_resources; present: platform_core",
         ),
         (
             vec![core(), test_manifest("plugins_stale")],
@@ -223,12 +223,12 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
         (
             vec![core()],
             vec!["platform_core", "platform_core"],
-            "Expected dev-build fragment kinds must be unique, but these occur more than once: platform_core",
+            "Expected dev-build component kinds must be unique, but these occur more than once: platform_core",
         ),
         (
             vec![core(), core()],
             vec![],
-            "Dev-build fragment kinds must be unique, but these occur more than once: platform_core",
+            "Dev-build component kinds must be unique, but these occur more than once: platform_core",
         ),
         (
             vec![test_manifest("platform_lib"), other_main],
@@ -242,11 +242,11 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
         ),
         (vec![], vec![], "At least one dev-build component is required"),
     ];
-    for (manifests, expected_fragments, message) in cases {
+    for (manifests, expected_components, message) in cases {
         let components: Vec<DevBuildComponent> = manifests.into_iter().map(DevBuildComponent::new).collect();
         let target = directory.path().join("target");
         let options = ComposeOptions {
-            expected_fragments: expected_fragments.into_iter().map(String::from).collect(),
+            expected_components: expected_components.into_iter().map(String::from).collect(),
             ..ComposeOptions::default()
         };
         require_error(compose_with_merge(&components, &target, &options, no_merge), message);
@@ -274,7 +274,7 @@ fn composer_accepts_a_composition_of_neutral_components_only() {
     assert_eq!(composed.platform_prefix, "idea");
 }
 
-// The regression that turned every AIR UI lane red. A fragment that several distributions share packs a bundled
+// The regression that turned every AIR UI lane red. A component that several distributions share packs a bundled
 // plugin, so only the composition spec declares its module.
 #[test]
 fn composer_declares_the_modules_of_the_spec() {
