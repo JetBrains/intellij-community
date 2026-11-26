@@ -4,14 +4,16 @@ package com.intellij.java.refactoring
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
+import com.intellij.testFramework.junit5.TestApplication
 
 /**
  * The tests of the collisions of the legacy rename, run on the ModPlan engine. A test that fails here is a difference of the ModPlan rename
  * from the legacy one.
  */
+@TestApplication
 class RenameCollisionsOnModPlanTest : RenameCollisionsTest() {
   override fun rename(target: PsiElement, newName: String) {
     val options = ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, true).with(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES, true)
-    renameOnModPlanInTests(project, target, newName, options)
+    renameOnModPlanInTests(target.project, target, newName, options)
   }
 }

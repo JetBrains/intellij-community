@@ -7,14 +7,32 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class RenameSuggestionsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testByParameterName() {
     String text = """
          class Test {
@@ -28,6 +46,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo");
   }
 
+  @Test
   public void testLambdaParameterName() {
     String text = """
       import java.util.Map;
@@ -43,6 +62,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "lambdaRename", "rename");
   }
 
+  @Test
   public void testForeachScope() {
     String text = """
          class Foo {
@@ -55,6 +75,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo");
   }
 
+  @Test
   public void testBySuperParameterName() {
     String text = """
          class Test {
@@ -68,6 +89,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("foo", "i"), names);
   }
 
+  @Test
   public void testByOptionalOfInitializer() {
     List<String> suggestions = getNameSuggestions("""
                                                     import java.util.*;
@@ -80,6 +102,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
+  @Test
   public void testByOptionalOfNullableInitializer() {
     List<String> suggestions = getNameSuggestions("""
         import java.util.*;
@@ -91,6 +114,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
+  @Test
   public void testByOptionalOfInitializerWithConstructor() {
     List<String> suggestions = getNameSuggestions("""
         import java.util.*;
@@ -100,6 +124,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("foo", "optionalFoo", "fooOptional", "optional"), suggestions);
   }
 
+  @Test
   public void testByOptionalFlatMap() {
     List<String> suggestions = getNameSuggestions("""
         import java.util.*;
@@ -115,6 +140,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("car", "optionalCar", "carOptional", "optional"), suggestions);
   }
 
+  @Test
   public void testLongQualifiedName() {
     List<String> suggestions = getNameSuggestions("""
                                                     class Foo {
@@ -131,6 +157,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("cat", "innerCat", "string"), suggestions);
   }
 
+  @Test
   public void testConstant() {
     List<String> names = getNameSuggestions("""
                                               class X {
@@ -140,6 +167,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("FOO_BAR_BAZ", "BAR_BAZ", "BAZ", "STRING"), names);
   }
 
+  @Test
   public void testNonConstant() {
     List<String> names = getNameSuggestions("""
                                               class X {
@@ -149,6 +177,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("fooBarBaz", "barBaz", "baz", "string"), names);
   }
   
+  @Test
   public void testSimpleField() {
     List<String> names = getNameSuggestions("""
                                               import java.util.ArrayList;
@@ -159,6 +188,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("value", "objects", "objectArrayList", "arrayList", "list", "stringList"), names);
   }
 
+  @Test
   public void testSimpleClass() {
     List<String> names = getNameSuggestions("""
                                               class RecentlyChangedFilesState<caret> {
@@ -167,6 +197,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     assertEquals(List.of("ChangedFilesState", "FilesState", "State"), names);
   }
   
+  @Test
   public void testAcronyms() {
     List<String> names = getNameSuggestions("""
                                               class APIClient {
@@ -189,25 +220,30 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
   }
 
   private List<String> getNameSuggestions(String text) {
-    configureFromFileText("a.java", text);
-    boolean oldPreselectSetting = getEditor().getSettings().isPreselectRename();
-    try {
-      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-      final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
-      assertNotNull(element);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("a.java", text);
+    Ref<List<String>> suggestions = new Ref<>();
+    myFixture.runInCommand(() -> {
+      boolean oldPreselectSetting = myFixture.getEditor().getSettings().isPreselectRename();
+      try {
+        TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+        final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+        assertNotNull(element);
 
-      MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler();
-      handler.doRename(element, getEditor(), null);
+        MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler();
+        handler.doRename(element, myFixture.getEditor(), null);
 
-      LookupEx lookup = LookupManager.getActiveLookup(getEditor());
-      assertNotNull(lookup);
-      return ContainerUtil.map(lookup.getItems(), LookupElement::getLookupString);
-    }
-    finally {
-      getEditor().getSettings().setPreselectRename(oldPreselectSetting);
-      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      assertNotNull(state);
-      state.gotoEnd(false);
-    }
+        LookupEx lookup = LookupManager.getActiveLookup(myFixture.getEditor());
+        assertNotNull(lookup);
+        suggestions.set(ContainerUtil.map(lookup.getItems(), LookupElement::getLookupString));
+      }
+      finally {
+        myFixture.getEditor().getSettings().setPreselectRename(oldPreselectSetting);
+        TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+        assertNotNull(state);
+        state.gotoEnd(false);
+      }
+    });
+    return suggestions.get();
   }
 }
