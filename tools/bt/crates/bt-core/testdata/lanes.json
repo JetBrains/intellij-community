@@ -86,6 +86,7 @@
     "//plugins/air/frontback/session/view.gui:air-session-view-gui-tests_test_lib",
     "//plugins/air/frontback/session/working-tree-git:air-session-working-tree-git-tests_test_lib",
     "//plugins/air/frontback/vcs/commit/git:air-vcs-commit-git-tests_test_lib",
+    "//plugins/air/frontback/vcs/commit/real-git:air-vcs-commit-realGit-tests_test_lib",
     "//plugins/air/frontback/worktree:air-worktree-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
