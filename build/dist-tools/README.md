@@ -20,18 +20,23 @@ distribution still runs. They are not in this workspace.
 
 Run a test target from the ultimate root. From `community/`, drop the `@community` prefix.
 
+A crate marked "Shared, not a distribution tool" serves the tools of other workspaces, and no distribution tool links
+it. It stays here, because its users take their third-party crates from `@dt`. The identity of a distribution tool
+states no package of such a crate.
+
 | Crate | Content | Bazel test target |
 |---|---|---|
 | `crates/appinfo` | The application info: the descriptor XML round trip, the markers, the frontend merge, and the reader of the facts that `product-info.json` states. | `@community//build/dist-tools/crates/appinfo:appinfo_test` |
-| `crates/checkout-files` | The files of a git checkout, as `git ls-files --cached --others --exclude-standard` lists them, without the `git` executable: the index reader and the walk. BT links it. Its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dist-tools/crates/checkout-files:checkout-files_test` |
+| `crates/checkout-files` | Shared, not a distribution tool. The files of a git checkout, as `git ls-files --cached --others --exclude-standard` lists them, without the `git` executable: the index reader and the walk. BT links it. Its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dist-tools/crates/checkout-files:checkout-files_test` |
 | `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector and the composer: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dist-tools/crates/component:component_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the lexical path functions `clean`, `dir` and `join`. | `@community//build/dist-tools/crates/distpath:distpath_test` |
-| `crates/docs-gate` | The docs gate of a docs site on the declared bun and OpenSpec CLI: the declared runtime, the run with a deadline, and the meaning of the sentinel and the exit code. The Rust tests of the docs sites link it. | `@community//build/dist-tools/crates/docs-gate:docs-gate_test` |
+| `crates/docs-gate` | Shared, not a distribution tool. The docs gate of a docs site on the declared bun and OpenSpec CLI: the declared runtime, the run with a deadline, and the meaning of the sentinel and the exit code. The Rust tests of the docs sites link it. | `@community//build/dist-tools/crates/docs-gate:docs-gate_test` |
 | `crates/filemeta` | The inventory JSON, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dist-tools/crates/fscopy:fscopy_test` |
 | `crates/jarpack` | The frozen-bytes engine of the packer: the jar reader and writer, the merge, the `__index__`, and the native tree of a presigned library. The remainder packer merges through it, and the descriptor writer reads library jars through its reader. | `@community//build/dist-tools/crates/jarpack:jarpack_test` |
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dist-tools/crates/javaglob:javaglob_test` |
+| `crates/prompt` | Shared, not a distribution tool. The terminal menus, questions and messages of `./build/dist.cmd update-ide`, over `cliclack`. Only the ultimate `dist` links it. | `@community//build/dist-tools/crates/prompt:prompt_test` |
 | `crates/planfile` | The plan file, the remainder contract, the plugin classpath record, and the asset and link-graph rules that the remainder packer and the collector share. | `@community//build/dist-tools/crates/planfile:planfile_test` |
 | `crates/pluginpack` | The remainder engine: the plan and the execution of a plugin remainder. Only the remainder packer links it. | `@community//build/dist-tools/crates/pluginpack:pluginpack_test` |
 | `crates/testkit` | The helpers that the tests of several crates share: the `testdata/` lookup, a temporary directory with a real path, the working directory of one test, and the file, mode and link helpers. Only `[dev-dependencies]` name it, so no tool links it. | `@community//build/dist-tools/crates/testkit:testkit_test` |
