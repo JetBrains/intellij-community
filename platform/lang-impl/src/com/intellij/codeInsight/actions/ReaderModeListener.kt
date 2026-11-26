@@ -4,7 +4,6 @@ package com.intellij.codeInsight.actions
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.ide.DataManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -17,6 +16,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import java.beans.PropertyChangeListener
@@ -83,12 +83,15 @@ internal class ReaderModeEditorSettingsListener : ProjectActivity {
       }
     }
     // TODO change to serviceAsync<...> when it is fixed for per-client services
-    service<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
-
+    val editorSettings = EditorSettingsExternalizable.getInstance()
     val fontPreferences = serviceAsync<AppEditorFontOptions>().fontPreferences as FontPreferencesImpl
+    val listenerDisposable = Disposer.newDisposable("ReaderModeEditorSettingsListener")
+    editorSettings.addPropertyChangeListener(propertyChangeListener, listenerDisposable)
     fontPreferences.addChangeListener({
       ReaderModeSettings.getInstance(project).showLigatures = fontPreferences.useLigatures()
       applyToAllEditors(project)
-    }, project)
+    }, listenerDisposable)
+    // a disposed project makes tryRegister dispose the listeners
+    Disposer.tryRegister(project, listenerDisposable)
   }
 }
