@@ -27,7 +27,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,8 +41,8 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 class SeTabVmBackPressureTest {
   @Test
-  fun `tab reports back pressure when the list stops the load during the result flow`(): Unit = timeoutRunBlocking(5.minutes) {
-    val popupScope = childScope("SeTabVmBackPressureTest", Dispatchers.Default)
+  fun `tab reports back pressure when the list stops the load during the result flow`(): Unit = timeoutRunBlocking(TEST_TIMEOUT) {
+    val popupScope = childScope("SeTabVmBackPressureTest", Dispatchers.Default.limitedParallelism(STRESS_PARALLELISM))
     try {
       val tabs = List(TAB_COUNT) { index -> popupScope.startEndlessSearch("tab$index") }
       tabs.forEach { it.waitForFirstReport() }
@@ -84,10 +86,11 @@ private class RunningSearch(private val vm: SeTabVm) {
 
   /** The first report shows that the collector of the reports is subscribed. A report before that moment has no receiver. */
   suspend fun waitForFirstReport() {
-    while (true) {
+    repeat(FIRST_REPORT_ATTEMPTS) {
       loadMoreAndStop()
       if (withTimeoutOrNull(1.seconds) { reports.receive() } != null) return
     }
+    fail("${vm.tabId} reported no back pressure in $FIRST_REPORT_ATTEMPTS attempts")
   }
 
   /** Stops the load at a moment when the results flow to the list. */
@@ -95,9 +98,12 @@ private class RunningSearch(private val vm: SeTabVm) {
     reports.tryReceive()
     val loadedBefore = loadedCount.get()
     vm.shouldLoadMore = true
-    while (loadedCount.get() < loadedBefore + LOADED_BEFORE_STOP) {
-      delay(1)
+    val loaded = withTimeoutOrNull(LOAD_TIMEOUT) {
+      while (loadedCount.get() < loadedBefore + LOADED_BEFORE_STOP) {
+        delay(1.milliseconds)
+      }
     }
+    assertNotNull(loaded, "${vm.tabId} loaded less than $LOADED_BEFORE_STOP results in $LOAD_TIMEOUT")
     vm.shouldLoadMore = false
   }
 
@@ -134,5 +140,20 @@ private const val TAB_COUNT = 32
 private const val ROUND_COUNT = 20
 private const val LOADED_BEFORE_STOP = 100
 
+/**
+ * The result flows of the tabs spin in `emit(); yield()` loops. They share this many workers of [Dispatchers.Default],
+ * so the other workers stay free for the rest of the application.
+ */
+private const val STRESS_PARALLELISM = 1
+
+/** The collector of the reports subscribes asynchronously. Each attempt gives it one second. */
+private const val FIRST_REPORT_ATTEMPTS = 30
+
+/** A tab yields after each result, so the results arrive within milliseconds while the load is on. */
+private val LOAD_TIMEOUT = 10.seconds
+
 /** The tab reports the back pressure 300 ms after the results start to wait. */
 private val REPORT_TIMEOUT = 10.seconds
+
+/** The test takes about 20 s. The limit stays below the 300 s limit of the Bazel target. */
+private val TEST_TIMEOUT = 2.minutes
