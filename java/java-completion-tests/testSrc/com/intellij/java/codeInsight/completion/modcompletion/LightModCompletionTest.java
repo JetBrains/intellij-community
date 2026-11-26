@@ -12,11 +12,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeTemplate;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -66,6 +68,30 @@ public final class LightModCompletionTest {
                                 }
                               }
                               """);
+    });
+  }
+
+  @Test
+  @NeedsIndex.Full(reason = "The import resolves p.Foo, a project class")
+  public void testStaticImportOrder() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("""
+        package p;
+        public class Foo {
+          public static void zeta() {}
+          public static void beta() {}
+          public static int ALPHA;
+        }
+        """);
+      myFixture.configureByText("Test.java", """
+        import static p.Foo.<caret>
+        public class Test {}
+        """);
+      List<ModCompletionItem> result = new ArrayList<>();
+      LightModCompletionServiceImpl.getItems(
+        myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), 1, CompletionType.BASIC, result::add);
+      assertEquals(List.of("*", "beta", "zeta", "ALPHA"), ContainerUtil.map(result, ModCompletionItem::mainLookupString));
     });
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -119,8 +121,12 @@ public final class LightModCompletionServiceImpl {
         }
       });
     }
+    Map<LookupElement, LookupElementPresentation> presentations = new HashMap<>();
     for (Map.Entry<CompletionSorterImpl, Classifier<LookupElement>> entry : sortMap.entrySet()) {
-      Iterable<LookupElement> items = entry.getValue().classify(allItems.getOrDefault(entry.getKey(), Set.of()), processingContext);
+      List<LookupElement> sorted = BaseCompletionLookupArranger.sortByPresentation(
+        allItems.getOrDefault(entry.getKey(), Set.of()), matcher::isStartMatch,
+        le -> presentations.computeIfAbsent(le, LookupElementPresentation::renderElement));
+      Iterable<LookupElement> items = entry.getValue().classify(sorted, processingContext);
       for (LookupElement item : items) {
         sink.accept(((CompletionItemLookupElement)item).item());
       }

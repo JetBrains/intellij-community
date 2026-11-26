@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
@@ -62,8 +63,6 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     .thenComparing(p -> StringUtil.notNullize(p.getTailText()).length())
     .thenComparing(LookupElementPresentation::getTailText, NaturalComparator.INSTANCE)
     .thenComparing(LookupElementPresentation::getTypeText, NaturalComparator.INSTANCE);
-  private static final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR =
-    Comparator.comparing(DEFAULT_PRESENTATION::get, PRESENTATION_COMPARATOR);
   @ApiStatus.Internal
   public static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Object> FORCE_MIDDLE_MATCH = Key.create("FORCE_MIDDLE_MATCH");
@@ -318,13 +317,26 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   private @NotNull List<LookupElement> sortByPresentation(@NotNull Iterable<? extends LookupElement> source) {
+    return sortByPresentation(source, element -> itemMatcher(element).isStartMatch(element), DEFAULT_PRESENTATION::get);
+  }
+
+  /**
+   * @param source items to sort
+   * @param isStartMatch tells whether the prefix matches the start of an item
+   * @param presentation returns the presentation of an item
+   * @return the start matches, then the middle matches; each group is sorted by the presentation
+   */
+  static @NotNull List<LookupElement> sortByPresentation(@NotNull Iterable<? extends LookupElement> source,
+                                                         @NotNull Predicate<? super LookupElement> isStartMatch,
+                                                         @NotNull Function<? super LookupElement, LookupElementPresentation> presentation) {
     List<LookupElement> startMatches = new ArrayList<>();
     List<LookupElement> middleMatches = new ArrayList<>();
     for (LookupElement element : source) {
-      (itemMatcher(element).isStartMatch(element) ? startMatches : middleMatches).add(element);
+      (isStartMatch.test(element) ? startMatches : middleMatches).add(element);
     }
-    ContainerUtil.sort(startMatches, BY_PRESENTATION_COMPARATOR);
-    ContainerUtil.sort(middleMatches, BY_PRESENTATION_COMPARATOR);
+    Comparator<LookupElement> comparator = Comparator.comparing(presentation, PRESENTATION_COMPARATOR);
+    ContainerUtil.sort(startMatches, comparator);
+    ContainerUtil.sort(middleMatches, comparator);
     startMatches.addAll(middleMatches);
     return startMatches;
   }

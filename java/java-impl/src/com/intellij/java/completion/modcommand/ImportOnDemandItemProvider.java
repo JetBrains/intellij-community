@@ -17,7 +17,7 @@ final class ImportOnDemandItemProvider extends JavaModCompletionItemProvider imp
   public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (context.getPosition().getParent() instanceof PsiJavaCodeReferenceElement ref &&
         ref.getParent() instanceof PsiImportStatementBase) {
-      sink.accept(new CommonCompletionItem("*"));
+      sink.accept(new CommonCompletionItem("*").withPriority(1));
     }
   }
 
