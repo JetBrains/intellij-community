@@ -59,9 +59,9 @@ Options:
                            filter for an explicit label or --module (not valid with a wildcard pattern);
                            a dotted value whose segments start with a lower-case letter runs that
                            whole package; no wildcard, no regex, no list
-  --shards <n>             shard count per target (default 2 for a run covering many targets,
-                           6 for a single one; ignored when a filter pins one class, which
-                           always runs unsharded)
+  --shards <n>             shard count per target (default: the shard plan gives each target its
+                           count by its recorded class times; ignored when a filter pins one
+                           class, which always runs unsharded)
   --max-failures <n>       failures rendered in full before collapsing to one-liners (default 3)
   --test-env <NAME>        forward a host env var into the test sandbox (repeatable)
   --no-cache               --cache_test_results=no

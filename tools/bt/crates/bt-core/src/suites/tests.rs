@@ -20,7 +20,7 @@ fn argv_of(resolution: &Resolution) -> Vec<String> {
     build_bazel_args(&RunPlan {
         resolution: resolution.clone(),
         extra: lane.map(|lane| lane.extra.clone()).unwrap_or_default(),
-        shards: default_shards(resolution, lane),
+        shards: default_shards(lane),
         bep_path: "/tmp/bep.json".to_owned(),
         ..RunPlan::default()
     })

@@ -30,7 +30,7 @@ use bt_core::selector::{
     Resolution, Selector, SelectorKind, apparent_label, as_filter_or_package, canonical_filter, no_tests_hint, resolve_selector,
 };
 use bt_core::shard_plan::{
-    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PLAN_TARGET_TTL_DAYS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE,
+    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PLAN_TARGET_TTL_DAYS, PLANNED_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE,
     SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
 };
 use bt_core::suites::resolve_suite_run;
@@ -308,7 +308,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     let overridden_bep = bep_override(&args.passthrough);
     let lane_spec = lane.map(|(_, spec)| spec);
-    let shards = args.shards.unwrap_or_else(|| default_shards(&resolution, lane_spec));
+    let shards = args.shards.unwrap_or_else(|| default_shards(lane_spec));
     let planned = args.shards.is_none() && uses_shard_plan(&resolution, lane_spec);
     let path_text = |path: &PathBuf| path.to_string_lossy().into_owned();
     let profile = resolution.multi_target.then(|| path_text(&repo_file(runtime, PROFILE_FILE)));
@@ -329,24 +329,26 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     let method_filtered = resolution.filter.as_deref().is_some_and(|filter| filter.contains('#'));
     let no_tests_hint = no_tests_hint(explicit_filter);
     let plan_files = (planned || class_time_budget_config.is_some()).then(|| PlanFiles::locate(runtime));
-    let recorded_text = plan_files.as_ref().and_then(|files| files.read(runtime));
+    let plan_texts = plan_files.as_ref().map(|files| files.read(runtime));
+    let recorded_text = plan_texts.as_ref().and_then(PlanTexts::plan);
     let recorded_plan = recorded_text.as_deref().map_or_else(ShardPlan::default, ShardPlan::parse);
     // The tests read the checkout copy, so a planned run writes it before its first bazel command. A run before the
     // first record splits each target into the default count, by class. A dry run writes nothing.
     if planned
         && !args.shared.dry_run
-        && let Some(files) = &plan_files
+        && let (Some(files), Some(texts)) = (&plan_files, &plan_texts)
     {
         let text = recorded_text.unwrap_or_else(|| ShardPlan::default().render());
-        files.write_copy(runtime, &text);
+        files.write_copy(runtime, &text, texts);
     }
     // A green run records this tree only when the files are the same after it. bt reads it before the first bazel
     // command of the run, such as the query of the groups. A dry run records nothing.
     let record_started = runtime.now_ms();
     let tree_before = if args.shared.dry_run { None } else { tree_before_run(runtime) };
     let mut check_record_ms = runtime.now_ms().saturating_sub(record_started);
-    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
-    let grouped = planned && owns_bep_file;
+    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation. A run of one
+    // target has one invocation anyway.
+    let grouped = planned && (owns_bep_file || !resolution.multi_target);
     let groups = if !grouped {
         Groups::default()
     } else if args.shared.dry_run {
@@ -369,11 +371,14 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     if !groups.gone.is_empty() {
         runtime.write_error(&gone_targets_line(&groups.gone));
     }
-    let Groups {
-        heavy: heavy_targets,
-        single: single_targets,
-        ..
-    } = groups;
+    // A run of one target has one invocation, so the group of the target gives the count of that invocation.
+    let (shards, heavy_targets, single_targets) = if resolution.multi_target {
+        (shards, groups.heavy, groups.single)
+    } else if planned {
+        (group_shards(&groups), Vec::new(), Vec::new())
+    } else {
+        (shards, Vec::new(), Vec::new())
+    };
     let mut plan = RunPlan {
         resolution,
         extra,
@@ -452,7 +457,8 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     let class_time_budget_baseline = class_time_budget.map(|budget| budget.load_baseline(runtime)).transpose()?;
 
-    // Bazel writes the profile into `out/bt/`. A planned run made the directory when it wrote the plan copy.
+    // Bazel writes the profile into `out/bt/`. A planned run made the directory when it wrote the plan copy, or found the
+    // copy there.
     if !planned
         && let Some(dir) = plan.profile.as_deref().and_then(|profile| Path::new(profile).parent())
         && let Err(error) = runtime.create_dir_all(dir)
@@ -748,35 +754,50 @@ impl PlanFiles {
         }
     }
 
+    /// The texts of both files as they are on the disk now.
+    fn read(&self, runtime: &dyn Runtime) -> PlanTexts {
+        let copy = runtime.read_text_file(&self.copy).ok();
+        let shared = self.shared.as_ref().and_then(|path| runtime.read_text_file(path).ok());
+        PlanTexts { shared, copy }
+    }
+
+    /// Writes the checkout copy, unless `on_disk` holds this text already.
+    fn write_copy(&self, runtime: &dyn Runtime, text: &str, on_disk: &PlanTexts) {
+        write_plan(runtime, &self.copy, text, on_disk.copy.as_deref());
+    }
+
+    /// Writes the shared file and the checkout copy, each in one step, and each unless `on_disk` holds this text already.
+    fn write_all(&self, runtime: &dyn Runtime, text: &str, on_disk: &PlanTexts) {
+        if let Some(shared) = &self.shared {
+            write_plan(runtime, shared, text, on_disk.shared.as_deref());
+        }
+        self.write_copy(runtime, text, on_disk);
+    }
+}
+
+/// The texts of the files of the shard plan as a run read them, `None` for a file that is not there.
+struct PlanTexts {
+    shared: Option<String>,
+    copy: Option<String>,
+}
+
+impl PlanTexts {
     /// The text of the plan, or `None` when neither file is there.
     ///
     /// It is the text of the shared file, with each target of the checkout copy that the shared file does not name. Such
     /// a target comes from a checkout that ran before the plan was shared. Without such a target, the text is the text
     /// of the shared file as it is.
-    fn read(&self, runtime: &dyn Runtime) -> Option<String> {
-        let copy = runtime.read_text_file(&self.copy).ok();
-        let shared = self.shared.as_ref().and_then(|path| runtime.read_text_file(path).ok());
-        match (shared, copy) {
+    fn plan(&self) -> Option<String> {
+        match (&self.shared, &self.copy) {
             (Some(shared), Some(copy)) => {
-                let mut plan = ShardPlan::parse(&shared);
-                if plan.add_missing_targets(&ShardPlan::parse(&copy)) {
+                let mut plan = ShardPlan::parse(shared);
+                if plan.add_missing_targets(&ShardPlan::parse(copy)) {
                     Some(plan.render())
                 } else {
-                    Some(shared)
+                    Some(shared.clone())
                 }
             }
-            (shared, copy) => shared.or(copy),
-        }
-    }
-
-    fn write_copy(&self, runtime: &dyn Runtime, text: &str) {
-        write_plan(runtime, &self.copy, text);
-    }
-
-    /// Writes the shared file and the checkout copy, each in one step.
-    fn write_all(&self, runtime: &dyn Runtime, text: &str) {
-        for path in self.shared.iter().chain([&self.copy]) {
-            write_plan(runtime, path, text);
+            (shared, copy) => shared.clone().or_else(|| copy.clone()),
         }
     }
 }
@@ -784,7 +805,11 @@ impl PlanFiles {
 /// The milliseconds of a day, to turn [`Runtime::now_ms`] into the day of a run in the shard plan.
 const MS_PER_DAY: u64 = 86_400_000;
 
-fn write_plan(runtime: &dyn Runtime, path: &Path, text: &str) {
+/// Writes the plan file, unless `on_disk` holds this text already.
+fn write_plan(runtime: &dyn Runtime, path: &Path, text: &str, on_disk: Option<&str>) {
+    if on_disk == Some(text) {
+        return;
+    }
     if let Err(error) = runtime.write_text_file(path, text) {
         runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
     }
@@ -803,14 +828,15 @@ fn update_shard_plan<'a>(
     lower_bounds: &[TargetTiming],
     run_targets: impl IntoIterator<Item = &'a str>,
 ) {
-    let mut plan = files.read(runtime).map_or_else(ShardPlan::default, |text| ShardPlan::parse(&text));
+    let on_disk = files.read(runtime);
+    let mut plan = on_disk.plan().map_or_else(ShardPlan::default, |text| ShardPlan::parse(&text));
     for timing in timings {
         plan.record(timing);
     }
     for timing in lower_bounds {
         if plan.record_lower_bound(timing) {
             runtime.write_error(&format!(
-                "{} timed out, so the shard plan now gives it {} shards in the invocation of the heavy targets",
+                "{} timed out, so the shard plan now makes it a heavy target with {} shards",
                 timing.label,
                 plan.shards_of(&timing.label)
             ));
@@ -819,7 +845,18 @@ fn update_shard_plan<'a>(
     let today = runtime.now_ms() / MS_PER_DAY;
     plan.mark_seen(run_targets, today);
     plan.forget_older_than(today, PLAN_TARGET_TTL_DAYS);
-    files.write_all(runtime, &plan.render());
+    files.write_all(runtime, &plan.render(), &on_disk);
+}
+
+/// The shard count of the one target of a planned run: the forced count of its group.
+const fn group_shards(groups: &Groups) -> u32 {
+    if !groups.heavy.is_empty() {
+        HEAVY_SHARDS
+    } else if !groups.single.is_empty() {
+        SINGLE_SHARDS
+    } else {
+        PLANNED_SHARDS
+    }
 }
 
 /// The error of [`tree_targets`]: bazel exited with a code that is no verdict, so the run ends.

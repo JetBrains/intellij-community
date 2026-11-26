@@ -3,14 +3,27 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::fake::timing;
 
+/// A timing of one class per value, with the classes `com.C0`, `com.C1` and so on.
+fn classes(label: &str, seconds: &[f64]) -> TargetTiming {
+    TargetTiming {
+        label: label.to_owned(),
+        class_seconds: seconds
+            .iter()
+            .enumerate()
+            .map(|(index, seconds)| (format!("com.C{index}"), *seconds))
+            .collect(),
+        fixed_seconds: None,
+    }
+}
+
 #[test]
 fn a_target_gets_a_shard_per_90_recorded_seconds_up_to_the_heavy_count() {
     let mut plan = ShardPlan::default();
     plan.record(&timing("//a:small", &[("A", 5.0)]));
     plan.record(&timing("//a:full", &[("A", 45.0), ("B", 45.0)]));
     plan.record(&timing("//a:medium", &[("A", 60.0), ("B", 60.0)]));
-    plan.record(&timing("//a:heavy", &[("A", 530.0)]));
-    plan.record(&timing("//a:heaviest", &[("A", 2000.0)]));
+    plan.record(&classes("//a:heavy", &[90.0, 90.0, 90.0, 90.0, 90.0, 80.0]));
+    plan.record(&classes("//a:heaviest", &[100.0; 20]));
     plan.record(&timing("//a:empty", &[]));
 
     assert_eq!(plan.shards_of("//a:small"), SINGLE_SHARDS);
@@ -22,15 +35,71 @@ fn a_target_gets_a_shard_per_90_recorded_seconds_up_to_the_heavy_count() {
     assert_eq!(plan.shards_of("//a:unknown"), DEFAULT_SHARDS);
 }
 
+/// The runner never splits a top-level class. So a target gets at most one shard per its heaviest class, and a target of
+/// one class gets one shard, whatever its seconds.
+#[test]
+fn a_target_gets_no_more_shards_than_its_heaviest_class_allows() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing("//a:one_class", &[("com.A", 2000.0)]));
+    plan.record(&timing(
+        "//a:one_heavy_class",
+        &[("com.A", 300.0), ("com.B", 10.0), ("com.C", 10.0), ("com.D", 10.0)],
+    ));
+    plan.record(&timing("//a:even", &[("com.A", 200.0), ("com.B", 100.0), ("com.C", 100.0)]));
+    plan.record(&timing(
+        "//a:light_classes",
+        &[("com.A", 100.0), ("com.B", 100.0), ("com.C", 100.0)],
+    ));
+
+    assert_eq!(plan.shards_of("//a:one_class"), SINGLE_SHARDS);
+    assert_eq!(plan.shards_of("//a:one_heavy_class"), 2);
+    assert_eq!(plan.shards_of("//a:even"), 2);
+    assert_eq!(plan.shards_of("//a:light_classes"), 3);
+}
+
+/// A plan line names a nested class apart from its top-level class. The runner weighs the top-level class, so the count
+/// does too: the record of a top-level class holds its nested classes, and a top-level class without a record weighs as
+/// much as its nested classes.
+#[test]
+fn a_nested_class_counts_in_its_top_level_class() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing(
+        "//a:outer_without_record",
+        &[("com.A$X", 200.0), ("com.A$Y", 200.0), ("com.B", 10.0)],
+    ));
+    plan.record(&timing(
+        "//a:outer_with_record",
+        &[
+            ("com.A", 300.0),
+            ("com.A$Inner", 290.0),
+            ("com.A$Inner$Deep", 280.0),
+            ("com.B", 100.0),
+        ],
+    ));
+    plan.record(&timing(
+        "//a:nested_of_three_classes",
+        &[("com.A$X", 100.0), ("com.B$X", 100.0), ("com.C$X", 100.0)],
+    ));
+
+    // 410 s over the 400 s of com.A
+    assert_eq!(plan.shards_of("//a:outer_without_record"), 2);
+    // 400 s over the 300 s of com.A, without the seconds of its nested classes
+    assert_eq!(plan.shards_of("//a:outer_with_record"), 2);
+    // three top-level classes of 100 s each
+    assert_eq!(plan.shards_of("//a:nested_of_three_classes"), 3);
+}
+
 /// A heavy target is one that wants more than the planned count, and the run names only the ones its patterns cover.
 #[test]
 fn the_heavy_targets_are_the_covered_targets_that_want_more_than_the_planned_count() {
     let mut plan = ShardPlan::default();
-    plan.record(&timing("//p/a:light_test", &[("A", 180.0)]));
-    plan.record(&timing("//p/a:heavy_test", &[("A", 181.0)]));
-    plan.record(&timing("//p/b/c:heavy_test", &[("A", 400.0)]));
-    plan.record(&timing("//q:heavy_test", &[("A", 400.0)]));
-    plan.record(&timing("@@community+//tools/bt:heavy_test", &[("A", 400.0)]));
+    plan.record(&classes("//p/a:light_test", &[90.0, 90.0]));
+    plan.record(&classes("//p/a:heavy_test", &[61.0, 60.0, 60.0]));
+    plan.record(&classes("//p/b/c:heavy_test", &[100.0; 4]));
+    plan.record(&classes("//q:heavy_test", &[100.0; 4]));
+    plan.record(&classes("@@community+//tools/bt:heavy_test", &[100.0; 4]));
+    // one class of 400 s runs whole on one shard
+    plan.record(&classes("//p/a:one_class_test", &[400.0]));
     let heavy = |patterns: &[&str]| plan.heavy_targets(&patterns.iter().map(|pattern| (*pattern).to_owned()).collect::<Vec<_>>());
 
     assert_eq!(heavy(&["//p/..."]), ["//p/a:heavy_test", "//p/b/c:heavy_test"]);
@@ -62,17 +131,19 @@ fn the_heavy_targets_are_the_covered_targets_that_want_more_than_the_planned_cou
 fn the_single_targets_are_the_covered_targets_that_want_one_shard() {
     let mut plan = ShardPlan::default();
     plan.record(&timing("//p/a:single_test", &[("A", 90.0)]));
-    plan.record(&timing("//p/a:medium_test", &[("A", 180.0)]));
-    plan.record(&timing("//p/b:heavy_test", &[("A", 181.0)]));
+    plan.record(&classes("//p/a:medium_test", &[90.0, 90.0]));
+    plan.record(&classes("//p/b:heavy_test", &[61.0, 60.0, 60.0]));
+    // one class of 400 s runs whole on one shard
+    plan.record(&classes("//p/b:one_class_test", &[400.0]));
     plan.record(&timing("@@community+//tools/bt:single_test", &[("A", 5.0)]));
     let single = |patterns: &[&str]| plan.single_targets(&patterns.iter().map(|pattern| (*pattern).to_owned()).collect::<Vec<_>>());
 
-    assert_eq!(single(&["//p/..."]), ["//p/a:single_test"]);
+    assert_eq!(single(&["//p/..."]), ["//p/a:single_test", "//p/b:one_class_test"]);
     assert_eq!(single(&["//p/a:all"]), ["//p/a:single_test"]);
     assert_eq!(single(&["@community//tools/bt/..."]), ["@@community+//tools/bt:single_test"]);
-    assert_eq!(single(&["//p/...", "-//p/a:single_test"]), Vec::<String>::new());
+    assert_eq!(single(&["//p/...", "-//p/a:single_test"]), ["//p/b:one_class_test"]);
     assert_eq!(
-        single(&["//p/...", "-//p/a:single_test", "//p/a:single_test"]),
+        single(&["//p/a/...", "-//p/a:single_test", "//p/a:single_test"]),
         ["//p/a:single_test"]
     );
     assert_eq!(single(&["//p/a:unknown_test"]), Vec::<String>::new());
@@ -82,12 +153,12 @@ fn the_single_targets_are_the_covered_targets_that_want_one_shard() {
 #[test]
 fn the_groups_are_the_covered_targets_that_the_tree_has() {
     let mut plan = ShardPlan::default();
-    plan.record(&timing("//p/a:heavy_test", &[("A", 400.0)]));
-    plan.record(&timing("//p/gone:heavy_test", &[("A", 400.0)]));
+    plan.record(&classes("//p/a:heavy_test", &[100.0; 4]));
+    plan.record(&classes("//p/gone:heavy_test", &[100.0; 4]));
     plan.record(&timing("//p/a:single_test", &[("A", 5.0)]));
     plan.record(&timing("@@community+//tools/bt:single_test", &[("A", 5.0)]));
     plan.record(&timing("@@community+//tools/bt:gone_test", &[("A", 5.0)]));
-    plan.record(&timing("//q:heavy_test", &[("A", 400.0)]));
+    plan.record(&classes("//q:heavy_test", &[100.0; 4]));
     let patterns = vec!["//p/...".to_owned(), "@community//tools/bt/...".to_owned()];
     let tree = TreeTargets::parse(
         [
@@ -125,10 +196,10 @@ fn the_groups_are_the_covered_targets_that_the_tree_has() {
 #[test]
 fn a_rust_test_target_is_a_single_shard_target_whatever_its_record() {
     let mut plan = ShardPlan::default();
-    plan.record(&timing("//p/a:heavy_rust_test", &[("A", 400.0)]));
-    plan.record(&timing("//p/a:medium_rust_test", &[("A", 120.0)]));
+    plan.record(&classes("//p/a:heavy_rust_test", &[100.0; 4]));
+    plan.record(&classes("//p/a:medium_rust_test", &[60.0, 60.0]));
     plan.record(&timing("@@community+//tools/bt:single_rust_test", &[("A", 5.0)]));
-    plan.record(&timing("//p/a:medium_test", &[("A", 120.0)]));
+    plan.record(&classes("//p/a:medium_test", &[60.0, 60.0]));
     let tree = TreeTargets::parse(
         [
             "_rust_test_junit_test rule //p/a:heavy_rust_test",
@@ -175,14 +246,59 @@ fn the_tree_query_names_the_test_targets_of_the_patterns_in_their_order() {
     let query = |patterns: &[&str]| TreeTargets::query(&patterns.iter().map(|pattern| (*pattern).to_owned()).collect::<Vec<_>>());
     assert_eq!(
         query(&["//p/...", "@@community+//tools/bt/...", "-//p/b/...", "//p/b/c:t"]),
-        r#"let t = tests(set() + "//p/..." + "@@community+//tools/bt/..." - "//p/b/..." + "//p/b/c:t") in $t except attr(tags, "\bmanual\b", $t)"#
+        r#"tests(set() + (tests("//p/...") except attr(tags, "\bmanual\b", tests("//p/..."))) + (tests("@@community+//tools/bt/...") except attr(tags, "\bmanual\b", tests("@@community+//tools/bt/..."))) - "//p/b/..." + "//p/b/c:t")"#
     );
     // a negative pattern first removes from nothing, as in `bazel test`
+    assert_eq!(query(&["-//p/..."]), r#"tests(set() - "//p/...")"#);
+    assert_eq!(query(&[]), "tests(set())");
+}
+
+/// `bazel test` leaves out a `manual` target of a wildcard pattern, and runs a `manual` target that a pattern names by its
+/// label. So only a wildcard pattern drops the `manual` targets from the answer.
+#[test]
+fn the_tree_query_keeps_a_manual_target_that_a_pattern_names_by_its_label() {
+    let query = |pattern: &str| TreeTargets::query(&[pattern.to_owned()]);
+    for explicit in [
+        "//build/tests/smoke:all-products-packaging_test",
+        "//p",
+        "@community//p:t",
+        "//p:all_tests",
+    ] {
+        assert_eq!(query(explicit), format!(r#"tests(set() + "{explicit}")"#), "{explicit}");
+    }
+    for wildcard in [
+        "//...",
+        "//p/...",
+        "//p/...:all",
+        "//p:all",
+        "//p:*",
+        "//p:all-targets",
+        "@@community+//p/...",
+    ] {
+        assert_eq!(
+            query(wildcard),
+            format!(r#"tests(set() + (tests("{wildcard}") except attr(tags, "\bmanual\b", tests("{wildcard}"))))"#),
+            "{wildcard}"
+        );
+    }
+}
+
+/// A `manual` target that the run names by its label is in the answer of the query. So a record of it is no gone target,
+/// and the target takes the count of its group.
+#[test]
+fn a_manual_target_that_the_run_names_is_not_gone() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing("//build/tests/smoke:all-products-packaging_test", &[("A", 400.0)]));
+    let patterns = vec!["//build/tests/smoke:all-products-packaging_test".to_owned()];
+    assert!(!TreeTargets::query(&patterns).contains("manual"));
+    let tree = TreeTargets::parse(["java_test rule //build/tests/smoke:all-products-packaging_test".to_owned()]);
     assert_eq!(
-        query(&["-//p/..."]),
-        r#"let t = tests(set() - "//p/...") in $t except attr(tags, "\bmanual\b", $t)"#
+        plan.groups(&patterns, || Ok::<_, ()>(Some(tree))),
+        Ok(Groups {
+            single: vec!["//build/tests/smoke:all-products-packaging_test".to_owned()],
+            ..Groups::default()
+        })
     );
-    assert_eq!(query(&[]), r#"let t = tests(set()) in $t except attr(tags, "\bmanual\b", $t)"#);
 }
 
 #[test]
@@ -232,7 +348,7 @@ fn the_rendered_plan_has_the_lines_the_runner_reads() {
 
     assert_eq!(
         plan.render(),
-        "# The shard plan of bt. bt rewrites this file after each multi-target run.\n\
+        "# The shard plan of bt. bt rewrites this file after each planned run.\n\
          default\t2\n\
          target\t//a:t\t2\n\
          class\t//a:t\tcom.A\t1.500\n\
@@ -260,16 +376,16 @@ fn a_plan_reads_back_what_it_wrote_and_skips_the_lines_it_does_not_know() {
 #[test]
 fn a_plan_adds_only_the_targets_it_has_no_record_of() {
     let mut shared = ShardPlan::default();
-    shared.record(&timing("//a:both", &[("A", 300.0)]));
+    shared.record(&timing("//a:both", &[("A", 150.0), ("B", 150.0)]));
     let mut copy = ShardPlan::default();
     copy.record(&timing("//a:both", &[("A", 5.0)]));
     copy.record(&timing("//a:old", &[("B", 7.0)]));
 
     assert!(shared.add_missing_targets(&copy));
-    assert_eq!(shared.shards_of("//a:both"), 4);
+    assert_eq!(shared.shards_of("//a:both"), 2);
     assert_eq!(
         shared.class_times().collect::<Vec<_>>(),
-        [("//a:both", "A", 300.0), ("//a:old", "B", 7.0)]
+        [("//a:both", "A", 150.0), ("//a:both", "B", 150.0), ("//a:old", "B", 7.0)]
     );
     assert!(!shared.add_missing_targets(&copy));
 }
@@ -293,7 +409,7 @@ fn a_record_replaces_the_classes_of_its_own_target_only() {
 #[test]
 fn a_heavy_target_has_its_wanted_count_in_the_rendered_plan() {
     let mut plan = ShardPlan::default();
-    plan.record(&timing("//a:t", &[("com.A", 530.0)]));
+    plan.record(&classes("//a:t", &[90.0, 90.0, 90.0, 90.0, 90.0, 80.0]));
     assert!(plan.render().contains("target\t//a:t\t6\n"), "{}", plan.render());
 }
 
@@ -308,7 +424,7 @@ fn a_shard_timeout_raises_the_record_only_when_the_target_becomes_heavy() {
     let before = plan.clone();
     assert!(
         !plan.record_lower_bound(&timing("//a:t", &[("com.A", 110.0), ("com.B", 5.0)])),
-        "160 s stay light"
+        "170 s over a class of 110 s stay light"
     );
     assert_eq!(plan, before);
 
@@ -321,7 +437,7 @@ fn a_shard_timeout_raises_the_record_only_when_the_target_becomes_heavy() {
         ));
         expected
     });
-    assert_eq!(plan.shards_of("//a:t"), 7);
+    assert_eq!(plan.shards_of("//a:t"), 3);
 
     // a heavy target keeps its record: a raise would change the split of its cached shards
     let heavy = plan.clone();
@@ -329,8 +445,12 @@ fn a_shard_timeout_raises_the_record_only_when_the_target_becomes_heavy() {
     assert_eq!(plan, heavy);
 
     // a target without a record becomes heavy as well
-    assert!(plan.record_lower_bound(&timing("//b:t", &[("com.E", 300.0)])));
-    assert_eq!(plan.shards_of("//b:t"), 4);
+    assert!(plan.record_lower_bound(&timing("//b:t", &[("com.E", 100.0), ("com.F", 100.0), ("com.G", 100.0)])));
+    assert_eq!(plan.shards_of("//b:t"), 3);
+
+    // one class runs whole on one shard, so a long class alone never makes a target heavy
+    assert!(!plan.record_lower_bound(&timing("//c:t", &[("com.Slow", 600.0)])));
+    assert_eq!(plan.shards_of("//c:t"), DEFAULT_SHARDS);
 }
 
 /// The fixed seconds of a target travel in a line of their own, which an older bt skips.

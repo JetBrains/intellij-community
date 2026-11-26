@@ -130,6 +130,11 @@ pub struct TargetTiming {
 /// The seconds of the classes, less each nested class whose outer class has a record. The suite of a class lasts until
 /// its nested classes end, so the record of the outer class holds them already.
 pub fn outer_class_seconds(class_seconds: &BTreeMap<String, f64>) -> f64 {
+    outer_classes(class_seconds).map(|(_, seconds)| seconds).sum()
+}
+
+/// The classes that [`outer_class_seconds`] counts, with their seconds: each class whose outer classes have no record.
+pub fn outer_classes(class_seconds: &BTreeMap<String, f64>) -> impl Iterator<Item = (&str, f64)> {
     class_seconds
         .iter()
         .filter(|(class, _)| {
@@ -137,8 +142,7 @@ pub fn outer_class_seconds(class_seconds: &BTreeMap<String, f64>) -> f64 {
                 .match_indices('$')
                 .any(|(position, _)| class_seconds.contains_key(&class[..position]))
         })
-        .map(|(_, seconds)| seconds)
-        .sum()
+        .map(|(class, seconds)| (class.as_str(), *seconds))
 }
 
 /// The median of the values, the mean of the two middle values for an even count. `None` for no value.

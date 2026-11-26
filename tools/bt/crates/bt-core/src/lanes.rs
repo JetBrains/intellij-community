@@ -587,22 +587,21 @@ pub struct RunPlan {
 ///
 /// A run covering many targets already saturates the machine across targets, and there the fixed cost dominates:
 /// measured on `--lane fast` (63 targets, 6221 tests, warm server, nothing to compile), forced=6 by test spends 3m24s
-/// against 1m55s for forced=2. One count for all targets is still wrong for most of them, so such a run forces
-/// [`PLANNED_SHARDS`] and the shard plan gives each target its own count. The heavy targets of the plan run in an
-/// invocation of their own; see [`crate::shard_plan`].
-pub fn default_shards(resolution: &Resolution, lane: Option<&LaneSpec>) -> u32 {
+/// against 1m55s for forced=2. One count for all targets is still wrong for most of them, so a planned run forces
+/// [`PLANNED_SHARDS`] and the shard plan gives each target its own count. The heavy and the single-shard targets of the
+/// plan run in an invocation of their own, and a run of one target forces the count of its group; see
+/// [`crate::shard_plan`].
+pub fn default_shards(lane: Option<&LaneSpec>) -> u32 {
     // A lane that names its own count owns the decision: for IDE-launching lanes the cost and isolation unit is
     // the IDE, not JVM bootstrap, and the flow lanes rely on one shared instance.
-    if let Some(shards) = lane.and_then(|lane| lane.shards) {
-        return shards;
-    }
-    if uses_shard_plan(resolution, lane) { PLANNED_SHARDS } else { 6 }
+    lane.and_then(|lane| lane.shards).unwrap_or(PLANNED_SHARDS)
 }
 
-/// Whether a run without an explicit shard count takes the shard plan: a run over many targets, unless its lane names
-/// its own count.
+/// Whether a run without an explicit shard count takes the shard plan: each run, unless its lane names its own count or
+/// a class filter turns its sharding off. A package filter or a filter of suites keeps the plan, and such a run records
+/// no class time.
 pub fn uses_shard_plan(resolution: &Resolution, lane: Option<&LaneSpec>) -> bool {
-    resolution.multi_target && lane.and_then(|lane| lane.shards).is_none()
+    resolution.filter.is_none() && lane.and_then(|lane| lane.shards).is_none()
 }
 
 pub const BEP_FLAG: &str = "--build_event_json_file";
@@ -657,11 +656,11 @@ pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
     .into();
     args.push(format!("{BEP_FLAG}={}", plan.bep_path));
 
-    // A filter pins one class, and one class cannot usefully be split across JVMs: `explicit` leaves the target's
-    // own declared sharding, which for a filtered run is none.
+    // A filter pins one class or one method, and the runner never splits a class across JVMs. `disabled` runs it in one
+    // JVM, also for a target that declares its own `shard_count`.
     match &resolution.filter {
         Some(filter) => {
-            args.push("--test_sharding_strategy=explicit".to_owned());
+            args.push("--test_sharding_strategy=disabled".to_owned());
             args.push(format!("--test_filter={filter}"));
         }
         None => args.push(format!("--test_sharding_strategy=forced={}", plan.shards)),

@@ -54,6 +54,7 @@ fn the_repo_streamed_and_detailed_defaults_are_always_overridden() {
     }
 }
 
+/// A filter runs in one JVM, also for a target that declares its own `shard_count`: `disabled`, not `explicit`.
 #[test]
 fn a_single_class_runs_unsharded_and_everything_else_is_forced() {
     let single = build_bazel_args(&base_plan(Resolution {
@@ -61,7 +62,13 @@ fn a_single_class_runs_unsharded_and_everything_else_is_forced() {
         ..labelled("//p:t")
     }));
     assert!(
-        has(&single, "--test_sharding_strategy=explicit") && has(&single, "--test_filter=a.b.C"),
+        has(&single, "--test_sharding_strategy=disabled") && has(&single, "--test_filter=a.b.C"),
+        "{single:?}"
+    );
+    assert!(
+        !single
+            .iter()
+            .any(|argument| argument.starts_with("--test_sharding_strategy=forced")),
         "{single:?}"
     );
     let whole = build_bazel_args(&base_plan(labelled("//p:t")));
@@ -79,23 +86,43 @@ fn an_ide_launching_lane_pins_one_shard() {
             multi_target: spec.is_multi_target(),
             ..labelled(&spec.targets[0])
         };
-        assert_eq!(default_shards(&resolution, Some(spec)), 1, "lane {name}");
+        assert_eq!(default_shards(Some(spec)), 1, "lane {name}");
+        assert!(!uses_shard_plan(&resolution, Some(spec)), "lane {name}");
     }
 }
 
+/// The shard plan gives each target its own count, in a run of many targets and in a run of one.
 #[test]
-fn a_lane_without_its_own_count_forces_the_planned_count() {
+fn a_run_without_a_count_of_its_own_takes_the_shard_plan() {
     let fast = lane("fast");
     assert_eq!(fast.shards, None);
     let broad = Resolution {
         multi_target: true,
         ..labelled(&fast.targets[0])
     };
-    assert_eq!(default_shards(&broad, Some(fast)), PLANNED_SHARDS);
+    assert_eq!(default_shards(Some(fast)), PLANNED_SHARDS);
     assert!(uses_shard_plan(&broad, Some(fast)));
-    assert_eq!(default_shards(&labelled("//p:t"), None), 6);
-    assert!(!uses_shard_plan(&labelled("//p:t"), None));
+    assert_eq!(default_shards(None), PLANNED_SHARDS);
+    assert!(uses_shard_plan(&labelled("//p:t"), None));
     assert!(!uses_shard_plan(&broad, Some(lane("ui"))));
+    // a package filter and the filters of suites keep the plan, and a class filter turns the sharding off
+    let package = Resolution {
+        include_package: Some("com.a".to_owned()),
+        ..labelled("//p:t")
+    };
+    assert!(uses_shard_plan(&package, None));
+    let suites = Resolution {
+        junit5_filters: vec!["include-classname=com.A".to_owned()],
+        ..labelled("//p:t")
+    };
+    assert!(uses_shard_plan(&suites, None));
+    for filter in ["a.b.C", "a.b.C#method"] {
+        let filtered = Resolution {
+            filter: Some(filter.to_owned()),
+            ..labelled("//p:t")
+        };
+        assert!(!uses_shard_plan(&filtered, None), "{filter}");
+    }
 }
 
 #[test]

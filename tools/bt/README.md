@@ -65,25 +65,37 @@ A package is no selector, and neither is a JPS module name: both are dotted lowe
 
 ## Shards
 
-A run over many targets passes the shard plan `out/bt/shard-plan.tsv` to the tests. The JUnit runner gives each target
-its planned count and splits the classes of the target by their recorded seconds. bt records the class times of each
-run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules.
+A run passes the shard plan `out/bt/shard-plan.tsv` to the tests. The JUnit runner gives each target its planned count
+and splits the top-level classes of the target by their recorded seconds. The runner never splits a class. So a target
+gets one shard per 90 recorded seconds, or per the seconds of its heaviest class when that class takes more. bt records
+the class times of each run in the plan, and writes a plan file only when its text changes.
+`crates/bt-core/src/shard_plan.rs` gives the rules.
 
-Bazel forces one shard count on a whole invocation, so a planned run uses up to three `bazel test` invocations. The
-first one runs heavy targets, which need more than two shards, and forces eight shards. The second runs the remaining
-targets with two shards. A target without a record stays in this group. The last runs targets recorded to need one
-shard, and each Rust test target (`rust_test` and `rust_test_junit`), and forces one shard. libtest runs the tests of
-one process in parallel threads, and each shard of a Rust target pays its shared setup again. `--dry-run` shows these
-groups as `heavy`, `argv` and `single`. They write the profiles `out/bt/profile-heavy.json.gz`, `out/bt/profile.json.gz`
-and `out/bt/profile-single.json.gz`. An explicit `--shards` and a BEP file of the caller give one invocation.
+A run without the plan is a run with `--shards`, a run of a lane that names its own count, and a run with a class or a
+method filter. A filter runs its target in one JVM (`--test_sharding_strategy=disabled`), also when the target declares
+a `shard_count`. A run with a package filter or with the filters of suites takes the plan and records no class time.
+
+Bazel forces one shard count on a whole invocation, so a planned run over many targets uses up to three `bazel test`
+invocations. The first one runs heavy targets, which need more than two shards, and forces eight shards. The second
+runs the remaining targets with two shards. A target without a record stays in this group. The last runs targets
+recorded to need one shard, and each Rust test target (`rust_test` and `rust_test_junit`), and forces one shard. libtest
+runs the tests of one process in parallel threads, and each shard of a Rust target pays its shared setup again.
+`--dry-run` shows these groups as `heavy`, `argv` and `single`. They write the profiles `out/bt/profile-heavy.json.gz`,
+`out/bt/profile.json.gz` and `out/bt/profile-single.json.gz`. An explicit `--shards` and a BEP file of the caller give
+one invocation.
+
+A planned run of one target uses one invocation, and forces the count of the group of the target: eight, two or one. It
+writes no profile, so the profile of the last run over many targets stays.
 
 A plan entry is a hint, because the plan keeps the targets of each branch that ran in the checkout. Bazel fails each
 invocation that names a target that the tree does not have, also as a negative pattern. So `bazel query` finds the test
-targets of the patterns in the current tree before the first invocation. The query leaves out a target with the tag
-`manual`, and it gives the rule kind of each target. The heavy and single groups name only those targets. A stderr line
-names the targets of the plan that the query does not find. A query file that bt cannot write leaves each target in the
-second group. A query that ends without a verdict, such as after an interrupt, stops the run as INFRA. `--dry-run` runs
-no query, so it shows the groups of the plan unchecked and without the Rust test targets, and a `note` line says so.
+targets of the patterns in the current tree before the first invocation. For a wildcard pattern, the query leaves out a
+target with the tag `manual`, as `bazel test` does. It keeps a `manual` target that a pattern names by its label,
+because `bazel test` runs it. The query gives the rule kind of each target. The heavy and single groups name only those
+targets. A stderr line names the targets of the plan that the query does not find. A query file that bt cannot write
+leaves each target in the second group. A query that ends without a verdict, such as after an interrupt, stops the run
+as INFRA. `--dry-run` runs no query, so it shows the groups of the plan unchecked and without the Rust test targets, and
+a `note` line says so.
 
 A shard that hits the Bazel timeout of its target is a shard timeout. The digest names the shard and the test where it
 stopped, and that test is not a failure. The `--json` payload lists the shard in `shardTimeouts`. When the times of

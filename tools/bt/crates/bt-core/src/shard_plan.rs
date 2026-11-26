@@ -1,17 +1,23 @@
-//! The shard plan of a multi-target run: the number of shards of each test target, and the recorded seconds of each
-//! test class.
+//! The shard plan of a run without an explicit shard count: the number of shards of each test target, and the recorded
+//! seconds of each test class.
+//!
+//! The runner never splits a top-level class, because each shard of a class pays the setup of the class again. So the
+//! shard count of a target is its recorded seconds over [`SECONDS_PER_SHARD`] or over its heaviest top-level class,
+//! whichever is more. A target of one class gets one shard. A nested class counts in its top-level class.
 //!
 //! `bazel test` has one shard count for a whole invocation, and a lane holds targets of 5 s and of 500 s. So a planned
 //! run has up to three groups of targets, and each group has its own `bazel test` invocation with a constant forced count:
 //!
-//! - A heavy target is a target whose recorded seconds want more than [`PLANNED_SHARDS`] shards. The first invocation
+//! - A heavy target is a target whose recorded classes want more than [`PLANNED_SHARDS`] shards. The first invocation
 //!   names the heavy targets of the run ([`Groups::heavy`]) and forces [`HEAVY_SHARDS`].
 //! - The second invocation runs the patterns of the run less the heavy and single-shard targets, and forces
 //!   [`PLANNED_SHARDS`]. A target without a record stays here.
-//! - A target whose recorded seconds want one shard is a single-shard target. The third invocation names these targets
+//! - A target whose recorded classes want one shard is a single-shard target. The third invocation names these targets
 //!   ([`Groups::single`]) and forces [`SINGLE_SHARDS`].
 //! - A Rust test target is a single-shard target, whatever its record says. libtest runs the tests of one process in
 //!   parallel threads, and each shard pays the shared setup of the target again.
+//!
+//! A run of one target has one invocation, and it forces the count of the group of the target.
 //!
 //! A plan entry is a hint, because the plan keeps the targets of each branch that ran in the repository. A target that
 //! the current tree does not have fails each invocation that names it, also as a negative pattern. So
@@ -48,6 +54,7 @@
 //!
 //! The tests read the checkout copy [`SHARD_PLAN_FILE`]. Before its first test invocation, a planned run writes the
 //! text of the plan it read to that copy. After the run, bt writes the updated plan to the shared file and to the copy.
+//! bt writes a file only when its text changes, because the file has about 1 MB and a cached run changes no time.
 //!
 //! The file is not a Bazel input: the plan decides how the tests of a target split, never which tests run, and an input
 //! would rerun every test after each update. bt passes the path of the copy relative to the checkout. So the key of a
@@ -60,7 +67,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
-use crate::result::TargetTiming;
+use crate::result::{TargetTiming, outer_classes};
 
 /// The variable that names the plan file to the JUnit runner.
 pub const SHARD_PLAN_ENV: &str = "JB_TEST_SHARD_PLAN";
@@ -112,7 +119,8 @@ pub const PLAN_TARGET_TTL_DAYS: u64 = 14;
 /// a target is older than [`PLAN_TARGET_TTL_DAYS`] on each real day, and it stays only when the run names it.
 const UNDATED_COPY_DAY: u64 = 0;
 
-/// The recorded test seconds that one shard takes.
+/// The recorded test seconds that one shard takes at the least. A shard takes more when the heaviest top-level class of
+/// the target takes more, because the runner never splits a class.
 ///
 /// Simulated with the runner's partition on the test.xml files of a `--lane fast` run (148 JVM targets): against
 /// `forced=2` by test, a shard per 90 s takes 18 % less test CPU with up to four shards (8.0 ks against 9.7 ks). A shard
@@ -161,18 +169,30 @@ pub struct TreeTargets {
 impl TreeTargets {
     /// The query expression of the test targets that the target patterns name, in their order. A negative pattern
     /// removes what the patterns before it name, as in `bazel test`. Each pattern is in quotes, because the canonical
-    /// name of a repository holds the operator `+`. The expression leaves out a target with the tag `manual`, because a
-    /// pattern of `bazel test` leaves it out, and an invocation that names it would run it.
+    /// name of a repository holds the operator `+`.
+    ///
+    /// A positive wildcard pattern leaves out a target with the tag `manual`, because `bazel test` leaves it out, and an
+    /// invocation that names it would run it. A positive explicit label keeps such a target, because `bazel test` runs
+    /// a `manual` target that a pattern names. [`is_wildcard`] tells the two kinds apart.
     pub fn query(patterns: &[String]) -> String {
         let mut expression = String::from("set()");
         for pattern in patterns {
-            let (operator, pattern) = match pattern.strip_prefix('-') {
-                Some(rest) => ('-', rest),
-                None => ('+', pattern.as_str()),
-            };
-            let _ = write!(expression, " {operator} \"{pattern}\"");
+            match pattern.strip_prefix('-') {
+                Some(rest) => {
+                    let _ = write!(expression, " - \"{rest}\"");
+                }
+                None if is_wildcard(pattern) => {
+                    let _ = write!(
+                        expression,
+                        r#" + (tests("{pattern}") except attr(tags, "\bmanual\b", tests("{pattern}")))"#
+                    );
+                }
+                None => {
+                    let _ = write!(expression, " + \"{pattern}\"");
+                }
+            }
         }
-        format!(r#"let t = tests({expression}) in $t except attr(tags, "\bmanual\b", $t)"#)
+        format!("tests({expression})")
     }
 
     /// Reads the answer of the query in the `label_kind` output, `<kind> rule <label>` a line. A line with only a label
@@ -319,18 +339,16 @@ impl ShardPlan {
             let recorded = raised.entry(class.clone()).or_default();
             *recorded = recorded.max(*seconds);
         }
-        if shards_for(raised.values().sum()) <= PLANNED_SHARDS {
+        if shards_for(&raised) <= PLANNED_SHARDS {
             return false;
         }
         self.targets.insert(timing.label.clone(), raised);
         true
     }
 
-    /// The shard count of the target with this label, from its recorded seconds.
+    /// The shard count of the target with this label, from its recorded classes; see [`shards_for`].
     pub fn shards_of(&self, label: &str) -> u32 {
-        self.targets
-            .get(label)
-            .map_or(DEFAULT_SHARDS, |classes| shards_for(classes.values().sum()))
+        self.targets.get(label).map_or(DEFAULT_SHARDS, shards_for)
     }
 
     /// The heavy and the single-shard targets of the plan that the target patterns of a run cover and that the current
@@ -395,7 +413,7 @@ impl ShardPlan {
 
     /// The text of the plan file, in the format that `ShardFilter.SHARD_PLAN_ENV` describes.
     pub fn render(&self) -> String {
-        let mut text = String::from("# The shard plan of bt. bt rewrites this file after each multi-target run.\n");
+        let mut text = String::from("# The shard plan of bt. bt rewrites this file after each planned run.\n");
         let _ = writeln!(text, "default\t{DEFAULT_SHARDS}");
         for (label, classes) in &self.targets {
             let _ = writeln!(text, "target\t{label}\t{}", self.shards_of(label));
@@ -422,8 +440,20 @@ impl ShardPlan {
     }
 }
 
-fn shards_for(seconds: f64) -> u32 {
-    let wanted = (seconds / SECONDS_PER_SHARD).ceil();
+/// The shard count of a target with these recorded classes: the seconds of the target over [`SECONDS_PER_SHARD`] or over
+/// its heaviest top-level class, whichever is more, from 1 to [`HEAVY_SHARDS`].
+///
+/// The runner never splits a top-level class, so more shards than this would only start idle JVMs. A nested class counts
+/// in its top-level class, as [`outer_classes`] counts it. The runner weighs a top-level class the same way.
+fn shards_for(classes: &BTreeMap<String, f64>) -> u32 {
+    let mut top_level: BTreeMap<&str, f64> = BTreeMap::new();
+    for (class, seconds) in outer_classes(classes) {
+        let outer = class.split_once('$').map_or(class, |(outer, _)| outer);
+        *top_level.entry(outer).or_default() += seconds;
+    }
+    let total: f64 = top_level.values().sum();
+    let heaviest = top_level.values().copied().fold(SECONDS_PER_SHARD, f64::max);
+    let wanted = (total / heaviest).ceil();
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "clamped into 1..=HEAVY_SHARDS")]
     let shards = wanted.clamp(1.0, f64::from(HEAVY_SHARDS)) as u32;
     shards
@@ -471,6 +501,17 @@ fn split_label(label: &str) -> Option<Label<'_>> {
     Some(Label { repository, package, name })
 }
 
+/// Whether a target name of a pattern names each target of its package, as `//pkg:all` does.
+fn is_any_name(name: &str) -> bool {
+    matches!(name, "all" | "*" | "all-targets")
+}
+
+/// Whether a target pattern names the targets of a package or of a tree, as `//pkg:all` and `//pkg/...` do, and not one
+/// target by its label. A pattern that is no label is no wildcard.
+fn is_wildcard(pattern: &str) -> bool {
+    split_label(pattern).is_some_and(|pattern| is_any_name(pattern.name) || pattern.package.ends_with("..."))
+}
+
 fn pattern_covers(pattern: &str, target: &Label<'_>) -> bool {
     let Some(pattern) = split_label(pattern) else {
         return false;
@@ -478,7 +519,7 @@ fn pattern_covers(pattern: &str, target: &Label<'_>) -> bool {
     if pattern.repository != target.repository {
         return false;
     }
-    let any_name = matches!(pattern.name, "all" | "*" | "all-targets");
+    let any_name = is_any_name(pattern.name);
     if let Some(root) = pattern.package.strip_suffix("...") {
         // `//pkg/...` reads as the package `pkg/...` with the name `...`, and `//pkg/...:all` with the name `all`.
         if !(any_name || pattern.name == "...") {
