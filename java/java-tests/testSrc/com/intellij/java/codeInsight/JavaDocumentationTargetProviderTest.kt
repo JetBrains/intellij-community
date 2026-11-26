@@ -25,6 +25,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.test.assertIs
@@ -400,5 +401,68 @@ class JavaDocumentationTargetProviderTest {
       "void foo() <caret>{}",
       "void foo() { <caret> }",
     )
+  }
+
+  @Test
+  fun testNavigatable(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    assertTarget<PsiClass>(
+      "class A { void foo() { <caret>String s; } }",
+    ) { _, target, cls ->
+      val navigatable = target.navigatable
+      assertEquals(cls, navigatable)
+      assertTrue(navigatable!!.canNavigate())
+    }
+
+    assertTarget<PsiMethod>(
+      "class A { void bar() {} void foo() { b<caret>ar(); } }",
+    ) { _, target, method ->
+      val navigatable = target.navigatable
+      assertEquals(method, navigatable)
+      assertTrue(navigatable!!.canNavigate())
+    }
+
+    assertTarget<PsiMethodCallExpression>(
+      "class A { void bar() {} void foo() { bar(<caret>); } }",
+    ) { _, target, callExpr ->
+      val navigatable = target.navigatable
+      assertEquals(callExpr.resolveMethod(), navigatable)
+      assertNotNull(navigatable)
+      assertTrue(navigatable!!.canNavigate())
+    }
+
+    assertTarget<PsiNewExpression>(
+      "class A { A() {} void foo() { new A(<caret>); } }",
+    ) { _, target, newExpr ->
+      val navigatable = target.navigatable
+      assertEquals(newExpr.resolveConstructor(), navigatable)
+      assertNotNull(navigatable)
+      assertTrue(navigatable!!.canNavigate())
+    }
+
+    assertTarget<PsiNewExpression>(
+      "class A { void foo() { new A(<caret>); } }",
+    ) { _, target, newExpr ->
+      val navigatable = target.navigatable
+      assertEquals(newExpr.resolveConstructor(), navigatable)
+      assertEquals(newExpr.classReference?.resolve(), (navigatable as? PsiElement)?.navigationElement)
+      assertNotNull(navigatable)
+      assertTrue(navigatable!!.canNavigate())
+    }
+
+    assertTarget<PsiNewExpression>(
+      "class A { A(int x) {} A(String s) {} void foo() { new A(<caret>); } }",
+    ) { _, target, newExpr ->
+      val navigatable = target.navigatable
+      assertEquals(newExpr.classReference?.resolve(), navigatable)
+      assertNotNull(navigatable)
+      assertTrue(navigatable!!.canNavigate())
+    }
+
+    assertTarget<PsiMethodCallExpression>(
+      "class A { void foo() { new StringBuilder().app<caret>end(); } }",
+      "class A { void foo() { new StringBuilder().append(<caret>); } }",
+    ) { _, target, _ ->
+      assertNull(target.navigatable)
+    }
   }
 }

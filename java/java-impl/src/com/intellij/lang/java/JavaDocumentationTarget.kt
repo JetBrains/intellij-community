@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodCallExpression
@@ -68,6 +69,12 @@ public class JavaDocumentationTarget(public val element: PsiElement, private val
   override fun computePresentation(): TargetPresentation {
     return targetPresentation(element)
   }
+
+  override val navigatable: Navigatable?
+    get() = when (element) {
+      is PsiMethodCallExpression, is PsiNewExpression -> resolveCallTarget(element)
+      else -> element
+    } as? Navigatable
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
