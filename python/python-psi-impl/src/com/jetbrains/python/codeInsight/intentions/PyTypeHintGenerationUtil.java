@@ -2,16 +2,12 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,10 +16,8 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAnnotationOwner;
@@ -80,16 +74,18 @@ public final class PyTypeHintGenerationUtil {
 
   private PyTypeHintGenerationUtil() { }
 
+  /**
+   * Declares the attribute {@code target} with a type comment at the start of its class.
+   * With an {@code updater}, starts a template on the types.
+   */
   public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
                                                           AnnotationInfo info,
-                                                          boolean startTemplate) {
+                                                          @Nullable ModPsiUpdater updater) {
 
     final PyClass pyClass = target.getContainingClass();
     if (pyClass == null) {
       throw new IllegalArgumentException("Target '" + target.getText() + "' in not contained in a class definition");
     }
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
@@ -98,23 +94,25 @@ public final class PyTypeHintGenerationUtil {
     final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
 
-    WriteAction.run(() -> {
-      final PyAssignmentStatement inserted = (PyAssignmentStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
-      PsiComment insertedComment = as(inserted.getLastChild(), PsiComment.class);
-      if (insertedComment == null) return;
+    final PyAssignmentStatement inserted = (PyAssignmentStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+    PsiComment insertedComment = as(inserted.getLastChild(), PsiComment.class);
+    if (insertedComment == null) return;
 
-      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
+    addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
 
-      insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
-      if (startTemplate && insertedComment != null) {
-        openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
-      }
-    });
+    insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
+    if (updater != null && insertedComment != null) {
+      addTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges(), updater);
+    }
   }
 
+  /**
+   * Declares the attribute {@code target} with an annotation at the start of its class.
+   * With an {@code updater}, starts a template on the annotation.
+   */
   public static void insertStandaloneAttributeAnnotation(@NotNull PyTargetExpression target,
                                                          @NotNull AnnotationInfo info,
-                                                         boolean startTemplate) {
+                                                         @Nullable ModPsiUpdater updater) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
       throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);
@@ -125,23 +123,19 @@ public final class PyTypeHintGenerationUtil {
       throw new IllegalArgumentException("Target '" + target.getText() + "' in not contained in a class definition");
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
-
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final String declarationText = target.getName() + ": " + info.getAnnotationText();
     final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
 
-    WriteAction.run(() -> {
-      PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+    PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
 
-      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
+    addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
 
-      inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
-      if (startTemplate && inserted != null) {
-        openEditorAndAddTemplateForAnnotation(inserted);
-      }
-    });
+    inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+    if (updater != null && inserted != null) {
+      addTemplateForAnnotation(inserted, updater);
+    }
   }
 
   private static @Nullable PsiElement findPrecedingAnchorForAttributeDeclaration(@NotNull PyClass pyClass) {
@@ -153,29 +147,29 @@ public final class PyTypeHintGenerationUtil {
     return null;
   }
 
+  /**
+   * Annotates the variable {@code target}, inline when it is the only target of an assignment, else in a declaration before it.
+   * Adds the imports of the types when {@code addImports} is true. With an {@code updater}, starts a template on the annotation.
+   */
   public static void insertVariableAnnotation(@NotNull PyTargetExpression target,
-                                              @Nullable TypeEvalContext context,
+                                              boolean addImports,
                                               @NotNull AnnotationInfo info,
-                                              boolean startTemplate) {
+                                              @Nullable ModPsiUpdater updater) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
       throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
-
     final Project project = target.getProject();
-    final ThrowableComputable<PyAnnotationOwner, RuntimeException> addOrUpdateAnnotatedStatement;
+    PyAnnotationOwner createdAnnotationOwner;
     if (canUseInlineAnnotation(target)) {
       final SmartPointerManager manager = SmartPointerManager.getInstance(project);
       final PyAssignmentStatement assignment = (PyAssignmentStatement)target.getParent();
       final SmartPsiElementPointer<PyAssignmentStatement> pointer = manager.createSmartPsiElementPointer(assignment);
-      addOrUpdateAnnotatedStatement = () -> {
-        PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-          document.insertString(target.getTextRange().getEndOffset(), ": " + info.getAnnotationText());
-        });
-        return pointer.getElement();
-      };
+      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        document.insertString(target.getTextRange().getEndOffset(), ": " + info.getAnnotationText());
+      });
+      createdAnnotationOwner = pointer.getElement();
     }
     else {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
@@ -183,45 +177,30 @@ public final class PyTypeHintGenerationUtil {
       final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
       final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
       assert statement != null;
-      addOrUpdateAnnotatedStatement = () -> (PyAnnotationOwner)statement.getParent().addBefore(declaration, statement);
+      createdAnnotationOwner = (PyAnnotationOwner)statement.getParent().addBefore(declaration, statement);
+    }
+    if (createdAnnotationOwner == null) return;
+
+    if (addImports) {
+      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), createdAnnotationOwner);
     }
 
-    WriteAction.run(() -> {
-      PyAnnotationOwner createdAnnotationOwner = addOrUpdateAnnotatedStatement.compute();
-      if (createdAnnotationOwner == null) return;
-
-      if (context != null) {
-        addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
-      }
-
-      createdAnnotationOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(createdAnnotationOwner);
-      if (startTemplate && createdAnnotationOwner != null) {
-        openEditorAndAddTemplateForAnnotation(createdAnnotationOwner);
-      }
-    });
+    createdAnnotationOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(createdAnnotationOwner);
+    if (updater != null && createdAnnotationOwner != null) {
+      addTemplateForAnnotation(createdAnnotationOwner, updater);
+    }
   }
 
-  private static void openEditorAndAddTemplateForAnnotation(@NotNull PyAnnotationOwner annotated) {
+  private static void addTemplateForAnnotation(@NotNull PyAnnotationOwner annotated, @NotNull ModPsiUpdater updater) {
     assert annotated.isValid();
     assert annotated.getAnnotationValue() != null;
 
-    final Project project = annotated.getProject();
-    final int initialCaretOffset = annotated.getTextRange().getStartOffset();
-    final VirtualFile updatedVirtualFile = annotated.getContainingFile().getVirtualFile();
-    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
     final String annotation = annotated.getAnnotationValue();
     final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
     //noinspection ConstantConditions
-    templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
-
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
-    if (editor != null) {
-      editor.getCaretModel().moveToOffset(initialCaretOffset);
-      templateBuilder.run(editor, true);
-    }
-    else {
-      templateBuilder.runNonInteractively(true);
-    }
+    final PyExpression annotationValue = annotated.getAnnotation().getValue();
+    updater.moveCaretTo(annotated);
+    updater.templateBuilder().field(annotationValue, new ConstantNode(replacementText));
   }
 
   private static boolean canUseInlineAnnotation(@NotNull PyTargetExpression target) {
@@ -229,11 +208,13 @@ public final class PyTypeHintGenerationUtil {
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
 
+  /**
+   * Adds a type comment for the variable {@code target} to its statement.
+   * With an {@code updater}, starts a template on the types.
+   */
   public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
                                                @NotNull AnnotationInfo info,
-                                               boolean startTemplate) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
-
+                                               @Nullable ModPsiUpdater updater) {
     final String typeCommentText = "  " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
 
     final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
@@ -251,19 +232,18 @@ public final class PyTypeHintGenerationUtil {
       throw new IllegalArgumentException("Target expression must belong to an assignment, \"with\" statement or \"for\" loop");
     }
 
-    final ThrowableRunnable<RuntimeException> insertComment;
     if (insertionAnchor instanceof PsiComment) {
       final String combinedTypeCommentText = typeCommentText + " " + insertionAnchor.getText();
       final PsiElement lastNonComment = PyPsiUtils.getPrevNonCommentSibling(insertionAnchor, true);
       final int startOffset = lastNonComment.getTextRange().getEndOffset();
       final int endOffset = insertionAnchor.getTextRange().getEndOffset();
-      insertComment = () -> PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
         document.replaceString(startOffset, endOffset, combinedTypeCommentText);
       });
     }
     else if (insertionAnchor != null) {
       final int offset = insertionAnchor.getTextRange().getEndOffset();
-      insertComment = () -> PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
         document.insertString(offset, typeCommentText);
       });
     }
@@ -271,41 +251,32 @@ public final class PyTypeHintGenerationUtil {
       return;
     }
 
-    WriteAction.run(() -> {
-      insertComment.run();
-      PsiComment insertedComment = target.getTypeComment();
-      if (insertedComment == null) return;
+    PsiComment insertedComment = target.getTypeComment();
+    if (insertedComment == null) return;
 
-      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
+    addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
 
-      insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
-      if (startTemplate && insertedComment != null) {
-        openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
-      }
-    });
+    insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
+    if (updater != null && insertedComment != null) {
+      addTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges(), updater);
+    }
   }
 
-  private static void openEditorAndAddTemplateForTypeComment(@NotNull PsiComment insertedComment,
-                                                             @NotNull String annotation,
-                                                             @NotNull List<TextRange> typeRanges) {
-    final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
-    final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
-    final Project project = insertedComment.getProject();
-    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
+  private static void addTemplateForTypeComment(@NotNull PsiComment insertedComment,
+                                                @NotNull String annotation,
+                                                @NotNull List<TextRange> typeRanges,
+                                                @NotNull ModPsiUpdater updater) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
-    for (TextRange range : typeRanges) {
+    updater.moveCaretTo(insertedComment);
+    final ModTemplateBuilder templateBuilder = updater.templateBuilder();
+    // Each field writes its value into the document at once, so a longer value moves the fields after it.
+    int shift = TYPE_COMMENT_PREFIX.length();
+    for (int i = 0; i < typeRanges.size(); i++) {
+      final TextRange range = typeRanges.get(i);
       final String individualType = range.substring(annotation);
       final String replacementText = testMode ? "[" + individualType + "]" : individualType;
-      templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
-    }
-
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
-    if (editor != null) {
-      editor.getCaretModel().moveToOffset(initialCaretOffset);
-      templateBuilder.run(editor, true);
-    }
-    else {
-      templateBuilder.runNonInteractively(true);
+      templateBuilder.field(insertedComment, range.shiftRight(shift), "TYPE" + i, new ConstantNode(replacementText));
+      shift += replacementText.length() - individualType.length();
     }
   }
 

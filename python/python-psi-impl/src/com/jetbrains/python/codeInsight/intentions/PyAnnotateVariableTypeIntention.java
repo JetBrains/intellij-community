@@ -2,7 +2,10 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
@@ -10,10 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -73,28 +74,28 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
  * @author Mikhail Golubev
  */
 @ApiStatus.Internal
-public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
+public final class PyAnnotateVariableTypeIntention implements ModCommandAction {
   @Override
   public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    final PsiFile psiFile = context.file();
     if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) {
-      return false;
+      return null;
     }
-    final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(project, editor, psiFile);
+    final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(context.project(), psiFile, context.offset());
     if (resolved.size() != 1) {
-      return false;
+      return null;
     }
 
-    setText(PyPsiBundle.message("INTN.add.type.hint.for.variable", resolved.get(0).getName()));
-    return true;
+    return Presentation.of(PyPsiBundle.message("INTN.add.type.hint.for.variable", resolved.get(0).getName()));
   }
 
-  private static @NotNull List<PyTargetExpression> findSuitableTargetsUnderCaret(@NotNull Project project, Editor editor, PsiFile file) {
-    final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+  private static @NotNull List<PyTargetExpression> findSuitableTargetsUnderCaret(@NotNull Project project, PsiFile file, int caretOffset) {
+    final int offset = TargetElementUtilBase.adjustOffset(file, file.getFileDocument(), caretOffset);
     final PyReferenceOwner elementAtCaret = PsiTreeUtil.getParentOfType(file.findElementAt(offset),
                                                                         PyReferenceExpression.class, PyTargetExpression.class);
     if (elementAtCaret == null) {
@@ -239,20 +240,20 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final List<PyTargetExpression> targets = findSuitableTargetsUnderCaret(project, editor, file);
-    assert targets.size() == 1;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    final List<PyTargetExpression> targets = findSuitableTargetsUnderCaret(context.project(), context.file(), context.offset());
+    if (targets.size() != 1) return ModCommand.nop();
     final PyTargetExpression annotationTarget = targets.get(0);
     try {
       if (preferSyntacticAnnotation(annotationTarget)) {
-        insertVariableAnnotation(annotationTarget);
+        return insertVariableAnnotation(context, annotationTarget);
       }
       else {
-        insertVariableTypeComment(annotationTarget);
+        return insertVariableTypeComment(context, annotationTarget);
       }
     }
     catch (Pep484IncompatibleTypeException e) {
-      PythonUiService.getInstance().showErrorHint(editor, e.getMessage());
+      return ModCommand.error(e.getMessage());
     }
   }
 
@@ -260,7 +261,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     return LanguageLevel.forElement(annotationTarget).isAtLeast(LanguageLevel.PYTHON36);
   }
 
-  private static void insertVariableAnnotation(@NotNull PyTargetExpression target) {
+  private static @NotNull ModCommand insertVariableAnnotation(@NotNull ActionContext actionContext, @NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final PyType rawType = getInferredTypeOrObject(target, context);
     final PyType inferredType = isInsideTupleUnpacking(target) ? rawType : PyLiteralType.upcastLiteralToClass(rawType);
@@ -271,32 +272,46 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, info, true);
+        return ModCommand.psiUpdate(actionContext, updater -> {
+          PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(updater.getWritable(target), info, updater);
+        });
       }
       else {
-        PyTypeHintGenerationUtil.insertVariableAnnotation(classLevelAttrs.get(0), context, info, true);
+        final PyTargetExpression classLevelAttr = classLevelAttrs.get(0);
+        return ModCommand.psiUpdate(actionContext, updater -> {
+          PyTypeHintGenerationUtil.insertVariableAnnotation(updater.getWritable(classLevelAttr), true, info, updater);
+        });
       }
     }
     else {
-      PyTypeHintGenerationUtil.insertVariableAnnotation(target, context, info, true);
+      return ModCommand.psiUpdate(actionContext, updater -> {
+        PyTypeHintGenerationUtil.insertVariableAnnotation(updater.getWritable(target), true, info, updater);
+      });
     }
   }
 
-  private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
+  private static @NotNull ModCommand insertVariableTypeComment(@NotNull ActionContext actionContext, @NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final AnnotationInfo info = generateNestedTypeHint(target, context);
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, info, true);
+        return ModCommand.psiUpdate(actionContext, updater -> {
+          PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(updater.getWritable(target), info, updater);
+        });
       }
       else {
         // Use existing class level definition (say, assignment of the default value) for annotation
-        PyTypeHintGenerationUtil.insertVariableTypeComment(classLevelAttrs.get(0), info, true);
+        final PyTargetExpression classLevelAttr = classLevelAttrs.get(0);
+        return ModCommand.psiUpdate(actionContext, updater -> {
+          PyTypeHintGenerationUtil.insertVariableTypeComment(updater.getWritable(classLevelAttr), info, updater);
+        });
       }
     }
     else {
-      PyTypeHintGenerationUtil.insertVariableTypeComment(target, info, true);
+      return ModCommand.psiUpdate(actionContext, updater -> {
+        PyTypeHintGenerationUtil.insertVariableTypeComment(updater.getWritable(target), info, updater);
+      });
     }
   }
 
@@ -355,8 +370,4 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     return parent instanceof PyTupleExpression;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 }

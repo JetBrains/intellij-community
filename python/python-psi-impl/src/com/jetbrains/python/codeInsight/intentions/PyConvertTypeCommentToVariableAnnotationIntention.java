@@ -2,8 +2,10 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,23 +38,27 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @ApiStatus.Internal
-public final class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseIntentionAction {
+public final class PyConvertTypeCommentToVariableAnnotationIntention extends PsiUpdateModCommandAction<PsiElement> {
+  public PyConvertTypeCommentToVariableAnnotationIntention() {
+    super(PsiElement.class);
+  }
+
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiComment typeComment = findCommentUnderCaret(editor, file);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PsiComment typeComment = PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
     if (typeComment != null) {
-      final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+      final SmartPointerManager manager = SmartPointerManager.getInstance(context.project());
       final SmartPsiElementPointer<PsiComment> commentPointer = manager.createSmartPsiElementPointer(typeComment);
       final Map<PyTargetExpression, String> map = mapTargetsToAnnotations(typeComment);
       if (!map.isEmpty()) {
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
           final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
           assert target != null;
-          PyTypeHintGenerationUtil.insertVariableAnnotation(target, null, new AnnotationInfo(map.get(target)), false);
+          PyTypeHintGenerationUtil.insertVariableAnnotation(target, false, new AnnotationInfo(map.get(target)), null);
         }
         else {
           for (Map.Entry<PyTargetExpression, String> entry : new ArrayList<>(map.entrySet())) {
-            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), null, new AnnotationInfo(entry.getValue()), false);
+            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), false, new AnnotationInfo(entry.getValue()), null);
           }
         }
 
@@ -65,27 +71,20 @@ public final class PyConvertTypeCommentToVariableAnnotationIntention extends PyB
   }
 
   @Override
-  public @NotNull String getText() {
-    return PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation");
-  }
-
-  @Override
   public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.type.comment.to.variable.annotation");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    final PsiFile psiFile = element.getContainingFile();
     if (psiFile instanceof PyFile && LanguageLevel.forElement(psiFile).isAtLeast(LanguageLevel.PYTHON36)) {
-      final PsiComment comment = findCommentUnderCaret(editor, psiFile);
-      return comment != null && isSuitableTypeComment(comment);
+      final PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
+      if (comment != null && isSuitableTypeComment(comment)) {
+        return Presentation.of(PyPsiBundle.message("INTN.convert.type.comment.to.variable.annotation"));
+      }
     }
-    return false;
-  }
-
-  private static @Nullable PsiComment findCommentUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    return PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
+    return null;
   }
 
   private static boolean isSuitableTypeComment(@NotNull PsiComment comment) {

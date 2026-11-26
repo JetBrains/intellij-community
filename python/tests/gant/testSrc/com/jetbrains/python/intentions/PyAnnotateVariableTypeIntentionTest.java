@@ -238,15 +238,15 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testAnnotationNotPossibleForStructuralType() {
-    doAnnotationTest();
+    doNotPossibleAnnotationTest("{foo}");
   }
 
   public void testAnnotationNotPossibleForNestedStructuralType() {
-    doAnnotationTest();
+    doNotPossibleAnnotationTest("{foo}");
   }
 
   public void testAnnotationNotPossibleForStructuralTypeInCallable() {
-    doAnnotationTest();
+    doNotPossibleAnnotationTest("{foo}");
   }
 
   public void testAnnotationCallableType() {
@@ -364,6 +364,17 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
 
   private void doTypeCommentTest() {
     doTest(LanguageLevel.PYTHON27);
+  }
+
+  /** The intention reports that it cannot express {@code type} and leaves the file as it is. */
+  private void doNotPossibleAnnotationTest(@NotNull String type) {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.configureByFile(getTestName(true) + ".py");
+      final IntentionAction action = myFixture.findSingleIntention(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable"));
+      final String expectedMessage = PyPsiBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type);
+      assertThrows(() -> myFixture.launchAction(action), Throwable.class, message -> assertEquals(expectedMessage, message));
+      myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    });
   }
 
   private void doNegativeTest() {

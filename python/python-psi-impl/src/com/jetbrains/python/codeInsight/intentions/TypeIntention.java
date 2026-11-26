@@ -56,18 +56,30 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
   }
 
   protected final @Nullable PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
-    return findOnlySuitableFunction(editor, file, input -> !isReturnTypeDefined(input));
+    return findOnlySuitableFunction(file, editor.getCaretModel().getOffset(), input -> !isReturnTypeDefined(input));
   }
 
-  public static @Nullable PyFunction findOnlySuitableFunction(@NotNull Editor editor,
-                                                              @NotNull PsiFile file,
-                                                              Predicate<PyFunction> condition) {
-    final PsiElement elementAt = getElementUnderCaret(editor, file);
+  /**
+   * Finds the function at {@code offset} of {@code file}: the function whose name is there, or the callee of the call there.
+   * Returns null when there is no such function, or more than one, or when the function is in a library.
+   */
+  public static @Nullable PyFunction findOnlySuitableFunction(@NotNull PsiFile file, int offset, @NotNull Predicate<PyFunction> condition) {
+    final PsiElement elementAt = getElementUnderCaret(file, offset);
     return elementAt != null ? ContainerUtil.getOnlyItem(findSuitableFunctions(elementAt, condition)) : null;
   }
 
   protected final @Nullable PyNamedParameter findOnlySuitableParameter(@NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiElement elementAt = getElementUnderCaret(editor, file);
+    return findOnlySuitableParameter(file, editor.getCaretModel().getOffset(), this::isParamTypeDefined);
+  }
+
+  /**
+   * Finds the parameter at {@code offset} of {@code file}, or the parameter that the reference there resolves to.
+   * Returns null for {@code self}, a lambda parameter, a parameter in a library, and a parameter for which {@code isTypeDefined} holds.
+   */
+  static @Nullable PyNamedParameter findOnlySuitableParameter(@NotNull PsiFile file,
+                                                              int offset,
+                                                              @NotNull Predicate<PyNamedParameter> isTypeDefined) {
+    final PsiElement elementAt = getElementUnderCaret(file, offset);
     final StreamEx<PyNamedParameter> parameters;
     final PyNamedParameter immediateParam = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class);
     if (immediateParam != null) {
@@ -91,12 +103,12 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
         VirtualFile dir = param.getContainingFile().getOriginalFile().getVirtualFile();
         return dir != null && !index.isInLibraryClasses(dir);
       })
-      .filter(param -> !isParamTypeDefined(param))
+      .filter(param -> !isTypeDefined.test(param))
       .findFirst().orElse(null);
   }
 
-  private static @Nullable PsiElement getElementUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
-    final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+  private static @Nullable PsiElement getElementUnderCaret(@NotNull PsiFile file, int caretOffset) {
+    final int offset = TargetElementUtilBase.adjustOffset(file, file.getFileDocument(), caretOffset);
     return PyUtil.findNonWhitespaceAtOffset(file, offset);
   }
 

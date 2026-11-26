@@ -2,22 +2,24 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTemplateBuilder;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAnnotation;
@@ -28,6 +30,7 @@ import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
+public final class PyAnnotateTypesIntention implements ModCommandAction {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -44,14 +47,15 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    final PsiFile psiFile = context.file();
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) return null;
 
-    final PyFunction function = findSuitableFunction(editor, psiFile);
-    if (function == null) return false;
+    final PyFunction function = findSuitableFunction(context);
+    if (function == null) return null;
 
     if (function.getTypeComment() != null) {
-      return false;
+      return null;
     }
 
     final PyAnnotation annotation = function.getAnnotation();
@@ -60,45 +64,50 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
                                                          it -> it instanceof PyNamedParameter &&
                                                                ((PyNamedParameter)it).getAnnotation() != null);
       if (allParametersAnnotated) {
-        return false;
+        return null;
       }
     }
 
-    setText(PyPsiBundle.message("INTN.add.type.hints.for.function", function.getName()));
-    return true;
+    return Presentation.of(PyPsiBundle.message("INTN.add.type.hints.for.function", function.getName()));
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PyFunction function = findSuitableFunction(editor, file);
-    if (function != null) {
-      annotateTypes(editor, function);
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    final PyFunction function = findSuitableFunction(context);
+    return function != null ? createCommand(context, function) : ModCommand.nop();
+  }
+
+  private static @Nullable PyFunction findSuitableFunction(@NotNull ActionContext context) {
+    return TypeIntention.findOnlySuitableFunction(context.file(), context.offset(), input -> true);
+  }
+
+  /**
+   * Adds type hints to {@code function} and starts a template on them, as the intention does.
+   * {@code editor} can be null; the template then opens an editor for the file of {@code function}.
+   */
+  public static void annotateTypes(@Nullable Editor editor, @NotNull PyFunction function) {
+    final ActionContext context = ActionContext.from(editor, function.getContainingFile());
+    ModCommandExecutor.getInstance().executeInteractively(context, createCommand(context, function), editor);
+  }
+
+  /** Computes the types on the physical {@code function}, because a copy has no collected run-time signature. */
+  private static @NotNull ModCommand createCommand(@NotNull ActionContext context, @NotNull PyFunction function) {
+    final AnnotationInfo returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function);
+    final PyParameter[] params = function.getParameterList().getParameters();
+    final List<String> paramTypes = ContainerUtil.map(params, SpecifyTypeInPy3AnnotationsIntention::parameterType);
+    final Project project = context.project();
+    if (isPy3k(function.getContainingFile())) {
+      return ModCommand.psiUpdate(context, updater -> generatePy3kTypeAnnotations(project, updater.getWritable(function), paramTypes,
+                                                                                    returnType, updater));
     }
+    return ModCommand.psiUpdate(context, updater -> generateTypeCommentAnnotations(updater.getWritable(function), paramTypes,
+                                                                                     returnType.getAnnotationText(), updater));
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  private static @Nullable PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
-    return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
-  }
-
-  public static void annotateTypes(Editor editor, PyFunction function) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(function)) return;
-
-    WriteAction.run(() -> {
-      if (isPy3k(function.getContainingFile())) {
-        generatePy3kTypeAnnotations(function.getProject(), editor, function);
-      }
-      else {
-        generateTypeCommentAnnotations(function.getProject(), function);
-      }
-    });
-  }
-
-  private static void generateTypeCommentAnnotations(Project project, PyFunction function) {
+  private static void generateTypeCommentAnnotations(@NotNull PyFunction function,
+                                                     @NotNull List<String> paramTypes,
+                                                     @NotNull String returnType,
+                                                     @NotNull ModPsiUpdater updater) {
 
     StringBuilder replacementTextBuilder = new StringBuilder("# type: (");
 
@@ -108,7 +117,7 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     for (int i = 0; i < params.length; i++) {
       if (!params[i].isSelf()) {
-        String type = SpecifyTypeInPy3AnnotationsIntention.parameterType(params[i]);
+        String type = paramTypes.get(i);
 
         templates.add(Pair.create(replacementTextBuilder.length(), type));
 
@@ -122,7 +131,6 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     replacementTextBuilder.append(") -> ");
 
-    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function).getAnnotationText();
     templates.add(Pair.create(replacementTextBuilder.length(), returnType));
 
     replacementTextBuilder.append(returnType);
@@ -132,56 +140,27 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     replacementTextBuilder.insert(0, indentation);
     replacementTextBuilder.insert(0, "\n");
 
+    final PsiElement beforeStatements = statements.getPrevSibling();
+    final int offset = beforeStatements.getTextRange().getStartOffset() + (":".equals(beforeStatements.getText()) ? 1 : 0);
+    final String replacementText = replacementTextBuilder.toString();
+    PyUtil.updateDocumentUnblockedAndCommitted(function, document -> {
+      document.insertString(offset, replacementText);
+    });
 
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    final Document document = manager.getDocument(function.getContainingFile());
+    PsiElement element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
 
-    if (document != null) {
-      final PsiElement beforeStatements = statements.getPrevSibling();
-      int offset = beforeStatements.getTextRange().getStartOffset();
-      if (":".equals(beforeStatements.getText())) {
-        offset += 1;
-      }
-      try {
-        document.insertString(offset, replacementTextBuilder.toString());
-      }
-      finally {
-        manager.commitDocument(document);
-      }
-
-
-      PsiElement element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
-
-      while (element != null && !element.getText().contains(replacementTextBuilder.toString())) {
-        element = element.getParent();
-      }
-
-      if (element != null) {
-        final TemplateBuilder builder =
-          TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
-
-        for (Pair<Integer, String> template : templates) {
-          builder.replaceRange(TextRange.from(
-            offset - element.getTextRange().getStartOffset() + replacementTextBuilder.toString().indexOf('#') + template.first,
-            template.second.length()), template.second);
-        }
-
-        startTemplate(project, element, builder);
-      }
+    while (element != null && !element.getText().contains(replacementText)) {
+      element = element.getParent();
     }
-  }
 
-  private static void startTemplate(Project project, PsiElement callable, TemplateBuilder builder) {
-    int offset = callable.getTextRange().getStartOffset();
-
-    final Editor targetEditor = PythonUiService.getInstance().openTextEditor(project,
-                                                                             callable.getContainingFile().getVirtualFile(),
-                                                                             offset);
-    if (targetEditor != null) {
-      builder.run(targetEditor, true);
-    }
-    else {
-      builder.runNonInteractively(true);
+    if (element != null) {
+      final ModTemplateBuilder builder = updater.templateBuilder();
+      final int commentStart = offset - element.getTextRange().getStartOffset() + replacementText.indexOf('#');
+      for (int i = 0; i < templates.size(); i++) {
+        final Pair<Integer, String> template = templates.get(i);
+        builder.field(element, TextRange.from(commentStart + template.first, template.second.length()), "TYPE" + i,
+                      new ConstantNode(template.second));
+      }
     }
   }
 
@@ -189,38 +168,43 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return !LanguageLevel.forElement(file).isPython2();
   }
 
-  private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, @NotNull PyFunction function) {
-    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
-
-    PyExpression returnType = SpecifyTypeInPy3AnnotationsIntention.annotateReturnType(project, function, false);
-
-    if (returnType != null) {
-      builder.replaceElement(returnType, returnType.getText());
-    }
+  private static void generatePy3kTypeAnnotations(@NotNull Project project,
+                                                  @NotNull PyFunction originalFunction,
+                                                  @NotNull List<String> paramTypes,
+                                                  @NotNull AnnotationInfo returnTypeInfo,
+                                                  @NotNull ModPsiUpdater updater) {
+    // The return type goes in through the document, so the reparse can replace the function element.
+    final PyExpression annotatedReturnType = SpecifyTypeInPy3AnnotationsIntention.annotateReturnType(originalFunction, returnTypeInfo, null);
+    final PyFunction function = annotatedReturnType != null
+                                ? PsiTreeUtil.getParentOfType(annotatedReturnType, PyFunction.class)
+                                : originalFunction;
+    if (function == null) return;
 
     PyParameter[] params = function.getParameterList().getParameters();
 
     for (int i = params.length - 1; i >= 0; i--) {
       if (params[i] instanceof PyNamedParameter && !params[i].isSelf()) {
-        params[i] = SpecifyTypeInPy3AnnotationsIntention.annotateParameter(project, editor, (PyNamedParameter)params[i], false);
+        params[i] = SpecifyTypeInPy3AnnotationsIntention.annotateParameter(project, (PyNamedParameter)params[i], paramTypes.get(i), null);
       }
     }
 
-
-    for (int i = params.length - 1; i >= 0; i--) {
-      if (params[i] instanceof PyNamedParameter) {
-        if (!params[i].isSelf()) {
-          params[i] = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(params[i]);
-          PyAnnotation annotation = ((PyNamedParameter)params[i]).getAnnotation();
-          if (annotation != null) {
-            PyExpression annotationValue = annotation.getValue();
-            if (annotationValue != null) {
-              builder.replaceElement(annotationValue, annotationValue.getText());
-            }
+    final ModTemplateBuilder builder = updater.templateBuilder();
+    for (PyParameter param : params) {
+      if (param instanceof PyNamedParameter namedParameter && !param.isSelf()) {
+        PyAnnotation annotation = namedParameter.getAnnotation();
+        if (annotation != null) {
+          PyExpression annotationValue = annotation.getValue();
+          if (annotationValue != null) {
+            builder.field(annotationValue, annotationValue.getText());
           }
         }
       }
     }
-    startTemplate(project, function, builder);
+    // The edits of the parameters reformat the header, so find the return type again.
+    final PyAnnotation returnAnnotation = function.getAnnotation();
+    final PyExpression returnType = returnAnnotation != null ? returnAnnotation.getValue() : null;
+    if (returnType != null) {
+      builder.field(returnType, returnType.getText());
+    }
   }
 }
