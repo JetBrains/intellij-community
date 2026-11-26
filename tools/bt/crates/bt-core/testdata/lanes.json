@@ -134,11 +134,13 @@
       "sources": [
         "plugins/air/tests/integration/bridge/tests",
         "plugins/air/tests/integration/bridge/testGen",
-        "plugins/air/tests/integration/bridge/genui/tests"
+        "plugins/air/tests/integration/bridge/genui/tests",
+        "plugins/air/tests/integration/bridge/unifiedIde/tests"
       ],
       "descriptors": [
         "plugins/air/tests/integration/bridge/resources/intellij.air.integrationTests.bridge.xml",
-        "plugins/air/tests/integration/bridge/genui/resources/intellij.air.integrationTests.bridge.genui.xml"
+        "plugins/air/tests/integration/bridge/genui/resources/intellij.air.integrationTests.bridge.genui.xml",
+        "plugins/air/tests/integration/bridge/unifiedIde/resources/intellij.air.integrationTests.bridge.unifiedIde.xml"
       ],
       "requestType": "AirUiTestRequest",
       "vocabulary": "plugins/air/tests/integration/bridge/resources/flow-vocabulary.json"

@@ -97,6 +97,14 @@ fn bridge_tree() -> FakeRuntime {
             "package genui\n\nclass Probe\n".to_owned(),
         ),
         (
+            format!("{BRIDGE}/unifiedIde/resources/intellij.air.integrationTests.bridge.unifiedIde.xml"),
+            "<idea-plugin/>".to_owned(),
+        ),
+        (
+            format!("{BRIDGE}/unifiedIde/tests/Workspace.kt"),
+            "package unifiedIde\n\nclass Workspace\n".to_owned(),
+        ),
+        (
             format!("{BRIDGE}/tests/Protocol.kt"),
             r#"package com.intellij.air.integration.bridge
 
