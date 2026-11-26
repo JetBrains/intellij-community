@@ -238,6 +238,51 @@ internal class UnifiedPluginUpdateAllControllerTest {
   }
 
   @Test
+  fun `apply makes a new update for the same plugin eligible`() {
+    val target = plugin("target")
+    controller.acceptUpdates(updates(target))
+    controller.requestUpdateAll()
+    executor.callbacks.single().prepared(target.pluginId, restartRequired = false)
+    controller.acceptOperationEvent(PluginModelEvent.InventoryInvalidated(PluginInventoryChangeReason.APPLY, emptySet()))
+
+    val nextVersion = plugin("target").apply { version = "2.0" }
+    controller.acceptUpdates(updates(nextVersion))
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Available)
+    controller.requestUpdateAll()
+    assertThat(executor.requests.last().updates.single()).isSameAs(nextVersion)
+  }
+
+  @Test
+  fun `new eligible updates replace Updated`() {
+    assertUpdateAllReturns(restartRequired = false)
+  }
+
+  @Test
+  fun `new eligible updates preserve pending restart`() {
+    assertUpdateAllReturns(restartRequired = true)
+  }
+
+  private fun assertUpdateAllReturns(restartRequired: Boolean) {
+    val prepared = plugin("prepared")
+    controller.acceptUpdates(updates(prepared))
+    controller.requestUpdateAll()
+    executor.callbacks.single().prepared(prepared.pluginId, restartRequired)
+
+    val expected = if (restartRequired) UnifiedPluginUpdateAllPresentation.RestartRequired else UnifiedPluginUpdateAllPresentation.Updated
+    controller.acceptUpdates(updates())
+    assertThat(controller.state.value.presentation).isEqualTo(expected)
+    controller.acceptUpdates(updates(prepared))
+    assertThat(controller.state.value.presentation).isEqualTo(expected)
+
+    val next = plugin("next")
+    controller.acceptUpdates(updates(prepared, next))
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Available)
+    assertThat(controller.state.value.restartRequired).isEqualTo(restartRequired)
+    controller.requestUpdateAll()
+    assertThat(executor.requests.last().updates).containsExactly(next)
+  }
+
+  @Test
   fun `clearing available updates preserves active progress and prepared restart`() {
     val target = plugin("target")
     controller.acceptUpdates(updates(target))

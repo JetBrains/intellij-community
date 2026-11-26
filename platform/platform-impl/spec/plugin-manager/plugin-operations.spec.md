@@ -358,13 +358,17 @@ Untested: No focused test covers every management edit and refresh path.
 - Retry must use the current update for each eligible failed target.
 - A restart requirement must produce the Restart IDE terminal state.
 - Completion without restart must produce the Updated terminal state.
-- A later update snapshot must replace an obsolete terminal state.
+- A later snapshot with eligible updates must restore Update All.
+- A pending restart must remain in effect when Update All becomes available again.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllControllerTest.kt (
     `request captures one snapshot before executor starts`;
     `failed operation is retained after the other updates prepare`;
     `retry follows eligibility after a batch fails`;
     `restart requirement survives a retry`;
-    `completion without restart shows updated state`
+    `completion without restart shows updated state`;
+    `apply makes a new update for the same plugin eligible`;
+    `new eligible updates replace Updated`;
+    `new eligible updates preserve pending restart`
   )
 
 ## Operation Presentation

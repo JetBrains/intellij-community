@@ -89,6 +89,7 @@ internal class UnifiedPluginUpdateAllController(
   private val lock = Any()
   private val mutableState = MutableStateFlow(UnifiedPluginUpdateAllState())
   private var latestUpdates: List<PluginUiModel> = emptyList()
+  private val preparedBatchPluginIds = HashSet<PluginId>()
   private var failedPluginIds: Set<PluginId> = emptySet()
   private var activeRequest: ActiveRequest? = null
   private var nextGeneration = 0L
@@ -120,11 +121,21 @@ internal class UnifiedPluginUpdateAllController(
     try {
       synchronized(lock) {
         if (closed) return
-        if (event is PluginModelEvent.InventoryInvalidated && event.reason == PluginInventoryChangeReason.RESET) {
-          activeRequest = null
-          failedPluginIds = emptySet()
-          preparedRestartRequired = false
-          publishSnapshotAvailability()
+        if (event is PluginModelEvent.InventoryInvalidated) {
+          when (event.reason) {
+            PluginInventoryChangeReason.APPLY -> {
+              latestUpdates = availableUpdates()
+              preparedBatchPluginIds.clear()
+            }
+            PluginInventoryChangeReason.RESET -> {
+              activeRequest = null
+              preparedBatchPluginIds.clear()
+              failedPluginIds = emptySet()
+              preparedRestartRequired = false
+              publishSnapshotAvailability()
+            }
+            else -> Unit
+          }
           return
         }
         val request = activeRequest ?: return
@@ -159,11 +170,12 @@ internal class UnifiedPluginUpdateAllController(
   fun requestUpdateAll() {
     val execution = synchronized(lock) {
       if (closed || !mutableState.value.presentation.canStartUpdateAll()) return
+      val available = availableUpdates()
       val updates = if (mutableState.value.presentation == UnifiedPluginUpdateAllPresentation.Failed) {
-        eligibleFailedUpdates()
+        eligibleFailedUpdates(available)
       }
       else {
-        latestUpdates
+        available
       }
       if (updates.isEmpty()) return
       val request = UnifiedPluginUpdateAllRequest(++nextGeneration, updates.toList())
@@ -228,6 +240,7 @@ internal class UnifiedPluginUpdateAllController(
   private fun acceptPrepared(request: ActiveRequest, pluginId: PluginId, restartRequired: Boolean) {
     if (pluginId !in request.request.pluginIds || pluginId in request.terminalPluginIds) return
     request.preparedPluginIds.add(pluginId)
+    preparedBatchPluginIds.add(pluginId)
     preparedRestartRequired = preparedRestartRequired || restartRequired
     publishAfterTargetFinished(request)
   }
@@ -295,28 +308,31 @@ internal class UnifiedPluginUpdateAllController(
   }
 
   private fun publishIdleState() {
-    val currentState = mutableState.value
-    when (currentState.presentation) {
-      UnifiedPluginUpdateAllPresentation.RestartRequired,
-      UnifiedPluginUpdateAllPresentation.Updated -> publish(currentState)
-      else -> {
-        val failedTargets = eligibleFailedUpdates().map { model ->
-          UnifiedPluginUpdateAllTarget(model, UnifiedPluginUpdateAllTargetStatus.Failed)
-        }
-        if (failedTargets.isEmpty()) publishSnapshotAvailability()
-        else publish(UnifiedPluginUpdateAllState(UnifiedPluginUpdateAllPresentation.Failed, failedTargets))
+    val available = availableUpdates()
+    val failedTargets = eligibleFailedUpdates(available).map { model ->
+      UnifiedPluginUpdateAllTarget(model, UnifiedPluginUpdateAllTargetStatus.Failed)
+    }
+    val presentation = when {
+      failedTargets.isNotEmpty() -> UnifiedPluginUpdateAllPresentation.Failed
+      available.isNotEmpty() -> UnifiedPluginUpdateAllPresentation.Available
+      else -> when (val current = mutableState.value.presentation) {
+        UnifiedPluginUpdateAllPresentation.RestartRequired, UnifiedPluginUpdateAllPresentation.Updated -> current
+        else -> UnifiedPluginUpdateAllPresentation.Hidden
       }
     }
+    publish(UnifiedPluginUpdateAllState(presentation, failedTargets))
   }
 
-  private fun eligibleFailedUpdates(): List<PluginUiModel> = latestUpdates.filter { it.pluginId in failedPluginIds }
+  private fun availableUpdates(): List<PluginUiModel> = latestUpdates.filterNot { it.pluginId in preparedBatchPluginIds }
+
+  private fun eligibleFailedUpdates(available: List<PluginUiModel>): List<PluginUiModel> = available.filter { it.pluginId in failedPluginIds }
 
   private fun publishSnapshotAvailability() {
     publish(snapshotAvailabilityState())
   }
 
   private fun snapshotAvailabilityState(): UnifiedPluginUpdateAllState {
-    return if (latestUpdates.isEmpty()) {
+    return if (availableUpdates().isEmpty()) {
       UnifiedPluginUpdateAllState()
     }
     else {
