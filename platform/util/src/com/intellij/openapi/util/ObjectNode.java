@@ -40,7 +40,19 @@ public final class ObjectNode {
     myObject = ROOT_DISPOSABLE;
   }
 
-  private static final Disposable ROOT_DISPOSABLE = Disposer.newDisposable("ROOT_DISPOSABLE");
+  // Do not call Disposer here. The static initializer of Disposer creates a root ObjectNode.
+  private static final Disposable ROOT_DISPOSABLE = new RootDisposable();
+
+  // A named class keeps the name ObjectNode$1 for EMPTY, for backward compatibility of heap dump analysis.
+  private static final class RootDisposable implements Disposable {
+    @Override
+    public void dispose() { }
+
+    @Override
+    public String toString() {
+      return "ROOT_DISPOSABLE";
+    }
+  }
 
   void assertNoChildren(boolean throwError) {
     for (ObjectNode childNode : myChildren.getAllNodes()) {
