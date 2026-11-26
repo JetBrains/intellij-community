@@ -1332,7 +1332,7 @@ object PyTypeChecker {
     // For class definitions with custom metaclasses, always use protocol matching.
     // Python's data model uses type(obj).__iter__ (metaclass method) for dunder protocols on class objects,
     // so even if the class explicitly inherits from e.g., Iterable via a base class, the metaclass method takes priority.
-    val isDefinitionWithCustomMetaclass = actual.isDefinition && run {
+    val isDefinitionWithCustomMetaclass = actual.isDefinition && !expected.isDefinition && run {
       val metaClassType = actual.getMetaClassType(context, true)
       metaClassType is PyClassType && PyNames.TYPE != metaClassType.name
     }

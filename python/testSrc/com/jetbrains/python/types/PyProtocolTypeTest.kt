@@ -1152,6 +1152,167 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  @TestFor(issues = ["PY-94149"])
+  inner class ProtocolMetaClassMembers {
+
+    @Test
+    fun `user protocol has the ABCMeta register method`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          def meth(self) -> int: ...
+
+      @P.register
+      class C:
+          def meth(self) -> int:
+              return 0
+
+      P.register(int)
+      """.trimIndent())
+
+    @Test
+    fun `collections abc MutableSet has the register method`() = test("""
+      from collections.abc import MutableSet, Iterable
+
+      @MutableSet.register
+      class MyClass[T]:
+          pass
+
+      Iterable.register(MyClass)
+      """.trimIndent())
+
+    @Test
+    fun `generic protocol and typing_extensions protocol have the register method`() = test("""
+      from typing import Protocol
+      from typing_extensions import Protocol as ExtProtocol
+
+      class GenericProto[T](Protocol):
+          def get(self) -> T: ...
+
+      class Ext(ExtProtocol):
+          def meth(self) -> None: ...
+
+      GenericProto.register(int)
+      Ext.register(int)
+      """.trimIndent())
+
+    @Test
+    fun `subclass of a protocol has the register method`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          def meth(self) -> int: ...
+
+      class Impl(P):
+          def meth(self) -> int:
+              return 0
+
+      Impl.register(int)
+      """.trimIndent())
+
+    @Test
+    fun `subclass of a built-in class and a protocol has the register method`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          pass
+
+      class E(Exception, P):
+          pass
+
+      E.register(int)
+      """.trimIndent())
+
+    @Test
+    fun `built-in classes do not have the register method`() = test("""
+      class MyList(list[int]):
+          pass
+
+      _ = str.register
+      #       ^^^^^^^^ WARNING Unresolved attribute reference 'register' for class 'str'
+      _ = MyList.register
+      #          ^^^^^^^^ WARNING Unresolved attribute reference 'register' for class 'MyList'
+      """.trimIndent())
+
+    @Test
+    fun `protocol with an explicit ABCMeta metaclass has the register method`() = test("""
+      from typing import Sized
+
+      Sized.register(int)
+      """.trimIndent())
+
+    @Test
+    fun `explicit metaclass derived from ABCMeta stays the metaclass`() = test("""
+      from abc import ABCMeta
+      from collections.abc import Iterator, Mapping
+
+      class MyMeta(ABCMeta):
+          def my_meta_method(cls) -> int: ...
+
+      class Cfg(Mapping[str, int], metaclass=MyMeta):
+          def __getitem__(self, key: str) -> int: ...
+          def __iter__(self) -> Iterator[str]: ...
+          def __len__(self) -> int: ...
+
+      Cfg.my_meta_method()
+      Cfg.register(int)
+      """.trimIndent())
+
+    @Test
+    fun `enum derived from str keeps the enum metaclass`() = test("""
+      from enum import Enum, StrEnum
+
+      class Color(str, Enum):
+          RED = "red"
+
+      class Shape(StrEnum):
+          SQUARE = "square"
+
+      for c in Color:
+          expr = c
+          # └ TYPE Color
+      for s in Shape:
+          expr = s
+          # └ TYPE Shape
+      """.trimIndent())
+
+    @Test
+    fun `subclass of a protocol checks the arguments of __init_subclass__`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          def __init_subclass__(cls, a: int) -> None: ...
+
+      class Impl(P, a="str"):
+      #             ^^^^^^^ WARNING Expected type 'int', got 'Literal["str"]' instead
+          pass
+      """.trimIndent())
+
+    @Test
+    fun `instance of a protocol does not have the register method`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          def meth(self) -> int: ...
+
+      def f(p: P) -> None:
+          p.register(int)
+          # ^^^^^^^^ WARNING Unresolved attribute reference 'register' for class 'P'
+      """.trimIndent())
+
+    @Test
+    fun `unknown attribute of a protocol class is unresolved`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          def meth(self) -> int: ...
+
+      _ = P.unknown
+      #     ^^^^^^^ WARNING Unresolved attribute reference 'unknown' for class 'P'
+      """.trimIndent())
+  }
+
+  @Nested
   @TestFor(issues = ["PY-49246"])
   inner class ProtocolCallAndConstructorMembers {
 

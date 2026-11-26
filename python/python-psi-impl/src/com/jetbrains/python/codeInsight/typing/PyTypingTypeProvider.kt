@@ -772,6 +772,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val GENERIC: String = "typing.Generic"
     const val PROTOCOL: String = "typing.Protocol"
     const val PROTOCOL_EXT: String = "typing_extensions.Protocol"
+    internal const val PROTOCOL_META: String = "typing._ProtocolMeta"
     const val TYPE: String = "typing.Type"
     const val ANY: String = "typing.Any"
     const val NEW_TYPE: String = "typing.NewType"
