@@ -17,17 +17,33 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class ClsGenerics15HighlightingTest extends ClsGenericsHighlightingTest {
-  
-  @NotNull
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+@TestApplication
+public class ClsGenerics15HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    ClsGenericsHighlightingTestUtil.clsGenericsHighlightingFixture(LanguageLevel.JDK_1_5);
+  private String myTestName;
+
+  @BeforeEach
+  void setUpTestName(TestInfo testInfo) {
+    myTestName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), false);
   }
 
+  private void doTest() {
+    ClsGenericsHighlightingTestUtil.doTest(codeInsightFixture.get(), myTestName);
+  }
+
+  @Test
   public void testIDEA97887() { doTest(); }
+  @Test
   public void testIDEA118733() { doTest(); }
+  @Test
   public void testIDEA146452() { doTest(); }
 }

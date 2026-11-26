@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -10,28 +11,33 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public final class JavacQuirksInspectionMultiModuleTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
-    super.tuneFixture(moduleBuilder);
-    moduleBuilder.addJdkVersion(LanguageLevel.JDK_25);
-  }
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
 
+@TestApplication
+public final class JavacQuirksInspectionMultiModuleTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(PathManager.getHomePath(), true, moduleBuilder -> moduleBuilder.addJdkVersion(LanguageLevel.JDK_25));
+
+  @Test
   public void testMissedTransitiveDepTypeAnnotations() throws IOException {
-    Sdk sdk = ModuleRootManager.getInstance(getModule()).getSdk();
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    Sdk sdk = ModuleRootManager.getInstance(myFixture.getModule()).getSdk();
     com.intellij.openapi.module.Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     com.intellij.openapi.module.Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
     Module mod3 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod3", myFixture.getTempDirFixture().findOrCreateDir("mod3"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod3", myFixture.getTempDirFixture().findOrCreateDir("mod3"));
     ModuleRootModificationUtil.setModuleSdk(mod1, sdk);
     ModuleRootModificationUtil.setModuleSdk(mod2, sdk);
     ModuleRootModificationUtil.setModuleSdk(mod3, sdk);
@@ -68,6 +74,6 @@ public final class JavacQuirksInspectionMultiModuleTest extends JavaCodeInsightF
       """);
     myFixture.configureFromExistingVirtualFile(PsiUtilCore.getVirtualFile(file));
     myFixture.enableInspections(new JavacQuirksInspection());
-    IdeaTestUtil.withLevel(mod3, LanguageLevel.JDK_25, myFixture::checkHighlighting);
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.withLevel(mod3, LanguageLevel.JDK_25, myFixture::checkHighlighting));
   }
 }

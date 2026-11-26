@@ -4,20 +4,31 @@ package com.intellij.java.codeInsight;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class JavaIndentsOnTypingInMultilineStringTest extends BasePlatformTestCase  {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightProjectFixture;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
+@TestApplication
+public class JavaIndentsOnTypingInMultilineStringTest {
+  private final TestFixture<Project> projectFixture = codeInsightProjectFixture();
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    CodeStyleSettings settings = CodeStyle.getSettings(codeInsightFixture.get().getProject());
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
     indentOptions.USE_TAB_CHARACTER = true;
   }
 
+  @Test
   public void testEmptyString() {
     doTest(
       """
@@ -37,6 +48,7 @@ public class JavaIndentsOnTypingInMultilineStringTest extends BasePlatformTestCa
     );
   }
 
+  @Test
   public void testNewLineAfterFirstBracesSpacesOnly() {
     doTest(
       """
@@ -58,6 +70,7 @@ public class JavaIndentsOnTypingInMultilineStringTest extends BasePlatformTestCa
     );
   }
 
+  @Test
   public void testNewLineAfterFirstBracesTabsOnly() {
     doTest(
       """
@@ -79,6 +92,7 @@ public class JavaIndentsOnTypingInMultilineStringTest extends BasePlatformTestCa
     );
   }
 
+  @Test
   public void testNewLineAfterFirstBracesMixed() {
     doTest(
       """
@@ -100,6 +114,7 @@ public class JavaIndentsOnTypingInMultilineStringTest extends BasePlatformTestCa
     );
   }
 
+  @Test
   public void testNewLineAfterFirstBracesMultipleNewLines() {
     doTest(
       """
@@ -128,6 +143,7 @@ public class JavaIndentsOnTypingInMultilineStringTest extends BasePlatformTestCa
   }
 
   private void doTest(String before, String typing, String after) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE, before);
     myFixture.type(typing);
     myFixture.checkResult(after);

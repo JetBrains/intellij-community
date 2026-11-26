@@ -17,12 +17,12 @@ package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Testdata from https://github.com/bwesterb/py-tarjan

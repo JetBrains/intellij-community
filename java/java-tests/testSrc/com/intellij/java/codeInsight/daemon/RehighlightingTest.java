@@ -1,10 +1,23 @@
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class RehighlightingTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+@TestApplication
+public class RehighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testDeleteClassCaptionUndo() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package java.lang.reflect; public class Modifier {}");
 
     myFixture.configureByText("a.java", """
@@ -20,24 +33,26 @@ public class RehighlightingTest extends JavaCodeInsightFixtureTestCase {
               this.isVirtual = isVirtual;
               this.isOverride = isOverride;
           }
-      
+
 
           public boolean isVirtual() {
               return isVirtual;
           }
-      
+
           public boolean isOverride() {
               return isOverride;
           }
       }""");
-    myFixture.checkHighlighting(false, false, false);
-    final String caption = myFixture.getEditor().getSelectionModel().getSelectedText();
-    myFixture.type(" ");
-    assertFalse(myFixture.doHighlighting().isEmpty());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkHighlighting(false, false, false);
+      final String caption = myFixture.getEditor().getSelectionModel().getSelectedText();
+      myFixture.type(" ");
+      assertFalse(myFixture.doHighlighting().isEmpty());
 
-    WriteCommandAction.runWriteCommandAction(
-      getProject(), () -> myFixture.getEditor().getDocument().insertString(myFixture.getEditor().getCaretModel().getOffset(), caption));
+      WriteCommandAction.runWriteCommandAction(
+        myFixture.getProject(), () -> myFixture.getEditor().getDocument().insertString(myFixture.getEditor().getCaretModel().getOffset(), caption));
 
-    myFixture.checkHighlighting(false, false, false);
+      myFixture.checkHighlighting(false, false, false);
+    });
   }
 }

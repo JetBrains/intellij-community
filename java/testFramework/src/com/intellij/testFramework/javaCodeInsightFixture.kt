@@ -16,12 +16,14 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 // JUnit 5 checks the virtual file pointers in TestApplicationLeakTrackerExtension after every fixture is torn down.
@@ -61,9 +63,7 @@ fun javaModuleCodeInsightFixture(
   testDataPath: String,
   addSourceRoot: Boolean = true,
   tune: Consumer<JavaModuleFixtureBuilder<*>> = Consumer { },
-): TestFixture<JavaCodeInsightTestFixture> = testFixture("javaModuleCodeInsightFixture") { context ->
-  val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(context.extensionContext.requiredTestMethod.name)
-  val fixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.fixture)
+): TestFixture<JavaCodeInsightTestFixture> = builderCodeInsightFixture("javaModuleCodeInsightFixture", testDataPath, { projectBuilder, fixture ->
   val moduleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder::class.java)
   if (addSourceRoot) {
     moduleBuilder.addSourceContentRoot(fixture.tempDirPath)
@@ -72,10 +72,41 @@ fun javaModuleCodeInsightFixture(
     moduleBuilder.addContentRoot(fixture.tempDirPath)
   }
   tune.accept(moduleBuilder)
+}) { fixture ->
+  IdeaTestUtil.setProjectLanguageLevel(fixture.project, LanguageLevel.JDK_1_6)
+}
+
+/**
+ * Creates a [JavaCodeInsightTestFixture] with a new heavy project for each test.
+ * It is the JUnit 6 form of a JUnit 3 test that creates the fixture with [JavaTestFixtureFactory.createCodeInsightFixture]
+ * on the project of [IdeaTestFixtureFactory.createFixtureBuilder]. Declare the result as an instance field.
+ *
+ * The project has the name of the test method. [configure] gets the project builder and the code insight fixture before the project opens.
+ * It adds the modules with [TestFixtureBuilder.addModule] and tunes them.
+ * Unlike [javaModuleCodeInsightFixture], the fixture adds no module and keeps the language level of the project.
+ * [testDataPath] is the absolute test data path.
+ */
+@TestOnly
+fun javaProjectBuilderCodeInsightFixture(
+  testDataPath: String,
+  configure: BiConsumer<TestFixtureBuilder<IdeaProjectTestFixture>, JavaCodeInsightTestFixture>,
+): TestFixture<JavaCodeInsightTestFixture> =
+  builderCodeInsightFixture("javaProjectBuilderCodeInsightFixture", testDataPath, configure::accept) { }
+
+@TestOnly
+private fun builderCodeInsightFixture(
+  debugName: String,
+  testDataPath: String,
+  configure: (TestFixtureBuilder<IdeaProjectTestFixture>, JavaCodeInsightTestFixture) -> Unit,
+  afterSetUp: (JavaCodeInsightTestFixture) -> Unit,
+): TestFixture<JavaCodeInsightTestFixture> = testFixture(debugName) { context ->
+  val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(context.extensionContext.requiredTestMethod.name)
+  val fixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.fixture)
+  configure(projectBuilder, fixture)
   fixture.testDataPath = testDataPath
   try {
     fixture.setUp()
-    IdeaTestUtil.setProjectLanguageLevel(fixture.project, LanguageLevel.JDK_1_6)
+    afterSetUp(fixture)
   }
   catch (e: Throwable) {
     try {
@@ -90,7 +121,6 @@ fun javaModuleCodeInsightFixture(
     fixture.tearDown()
   }
 }
-
 
 /**
  * Configures jdk for the project and the module inside JUnit5 test.

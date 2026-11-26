@@ -5,7 +5,9 @@ import com.intellij.codeInsight.BaseExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ClassPathUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -22,6 +24,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
@@ -32,6 +35,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameHelper;
@@ -47,12 +51,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
@@ -62,35 +69,56 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.bind.annotation.XmlElement;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ExternalAnnotationsManagerTest {
   private static final Set<String> KNOWN_EXCEPTIONS = Set.of(
     "java.util.stream.Stream<T> generate(java.util.function.Supplier<T>)", // replaced with Supplier<? extends T> in JDK11
     "java.nio.charset.Charset charset()" // in java.io.PrintStream since JDK18, but test runs on JDK17
   );
 
-  private final DefaultLightProjectDescriptor myDescriptor = new DefaultLightProjectDescriptor() {
+  private static final DefaultLightProjectDescriptor ourDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public void registerSdk(Disposable disposable) {
+      // The class path jars are outside the allowed roots of the open project.
+      VfsRootAccess.allowRootAccess(disposable, ArrayUtil.toStringArray(getSdkClassPath()));
+      super.registerSdk(disposable);
+    }
+
     @Override
     public Sdk getSdk() {
       //noinspection removal
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
 
-      Collection<String> utilClassPath = ClassPathUtil.getUtilClassPath();
-      VirtualFile[] files = StreamEx.of(utilClassPath)
-        .append(PathManager.getJarPathForClass(XmlElement.class))
+      VirtualFile[] files = StreamEx.of(getSdkClassPath())
         .map(path -> path.endsWith(".jar") ?
-                     JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
-                     StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(path)))
+                     JarFileSystem.getInstance().findFileByPath(path + "!/") :
+                     StandardFileSystems.local().findFileByPath(path))
         .toArray(VirtualFile[]::new);
 
       return PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, files);
+    }
+
+    private static @NotNull List<String> getSdkClassPath() {
+      return StreamEx.of(ClassPathUtil.getUtilClassPath())
+        .append(PathManager.getJarPathForClass(XmlElement.class))
+        .map(FileUtil::toSystemIndependentName)
+        .toList();
     }
 
     @Override
@@ -103,16 +131,15 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
   };
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return myDescriptor;
-  }
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(ourDescriptor);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testBundledAnnotationXmlSyntax() {
     String path = BazelTestUtil.isUnderBazelTest()
                   ? BazelTestUtil.findRunfilesDirectoryUnderCommunityOrUltimate("java/jdkAnnotations/resources").toString()
                   : PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations/resources";
-    findAnnotationsXmlAndCheckSyntax(path);
+    ReadAction.runBlocking(() -> findAnnotationsXmlAndCheckSyntax(path));
   }
 
   private void findAnnotationsXmlAndCheckSyntax(String root) {
@@ -132,8 +159,8 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
 
   private void checkSyntax(@NotNull VirtualFile file, @NotNull String assumedPackage) {
     //System.out.println("file = " + file);
-    ExternalAnnotationsManagerImpl manager = (ExternalAnnotationsManagerImpl)ExternalAnnotationsManager.getInstance(getProject());
-    PsiFile psiFile = getPsiManager().findFile(file);
+    ExternalAnnotationsManagerImpl manager = (ExternalAnnotationsManagerImpl)ExternalAnnotationsManager.getInstance(codeInsightFixture.get().getProject());
+    PsiFile psiFile = PsiManager.getInstance(codeInsightFixture.get().getProject()).findFile(file);
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> map = manager.getDataFromFile(psiFile);
     for (String externalName : map.keySet()) {
       PsiModifierListOwner listOwner = checkExternalName(psiFile, externalName, assumedPackage);
@@ -187,19 +214,19 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
           if (listOwner != null) {
             if ("org.intellij.lang.annotations.MagicConstant".equals(nameText)) {
               String typeText = getType(listOwner).getCanonicalText();
-              assertTrue(externalName, "int".equals(typeText) || "long".equals(typeText) || "java.lang.String".equals(typeText));
+              assertTrue("int".equals(typeText) || "long".equals(typeText) || "java.lang.String".equals(typeText), externalName);
             }
             else if ("org.jetbrains.annotations.Nullable".equals(nameText)
                      || "org.jetbrains.annotations.NotNull".equals(nameText)
                      || "org.jetbrains.annotations.UnknownNullability".equals(nameText)
                      || "org.intellij.lang.annotations.Flow".equals(nameText)) {
-              assertFalse(externalName, getType(listOwner) instanceof PsiPrimitiveType);
+              assertFalse(getType(listOwner) instanceof PsiPrimitiveType, externalName);
             }
             else if ("org.jetbrains.annotations.Contract".equals(nameText)) {
-              assertTrue(externalName, listOwner instanceof PsiMethod);
+              assertInstanceOf(PsiMethod.class, listOwner, externalName);
             }
             else if ("org.jetbrains.annotations.Range".equals(nameText)) {
-              assertTrue(externalName, ClassUtils.isIntegral(getType(listOwner)));
+              assertTrue(ClassUtils.isIntegral(getType(listOwner)), externalName);
             }
             else if ("org.jetbrains.annotations.NonNls".equals(nameText) || "org.jetbrains.annotations.Nls".equals(nameText)) {
               if (listOwner instanceof PsiClass
@@ -214,13 +241,13 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
                 continue;
               }
               String typeText = getType(listOwner).getCanonicalText();
-              assertTrue(externalName, "java.lang.String".equals(typeText)
-                                       || "java.lang.String...".equals(typeText)
-                                       || "java.lang.String[]".equals(typeText));
+              assertTrue("java.lang.String".equals(typeText)
+                         || "java.lang.String...".equals(typeText)
+                         || "java.lang.String[]".equals(typeText), externalName);
             }
             else if ("org.jetbrains.annotations.PropertyKey".equals(nameText)) {
               String typeText = getType(listOwner).getCanonicalText();
-              assertEquals(externalName, "java.lang.String", typeText);
+              assertEquals("java.lang.String", typeText, externalName);
             }
             else if ("org.jetbrains.annotations.Unmodifiable".equals(nameText)
                      || "org.jetbrains.annotations.UnmodifiableView".equals(nameText)) {
@@ -230,7 +257,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
                          || InheritanceUtil.isInheritor(type, "java.util.Map.Entry"));
             }
             else {
-              fail(externalName + " " + nameText);
+              Assertions.fail(externalName + " " + nameText);
             }
           }
         }
@@ -296,11 +323,11 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
                                          @NotNull PsiFile psiFile,
                                          @NotNull String externalName,
                                          @Nullable("null means can be any") String assumedPackage) {
-    if (!PsiNameHelper.getInstance(getProject()).isQualifiedName(text) || !text.contains(".")) {
+    if (!PsiNameHelper.getInstance(codeInsightFixture.get().getProject()).isQualifiedName(text) || !text.contains(".")) {
       fail("'" + text + "' doesn't seem like a FQN", psiFile, externalName);
     }
 
-    PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(text, GlobalSearchScope.allScope(getProject()));
+    PsiClass aClass = JavaPsiFacade.getInstance(codeInsightFixture.get().getProject()).findClass(text, GlobalSearchScope.allScope(codeInsightFixture.get().getProject()));
     if (aClass == null) {
       fail("'" + text + "' doesn't resolve to a class", psiFile, externalName);
     }
@@ -315,7 +342,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   private static void fail(String error, PsiFile psiFile, @NotNull String externalName) {
     int offset = psiFile.getText().indexOf(XmlUtil.escape(externalName));
     int line = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile).getLineNumber(offset);
-    fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
+    Assertions.fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
   }
 
   private PsiModifierListOwner checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
@@ -324,7 +351,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
     if (words.size() == 1) {
-      PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage(className);
+      PsiPackage psiPackage = JavaPsiFacade.getInstance(codeInsightFixture.get().getProject()).findPackage(className);
       if (psiPackage != null) {
         return psiPackage;
       }

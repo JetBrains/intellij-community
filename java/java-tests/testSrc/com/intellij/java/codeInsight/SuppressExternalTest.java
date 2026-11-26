@@ -19,8 +19,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.idea.IgnoreJUnit3;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
@@ -31,39 +30,42 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
+
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaProjectBuilderCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Support for suppressions in external annotations is dropped. We may reconsider this later
  * when external annotations will be supported in ModCommands
  */
-@IgnoreJUnit3
-public class SuppressExternalTest extends UsefulTestCase {
-  protected CodeInsightTestFixture myFixture;
+@TestApplication
+@Disabled("Support for suppressions in external annotations is dropped. We may reconsider this later when external annotations will be supported in ModCommands")
+public class SuppressExternalTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaProjectBuilderCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/externalAnnotations", (testFixtureBuilder, fixture) -> {
+      final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
+      new File(fixture.getTempDirPath() + "/src/").mkdir();
+      builder.addContentRoot(fixture.getTempDirPath()).addSourceRoot("src");
+      builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    });
 
   private LanguageLevel myLanguageLevel;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder(getName());
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
-    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/externalAnnotations");
-    final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
-    new File(myFixture.getTempDirPath() + "/src/").mkdir();
-    builder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("src");
-    builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
-    myFixture.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new SillyAssignmentInspection());
 
     addAnnotationsModuleRoot();
@@ -73,26 +75,18 @@ public class SuppressExternalTest extends UsefulTestCase {
     IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), LanguageLevel.JDK_1_5);
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), myLanguageLevel);
-
-    try {
-      myFixture.tearDown();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myFixture = null;
-      super.tearDown();
+  @AfterEach
+  void tearDown() {
+    if (myLanguageLevel != null) {
+      IdeaTestUtil.setProjectLanguageLevel(codeInsightFixture.get().getProject(), myLanguageLevel);
     }
   }
 
 
   private void addAnnotationsModuleRoot() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       final Module module = myFixture.getModule();
       final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
       final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
@@ -103,24 +97,30 @@ public class SuppressExternalTest extends UsefulTestCase {
 
 
   private void doTest(String testName) {
-    final IntentionAction action = myFixture.getAvailableIntention("Suppress for method", "src/suppressed/" + testName + ".java");
-    assertNotNull(action);
-    Project project = myFixture.getProject();
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(project);
-    javaSettings.USE_EXTERNAL_ANNOTATIONS = true;
-    myFixture.launchAction(action);
-    myFixture.checkResultByFile("content/anno/suppressed/annotations.xml", "content/anno/suppressed/annotations" + testName + "_after.xml", true);
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final IntentionAction action = myFixture.getAvailableIntention("Suppress for method", "src/suppressed/" + testName + ".java");
+      assertNotNull(action);
+      Project project = myFixture.getProject();
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(project);
+      javaSettings.USE_EXTERNAL_ANNOTATIONS = true;
+      myFixture.launchAction(action);
+      myFixture.checkResultByFile("content/anno/suppressed/annotations.xml", "content/anno/suppressed/annotations" + testName + "_after.xml", true);
+    });
   }
 
 
+  @Test
   public void testNewSuppress() {
     doTest("NewSuppress");
   }
 
+  @Test
   public void testExistingExternalName() {
     doTest("ExistingExternalName");
   }
 
+  @Test
   public void testSecondSuppression() {
     doTest("SecondSuppression");
   }

@@ -6,19 +6,35 @@ import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class NonSourceInspectionTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testInspectionOutsideSourceRoot() throws IOException {
-    PsiTestUtil.removeAllRoots(getModule(), ModuleRootManager.getInstance(getModule()).getSdk());
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiTestUtil.removeAllRoots(myFixture.getModule(), ModuleRootManager.getInstance(myFixture.getModule()).getSdk());
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
 
     @Language("JAVA") String generic = """
       package foo;
@@ -44,13 +60,15 @@ public class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
     PsiFile file = myFixture.addFileToProject("SomeClass.java", some);
 
     LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection());
-    GlobalInspectionContext context = InspectionManager.getInstance(getProject()).createNewGlobalContext();
-    assertEmpty(InspectionEngine.runInspectionOnFile(file, wrapper, context));
+    GlobalInspectionContext context = InspectionManager.getInstance(myFixture.getProject()).createNewGlobalContext();
+    assertThat(ReadAction.computeBlocking(() -> InspectionEngine.runInspectionOnFile(file, wrapper, context))).isEmpty();
   }
 
+  @Test
   public void testResolveSuperConstructorReference() throws IOException {
-    PsiTestUtil.removeAllRoots(getModule(), ModuleRootManager.getInstance(getModule()).getSdk());
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiTestUtil.removeAllRoots(myFixture.getModule(), ModuleRootManager.getInstance(myFixture.getModule()).getSdk());
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
 
     @Language("JAVA") String foo = """
       class Foo<T> {
@@ -75,6 +93,6 @@ public class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByText("Foo.java", foo2);
 
     assertTrue(myFixture.getFile().isPhysical());
-    assertEquals("Foo", assertInstanceOf(myFixture.getElementAtCaret(), PsiMethod.class).getName());
+    assertEquals("Foo", ReadAction.computeBlocking(() -> assertInstanceOf(PsiMethod.class, myFixture.getElementAtCaret()).getName()));
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -13,18 +14,35 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class MultipleModuleHighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(PathManager.getHomePath(), true, moduleBuilder -> {
+      moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+      moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
+    });
+
+  @Test
   public void testUseOriginalPlaceClasspathForReferenceTypeResolving() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addTwoModules();
 
     myFixture.addFileToProject("mod1/Class2.java", """
@@ -53,23 +71,19 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
                                                                       }
                                                                     }
                                                                     """).getContainingFile().getVirtualFile());
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
-
+  @Test
   public void testMissedTransitiveDepFunctionalInterface() throws IOException {
-    Sdk sdk = ModuleRootManager.getInstance(getModule()).getSdk();
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    Sdk sdk = ModuleRootManager.getInstance(myFixture.getModule()).getSdk();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
     Module mod3 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod3", myFixture.getTempDirFixture().findOrCreateDir("mod3"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod3", myFixture.getTempDirFixture().findOrCreateDir("mod3"));
     ModuleRootModificationUtil.setModuleSdk(mod1, sdk);
     ModuleRootModificationUtil.setModuleSdk(mod2, sdk);
     ModuleRootModificationUtil.setModuleSdk(mod3, sdk);
@@ -98,14 +112,16 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
           }
       }""");
     myFixture.configureFromExistingVirtualFile(PsiUtilCore.getVirtualFile(file));
-    IdeaTestUtil.withLevel(mod3, LanguageLevel.JDK_1_8, myFixture::checkHighlighting);
+    EdtTestUtil.runInEdtAndWait(() -> IdeaTestUtil.withLevel(mod3, LanguageLevel.JDK_1_8, myFixture::checkHighlighting));
   }
 
+  @Test
   public void testMissedMethodInHierarchy() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
     ModuleRootModificationUtil.addDependency(mod2, mod1);
 
     myFixture.addFileToProject("mod1/p/A.java", """
@@ -147,15 +163,17 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
       """);
 
     myFixture.configureFromExistingVirtualFile(PsiUtilCore.getVirtualFile(file));
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testClassQualifierWithInaccessibleSuper() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
-    ModuleRootModificationUtil.addDependency(mod1, getModule());
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    ModuleRootModificationUtil.addDependency(mod1, myFixture.getModule());
     ModuleRootModificationUtil.addDependency(mod2, mod1);
     myFixture.addClass("public class Class0 {}");
 
@@ -174,15 +192,17 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
       """);
 
     myFixture.configureFromTempProjectFile("mod2/Usage.java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testClassQualifierWithInaccessibleSuperUsedForConstantFieldAccess() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
-    ModuleRootModificationUtil.addDependency(mod1, getModule());
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    ModuleRootModificationUtil.addDependency(mod1, myFixture.getModule());
     ModuleRootModificationUtil.addDependency(mod2, mod1);
     myFixture.addClass("public class Class0 {}");
 
@@ -201,15 +221,17 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
       """);
 
     myFixture.configureFromTempProjectFile("mod2/Usage.java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testClassQualifierWithInaccessibleSuperOfReturnType() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
-    ModuleRootModificationUtil.addDependency(mod1, getModule());
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    ModuleRootModificationUtil.addDependency(mod1, myFixture.getModule());
     ModuleRootModificationUtil.addDependency(mod2, mod1);
     myFixture.addClass("public class Class0 {}");
 
@@ -231,10 +253,12 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
       """);
 
     myFixture.configureFromTempProjectFile("mod2/Usage.java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testUseOriginalPlaceClasspathForNewExpressionTypeResolving() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addTwoModules();
 
     myFixture.addFileToProject("mod1/A.java", """
@@ -261,28 +285,32 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
                                                                       }
                                                                     }
                                                                     """).getContainingFile().getVirtualFile());
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
   private void addTwoModules() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
-    ModuleRootModificationUtil.addDependency(getModule(), mod1);
-    ModuleRootModificationUtil.addDependency(getModule(), mod2);
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    ModuleRootModificationUtil.addDependency(myFixture.getModule(), mod1);
+    ModuleRootModificationUtil.addDependency(myFixture.getModule(), mod2);
   }
 
   private void addModuleChain() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module mod1 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
-    ModuleRootModificationUtil.addDependency(getModule(), mod1);
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    ModuleRootModificationUtil.addDependency(myFixture.getModule(), mod1);
     ModuleRootModificationUtil.addDependency(mod1, mod2);
   }
   
+  @Test
   public void testIndirectClassInaccessible() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addModuleChain();
     myFixture.addFileToProject("mod2/p/A.java", """
       package p;
@@ -296,20 +324,24 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
       package p;
       <error descr="Cannot access p.A">class C <caret>extends B</error> {}
       """);
-    myFixture.checkHighlighting();
-    IntentionAction intention = myFixture.findSingleIntention("Add dependency on module 'mod2'");
-    IntentionPreviewInfo preview = intention.generatePreview(getProject(), myFixture.getEditor(), myFixture.getFile());
-    IntentionPreviewInfo.Html html = assertInstanceOf(preview, IntentionPreviewInfo.Html.class);
+    IntentionPreviewInfo preview = EdtTestUtil.runInEdtAndGet(() -> {
+      myFixture.checkHighlighting();
+      IntentionAction intention = myFixture.findSingleIntention("Add dependency on module 'mod2'");
+      return intention.generatePreview(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    });
+    IntentionPreviewInfo.Html html = assertInstanceOf(IntentionPreviewInfo.Html.class, preview);
     // The current module name is a sequence of digits
     String text = html.content().toString().replaceFirst("&#39;\\d+&#39;", "&#39;module_name&#39;");
     assertEquals("Adds module &#39;mod2&#39; to the dependencies of module &#39;module_name&#39; and imports unresolved classes if necessary", text);
   }
 
+  @Test
   public void testOverridingJdkExceptions() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final Module dep =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "dep", myFixture.getTempDirFixture().findOrCreateDir("dep"));
-    ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(getModule()).getSdk());
-    ModuleRootModificationUtil.updateModel(getModule(), model -> {
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "dep", myFixture.getTempDirFixture().findOrCreateDir("dep"));
+    ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myFixture.getModule()).getSdk());
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
       model.addModuleOrderEntry(dep);
 
       OrderEntry @NotNull [] entries = model.getOrderEntries();
@@ -346,6 +378,6 @@ public class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCa
         }
       }
       """).getVirtualFile());
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 }

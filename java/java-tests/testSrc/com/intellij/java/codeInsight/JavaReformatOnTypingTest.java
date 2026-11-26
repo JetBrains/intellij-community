@@ -8,22 +8,30 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class JavaReformatOnTypingTest extends BasePlatformTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightProjectFixture;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class JavaReformatOnTypingTest {
+  private final TestFixture<Project> projectFixture = codeInsightProjectFixture();
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
     AutoFormatTypedHandler.setEnabledInTests(true);
-    useSpacesAroundAssignmentOperator(true, myFixture.getProject());
+    useSpacesAroundAssignmentOperator(true, codeInsightFixture.get().getProject());
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     AutoFormatTypedHandler.setEnabledInTests(false);
-    //noinspection SuperTearDownInFinally
-    super.tearDown();
   }
 
   private static void useSpacesAroundAssignmentOperator(boolean value, Project project) {
@@ -32,36 +40,44 @@ public class JavaReformatOnTypingTest extends BasePlatformTestCase {
     common.SPACE_AROUND_ASSIGNMENT_OPERATORS = value;
   }
 
+  @Test
   public void test_DoNotInsertSpaceIfSettingDisabled() {
-    useSpacesAroundAssignmentOperator(false, myFixture.getProject());
+    useSpacesAroundAssignmentOperator(false, codeInsightFixture.get().getProject());
     doTest("class T { int<caret> }", "=", "class T { int=<caret> }");
   }
 
+  @Test
   public void test_DoNotInsertAfterIfSettingDisabled() {
-    useSpacesAroundAssignmentOperator(false, myFixture.getProject());
+    useSpacesAroundAssignmentOperator(false, codeInsightFixture.get().getProject());
     doTest("class T { int a=<caret> }", "2", "class T { int a=2 }");
   }
 
+  @Test
   public void test_AddSpacesAroundAssignmentOperator() {
     doTest("class T { int<caret> }", "=", "class T { int =<caret> }");
   }
 
+  @Test
   public void test_EmptyText() {
     doTest("<caret>", "x", "x<caret>");
   }
 
+  @Test
   public void test_IgnoreSpacePressedAfterAssignmentOperator() {
     doTest("class T { int<caret> }", "= ", "class T { int = <caret> }");
   }
 
+  @Test
   public void test_DoNotInsertDoubleSpaceBeforeAssignment() {
     doTest("class T { int <caret> }", "=", "class T { int =<caret> }");
   }
 
+  @Test
   public void test_DoNotInsertDoubleSpaceAnywhere() {
     doTest("class T { int <caret> }", "= ", "class T { int = <caret> }");
   }
 
+  @Test
   public void test_InsertSpaceForAssignments() {
     doTest("c <caret>", "+=a", "c += a<caret>");
     doTest("c <caret>", "-=a", "c -= a<caret>");
@@ -76,34 +92,41 @@ public class JavaReformatOnTypingTest extends BasePlatformTestCase {
     doTest("c <caret>", ">>>=a", "c >>>= a<caret>");
   }
 
+  @Test
   public void test_DoNotInsertSpaceIfNotAssignment() {
     doTest("1 <caret>", "!=a", "1 !=a<caret>");
     doTest("c <caret>", ">=a", "c >=a<caret>");
     doTest("c <caret>", "<=a", "c <=a<caret>");
   }
 
+  @Test
   public void test_IgnoreIfInsideStringLiteral() {
     doTest("class X { String s = \"xxxxx<caret>\"; }", "=x",
            "class X { String s = \"xxxxx=x<caret>\"; }");
   }
 
+  @Test
   public void test_InsideStringLiteral() {
     doTest("class X { String x = \"x<caret> }", "=y", "class X { String x = \"x=y<caret> }");
   }
 
+  @Test
   public void test_InsideCharLiteral() {
     doTest("class X { char x = '<caret>'; }", "=", "class X { char x = '='; }");
   }
 
+  @Test
   public void test_AfterOpenedQuote() {
     doTest("class X { char x = '<caret> }", "=", "class X { char x = '= }");
   }
 
+  @Test
   public void test_DistinguishAssignmentAndEquality() {
     doTest("class T { boolean b = 1 <caret> }", "==", "class T { boolean b = 1 ==<caret> }");
   }
 
   private void doTest(String before, String typing, String after) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE, before);
     myFixture.type(typing);
     myFixture.checkResult(after);

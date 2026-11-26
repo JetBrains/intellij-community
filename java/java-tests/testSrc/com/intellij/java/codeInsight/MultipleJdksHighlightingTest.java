@@ -38,72 +38,65 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.Collection;
 
-public class MultipleJdksHighlightingTest extends UsefulTestCase {
-  private JavaCodeInsightTestFixture myFixture;
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaProjectBuilderCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class MultipleJdksHighlightingTest {
+  private final JavaModuleFixtureBuilder<?>[] myBuilders = new JavaModuleFixtureBuilder[3];
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaProjectBuilderCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/multipleJdks", (projectBuilder, ignored) -> {
+      myBuilders[0] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+      myBuilders[0].setLanguageLevel(LanguageLevel.JDK_1_3);
+      myBuilders[0].addJdkVersion(LanguageLevel.JDK_1_4);
+
+      myBuilders[1] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+      myBuilders[1].addJdkVersion(LanguageLevel.JDK_1_7);
+
+      myBuilders[2] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+      myBuilders[2].addJdkVersion(LanguageLevel.JDK_1_8);
+    });
   private Module myJava3Module;
   private Module myJava7Module;
   private Module myJava8Module;
+  private String myTestName;
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myFixture.tearDown();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myFixture = null;
-      myJava3Module = null;
-      myJava7Module = null;
-      myJava8Module = null;
-      super.tearDown();
-    }
-  }
-  
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/multipleJdks");
-    final JavaModuleFixtureBuilder[] builders = new JavaModuleFixtureBuilder[3];
-
-    builders[0] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
-    builders[0].setLanguageLevel(LanguageLevel.JDK_1_3);
-    builders[0].addJdkVersion(LanguageLevel.JDK_1_4);
-
-    builders[1] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
-    builders[1].addJdkVersion(LanguageLevel.JDK_1_7);
-
-    builders[2] = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
-    builders[2].addJdkVersion(LanguageLevel.JDK_1_8);
-
-    myFixture.setUp();
+  @BeforeEach
+  void setUp(TestInfo testInfo) throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myTestName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), false);
 
     VirtualFile java3Root = myFixture.getTempDirFixture().findOrCreateDir("java3");
     VirtualFile java7Root = myFixture.getTempDirFixture().findOrCreateDir("java7");
     VirtualFile java8Root = myFixture.getTempDirFixture().findOrCreateDir("java8");
 
-    myJava3Module = builders[0].getFixture().getModule();
-    myJava7Module = builders[1].getFixture().getModule();
-    myJava8Module = builders[2].getFixture().getModule();
+    myJava3Module = myBuilders[0].getFixture().getModule();
+    myJava7Module = myBuilders[1].getFixture().getModule();
+    myJava8Module = myBuilders[2].getFixture().getModule();
     ModuleRootModificationUtil.updateModel(myJava3Module, model -> model.addContentEntry(java3Root).addSourceFolder(java3Root, false));
     ModuleRootModificationUtil.updateModel(myJava7Module, model -> model.addContentEntry(java7Root).addSourceFolder(java7Root, false));
     ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.addContentEntry(java8Root).addSourceFolder(java8Root, false));
@@ -115,164 +108,199 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
   }
 
+  @Test
   public void testGetClass() {
     addDependencies_37_78();
     doTest();
   }
 
+  @Test
   public void testAutoCloseable() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Sdk mockJdk14 = IdeaTestUtil.getMockJdk14();
     ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk14, model.getProject()));
       model.setSdk(mockJdk14);
     });
     addDependencies_37_78();
-    final String name = getTestName(false);
+    final String name = myTestName;
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
-      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTestUtil.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
     }
     myFixture.configureByFile("java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testWrongSuperInLibrary() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addDependencies_37_78();
-    final String name = getTestName(false);
+    final String name = myTestName;
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
-      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTestUtil.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
     }
 
     myFixture.configureByFile("java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testWrongComparator() {
     addDependencies_37_78();
    doTestWithoutLibrary();
   }
 
+  @Test
   public void testWrongComparatorInUpperBound() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testGenericComparator() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testGenericCallableWithDifferentTypeArgs() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testSuperclassImplementsUnknownType() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testDeclaredTypeOfVariableImplementsUnknownType() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
   
+  @Test
   public void testSuperclassImplementsGenericsOfUnknownType() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testSuperMethodNotExist() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testNoOverriding() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
+  @Test
   public void testStaticCallOnChildWithNotAccessibleParent() {
     addDependencies_37_78();
     ModuleRootModificationUtil.updateModel(myJava3Module, m -> m.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5));
     doTest3Modules();
   }
 
+  @Test
   public void testBoxedTypesWhenPreGenericJDKPresentInProject() {
-    myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
-    myFixture.checkHighlighting();
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFiles("java8/p/" + myTestName + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testRawAssignmentToGenerics() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
-    final String name = getTestName(false);
+    final String name = myTestName;
     myFixture.copyFileToProject("java3/p/" + name + ".java");
     myFixture.configureByFiles("java7/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testCloseableAutoCloseable() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
     ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
-    final String name = getTestName(false);
+    final String name = myTestName;
     myFixture.copyFileToProject("java3/p/" + name + ".java");
     myFixture.configureByFiles("java7/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testDependsOnNewerJdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
     ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
-    final String name = getTestName(false);
+    final String name = myTestName;
     myFixture.copyFileToProject("java7/p/" + name + ".java");
     myFixture.configureByFiles("java3/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testMissedAutoCloseable() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
     ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
-    final String name = getTestName(false);
+    final String name = myTestName;
     myFixture.copyFileToProject("java7/p/" + name + ".java");
     myFixture.configureByFiles("java3/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testLanguageLevelInReturnTypeCheck() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addDependencies_37_78();
-    final String name = getTestName(false);
+    final String name = myTestName;
     myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testUnrelatedDefaultsFromDifferentJdkVersions() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
     myFixture.copyFileToProject("java7/p/I.java");
     myFixture.copyFileToProject("java8/p/I.java");
 
-    final String testName = getTestName(false);
+    final String testName = myTestName;
     myFixture.configureByFiles("java8/p/" + testName + ".java", "java7/p/" + testName + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testMethodReferencePointingToDifferentJdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
-    final String testName = getTestName(false);
+    final String testName = myTestName;
     myFixture.copyFileToProject("java3/p/" + testName + ".java");
     myFixture.copyFileToProject("java8/p/" + testName + ".java");
 
     myFixture.configureByFiles("java8/p/" + testName + ".java", "java3/p/" + testName + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testInheritorsOfJdkClassOnlyInModulesWithThatJdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
 
-    PsiClass usage7 = ((PsiJavaFile) myFixture.addFileToProject("java7/a.java", "class A extends java.util.ArrayList {}")).getClasses()[0];
-    PsiClass usage8 = ((PsiJavaFile) myFixture.addFileToProject("java8/a.java", "class A extends java.util.ArrayList {}")).getClasses()[0];
-    PsiUtilCore.ensureValid(usage7);
+    PsiJavaFile file7 = (PsiJavaFile) myFixture.addFileToProject("java7/a.java", "class A extends java.util.ArrayList {}");
+    PsiJavaFile file8 = (PsiJavaFile) myFixture.addFileToProject("java8/a.java", "class A extends java.util.ArrayList {}");
+    PsiClass usage7 = ReadAction.computeBlocking(() -> file7.getClasses()[0]);
+    PsiClass usage8 = ReadAction.computeBlocking(() -> file8.getClasses()[0]);
+    ReadAction.runBlocking(() -> PsiUtilCore.ensureValid(usage7));
 
-    PsiClass abstractList7 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage7.getResolveScope());
-    PsiClass abstractList8 = myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage8.getResolveScope());
+    PsiClass abstractList7 = ReadAction.computeBlocking(() -> myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage7.getResolveScope()));
+    PsiClass abstractList8 = ReadAction.computeBlocking(() -> myFixture.getJavaFacade().findClass(AbstractList.class.getName(), usage8.getResolveScope()));
     assertNotSame(abstractList7, abstractList8);
 
     checkScopes(
@@ -288,49 +316,67 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
       VirtualFile file = PsiUtilCore.getVirtualFile(cls);
       assertNotNull(file);
-      assertTrue(file.getPath(), FileUtil.startsWith(file.getPath(), FileUtil.toSystemIndependentName(jdkHome.getPath()), true));
+      assertTrue(FileUtil.startsWith(file.getPath(), FileUtil.toSystemIndependentName(jdkHome.getPath()), true), file.getPath());
     }
   }
 
+  @Test
   public void testFindUsagesInLibrarySource() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiTestUtil.addLibrary(myJava7Module, "lib", myFixture.getTempDirFixture().findOrCreateDir("lib").getPath(), new String[]{"/libClasses"}, new String[]{"/libSrc"});
     PsiFile libSrc = myFixture.addFileToProject("lib/libSrc/Foo.java", "class C{{ new javax.swing.JScrollPane().getHorizontalScrollBar(); }}");
-    assertTrue(FileIndexFacade.getInstance(myFixture.getProject()).isInLibrarySource(libSrc.getVirtualFile()));
+    assertTrue(ReadAction.computeBlocking(() -> FileIndexFacade.getInstance(myFixture.getProject()).isInLibrarySource(libSrc.getVirtualFile())));
 
-    PsiReference ref = libSrc.findReferenceAt(libSrc.getText().indexOf("Horizontal"));
-    PsiMethod method = assertInstanceOf(ref.resolve(), PsiMethod.class);
-    assertContainsElements(ReadAction.computeBlocking(()->MethodReferencesSearch.search(method).findAll()), ref);
+    PsiReference ref = ReadAction.computeBlocking(() -> libSrc.findReferenceAt(libSrc.getText().indexOf("Horizontal")));
+    PsiMethod method = assertInstanceOf(PsiMethod.class, ReadAction.computeBlocking(() -> ref.resolve()));
+    assertThat(ReadAction.computeBlocking(()->MethodReferencesSearch.search(method).findAll())).contains(ref);
   }
 
+  @Test
   public void testConditionalAssignedToJava3Object() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
-    final String name = getTestName(false);
+    final String name = myTestName;
     myFixture.copyFileToProject("java3/p/" + name + ".java");
     myFixture.configureByFiles("java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testInFileReferencesHighlighting() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
     myFixture.copyFileToProject("java7/p/Object7.java");
-    myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
-    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
-    final RangeHighlighter highlighter = assertOneElement(myFixture.getEditor().getMarkupModel().getAllHighlighters());
+    myFixture.configureByFiles("java8/p/" + myTestName + ".java");
+    RangeHighlighter[] highlighters = EdtTestUtil.runInEdtAndGet(() -> {
+      HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      return myFixture.getEditor().getMarkupModel().getAllHighlighters();
+    });
+    assertEquals(1, highlighters.length, Arrays.toString(highlighters));
+    final RangeHighlighter highlighter = highlighters[0];
     assertEquals(64, highlighter.getStartOffset());
     assertEquals(72, highlighter.getEndOffset());
   }
 
+  @Test
   public void testInFileReferencesHighlighting2() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
     myFixture.copyFileToProject("java7/p/List7.java");
-    myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
-    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
-    final RangeHighlighter highlighter = assertOneElement(myFixture.getEditor().getMarkupModel().getAllHighlighters());
+    myFixture.configureByFiles("java8/p/" + myTestName + ".java");
+    RangeHighlighter[] highlighters = EdtTestUtil.runInEdtAndGet(() -> {
+      HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      return myFixture.getEditor().getMarkupModel().getAllHighlighters();
+    });
+    assertEquals(1, highlighters.length, Arrays.toString(highlighters));
+    final RangeHighlighter highlighter = highlighters[0];
     assertEquals(60, highlighter.getStartOffset());
     assertEquals(66, highlighter.getEndOffset());
   }
 
+  @Test
   public void testOverrideClassLoaderMethodSince7() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
     myFixture.addFileToProject("java3/MyLoader.java",
                                "public class MyLoader extends ClassLoader { protected Object getClassLoadingLock(String className) {} }");
@@ -342,32 +388,38 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
                                               "  getClassLoadingLock(\"\"); " +
                                               "}}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    myFixture.checkHighlighting();
+    RangeHighlighter[] highlighters = EdtTestUtil.runInEdtAndGet(() -> {
+      myFixture.checkHighlighting();
 
-    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
-    assertSize(2, myFixture.getEditor().getMarkupModel().getAllHighlighters());
+      HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      return myFixture.getEditor().getMarkupModel().getAllHighlighters();
+    });
+    assertEquals(2, highlighters.length, Arrays.toString(highlighters));
   }
 
   private void doTestWithoutLibrary() {
-    final String name = getTestName(false);
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myTestName;
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
   private void doTest3Modules() {
-    final String name = getTestName(false);
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myTestName;
     myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java", "java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 
 
   private void doTest() {
-    final String name = getTestName(false);
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myTestName;
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
-      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTestUtil.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
     }
 
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
-    myFixture.checkHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.checkHighlighting());
   }
 }
