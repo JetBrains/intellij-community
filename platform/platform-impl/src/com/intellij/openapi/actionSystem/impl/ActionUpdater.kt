@@ -286,10 +286,10 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     finally {
-      if (currentEDTWaitMillis > 300) {
+      if (currentEDTWaitMillis > 500) {
         LOG.info("$currentEDTWaitMillis ms to grab EDT for $operationName")
       }
-      if (currentEDTPerformMillis > 300) {
+      if (currentEDTPerformMillis > 500) {
         reportSlowEdtOperation(opElement.sessionKey ?: opElement.action ?: opElement,
                                operationName, currentEDTPerformMillis, edtTraces)
       }

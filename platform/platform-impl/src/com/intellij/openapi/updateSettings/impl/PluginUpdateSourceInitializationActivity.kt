@@ -198,7 +198,7 @@ object PluginUpdateSourceInitializer {
         }
       }
       else {
-        thisLogger().info("Plugin ${plugin.pluginId} doesn't need update source init")
+        thisLogger().debug("Plugin ${plugin.pluginId} doesn't need update source init")
       }
     }
 

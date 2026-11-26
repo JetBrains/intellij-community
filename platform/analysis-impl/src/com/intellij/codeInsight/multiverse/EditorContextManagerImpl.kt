@@ -32,13 +32,13 @@ internal class EditorContextManagerImpl(
   init {
     project.messageBus.connect(cs).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
       override fun contextsChanged() {
-        log.info("Dropping all editor contexts")
+        log.debug("Dropping all editor contexts")
         currentContextCache.invalidate()
       }
 
       // The next request infers the selection again from the preferred context.
       override fun contextsChanged(files: Set<VirtualFile>) {
-        log.info("Dropping the editor contexts of ${files.size} file(s)")
+        log.debug("Dropping the editor contexts of ${files.size} file(s)")
         val fileDocumentManager = FileDocumentManager.getInstance()
         val editors = EditorFactory.getInstance().allEditors.filter { fileDocumentManager.getFile(it.document) in files }
         currentContextCache.remove(editors)
