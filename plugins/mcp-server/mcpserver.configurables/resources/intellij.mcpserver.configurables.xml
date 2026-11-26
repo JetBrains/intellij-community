@@ -24,7 +24,6 @@
       id="com.intellij.mcpserver.settings"
       key="mcp.server.configurable.name"
       bundle="messages.McpServerBundle"
-      dynamic="true"
       parentId="ai"/>
 
     <applicationConfigurable
@@ -32,7 +31,6 @@
       id="com.intellij.mcpserver.settings.filter"
       key="configurable.mcp.tool.filter"
       bundle="messages.McpServerBundle"
-      dynamic="true"
       parentId="com.intellij.mcpserver.settings"/>
   </extensions>
 </idea-plugin>

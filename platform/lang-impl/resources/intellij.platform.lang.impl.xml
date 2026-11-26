@@ -939,7 +939,6 @@
                          parentId="editor"
                          key="settings.hints"
                          bundle="messages.ApplicationBundle"
-                         dynamic="true"
                          groupWeight="1"/>
     <search.optionContributor implementation="com.intellij.codeInsight.hints.settings.InlayHintsSettingsSearchableContributor"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
