@@ -172,6 +172,7 @@ internal class BuildConsoleViewImplV2(
 
   override fun scrollToNodeOutput(nodeId: Any) {
     state.accessFlushed {
+      editor.resetSelection()
       val inlay = nodeInlays(nodeId).firstOrNull()
       if (inlay != null) {
         editor.caretModel.moveToOffset(inlay.offset)
@@ -190,8 +191,6 @@ internal class BuildConsoleViewImplV2(
   }
 
   private fun Editor.selectOutputText(outputRanges: List<TextRange>) {
-    caretModel.removeSecondaryCarets()
-    caretModel.primaryCaret.removeSelection()
     val trimmedRanges = trimRanges(document, outputRanges)
     for ([index, outputRange] in trimmedRanges.withIndex()) {
       if (index == 0) {
@@ -207,6 +206,11 @@ internal class BuildConsoleViewImplV2(
         secondaryCaret.setSelection(outputRange.startOffset, outputRange.endOffset)
       }
     }
+  }
+
+  private fun Editor.resetSelection() {
+    caretModel.removeSecondaryCarets()
+    caretModel.primaryCaret.removeSelection()
   }
 
   private fun trimRanges(document: Document, outputRanges: List<TextRange>): List<TextRange> {
