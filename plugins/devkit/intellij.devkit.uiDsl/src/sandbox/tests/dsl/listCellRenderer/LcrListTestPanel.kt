@@ -7,12 +7,12 @@ package com.intellij.devkit.uiDsl.sandbox.tests.dsl.listCellRenderer
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.devkit.uiDsl.sandbox.UISandboxPanel
 import com.intellij.devkit.uiDsl.sandbox.intList
-import com.intellij.devkit.uiDsl.sandbox.jbList
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -41,12 +41,13 @@ internal class LcrListTestPanel : UISandboxPanel {
       indent {
         row {
           val aligns = listOf(LcrInitParams.Align.LEFT, LcrInitParams.Align.CENTER, LcrInitParams.Align.RIGHT)
-          jbList(DevkitUiDslBundle.message("sandbox.label.align"), intList(), listCellRenderer {
+          list(intList(), listCellRenderer {
             val customAlign = aligns.getOrNull(index % (aligns.size + 1))
             text("$value: $customAlign") {
               align = customAlign
             }
-          }).align(Align.FILL)
+          }).label(DevkitUiDslBundle.message("sandbox.label.align"), LabelPosition.TOP)
+            .align(AlignX.FILL)
         }
 
         row {
@@ -57,37 +58,41 @@ internal class LcrListTestPanel : UISandboxPanel {
                               SimpleTextAttributes.STYLE_BOLD,
                               SimpleTextAttributes.STYLE_ITALIC)
 
-          jbList(DevkitUiDslBundle.message("sandbox.label.foreground"), intList(), listCellRenderer {
+          list(intList(), listCellRenderer {
             val i = index % colors.size
             text(DevkitUiDslBundle.message("sandbox.item.0", value)) {
               if (i > 0) {
                 foreground = colors[i]
               }
             }
-          })
+          }).label(DevkitUiDslBundle.message("sandbox.label.foreground"), LabelPosition.TOP)
 
-          jbList(DevkitUiDslBundle.message("sandbox.label.attributes"), intList(), listCellRenderer {
+          list(intList(), listCellRenderer {
             val i = index % colors.size
             text(DevkitUiDslBundle.message("sandbox.item.0", value)) {
               attributes = SimpleTextAttributes(styles[i], colors[i])
             }
-          })
+          }).label(DevkitUiDslBundle.message("sandbox.label.attributes"), LabelPosition.TOP)
 
-          jbList(DevkitUiDslBundle.message("sandbox.label.background"), intList(), listCellRenderer {
+          list(intList(), listCellRenderer {
             val i = index % colors.size
             if (i > 0) {
               background = colors[i]
             }
             text(DevkitUiDslBundle.message("sandbox.item.0", value))
-          })
+          }).label(DevkitUiDslBundle.message("sandbox.label.background"), LabelPosition.TOP)
         }
 
         row {
-          jbList("FixedCellHeight", intList(), listCellRenderer {
+          list(intList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text(DevkitUiDslBundle.message("sandbox.item.0", value))
-          }, patchList = { it.fixedCellHeight = JBUIScale.scale(30) })
-          jbList(DevkitUiDslBundle.message("sandbox.label.big.font"), intList(), listCellRenderer {
+          }).label("FixedCellHeight", LabelPosition.TOP)
+            .applyToComponent {
+              fixedCellHeight = JBUIScale.scale(30)
+            }
+
+          list(intList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text(DevkitUiDslBundle.message("sandbox.item.0", value)) {
               font = JBFont.h1()
@@ -97,7 +102,10 @@ internal class LcrListTestPanel : UISandboxPanel {
               font = JBFont.small()
               foreground = greyForeground
             }
-          }, patchList = { it.fixedCellHeight = JBUIScale.scale(30) })
+          }).label(DevkitUiDslBundle.message("sandbox.label.big.font"), LabelPosition.TOP)
+            .applyToComponent {
+              fixedCellHeight = JBUIScale.scale(30)
+            }
         }
       }.enabledIf(enabled.selected)
     }

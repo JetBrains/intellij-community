@@ -5,7 +5,6 @@ package com.intellij.devkit.uiDsl.sandbox.tests.dsl.listCellRenderer
 
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.devkit.uiDsl.sandbox.UISandboxPanel
-import com.intellij.devkit.uiDsl.sandbox.jbList
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -37,7 +36,7 @@ internal class LcrSeparatorTestPanel : UISandboxPanel {
         panel {
           group(DevkitUiDslBundle.message("sandbox.border.title.new.api")) {
             row {
-              jbList(null, items, newApiRenderer())
+              list(items, newApiRenderer())
                 .comment(DevkitUiDslBundle.message("sandbox.text.see.also.tooltips"))
             }
             row {
@@ -61,7 +60,7 @@ internal class LcrSeparatorTestPanel : UISandboxPanel {
         panel {
           group(DevkitUiDslBundle.message("sandbox.border.title.old.api")) {
             row {
-              jbList(null, items, MyGroupedItemsListRenderer())
+              list(items, MyGroupedItemsListRenderer())
             }
             row {
               @Suppress("HardCodedStringLiteral")

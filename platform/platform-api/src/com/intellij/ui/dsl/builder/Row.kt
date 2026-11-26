@@ -20,6 +20,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBScrollPane
@@ -51,6 +52,7 @@ import javax.swing.JLabel
 import javax.swing.JSlider
 import javax.swing.JSpinner
 import javax.swing.ListCellRenderer
+import javax.swing.ListModel
 
 /**
  * Determines relation between row grid and parent's grid
@@ -428,6 +430,26 @@ interface Row {
    * @see textListCellRenderer
    */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
+
+  /**
+   * Creates a [JBList] with [model] and puts it into a [JBScrollPane].
+   *
+   * [Cell.component] is the list. Layout methods like [Cell.align] and [Cell.label] apply to the scroll pane.
+   *
+   * @see listCellRenderer
+   * @see textListCellRenderer
+   */
+  fun <T> list(model: ListModel<T>, renderer: ListCellRenderer<in T>? = null): Cell<JBList<T>>
+
+  /**
+   * Creates a [JBList] with a copy of [items] and puts it into a [JBScrollPane].
+   *
+   * [Cell.component] is the list. Layout methods like [Cell.align] and [Cell.label] apply to the scroll pane.
+   *
+   * @see listCellRenderer
+   * @see textListCellRenderer
+   */
+  fun <T> list(items: Collection<T>, renderer: ListCellRenderer<in T>? = null): Cell<JBList<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases

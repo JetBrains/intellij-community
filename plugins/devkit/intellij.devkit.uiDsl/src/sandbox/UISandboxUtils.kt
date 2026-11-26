@@ -11,20 +11,14 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.rows
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import java.awt.Component
-import java.util.function.Consumer
 import javax.swing.AbstractButton
 import javax.swing.JButton
 import javax.swing.JComboBox
@@ -32,7 +26,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextArea
 import javax.swing.JToggleButton
-import javax.swing.ListCellRenderer
 import javax.swing.text.JTextComponent
 
 @Suppress("HardCodedStringLiteral")
@@ -126,23 +119,6 @@ internal fun items(count: Int, prefix: String = "Item"): List<String> {
 
 internal fun intList(count: Int = 100): List<Int> {
   return (1..count).toList()
-}
-
-internal fun <T> Row.jbList(label: @NlsContexts.Label String?, items: List<T>, renderer: ListCellRenderer<T>,
-                            patchList: Consumer<JBList<T>>? = null): Cell<JBScrollPane> {
-  val list = JBList(items)
-  list.setCellRenderer(renderer)
-  patchList?.accept(list)
-  val scroll = JBScrollPane(list)
-  scroll.minimumSize = JBDimension(100, 200)
-  scroll.isOverlappingScrollBar = true
-
-  val result = cell(scroll)
-    .align(AlignY.TOP)
-  label?.let {
-    result.label(it, LabelPosition.TOP)
-  }
-  return result
 }
 
 /**

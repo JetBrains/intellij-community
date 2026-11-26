@@ -29,6 +29,7 @@ import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBScrollPane
@@ -80,6 +81,7 @@ import javax.swing.JRadioButton
 import javax.swing.JSlider
 import javax.swing.JSpinner
 import javax.swing.ListCellRenderer
+import javax.swing.ListModel
 import javax.swing.SpinnerNumberModel
 
 @Suppress("OVERRIDE_DEPRECATION")
@@ -294,7 +296,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
     return result
   }
-  
+
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     val result: CellImpl<JEditorPane> = cell(createComment(comment, maxLineLength, action))
     if (maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) {
@@ -458,6 +460,21 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     return comboBox(DefaultComboBoxModel(Vector(items)), renderer)
+  }
+
+  override fun <T> list(items: Collection<T>, renderer: ListCellRenderer<in T>?): Cell<JBList<T>> {
+    return list(JBList.createDefaultListModel(items), renderer)
+  }
+
+  override fun <T> list(model: ListModel<T>, renderer: ListCellRenderer<in T>?): Cell<JBList<T>> {
+    val list = JBList(model).apply {
+      cellRenderer = renderer ?: textListCellRenderer { it.toString() }
+    }
+    val scrollPane = JBScrollPane(list).apply {
+      minimumSize = JBUI.size(100, 60)
+      isOverlappingScrollBar = true
+    }
+    return cellImpl(list, scrollPane)
   }
 
   override fun customize(customRowGaps: UnscaledGapsY): Row {

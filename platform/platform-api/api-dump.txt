@@ -9120,6 +9120,10 @@ com.intellij.ui.dsl.builder.Row
 - a:label(java.lang.String):com.intellij.ui.dsl.builder.Cell
 - a:layout(com.intellij.ui.dsl.builder.RowLayout):com.intellij.ui.dsl.builder.Row
 - a:link(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:list(java.util.Collection,javax.swing.ListCellRenderer):com.intellij.ui.dsl.builder.Cell
+- a:list(javax.swing.ListModel,javax.swing.ListCellRenderer):com.intellij.ui.dsl.builder.Cell
+- bs:list$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:list$default(com.intellij.ui.dsl.builder.Row,javax.swing.ListModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:panel(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Panel
 - a:passwordField():com.intellij.ui.dsl.builder.Cell
 - a:placeholder():com.intellij.ui.dsl.builder.Placeholder
@@ -9156,6 +9160,8 @@ Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:icon$default(com.intellij.ui.dsl.builder.Row,com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:icon$default(com.intellij.ui.dsl.builder.Row,com.intellij.platform.icons.scale.IconScale,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:intTextField$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,java.lang.Integer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:list$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:list$default(com.intellij.ui.dsl.builder.Row,javax.swing.ListModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:radioButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.Object,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
