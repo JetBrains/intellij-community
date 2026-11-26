@@ -68,6 +68,7 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyPossibleClassMember;
+import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatementList;
@@ -106,6 +107,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1742,7 +1744,55 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     final List<PyClassLikeType> metaClassTypes = getAllPossibleMetaClassTypes(context);
     final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
+    final PyClassLikeType protocolMeta = getProtocolMetaClassType(context);
+    if (protocolMeta != null && (mostDerivedMeta != null || metaClassTypes.isEmpty())) {
+      final PyClassLikeType mostDerivedWithProtocolMeta =
+        getMostDerivedClassType(ContainerUtil.append(metaClassTypes, protocolMeta), context);
+      if (mostDerivedWithProtocolMeta != null) {
+        return mostDerivedWithProtocolMeta;
+      }
+    }
     return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(this).getObjectType("type");
+  }
+
+  /**
+   * Returns {@code typing._ProtocolMeta}, the runtime metaclass of {@code typing.Protocol}, if this class inherits a protocol.
+   * <p>
+   * The stubs declare {@code Protocol} as a special form with no metaclass. The caller drops this metaclass when it conflicts with
+   * another metaclass of the class. The search for the protocol does not go through a {@code builtins} class. The stubs of
+   * {@code str}, {@code list} and other built-in classes inherit protocols that the runtime classes do not inherit.
+   */
+  private @Nullable PyClassLikeType getProtocolMetaClassType(@NotNull TypeEvalContext context) {
+    return PyUtil.getNullableParameterizedCachedValue(this, context, contextArgument -> {
+      if (!inheritsProtocolOutsideBuiltins(contextArgument)) {
+        return null;
+      }
+      final PyClass protocolMetaClass =
+        PyPsiFacade.getInstance(getProject()).createClassByQName(PyTypingTypeProvider.PROTOCOL_META, this);
+      return protocolMetaClass != null ? protocolMetaClass.getType(contextArgument) : null;
+    });
+  }
+
+  private boolean inheritsProtocolOutsideBuiltins(@NotNull TypeEvalContext context) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+    final Set<PyClass> visited = new HashSet<>();
+    final Deque<PyClass> toVisit = new ArrayDeque<>();
+    toVisit.push(this);
+    while (!toVisit.isEmpty()) {
+      final PyClass cls = toVisit.pop();
+      if (!visited.add(cls) || builtinCache.isBuiltin(cls)) {
+        continue;
+      }
+      for (PyClassLikeType superClassType : cls.getSuperClassTypes(context)) {
+        if (superClassType instanceof PyCustomType && PyTypingTypeProvider.PROTOCOL.equals(superClassType.getClassQName())) {
+          return true;
+        }
+        if (superClassType instanceof PyClassType classType) {
+          toVisit.push(classType.getPyClass());
+        }
+      }
+    }
+    return false;
   }
 
   private static @Nullable PyClassLikeType getMostDerivedClassType(@NotNull List<@NotNull PyClassLikeType> classTypes,
