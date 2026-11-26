@@ -443,10 +443,7 @@ impl Inner {
                 spans: span_documents,
             }],
         };
-        let text = serde_json::to_string(&document).expect("a trace document has no map with non-string keys");
-        // `serde_json` does not escape U+2028 and U+2029, and the former writer did. The two characters occur only in a
-        // JSON string, so this replace keeps the bytes of the former writer.
-        text.replace('\u{2028}', "\\u2028").replace('\u{2029}', "\\u2029").into_bytes()
+        serde_json::to_vec(&document).expect("a trace document has no map with non-string keys")
     }
 }
 
