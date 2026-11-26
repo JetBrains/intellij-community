@@ -2,22 +2,29 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.light.LightField;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,7 +35,9 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * What a short name at a place means once an element has that name, found before the element has it: the code as it is sees the element
@@ -38,6 +47,12 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public final class ResolveAfterRenameUtil {
+  private static final int INNER = 0;
+  private static final int FILE = 1;
+  private static final int PACKAGE = 2;
+  private static final int ON_DEMAND = 3;
+  private static final int NOWHERE = 4;
+
   private ResolveAfterRenameUtil() {
   }
 
@@ -133,6 +148,9 @@ public final class ResolveAfterRenameUtil {
     PsiJavaCodeReferenceElement reference = referenceAt(newName, place);
     if (reference == null) return Target.NOTHING;
     Collection<? extends PsiImportStatementBase> ignoredImports = view.getIgnoredImports();
+    boolean moved = view.isMoved();
+    PsiFile placeFile = FileContextUtil.getContextFile(reference);
+    Map<PsiElement, Integer> levels = new HashMap<>();
     ClassResolverProcessor processor = new ClassResolverProcessor(newName, reference, reference.getContainingFile()) {
       private PsiElement myFileContext;
 
@@ -147,7 +165,12 @@ public final class ResolveAfterRenameUtil {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (myFileContext != null && ignoredImports.contains(myFileContext)) return true;
-        return super.execute(view.isRenamed(element) ? view : element, state);
+        boolean original = view.isRenamed(element);
+        if (!moved || !(element instanceof PsiClass)) return super.execute(original ? view : element, state);
+        if (original && !isOfferedAfterMove(view, element, myFileContext, placeFile)) return true;
+        PsiElement offered = original ? view : element;
+        levels.putIfAbsent(offered, levelOf(element, myFileContext, placeFile));
+        return super.execute(offered, state);
       }
 
       // The class to rename has its old name yet: without the hint the walk offers it too.
@@ -157,7 +180,60 @@ public final class ResolveAfterRenameUtil {
       }
     };
     PsiScopesUtil.resolveAndWalk(processor, reference, null);
-    return targetOf(processor.getResult(), view.getToRename(), view);
+    JavaResolveResult[] results = processor.getResult();
+    if (moved) results = showMovedClass(view, results, levels, placeFile);
+    return targetOf(results, view.getToRename(), view);
+  }
+
+  private static boolean isOfferedAfterMove(@NotNull RenamedClassView view,
+                                            @NotNull PsiElement element,
+                                            @Nullable PsiElement fileContext,
+                                            @Nullable PsiFile placeFile) {
+    if (fileContext instanceof PsiImportStatementBase) return !((PsiImportStatementBase)fileContext).isOnDemand();
+    return fileContext == null && placeFile != null && isOwnClass(element, placeFile) && view.isMovedFile(placeFile);
+  }
+
+  private static boolean isOwnClass(@NotNull PsiElement element, @NotNull PsiFile placeFile) {
+    PsiFile file = element.getContainingFile();
+    return file != null && file.getOriginalFile() == placeFile.getOriginalFile();
+  }
+
+  private static int levelOf(@NotNull PsiElement element, @Nullable PsiElement fileContext, @Nullable PsiFile placeFile) {
+    if (fileContext instanceof PsiImportStatementBase) return ((PsiImportStatementBase)fileContext).isOnDemand() ? ON_DEMAND : FILE;
+    PsiClass aClass = (PsiClass)element;
+    if (aClass.getContainingClass() != null) return INNER;
+    if (placeFile == null) return ON_DEMAND;
+    if (isOwnClass(aClass, placeFile)) return FILE;
+    String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName != null && placeFile instanceof PsiJavaFile &&
+        StringUtil.getPackageName(qualifiedName).equals(((PsiJavaFile)placeFile).getPackageName())) {
+      return PACKAGE;
+    }
+    return ON_DEMAND;
+  }
+
+  private static JavaResolveResult @NotNull [] showMovedClass(@NotNull RenamedClassView view,
+                                                              JavaResolveResult @NotNull [] results,
+                                                              @NotNull Map<PsiElement, Integer> levels,
+                                                              @Nullable PsiFile placeFile) {
+    int shown = shownLevel(view, placeFile);
+    if (shown == NOWHERE) return results;
+    int walked = NOWHERE;
+    for (JavaResolveResult result : results) {
+      walked = Math.min(walked, levels.getOrDefault(result.getElement(), INNER));
+    }
+    if (walked < shown || walked == shown && shown == PACKAGE) return results;
+    JavaResolveResult movedResult = new ClassCandidateInfo(view, PsiSubstitutor.EMPTY);
+    return walked > shown ? new JavaResolveResult[]{movedResult} : ArrayUtil.append(results, movedResult);
+  }
+
+  private static int shownLevel(@NotNull RenamedClassView view, @Nullable PsiFile placeFile) {
+    if (!(placeFile instanceof PsiJavaFile)) return NOWHERE;
+    PsiJavaFile javaFile = (PsiJavaFile)placeFile;
+    String packageAfterMove = view.isMovedFile(javaFile) ? view.getTargetPackage() : javaFile.getPackageName();
+    if (packageAfterMove.equals(view.getTargetPackage())) return PACKAGE;
+    PsiImportList importList = javaFile.getImportList();
+    return importList != null && importList.findOnDemandImportStatement(view.getTargetPackage()) != null ? ON_DEMAND : NOWHERE;
   }
 
   /**

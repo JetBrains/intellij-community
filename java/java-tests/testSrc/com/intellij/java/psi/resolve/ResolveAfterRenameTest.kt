@@ -2,11 +2,13 @@
 package com.intellij.java.psi.resolve
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiTypeElement
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.source.resolve.RenamedClassView
 import com.intellij.psi.impl.source.resolve.ResolveAfterRenameUtil
@@ -134,6 +136,145 @@ class ResolveAfterRenameTest {
 
       assertEquals(findClass("Outer.Inner"), ResolveAfterRenameUtil.methodClass(listOf(run), "execute", call.methodExpression))
     }
+  }
+
+  @Test
+  fun testMovedClassLeavesItsOldPackage(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    val user = myFixture.addFileToProject("a/User.java", "package a; class User { Foo f; }") as PsiJavaFile
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.NONE, resolveMoved(listOf(fooFile), user).kind())
+    }
+  }
+
+  @Test
+  fun testMovedClassLeavesTheImportOnDemandOfItsOldPackage(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    val use = myFixture.addFileToProject("q/Use.java", "package q; import a.*; class Use { Foo f; }") as PsiJavaFile
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.NONE, resolveMoved(listOf(fooFile), use).kind())
+    }
+  }
+
+  @Test
+  fun testMovedClassKeepsItsSingleImport(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    val use = myFixture.addFileToProject("q/Use.java", "package q; import a.Foo; class Use { Foo f; }") as PsiJavaFile
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, resolveMoved(listOf(fooFile), use).kind())
+    }
+  }
+
+  @Test
+  fun testMovedClassEntersTheTargetPackage(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    val bar = myFixture.addFileToProject("c/Bar.java", "package c; class Bar { a.Foo f; }") as PsiJavaFile
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, resolveMoved(listOf(fooFile), bar).kind())
+    }
+  }
+
+  @Test
+  fun testMovedClassComesThroughTheImportOnDemandOfTheTargetPackage(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    myFixture.addClass("package c; public class Other {}")
+    val use = myFixture.addFileToProject("q/Use.java", "package q; import c.*; class Use { a.Foo f; }") as PsiJavaFile
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, resolveMoved(listOf(fooFile), use).kind())
+    }
+  }
+
+  @Test
+  fun testMemberClassWinsOverTheMovedClass(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    val bar = myFixture.addFileToProject("c/Bar.java", "package c; class Bar { a.Foo f; class Foo {} }") as PsiJavaFile
+
+    readAction {
+      val target = resolveMoved(listOf(fooFile), bar)
+
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
+      assertEquals(findClass("c.Bar.Foo"), target.element())
+    }
+  }
+
+  @Test
+  fun testSingleImportWinsOverTheMovedClassOfTheTargetPackage(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    myFixture.addClass("package x; public class Foo {}")
+    val bar = myFixture.addFileToProject("c/Bar.java", "package c; import x.Foo; class Bar { a.Foo f; }") as PsiJavaFile
+
+    readAction {
+      val target = resolveMoved(listOf(fooFile), bar)
+
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
+      assertEquals(findClass("x.Foo"), target.element())
+    }
+  }
+
+  @Test
+  fun testPackageClassWinsOverTheMovedClassOfAnImportOnDemand(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    myFixture.addClass("package c; public class Other {}")
+    myFixture.addClass("package q; class Foo {}")
+    val use = myFixture.addFileToProject("q/Use.java", "package q; import c.*; class Use { a.Foo f; }") as PsiJavaFile
+
+    readAction {
+      val target = resolveMoved(listOf(fooFile), use)
+
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
+      assertEquals(findClass("q.Foo"), target.element())
+    }
+  }
+
+  @Test
+  fun testMovedClassAndAClassOfAnotherImportOnDemandAreAmbiguous(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    myFixture.addClass("package c; public class Other {}")
+    myFixture.addClass("package x; public class Foo {}")
+    val use = myFixture.addFileToProject("q/Use.java", "package q; import c.*; import x.*; class Use { a.Foo f; }") as PsiJavaFile
+
+    readAction {
+      val target = resolveMoved(listOf(fooFile), use)
+
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.AMBIGUOUS, target.kind())
+      assertThat(target.elements()).containsExactlyInAnyOrder(findClass("a.Foo"), findClass("x.Foo"))
+    }
+  }
+
+  @Test
+  fun testMovedFileSeesTheMovedClassOfTheTargetPackage(): Unit = timeoutRunBlocking {
+    val fooFile = addFoo()
+    val user = myFixture.addFileToProject("a/User.java", "package a; class User { Foo f; }") as PsiJavaFile
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, resolveMoved(listOf(fooFile, user), user).kind())
+    }
+  }
+
+  @Test
+  fun testCopyOfTheMovedFileSeesTheClassAsItsOwnClass(): Unit = timeoutRunBlocking {
+    val fooFile = myFixture.addFileToProject("a/Foo.java", "package a; public class Foo { Foo next; }") as PsiJavaFile
+    val copy = readAction { fooFile.copy() as PsiJavaFile }
+    writeCommandAction(project, "Set the package of the copy") { copy.packageName = "c" }
+
+    readAction {
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, resolveMoved(listOf(fooFile), copy).kind())
+    }
+  }
+
+  private fun addFoo(): PsiJavaFile = myFixture.addFileToProject("a/Foo.java", "package a; public class Foo {}") as PsiJavaFile
+
+  private fun resolveMoved(movedFiles: List<PsiJavaFile>, file: PsiJavaFile): ResolveAfterRenameUtil.Target {
+    val view = RenamedClassView.moved(findClass("a.Foo"), "c", movedFiles)
+    val place = PsiTreeUtil.findChildrenOfType(file, PsiTypeElement::class.java)
+      .mapNotNull { it.innermostComponentReferenceElement }
+      .first { it.referenceName == "Foo" }
+    return ResolveAfterRenameUtil.resolveClass(view, place)
   }
 
   private fun referenceTo(name: String, file: PsiJavaFile): PsiJavaCodeReferenceElement =
