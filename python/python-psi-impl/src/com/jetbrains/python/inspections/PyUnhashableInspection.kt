@@ -41,7 +41,11 @@ class PyUnhashableInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    return Visitor(holder, PyInspectionVisitor.getContext(session))
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return Visitor(holder, context)
   }
 
   private class Visitor(holder: ProblemsHolder?, val context: TypeEvalContext) : PyInspectionVisitor(holder, context) {

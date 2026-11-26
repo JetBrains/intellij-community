@@ -51,6 +51,9 @@ class PyInvalidCastInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
     val ignoreGenericVariance = ignoreGenericVariance
     val ignoreTypedDictStructure = ignoreTypedDictStructure
     return object : PyInspectionVisitor(holder, context) {

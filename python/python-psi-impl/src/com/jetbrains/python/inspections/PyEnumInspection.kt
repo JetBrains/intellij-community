@@ -37,7 +37,11 @@ import java.math.BigDecimal
 @ApiStatus.Internal
 class PyEnumInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    return object : PyInspectionVisitor(holder, getContext(session)) {
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return object : PyInspectionVisitor(holder, context) {
       override fun visitPyClass(node: PyClass) {
         validateSuperClasses(node)
         if (!PyStdlibTypeProvider.isCustomEnum(node, myTypeEvalContext)) return
