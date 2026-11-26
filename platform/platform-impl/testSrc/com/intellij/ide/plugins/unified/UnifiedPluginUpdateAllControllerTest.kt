@@ -182,6 +182,32 @@ internal class UnifiedPluginUpdateAllControllerTest {
   }
 
   @Test
+  fun `retry follows eligibility after a batch fails`() {
+    val first = plugin("first")
+    val second = plugin("second")
+    controller.acceptUpdates(updates(first, second))
+    controller.requestUpdateAll()
+    finishOperation(first, PluginOperationTerminalResult.FAILED)
+    finishOperation(second, PluginOperationTerminalResult.FAILED)
+
+    controller.acceptUpdates(updates())
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Hidden)
+    controller.requestUpdateAll()
+    assertThat(executor.requests).hasSize(1)
+
+    val newTarget = plugin("new.target")
+    controller.acceptUpdates(updates(newTarget))
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Available)
+
+    controller.acceptUpdates(updates(second, newTarget))
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Failed)
+    val refreshedSecond = plugin("second").apply { version = "2.1" }
+    controller.acceptUpdates(updates(refreshedSecond, newTarget))
+    controller.requestUpdateAll()
+    assertThat(executor.requests.last().updates.single()).isSameAs(refreshedSecond)
+  }
+
+  @Test
   fun `restart requirement survives a retry`() {
     val first = plugin("first")
     val second = plugin("second")

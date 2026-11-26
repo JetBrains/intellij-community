@@ -354,14 +354,15 @@ Untested: No focused test covers every management edit and refresh path.
 - The captured total must stay fixed while that request runs.
 - A successful prepared update must advance the prepared count.
 - A failed or cancelled update must not advance the prepared count.
-- Any failed target must make the completed request retryable.
-- Retry must include only failed targets that remain eligible.
+- An eligible failed target must make the completed request retryable.
+- Retry must use the current update for each eligible failed target.
 - A restart requirement must produce the Restart IDE terminal state.
 - Completion without restart must produce the Updated terminal state.
 - A later update snapshot must replace an obsolete terminal state.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllControllerTest.kt (
     `request captures one snapshot before executor starts`;
     `failed operation is retained after the other updates prepare`;
+    `retry follows eligibility after a batch fails`;
     `restart requirement survives a retry`;
     `completion without restart shows updated state`
   )
