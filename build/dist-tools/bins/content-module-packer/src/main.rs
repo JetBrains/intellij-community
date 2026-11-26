@@ -10,7 +10,7 @@
 //! The inventory goes to the `metadata-file=` of the group through `filemeta`, after the jar. It lists the jar, and in
 //! natives mode also the tree root and every entry under it. A tree file gets `NativeTree::file_mode`, not the mode that
 //! a stat returns. A tree directory gets the mode that a stat returns. The Kotlin build and the collector read the file,
-//! so its bytes are the inventory JSON version 1.
+//! so its bytes are the inventory JSON version 2.
 //!
 //! The merge hashes the jar while it writes it, and its report holds the size and the content hash. So the inventory
 //! does not read the jar again, and takes only the mode of the jar from a stat. It refuses a jar output that is not a
