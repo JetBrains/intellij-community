@@ -25,7 +25,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
+public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T>, InlineKeyPolicy<T> {
   private final boolean myCompactFormat = isCompactFormat();
 
   /**
@@ -62,7 +62,9 @@ public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
     return fromInt(n);
   }
 
+  @Override
   public abstract T fromInt(int n);
 
+  @Override
   public abstract int toInt(T t);
 }

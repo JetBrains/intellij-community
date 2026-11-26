@@ -2038,6 +2038,7 @@ f:com.intellij.util.io.IOUtil
 - s:readStringList(java.io.DataInput):java.util.List
 - s:readUTF(java.io.DataInput):java.lang.String
 a:com.intellij.util.io.InlineKeyDescriptor
+- com.intellij.util.containers.hash.EqualityPolicy
 - com.intellij.util.io.KeyDescriptor
 - <init>():V
 c:com.intellij.util.io.IntInlineKeyDescriptor

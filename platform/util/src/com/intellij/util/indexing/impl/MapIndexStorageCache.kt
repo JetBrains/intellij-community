@@ -7,7 +7,7 @@ import com.intellij.util.containers.SLRUCache
 import com.intellij.util.containers.hash.EqualityPolicy
 import com.intellij.util.containers.intcaches.SLRUIntObjectCache
 import com.intellij.util.io.IOCancellationCallbackHolder
-import com.intellij.util.io.InlineKeyDescriptor
+import com.intellij.util.io.InlineKeyPolicy
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -122,7 +122,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     cacheSizeHint: Int,
   ): MapIndexStorageCache<Key, Value> {
 
-    val underlyingCache = if (hashingStrategy is InlineKeyDescriptor<Key>) {
+    val underlyingCache = if (hashingStrategy is InlineKeyPolicy<Key>) {
       //use specialized cache for Int keys, if actual Key type is convertable to Int:
       SlruCacheForIntKeys(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
     }
@@ -183,7 +183,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   private class SlruCacheForIntKeys<Key : Any, Value>(
     val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
     val evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-    val converter: InlineKeyDescriptor<Key>,
+    val keyPolicy: InlineKeyPolicy<Key>,
     cacheSize: Int,
   ) : MapIndexStorageCache<Key, Value> {
     private val cache = SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(
@@ -191,22 +191,22 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
       /* probationQueueSize: */ cacheSize / 4,
       /* valueFactory:       */ { key: Int ->
         totalUncachedReads.incrementAndGet()
-        valueReader.apply(converter.fromInt(key))
+        valueReader.apply(keyPolicy.fromInt(key))
       },
       /* onEvict:            */ { key: Int, valueContainer: ChangeTrackingValueContainer<Value> ->
         totalEvicted.incrementAndGet()
-        evictedValuesPersister.accept(converter.fromInt(key), valueContainer)
+        evictedValuesPersister.accept(keyPolicy.fromInt(key), valueContainer)
       }
     )
 
     override fun read(key: Key): ChangeTrackingValueContainer<Value> {
       totalReads.incrementAndGet()
-      return cache.getOrCreate(converter.toInt(key))
+      return cache.getOrCreate(keyPolicy.toInt(key))
     }
 
     override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
       totalReads.incrementAndGet()
-      return cache.getIfCached(converter.toInt(key))
+      return cache.getIfCached(keyPolicy.toInt(key))
     }
 
     override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> {
