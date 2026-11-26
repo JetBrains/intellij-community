@@ -240,6 +240,8 @@ internal class DistPlanCompute(
   @JvmField val productClasses: Map<String, String> = emptyMap(),
   /** What the distribution index states of every planned split product, keyed by the `dev-build.json` key. Empty for the dev sections. */
   @JvmField val indexProducts: Map<String, DistIndexProduct> = emptyMap(),
+  /** The module-set table that the plan writes, with each label in the recorded form, see [recordedModuleSets]. Empty for the dev sections. */
+  @JvmField val moduleSets: List<ModuleSetData> = emptyList(),
 ) {
   /**
    * Writes the rendered files when [commitChanges], and otherwise reports them as diffs.
@@ -379,7 +381,8 @@ internal fun computeDistPluginExecutions(
  * fragment plan of them, so it writes no row of them in the plan, the reference files, the fragment inputs, the module
  * sets, the product info and the product descriptor package, and no launch model. Empty for the community half.
  * [upstreamIndexProducts] are the index facts of the community half, see [DistUpstreamHalf.indexProducts]. The
- * distribution index of this half reads them for a community product.
+ * distribution index of this half reads them for a community product. [upstreamModuleSets] is the module-set table of
+ * the community half, see [DistUpstreamHalf.moduleSets], and `null` for the community half.
  */
 internal fun computeDistPlan(
   half: DistHalf,
@@ -392,6 +395,7 @@ internal fun computeDistPlan(
   runConfigurationRows: List<DevRunConfigurationRow>,
   communityProducts: Set<String> = emptySet(),
   upstreamIndexProducts: Map<String, DistIndexProduct> = emptyMap(),
+  upstreamModuleSets: List<ModuleSetData>? = null,
 ): DistPlanCompute {
   sections.requireDescriptorDeclarationsUnchanged()
   val pluginPlans = executions.files
@@ -465,6 +469,7 @@ internal fun computeDistPlan(
     ))
   }
   val indexProducts = distIndexProducts(plannedIndexProducts, communityProducts, upstreamIndexProducts)
+  val moduleSets = recordedModuleSets(collected.moduleSets, index)
   val fileContents = buildSpan("distribution plan: render files") { renderSpan ->
     val contents = buildList {
       add(DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half, index))
@@ -481,7 +486,7 @@ internal fun computeDistPlan(
         add(DIST_REFERENCE_INPUTS_RELATIVE_PATH to renderDistReferenceInputs(referenceInputs, half.generatedByHeader))
       }
       add(DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
-      add(DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
+      add(DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(moduleSets, upstreamModuleSets, half))
       add(DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half, sections.updatePluginModules))
       add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(
         rows = runConfigurations,
@@ -548,6 +553,7 @@ internal fun computeDistPlan(
     pluginPlans = pluginPlans.updates,
     productClasses = plannedProductClasses,
     indexProducts = indexProducts,
+    moduleSets = moduleSets,
   )
 }
 
@@ -3813,7 +3819,23 @@ private fun StringBuilder.appendPayload(key: String, payload: FragmentPayload, i
   append("),\n")
 }
 
-private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): String = buildString {
+/**
+ * [moduleSets] with each `packed` label in the recorded form, as the targets JSON writes it. The community half spells
+ * a plan label with `//`, and the table spells it with `@community//`, as `descriptors` does. So the ultimate half
+ * can compare a set with the one of the community half, see [renderModuleSets].
+ */
+private fun recordedModuleSets(moduleSets: List<ModuleSetData>, index: DistBazelIndex): List<ModuleSetData> {
+  return moduleSets.map { set -> set.copy(packed = set.packed.mapValuesTo(TreeMap()) { index.recordedLabel(it.value) }) }
+}
+
+/**
+ * The module-set table of [half]. [upstream] is the table of the community half, or `null` for the community half.
+ *
+ * The half that renders second loads the community table and writes only each set of [moduleSets] that [upstream] does
+ * not state with equal facts. The compare takes the whole set, because `module_system_loaded` and `mode_refused` are
+ * verdicts of the products of one half. The union keeps every other set of the community table.
+ */
+private fun renderModuleSets(moduleSets: List<ModuleSetData>, upstream: List<ModuleSetData>?, half: DistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
   append("# What each module set a split product references contains: the modules it declares itself, and the sets it\n")
@@ -3832,9 +3854,10 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
   append("# `descriptors` maps each member to the label of its conventional descriptor `<module>.xml`, in the form of the\n")
   append("# targets JSON. The product descriptor macros take the descriptor row of a member from it.\n")
   append("#\n")
-  append("# `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A\n")
-  append("# product's `platform_lib` payload in `dist_fragment_inputs.bzl` names only the labels no set carries.\n")
-  append("# Every product that references a set hands over the labels of its members, less the ones its mode refuses.\n")
+  append("# `packed` maps each member that owns a `content_module_jar` target to that label, in the form of the targets\n")
+  append("# JSON, written once per set. A product's `platform_lib` payload in `dist_fragment_inputs.bzl` names only the\n")
+  append("# labels no set carries. Every product that references a set hands over the labels of its members, less the\n")
+  append("# ones its mode refuses.\n")
   append("#\n")
   append("# `module_system_loaded` names the `packed` members whose jar the module system loads in every product that\n")
   append("# references the set. The payload puts every other packed direct child of `lib/` on the core classpath.\n")
@@ -3844,39 +3867,58 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DistHalf): S
   append("#\n")
   append("# The binder fails on a set name that a payload references and this table does not have. One generator run writes\n")
   append("# both files, and no module extension loads this one.\n")
-  append("DIST_MODULE_SETS = {\n")
-  for (moduleSet in moduleSets) {
-    append("    \"").append(moduleSet.name).append("\": struct(\n")
-    appendNameList("modules", moduleSet.modules, indent = "        ")
-    appendNameList("nested", moduleSet.nested, indent = "        ")
-    appendStringDict("loading", moduleSet.loading)
-    appendStringDict("required_if_available", moduleSet.requiredIfAvailable)
-    moduleSet.alias?.let { alias ->
-      append("        alias = \"").append(alias).append("\",\n")
-    }
-    appendStringDict("descriptors", moduleSet.descriptors)
-    if (moduleSet.packed.isNotEmpty()) {
-      append("        packed = {\n")
-      for ((module, label) in moduleSet.packed) {
-        append("            \"").append(module).append("\": \"").append(label).append("\",\n")
+  if (upstream == null) {
+    append("DIST_MODULE_SETS = {\n")
+    moduleSets.forEach(::appendModuleSet)
+  }
+  else {
+    append("#\n")
+    append("# The table starts from the table of the community half. This file writes only each set that this half states\n")
+    append("# with other facts, or that the community half does not have.\n")
+    append("load(\"@community//build:dist_module_sets.bzl\", COMMUNITY_DIST_MODULE_SETS = \"DIST_MODULE_SETS\")\n")
+    append("\n")
+    append("DIST_MODULE_SETS = COMMUNITY_DIST_MODULE_SETS | {\n")
+    val upstreamByName = upstream.associateBy(ModuleSetData::name)
+    for (moduleSet in moduleSets) {
+      if (upstreamByName.get(moduleSet.name) != moduleSet) {
+        appendModuleSet(moduleSet)
       }
-      append("        },\n")
     }
-    appendNonEmptyNameList("module_system_loaded", moduleSet.moduleSystemLoaded)
-    if (moduleSet.modeRefused.isNotEmpty()) {
-      append("        mode_refused = {\n")
-      for ((mode, modules) in moduleSet.modeRefused) {
-        append("            \"").append(mode).append("\": [\n")
-        for (module in modules) {
-          append("                \"").append(module).append("\",\n")
-        }
-        append("            ],\n")
-      }
-      append("        },\n")
-    }
-    append("    ),\n")
   }
   append("}\n")
+}
+
+/** One entry of the `DIST_MODULE_SETS` dict. */
+private fun StringBuilder.appendModuleSet(moduleSet: ModuleSetData) {
+  append("    \"").append(moduleSet.name).append("\": struct(\n")
+  appendNameList("modules", moduleSet.modules, indent = "        ")
+  appendNameList("nested", moduleSet.nested, indent = "        ")
+  appendStringDict("loading", moduleSet.loading)
+  appendStringDict("required_if_available", moduleSet.requiredIfAvailable)
+  moduleSet.alias?.let { alias ->
+    append("        alias = \"").append(alias).append("\",\n")
+  }
+  appendStringDict("descriptors", moduleSet.descriptors)
+  if (moduleSet.packed.isNotEmpty()) {
+    append("        packed = {\n")
+    for ((module, label) in moduleSet.packed) {
+      append("            \"").append(module).append("\": \"").append(label).append("\",\n")
+    }
+    append("        },\n")
+  }
+  appendNonEmptyNameList("module_system_loaded", moduleSet.moduleSystemLoaded)
+  if (moduleSet.modeRefused.isNotEmpty()) {
+    append("        mode_refused = {\n")
+    for ((mode, modules) in moduleSet.modeRefused) {
+      append("            \"").append(mode).append("\": [\n")
+      for (module in modules) {
+        append("                \"").append(module).append("\",\n")
+      }
+      append("            ],\n")
+    }
+    append("        },\n")
+  }
+  append("    ),\n")
 }
 
 /** A `name = {...}` field of a set struct, one entry per line and sorted by key, as buildifier keeps a dict. An empty dict is left out. */

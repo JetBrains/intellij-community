@@ -338,12 +338,13 @@ internal class DistBuildSections private constructor(
 
   /**
    * What the half that renders second reads of this half, see [DistUpstreamHalf]. [productClasses],
-   * [ownPackagePlans] and [indexProducts] come from the plan and the plugin executions over these sections.
+   * [ownPackagePlans], [indexProducts] and [moduleSets] come from the plan and the plugin executions over these sections.
    */
   fun upstreamSummary(
     productClasses: Map<String, String>,
     ownPackagePlans: DistOwnPackagePlans,
     indexProducts: Map<String, DistIndexProduct>,
+    moduleSets: List<ModuleSetData>,
   ): DistUpstreamHalf {
     return DistUpstreamHalf(
       halfName = half.name,
@@ -353,6 +354,7 @@ internal class DistBuildSections private constructor(
       productClasses = productClasses,
       ownPackagePlans = ownPackagePlans,
       indexProducts = indexProducts,
+      moduleSets = moduleSets,
     )
   }
 

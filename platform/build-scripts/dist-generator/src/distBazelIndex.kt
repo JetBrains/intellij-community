@@ -224,6 +224,11 @@ class DistBazelIndex(
    */
   fun planLabel(label: String): String = respellLibraryLabel(label, dependentIsCommunity = planPackageIsCommunity)
 
+  /** [label], an absolute label as a generated plan package of the run writes it, in the recorded form. It undoes [planLabel]. */
+  fun recordedLabel(label: String): String {
+    return if (planPackageIsCommunity && label.startsWith("//")) COMMUNITY_REPOSITORY_PREFIX + label.removePrefix("//") else label
+  }
+
   /** [projectRelativePath] relative to [communityRoot], or `null` for a path outside the community checkout. */
   fun communityRelativePath(projectRelativePath: String): String? {
     return when {
