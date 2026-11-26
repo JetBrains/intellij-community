@@ -12,6 +12,7 @@ load("//build:intellij_dev_community.bzl", "intellij_dev_launch_assembles_test",
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 load(":dev_run_configuration_test.bzl", "dev_run_configuration_test_suite")
+load(":dist_plugin_components_test.bzl", "dist_plugin_components_test_suite")
 load(":downloads_test.bzl", "downloads_test_suite")
 load(":intellij_add_opens_test.bzl", "intellij_add_opens_test_suite")
 load(":jps_modules_test.bzl", "jps_modules_test_suite")
@@ -34,6 +35,8 @@ intellij_add_opens_test_suite(name = "intellij_add_opens_test")
 jps_modules_test_suite(name = "jps_modules_test")
 
 dev_run_configuration_test_suite(name = "dev_run_configuration_test")
+
+dist_plugin_components_test_suite(name = "dist_plugin_components_test")
 
 # Whether the community repository is loaded inside the ultimate repository. The `.bazelrc` of the ultimate repository sets it.
 # The `ij_plugin` rule reads it to decide what to do with a content module that it cannot resolve.
