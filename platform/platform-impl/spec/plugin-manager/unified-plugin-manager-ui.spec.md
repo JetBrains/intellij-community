@@ -795,7 +795,7 @@ Untested: No focused test verifies Shift-selection across sections.
 
 ## Presentation
 
-- The header must show Search, Update All, and Settings controls in that order.
+- The header must show Search, the settings gear, and Update All in that order.
 - Search must shrink before a header action is clipped.
 - The unified page must hide the shared Settings progress and Reset controls.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (

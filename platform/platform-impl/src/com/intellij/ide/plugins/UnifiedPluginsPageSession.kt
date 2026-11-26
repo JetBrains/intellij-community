@@ -616,26 +616,24 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
           insets = JBUI.insetsRight(4)
         })
         add(
-          updateAllButton.component,
-          GridBagConstraints().apply {
-            gridx = 1
-            gridy = 0
-            fill = GridBagConstraints.NONE
-            anchor = GridBagConstraints.CENTER
-            insets = JBUI.insetsRight(4)
-          },
-        )
-        add(
           TabbedPaneHeaderComponent.createToolbar(
             actions.group,
             IdeBundle.message("plugin.manager.tooltip"),
             AllIcons.General.GearPlain,
           ).also(::makeToolbarButtonsFocusable),
           GridBagConstraints().apply {
+            gridx = 1
+            gridy = 0
+            anchor = GridBagConstraints.WEST
+          },
+        )
+        add(
+          updateAllButton.component,
+          GridBagConstraints().apply {
             gridx = 2
             gridy = 0
-            weightx = 1.0
-            anchor = GridBagConstraints.WEST
+            anchor = GridBagConstraints.CENTER
+            insets = JBUI.insetsLeft(4)
           },
         )
         val operationConstraints = GridBagConstraints().apply {
@@ -816,15 +814,17 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   @RequiresEdt
   private fun renderOperationHeader(source: UnifiedPluginsPageSourceState, updateAll: UnifiedPluginUpdateAllState) {
     val restartRequired = source.restartRequired || updateAll.restartRequired
-    val updateAllRunning = updateAll.presentation is UnifiedPluginUpdateAllPresentation.Running
+    val updateAllProgress = updateAll.presentation as? UnifiedPluginUpdateAllPresentation.Running
     val operations = source.sections.firstOrNull { it.id == PluginSectionId.Installing }?.items.orEmpty()
     view.renderOperationStatus(
       operations,
       source.uninstallingPlugins,
-      showUpdateCheck = checkingForUpdates && !restartRequired && !updateAllRunning,
+      updateAllProgress,
+      showUpdateCheck = checkingForUpdates && !restartRequired,
     )
-    updateAllButton.render(updateAll.presentation)
-    restartButton.isVisible = restartRequired && !view.operationStatusComponent.isVisible && !updateAllRunning
+    val operationInProgress = view.operationStatusComponent.isVisible
+    updateAllButton.render(if (operationInProgress) UnifiedPluginUpdateAllPresentation.Hidden else updateAll.presentation)
+    restartButton.isVisible = restartRequired && !operationInProgress
   }
 
   @RequiresEdt

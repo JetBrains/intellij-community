@@ -25,6 +25,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllExecutor.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginsPageActions.kt
   - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinator.kt
+  - ../../src/com/intellij/ide/plugins/unified/UnifiedPluginsPageView.kt
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageApplyStateTest.kt
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/InstallPluginTerminalStateTest.kt
@@ -366,7 +367,7 @@ Untested: No focused test covers every management edit and refresh path.
 - The status must follow operations across query changes and hide when it has no progress to show.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `operation status uses only free header space`;
-    `Update All button counts prepared executor targets`
+    `Update All uses the header status for batch progress`
   )
 
 - An active uninstall must show a spinner and an Uninstalling status beside the settings gear.
@@ -396,13 +397,13 @@ Untested: No focused test covers every management edit and refresh path.
     `pending restart shares the header slot with active progress`
   )
 
-- Update All must stay visible and disabled while its request runs.
-- Update All must show prepared and total counts while its request runs.
-- Active operation progress must appear in each matching row and in the selected plugin details.
-  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllControllerTest.kt
+- The Update All button must hide while its request runs or the header status shows progress.
+- The header status must show the prepared and total counts for Update All.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
-    `Update All button counts prepared executor targets`
+    `Update All uses the header status for batch progress`
   )
+
+- Active operation progress must appear in each matching row and in the selected plugin details.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `active update renders row and details progress without action overlap`
   )

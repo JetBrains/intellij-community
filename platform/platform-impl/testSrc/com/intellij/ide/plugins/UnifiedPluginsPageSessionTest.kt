@@ -88,7 +88,6 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.ActionLink
@@ -772,7 +771,7 @@ internal class UnifiedPluginsPageSessionTest {
         val searchComponent = componentsOfType(header, SearchFieldWithExtension::class.java).single()
         updateAllButton(header).apply {
           isVisible = true
-          text = "Updating 13/35..."
+          text = "Update All"
         }
 
         waitForSearchControlCount(searchComponent, 1)
@@ -792,9 +791,10 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
-  fun `Update All button counts prepared executor targets`(): Unit =
+  fun `Update All uses the header status for batch progress`(): Unit =
     uiTest {
       val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
+      val checkingForUpdates = MutableStateFlow(false)
       val executor = RecordingUpdateAllExecutor()
       val first = PluginDto("First", PluginId.getId("first"))
       val second = PluginDto("Second", PluginId.getId("second"))
@@ -816,6 +816,7 @@ internal class UnifiedPluginsPageSessionTest {
         provider = provider,
         pluginUpdates = updates,
         updateAllExecutor = executor,
+        updateCheckInProgress = checkingForUpdates,
       )
       try {
         val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
@@ -825,24 +826,30 @@ internal class UnifiedPluginsPageSessionTest {
 
         updates.emit(PluginUpdatesEvent(listOf(first, second), listOf(disabled), listOf(pluginNod)))
         waitForButton(button, "Update All", enabled = true)
-        assertThat(button.icon).isNull()
+        checkingForUpdates.value = true
+        waitUntilAssertSucceeds {
+          assertThat(status.isVisible).isTrue()
+          assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.checking.updates"))
+          assertThat(button.isVisible).isFalse()
+        }
+        checkingForUpdates.value = false
+        waitForButton(button, "Update All", enabled = true)
         button.doClick()
-        waitForButton(button, "Updating 0/2...", enabled = false)
         waitUntilAssertSucceeds {
           assertThat(status.isVisible).isTrue()
           assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.updating.plugins", 0, 2))
+          assertThat(button.isVisible).isFalse()
           assertThat(componentsOfType(session.getComponent(), ListPluginComponent::class.java)).hasSize(3)
         }
-        assertThat(button.icon).isSameAs(AnimatedIcon.Default.INSTANCE)
         assertThat(executor.requests.single().updates).containsExactly(first, second)
 
         updates.emit(PluginUpdatesEvent(listOf(second), emptyList(), emptyList()))
         delay(50.milliseconds)
-        assertThat(button.text).isEqualTo("Updating 0/2...")
+        assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.updating.plugins", 0, 2))
         executor.callbacks.single().prepared(first.pluginId, restartRequired = false)
-        waitForButton(button, "Updating 1/2...", enabled = false)
         waitUntilAssertSucceeds {
           assertThat(status.text).isEqualTo(IdeBundle.message("plugins.configurable.operation.updating.plugins", 1, 2))
+          assertThat(button.isVisible).isFalse()
         }
         executor.callbacks.single().prepared(second.pluginId, restartRequired = false)
         waitForButton(button, "Updated", enabled = false)
@@ -1047,7 +1054,7 @@ internal class UnifiedPluginsPageSessionTest {
         }
         waitForButton(button, "Update All", enabled = true)
         button.doClick()
-        waitForButton(button, "Updating 0/1...", enabled = false)
+        waitUntilAssertSucceeds { assertThat(button.isVisible).isFalse() }
         assertThat(executor.requests.single().updates).containsExactly(unchanged)
         executor.callbacks.single().prepared(unchanged.pluginId, restartRequired = false)
         waitForButton(button, "Updated", enabled = false)
@@ -1148,7 +1155,7 @@ internal class UnifiedPluginsPageSessionTest {
         updates.emit(PluginUpdatesEvent(listOf(dynamicUpdate, restartUpdate), emptyList(), emptyList()))
         waitForButton(button, "Update All", enabled = true)
         button.doClick()
-        waitForButton(button, "Updating 0/2...", enabled = false)
+        waitUntilAssertSucceeds { assertThat(button.isVisible).isFalse() }
         executor.callbacks.single().prepared(dynamicUpdate.pluginId, restartRequired = false)
         executor.callbacks.single().prepared(restartUpdate.pluginId, restartRequired = true)
         waitForButton(restart, "Restart IDE", enabled = true)
@@ -1828,8 +1835,8 @@ internal class UnifiedPluginsPageSessionTest {
     val updateAllConstraints = layout.getConstraints(updateAllButton)
     val settingsConstraints = layout.getConstraints(settingsToolbar)
     val maximumWidth = JBUI.scale(340)
-    assertThat(updateAllConstraints.gridx).isEqualTo(searchConstraints.gridx + 1)
-    assertThat(settingsConstraints.gridx).isEqualTo(updateAllConstraints.gridx + 1)
+    assertThat(settingsConstraints.gridx).isEqualTo(searchConstraints.gridx + 1)
+    assertThat(updateAllConstraints.gridx).isEqualTo(settingsConstraints.gridx + 1)
     assertThat(searchConstraints.fill).isEqualTo(GridBagConstraints.HORIZONTAL)
     assertThat(searchComponent.minimumSize.width).isLessThan(maximumWidth)
     assertThat(searchComponent.preferredSize.width).isEqualTo(maximumWidth)
@@ -1846,7 +1853,7 @@ internal class UnifiedPluginsPageSessionTest {
     header.doLayout()
 
     assertThat(searchComponent.width).isLessThan(maximumWidth)
-    assertThat(settingsToolbar.bounds.x + settingsToolbar.width).isLessThanOrEqualTo(header.width)
+    assertThat(updateAllButton.x + updateAllButton.width).isLessThanOrEqualTo(header.width)
 
     val historyToolbar = JPanel().apply {
       preferredSize = Dimension(JBUI.scale(88), header.preferredSize.height)
@@ -1871,9 +1878,9 @@ internal class UnifiedPluginsPageSessionTest {
     header.doLayout()
 
     assertThat(searchComponent.width).isEqualTo(expectedNarrowSearchWidth)
-    assertThat(updateAllButton.x - searchComponent.run { x + width }).isEqualTo(JBUI.scale(4))
-    assertThat(settingsToolbar.x - updateAllButton.run { x + width }).isEqualTo(JBUI.scale(4))
-    assertThat(settingsToolbar.bounds.x + settingsToolbar.width).isLessThanOrEqualTo(header.width)
+    assertThat(settingsToolbar.x - searchComponent.run { x + width }).isEqualTo(JBUI.scale(4))
+    assertThat(updateAllButton.x - settingsToolbar.run { x + width }).isEqualTo(JBUI.scale(4))
+    assertThat(updateAllButton.x + updateAllButton.width).isLessThanOrEqualTo(header.width)
   }
 
   private fun updateAllButton(header: JComponent): JButton {

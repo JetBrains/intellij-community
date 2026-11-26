@@ -358,7 +358,12 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
   }
 
   @RequiresEdt
-  fun renderOperationStatus(items: List<PluginItemState>, uninstallingPlugins: List<PluginUiModel>, showUpdateCheck: Boolean) {
+  fun renderOperationStatus(
+    items: List<PluginItemState>,
+    uninstallingPlugins: List<PluginUiModel>,
+    updateAllProgress: UnifiedPluginUpdateAllPresentation.Running?,
+    showUpdateCheck: Boolean,
+  ) {
     val activeItems = items.filter { it.rowInput?.operationInProgress == true }
     if (activeItems.isEmpty()) operationProgressPluginIds.clear()
     else activeItems.mapTo(operationProgressPluginIds, PluginItemState::pluginId)
@@ -368,6 +373,10 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       val status = if (plugin == null) IdeBundle.message("plugins.configurable.operation.uninstalling.plugins", uninstallingPlugins.size)
                    else IdeBundle.message("plugins.configurable.operation.uninstalling.plugin", plugin.name ?: plugin.pluginId.idString)
       setOperationStatus(status)
+      return
+    }
+    if (updateAllProgress != null) {
+      setOperationStatus(IdeBundle.message("plugins.configurable.operation.updating.plugins", updateAllProgress.prepared, updateAllProgress.total))
       return
     }
     if (activeItems.isEmpty()) {
