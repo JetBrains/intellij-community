@@ -9,7 +9,7 @@ load("//build/dist-content:dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
 load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_module_facts")
 load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_project_model_tree")
 load(":component_names.bzl", "PLATFORM_LIB_COMPONENT", "PLATFORM_RUNTIME_MODULE_REPOSITORY_COMPONENT")
-load(":dist_fragment_inputs.bzl", "DIST_FRAGMENT_INPUTS")
+load(":dist_component_inputs.bzl", "DIST_COMPONENT_INPUTS")
 load(":dist_module_sets.bzl", "DIST_MODULE_SETS")
 load(":dist_plan.bzl", "DIST_APPLICATION_INFOS", "DIST_CASE_SAFE_NAMES", "DIST_PLANS", "DIST_PLATFORM_JAR_ORDERS")
 load(":dist_product_info.bzl", "DIST_PRODUCT_INFO")
@@ -39,7 +39,7 @@ def _platform_lib_payload(product):
     info = DIST_PRODUCT_INFO.get(product)
     if info == None:
         fail("No generated distribution product info for product '%s', so its product mode is unknown" % product)
-    return packed_labels(DIST_FRAGMENT_INPUTS, DIST_MODULE_SETS, product, info.mode)
+    return packed_labels(DIST_COMPONENT_INPUTS, DIST_MODULE_SETS, product, info.mode)
 
 def _product_mode(product):
     return DIST_PRODUCT_INFO[product].mode
@@ -51,7 +51,7 @@ _DECLARATIONS = intellij_dist_declarations(struct(
     case_safe_names = DIST_CASE_SAFE_NAMES,
     application_infos = DIST_APPLICATION_INFOS,
     platform_jar_orders = DIST_PLATFORM_JAR_ORDERS,
-    component_inputs = DIST_FRAGMENT_INPUTS,
+    component_inputs = DIST_COMPONENT_INPUTS,
     plugin_components = DIST_PLUGIN_COMPONENTS,
     product = dist_product,
     platform_lib_component = PLATFORM_LIB_COMPONENT,

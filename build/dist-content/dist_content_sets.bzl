@@ -8,7 +8,7 @@
 # the `dev` section of the plugin when its own package holds the same plan files and calls. Otherwise it sits in
 # `build/dist-descriptors/<main module>/BUILD.bazel`.
 #
-# Labels, not names: a target Bazel cannot resolve is an analysis error, not a fragment that quietly packs
+# Labels, not names: a target Bazel cannot resolve is an analysis error, not a component that quietly packs
 # less. `build/intellij_dev_community.bzl` loads this file, not a module extension, so nothing here is
 # fail-open and the file does not have to keep its own generator buildable.
 #

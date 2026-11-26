@@ -3,7 +3,7 @@
 # The plan of every split product: the facts that its distribution reads. Bazel consumes this plan directly
 # and fails when the requested product is absent.
 #
-# What the fragments of a product declare as their inputs lives in `dist_fragment_inputs.bzl`, which churns
+# What the components of a product declare as their inputs lives in `dist_component_inputs.bzl`, which churns
 # with every model change.
 #
 # There is deliberately no content digest here. An action key already covers everything that decides what the
@@ -98,7 +98,7 @@ DIST_APPLICATION_INFOS = {
 }
 
 # The `lib/` jar order of the platform as a rule with two lists, for every product with the runtime module repository
-# fragment. The core plugin lists the jars of `first` in that order. Then it lists every other jar with a module,
+# component. The core plugin lists the jars of `first` in that order. Then it lists every other jar with a module,
 # sorted by its smallest member module name. Then it lists the jars of `last` in that order. Bazel knows the member
 # names, but not the two lists. Equal lists are one private struct, named as a shared plan field is named.
 DIST_PLATFORM_JAR_ORDERS = {

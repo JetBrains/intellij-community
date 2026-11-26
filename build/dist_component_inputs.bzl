@@ -126,7 +126,7 @@ _RESIDUAL_JAR_util_rt = struct(
     ],
 )
 
-DIST_FRAGMENT_INPUTS = {
+DIST_COMPONENT_INPUTS = {
     "AndroidStudio": {
         "platform_lib": struct(
             module_sets = [
