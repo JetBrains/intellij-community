@@ -19,11 +19,14 @@ private val SAMPLES = listOf(ShardFilterTest.SampleA::class.java, ShardFilterTes
 
 class ShardFilterTest {
   @Test
-  fun `without a plan each test goes to a shard of its own and every test runs once`() {
+  fun `without a plan each class goes to one shard and every test runs once`() {
     val shards = (0 until 3).map { discover(ShardFilter.create(3, it, null, TARGET)) }
 
     assertThat(shards.flatten()).containsExactlyInAnyOrderElementsOf(discover(null))
     assertThat(shards.flatten()).doesNotHaveDuplicates()
+    for (name in listOf("SampleA", "SampleB", "SampleC", "SampleD")) {
+      assertThat(shards.count { name in classesOf(it) }).isEqualTo(1)
+    }
   }
 
   @Test
@@ -37,17 +40,13 @@ class ShardFilterTest {
   }
 
   @Test
-  fun `a class much heavier than the fair share of a shard is split by test`() {
+  fun `a class much heavier than the fair share of a shard stays whole`() {
     val plan = plan(shards = 2, "SampleA" to 100.0, "SampleB" to 1.0, "SampleC" to 1.0, "SampleD" to 1.0)
     val shards = (0 until 2).map { discover(ShardFilter.create(2, it, plan, TARGET)) }
 
     assertThat(shards.flatten()).containsExactlyInAnyOrderElementsOf(discover(null))
     assertThat(shards.flatten()).doesNotHaveDuplicates()
-    assertThat(shards).allSatisfy { assertThat(classesOf(it)).contains("SampleA") }
-    // the other classes stay whole
-    for (name in listOf("SampleB", "SampleC", "SampleD")) {
-      assertThat(shards.count { name in classesOf(it) }).isEqualTo(1)
-    }
+    assertThat(shards.map { classesOf(it) }).containsExactly(setOf("SampleA"), setOf("SampleB", "SampleC", "SampleD"))
   }
 
   @Test
@@ -112,11 +111,11 @@ class ShardFilterTest {
     assertThat(ShardFilter.create(4, 2, plan, TARGET).isIdle).isFalse()
     assertThat(ShardFilter.create(4, 3, plan, TARGET).isIdle).isTrue()
 
-    // with the 100 seconds of the other target, SampleA would be split
+    // with the 100 seconds of the other target, SampleA would take a shard of its own
     val balanced = "default\t2\n" + plan(shards = 2, "SampleA" to 1.0, "SampleB" to 1.0, "SampleC" to 1.0, "SampleD" to 1.0)
       .lineSequence().filter { it.startsWith("class") }.joinToString("\n") + "\nclass\t$other\t${SampleA::class.java.name}\t100\n"
     val shards = (0 until 2).map { discover(ShardFilter.create(2, it, balanced, TARGET)) }
-    assertThat(shards.count { "SampleA" in classesOf(it) }).isEqualTo(1)
+    assertThat(shards.map { classesOf(it) }).containsExactly(setOf("SampleA", "SampleD"), setOf("SampleB", "SampleC"))
   }
 
   @Test

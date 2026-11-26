@@ -17,7 +17,6 @@ import java.util.IdentityHashMap
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.min
 
 private val included = FilterResult.included(null)
@@ -26,13 +25,14 @@ private val excluded = FilterResult.excluded(null)
 /**
  * A filter that implements Bazel sharding support.
  *
- * Without a shard plan, each test goes to the shard of the hash of its unique id.
+ * The unit of a shard is a top-level class (a child of the engine root). All tests of a class, its nested classes
+ * included, run in one shard, so only one JVM pays the class setup, such as a `@BeforeAll`.
  *
- * With a shard plan ([SHARD_PLAN_ENV]), the unit is a top-level class (a child of the engine root), so only one shard
- * pays the class setup. The plan gives the target its number of shards and the recorded seconds of each class. The
- * filter puts each class into the least loaded shard, the heaviest class first. A class that is more than a quarter
- * heavier than the fair share of a shard is split by test over as many of the lightest shards as its weight needs.
- * A shard at or above the planned number runs no test ([isIdle]).
+ * Without a shard plan, each class goes to the shard of the hash of its unique id.
+ *
+ * With a shard plan ([SHARD_PLAN_ENV]), the plan gives the target its number of shards and the recorded seconds of each
+ * class. The filter puts each class into the least loaded shard, the heaviest class first. A shard at or above the
+ * planned number runs no test ([isIdle]).
  *
  * Each shard is a separate JVM, and each computes the same partition: the discovered tree and the plan are the same in
  * each shard, and the partition depends only on them. A shard can still read another version of the plan than the other
@@ -54,7 +54,7 @@ class ShardFilter private constructor(
   // the state of the class partition; the loads carry over from one engine root to the next
   private val loads = DoubleArray(shardCount)
   private val partitionedRoots = HashSet<TestDescriptor>()
-  private val shardOfDescriptor = IdentityHashMap<TestDescriptor, Int>()
+  private val shardOfUnit = IdentityHashMap<TestDescriptor, Int>()
 
   private var excludedTests = false
 
@@ -74,7 +74,8 @@ class ShardFilter private constructor(
     if (!testDescriptor.isShardItem()) {
       return included
     }
-    val shard = if (plan == null) testDescriptor.hashShard() else testDescriptor.classShard(plan)
+    val unit = testDescriptor.unit()
+    val shard = if (plan == null) unit.hashShard() else unit.planShard(plan)
     if (shard == shardIndex) {
       return included
     }
@@ -84,52 +85,30 @@ class ShardFilter private constructor(
 
   private fun TestDescriptor.hashShard() = abs(uniqueId.toString().hashCode() % shardCount)
 
-  private fun TestDescriptor.classShard(plan: ShardPlan): Int {
-    val unit = unit()
-    val root = unit.parent.orElse(unit)
+  private fun TestDescriptor.planShard(plan: ShardPlan): Int {
+    val root = parent.orElse(this)
     if (partitionedRoots.add(root)) {
       partition(root, plan)
     }
-    return shardOfDescriptor.get(this) ?: shardOfDescriptor.get(unit) ?: hashShard()
+    return shardOfUnit.get(this) ?: hashShard()
   }
 
   private fun partition(root: TestDescriptor, plan: ShardPlan) {
-    val units = root.children.map { descriptor ->
-      val items = ArrayList<TestDescriptor>()
-      descriptor.collectShardItems(items)
-      ShardUnit(descriptor, items, descriptor.recordedSeconds(plan))
-    }
+    val units = root.children.map { ShardUnit(it, it.countShardItems(), it.recordedSeconds(plan)) }
 
     // a class without a record weighs as much per test as the recorded classes do on average
     val recorded = units.filter { it.recordedSeconds != null }
-    val recordedItems = recorded.sumOf { it.items.size }
+    val recordedItems = recorded.sumOf { it.itemCount }
     val secondsPerItem = if (recordedItems == 0) 1.0 else recorded.sumOf { it.recordedSeconds!! } / recordedItems
-    for (unit in units) {
-      // a small weight per test keeps the classes recorded at zero seconds from piling up in one shard
-      unit.weight = (unit.recordedSeconds ?: (secondsPerItem * unit.items.size)) + unit.items.size * 0.001
-    }
-
-    // a split repeats the class setup in each part, so a class only a little over the fair share stays whole
-    val splitShare = (loads.sum() + units.sumOf { it.weight }) / shardCount * 1.25
-    val allShards = loads.indices.toList()
-    for (unit in units.sortedWith(compareByDescending<ShardUnit> { it.weight }.thenBy { it.descriptor.uniqueId.toString() })) {
-      val parts = min(shardCount, ceil(unit.weight / splitShare).toInt())
-      if (parts > 1 && unit.items.size > 1) {
-        val shards = allShards.sortedWith(compareBy<Int> { loads[it] }.thenBy { it }).take(parts)
-        val itemWeight = unit.weight / unit.items.size
-        for (item in unit.items.sortedBy { it.uniqueId.toString() }) {
-          shardOfDescriptor.put(item, addToLightestShard(shards, itemWeight))
-        }
-      }
-      else {
-        shardOfDescriptor.put(unit.descriptor, addToLightestShard(allShards, unit.weight))
-      }
+    val weights = units.associateWith { it.weight(secondsPerItem) }
+    for (unit in units.sortedWith(compareByDescending<ShardUnit> { weights.getValue(it) }.thenBy { it.descriptor.uniqueId.toString() })) {
+      shardOfUnit.put(unit.descriptor, addToLightestShard(weights.getValue(unit)))
     }
   }
 
-  private fun addToLightestShard(shards: List<Int>, weight: Double): Int {
-    var lightest = shards.first()
-    for (index in shards) {
+  private fun addToLightestShard(weight: Double): Int {
+    var lightest = 0
+    for (index in loads.indices) {
       if (loads[index] < loads[lightest]) {
         lightest = index
       }
@@ -162,7 +141,7 @@ class ShardFilter private constructor(
       val planValue = System.getenv(SHARD_PLAN_ENV)?.takeIf { it.isNotBlank() }
       val plan = planValue?.let { readPlan(it, System.getenv("TEST_TARGET").orEmpty()) }
       try {
-        println("Configuring shard $shardIndex of $totalShards" + (plan?.let { ", ${it.shardCount} planned, by class" } ?: ""))
+        println("Configuring shard $shardIndex of $totalShards" + (plan?.let { ", ${it.shardCount} planned" } ?: "") + ", by class")
         return ShardFilter(totalShards.toInt(), shardIndex.toInt(), plan, planValue?.let { plan?.digest() ?: NO_PLAN_DIGEST })
       }
       catch (e: NumberFormatException) {
@@ -190,28 +169,28 @@ class ShardFilter private constructor(
       }
     }
 
-    // A plan that cannot be read leaves the hash of each test. Every shard reads the same file, so all of them agree.
+    // A plan that cannot be read leaves the hash of each class. Every shard reads the same file, so all of them agree.
     private fun readPlan(value: String, target: String): ShardPlan? {
       val file = try {
         Path.of(value).let { if (it.isAbsolute) it else findCheckout().resolve(it) }
       }
       catch (e: Exception) {
-        System.err.println("Cannot find the checkout of the shard plan $value, sharding by test: $e")
+        System.err.println("Cannot find the checkout of the shard plan $value, sharding by the hash of each class: $e")
         return null
       }
       val text = try {
         file.readText()
       }
       catch (_: NoSuchFileException) {
-        System.err.println("No shard plan at $file, sharding by test")
+        System.err.println("No shard plan at $file, sharding by the hash of each class")
         return null
       }
       catch (e: IOException) {
-        System.err.println("Cannot read the shard plan $file, sharding by test: $e")
+        System.err.println("Cannot read the shard plan $file, sharding by the hash of each class: $e")
         return null
       }
       return parsePlan(text, target) ?: run {
-        System.err.println("The shard plan $file is malformed, sharding by test")
+        System.err.println("The shard plan $file is malformed, sharding by the hash of each class")
         null
       }
     }
@@ -273,11 +252,11 @@ private class ShardPlan(@JvmField val shardCount: Int, @JvmField val classSecond
 
 private class ShardUnit(
   @JvmField val descriptor: TestDescriptor,
-  @JvmField val items: List<TestDescriptor>,
+  @JvmField val itemCount: Int,
   @JvmField val recordedSeconds: Double?,
 ) {
-  @JvmField
-  var weight: Double = 0.0
+  // a small weight per test keeps the classes recorded at zero seconds from piling up in one shard
+  fun weight(secondsPerItem: Double): Double = (recordedSeconds ?: (secondsPerItem * itemCount)) + itemCount * 0.001
 }
 
 /**
@@ -286,13 +265,7 @@ private class ShardUnit(
  */
 private fun TestDescriptor.isShardItem(): Boolean = isTest || (isContainer && source.orElse(null) is MethodSource)
 
-private fun TestDescriptor.collectShardItems(items: MutableList<TestDescriptor>) {
-  if (isShardItem()) {
-    items.add(this)
-    return
-  }
-  children.forEach { it.collectShardItems(items) }
-}
+private fun TestDescriptor.countShardItems(): Int = if (isShardItem()) 1 else children.sumOf { it.countShardItems() }
 
 /**
  * The recorded seconds of a class. A test report has a suite per class with direct tests, a nested class included. The
