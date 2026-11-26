@@ -25,12 +25,19 @@ import java.util.function.Consumer
 @Internal
 class GradleUndefinedToolchainRepositoriesIssueChecker : GradleIssueChecker {
 
+    private val TOOLCHAIN_FAILURE_MARKERS: List<String> = listOf(
+        "Toolchain download repositories have not been configured.",
+        "Toolchain resolvers did not return download URLs providing a JDK matching",
+    )
+
+    @Suppress("HardCodedStringLiteral")
     override fun check(issueData: GradleIssueData): BuildIssue? {
-        val rootCause = issueData.failure.rootCause
-        val message = rootCause.messageOrDescription
-        if (message?.contains("Toolchain download repositories have not been configured.") == true ||
-            message?.contains("Toolchain resolvers did not return download URLs providing a JDK matching") == true) {
-            return GradleUndefinedToolchainRepositoriesBuildIssue(message, issueData.projectPath)
+        val message = issueData.failure.rootCause.messageOrDescription
+            ?: return null
+        val causeMessage = message.lineSequence()
+            .firstOrNull { line -> TOOLCHAIN_FAILURE_MARKERS.any { line.contains(it) } }
+        if (causeMessage != null) {
+            return GradleUndefinedToolchainRepositoriesBuildIssue(causeMessage.trim(), issueData.projectPath)
         }
         return null
     }
