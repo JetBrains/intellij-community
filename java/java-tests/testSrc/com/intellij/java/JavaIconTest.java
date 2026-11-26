@@ -13,12 +13,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.ui.DeferredIcon;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.IconTestUtil;
 import com.intellij.ui.icons.CoreIconManager;
@@ -74,6 +78,14 @@ public class JavaIconTest {
     finally {
       setFileWritable(file, true);
     }
+  }
+
+  @Test
+  public void testClassIconDoesNotRetainPsiClass() {
+    PsiClass psiClass = codeInsightFixture.get().addClass("class A {}");
+    Icon icon = ReadAction.computeBlocking(() -> PsiClassImplUtil.getClassIcon(Iconable.ICON_FLAG_VISIBILITY, psiClass));
+    assertThat(icon).isInstanceOf(DeferredIcon.class);
+    LeakHunter.checkLeak(IconDeferrer.getInstance(), PsiClass.class, aClass -> aClass == psiClass);
   }
 
   private void setFileWritable(VirtualFile file, boolean writable) throws IOException {

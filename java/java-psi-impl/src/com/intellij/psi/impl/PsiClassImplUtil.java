@@ -77,6 +77,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
@@ -252,13 +253,11 @@ public final class PsiClassImplUtil {
   }
 
   private static final class ClassIconRequest {
-    private final @NotNull PsiClass psiClass;
-    private final int flags;
+    private final @NotNull PsiElementIconRequest iconRequest;
     private final Icon symbolIcon;
 
     private ClassIconRequest(@NotNull PsiClass psiClass, int flags, Icon symbolIcon) {
-      this.psiClass = psiClass;
-      this.flags = flags;
+      iconRequest = PsiElementIconRequest.create(psiClass, flags);
       this.symbolIcon = symbolIcon;
     }
 
@@ -269,30 +268,30 @@ public final class PsiClassImplUtil {
 
       ClassIconRequest that = (ClassIconRequest)o;
 
-      return flags == that.flags && psiClass.equals(that.psiClass);
+      return Objects.equals(iconRequest, that.iconRequest);
     }
 
     @Override
     public int hashCode() {
-      int result = psiClass.hashCode();
-      result = 31 * result + flags;
-      return result;
+      return iconRequest.hashCode();
     }
   }
 
   private static final Function1<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = r -> {
-    if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) {
+    PsiClass psiClass = (PsiClass)r.iconRequest.getElement();
+    if (psiClass == null || psiClass.getProject().isDisposed()) {
       return null;
     }
+    int flags = r.iconRequest.getFlags();
 
-    boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
+    boolean isLocked = BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) && !psiClass.isWritable();
     Icon symbolIcon = r.symbolIcon != null
                       ? r.symbolIcon
-                      : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
+                      : ElementPresentationUtil.getClassIconOfKind(psiClass, ElementPresentationUtil.getClassKind(psiClass));
     RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(r.psiClass, symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
-    Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
-    LastComputedIconCache.put(r.psiClass, result, r.flags);
+      IconManager.getInstance().createLayeredIcon(psiClass, symbolIcon, ElementPresentationUtil.getFlags(psiClass, isLocked));
+    Icon result = ElementPresentationUtil.addVisibilityIcon(psiClass, flags, baseIcon);
+    LastComputedIconCache.put(psiClass, result, flags);
     return result;
   };
 
@@ -301,17 +300,20 @@ public final class PsiClassImplUtil {
   }
 
   public static Icon getClassIcon(int flags, @NotNull PsiClass aClass, @Nullable Icon symbolIcon) {
+    IconManager iconManager = IconManager.getInstance();
+    if (!aClass.isValid()) return iconManager.getPlatformIcon(PlatformIcons.Class);
+
     Icon base = LastComputedIconCache.get(aClass, flags);
     if (base == null) {
       Icon baseSymbolIcon = symbolIcon;
       if (baseSymbolIcon == null) {
         baseSymbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, baseSymbolIcon, Iconable.ICON_FLAG_FAST_ONLY);
+      RowIcon baseIcon = iconManager.createLayeredIcon(aClass, baseSymbolIcon, Iconable.ICON_FLAG_FAST_ONLY);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 
-    return IconManager.getInstance().createDeferredIcon(base, new ClassIconRequest(aClass, flags, symbolIcon), FULL_ICON_EVALUATOR);
+    return iconManager.createDeferredIcon(base, new ClassIconRequest(aClass, flags, symbolIcon), FULL_ICON_EVALUATOR);
   }
 
   public static @NotNull SearchScope getClassUseScope(@NotNull PsiClass aClass) {
