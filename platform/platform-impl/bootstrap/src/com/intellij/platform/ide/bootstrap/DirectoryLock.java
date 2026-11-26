@@ -517,8 +517,8 @@ public final class DirectoryLock {
         vm.detach();
       }
     }
-    catch (Exception e) {
-      return "Cannot collect thread dump: " + e.getClass().getName() + ": " + e.getMessage();
+    catch (Throwable t) {
+      return "Cannot collect thread dump: " + t.getClass().getName() + ": " + t.getMessage();
     }
   }
 
