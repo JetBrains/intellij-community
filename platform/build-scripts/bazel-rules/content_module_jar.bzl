@@ -233,7 +233,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     if spans:
         # Inside the flag file, as a `trace-file=` line, because the action passes only `--flagfile=`. Every other
         # producer of these span files takes a `--trace-file=` argument instead. It follows `output=`, because the
-        # grammar starts a group there.
+        # grammar takes that line first.
         #
         # The `File`, not `spans.path`: this argument travels in a param file that output path mapping may rewrite, and
         # only the `File` form is rewritten with it. `intellij_dist.bzl`'s `_declare_spans` passes the string,

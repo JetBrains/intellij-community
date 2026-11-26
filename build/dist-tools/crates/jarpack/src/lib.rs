@@ -3,9 +3,8 @@
 //! The packer core behind `PackContentModuleJar`. It merges source jars and single files into one STORED jar with a
 //! generated `__index__`. It can also write the native files of one library as a tree.
 //!
-//! The output bytes are frozen. The golden digests in the tests and the `./build/dist.cmd jars` gate hold them to
-//! the bytes that `JarPackager` writes. Every function that can fail returns `anyhow::Result`. `API.md` beside this crate
-//! lists what the crate refuses.
+//! The output bytes are frozen. The golden digests in the tests hold them. Every function that can fail returns
+//! `anyhow::Result`. `API.md` beside this crate lists what the crate refuses.
 
 mod filters;
 mod flagfile;

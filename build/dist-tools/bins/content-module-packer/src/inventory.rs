@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The inventory of one packed group: the jar, and in natives mode also the tree.
+//! The inventory of the packed jar, and in natives mode also of the tree.
 
 use std::fs;
 use std::path::Path;

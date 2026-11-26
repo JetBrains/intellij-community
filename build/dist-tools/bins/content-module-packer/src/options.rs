@@ -2,32 +2,19 @@
 
 //! The command line of the packer.
 //!
-//! A packing action passes `--flagfile=<path>` alone. A one-shot run can add `--trace-file=<path>`. The parser refuses
-//! one dash, a value in the next argument and a repeated option, because no caller uses these forms. A typo then fails the action and does not change it silently.
+//! A packing action passes `--flagfile=<path>` alone. The parser refuses every other option, one dash, a value in the
+//! next argument and a repeated option, because no caller uses these forms. A typo then fails the action and does not
+//! change it silently.
 
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use anyhow::bail;
+pub(crate) const USAGE: &str = "usage: content-module-packer --flagfile=<path>";
 
-pub(crate) const USAGE: &str = "usage: content-module-packer [--trace-file=<path>] --flagfile=<path>";
-
-#[derive(Debug, Default, PartialEq, Eq)]
-pub(crate) struct Options {
-    /// The recipe: one `output=` line per jar, then the lines of the sources that the jar merges.
-    pub(crate) flag_file: PathBuf,
-    /// The span file of a one-shot run. It wins over a `trace-file=` line of the recipe. It is UTF-8 text, because it
-    /// goes through the path rule of the recipe.
-    pub(crate) trace_file: Option<String>,
-}
-
-pub(crate) fn parse(arguments: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
+/// Returns the recipe: one `output=` line, then the lines of the sources that the jar merges.
+pub(crate) fn parse(arguments: impl IntoIterator<Item = OsString>) -> anyhow::Result<PathBuf> {
     let mut options = cli::parse(arguments)?;
     let flag_file = PathBuf::from(options.require("--flagfile")?);
-    let trace_file = options.take("--trace-file")?;
-    if trace_file.as_deref() == Some("") {
-        bail!("--trace-file must not be empty");
-    }
     options.finish()?;
-    Ok(Options { flag_file, trace_file })
+    Ok(flag_file)
 }

@@ -253,7 +253,7 @@ fn ids_are_distinct_across_tracers_and_spans() {
 
 #[test]
 fn concurrent_spans_are_all_recorded() {
-    // A whole-tranche run packs thousands of jars on many threads, and each thread starts a child of the root.
+    // A tool can start the children of one root on many threads, and each child must reach the span file.
     let tracer = Tracer::new("packer");
     let root = tracer.span("pack content modules");
     std::thread::scope(|scope| {

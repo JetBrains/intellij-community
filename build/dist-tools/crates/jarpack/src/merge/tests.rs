@@ -190,8 +190,8 @@ fn merge_rejects_unsafe_or_stale_source_operations() {
 // the gate. The
 // distribution consumes these jars, so a packer that drifts shows at class-load time in the IDE and nowhere earlier.
 //
-// A digest that changes is not a test to update. It is a deliberate format change, and then the Kotlin `JarPackager`
-// must make the same one, and `./build/dist.cmd jars` says so. Or it is a regression.
+// A digest that changes is not a test to update. It is a deliberate format change, which also moves the fingerprint of
+// each composed distribution, or it is a regression.
 
 #[test]
 fn pack_module_output_drops_what_a_distribution_never_inherits() {

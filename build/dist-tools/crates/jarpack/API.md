@@ -2,7 +2,7 @@
 
 The packer core behind `PackContentModuleJar`. It merges source jars and single files into one STORED jar with a
 generated `__index__`. It can also write the native files of one library as a tree. The output bytes are frozen. The six
-golden digests in `src/tests/golden.rs` and the `./build/dist.cmd jars` gate hold them.
+golden digests in `src/tests/golden.rs` hold them.
 
 The public items are at the crate root, except the items of `jarpack::nativelib`, `jarpack::reader` and
 `jarpack::writer`. Rustdoc states each signature. The packer binary writes the inventory of a spec. The descriptor
@@ -11,7 +11,7 @@ writer reads the declared library jars with `reader::Jar`.
 ## Supported subset
 
 The crate takes only the inputs that a producer writes. The producers are `pack_jar` in `content_module_jar.bzl`, which
-`content_module_jar`, `dist_platform_jar` and `dev_plugin` call, the recipe replay of `dist`, and the
+`content_module_jar`, `dist_platform_jar` and `dev_plugin` call, the source trees of `dev_plugin_remainder.bzl`, and the
 plan files through pluginpack. Each other input fails with an error that names it.
 
 | Input | Accepted | Refused |
@@ -20,8 +20,9 @@ plan files through pluginpack. Each other input fails with an error that names i
 | `source-manifest=` | no value. No producer writes a manifest policy into a flag file. | every value, as an unknown option |
 | `jar-name=` | no value. Every producer writes a jar under its distribution name. | every value, as an unknown option |
 | A flag-file path | a path without a `.` or `..` component | a path with one. The recipe checks compare the paths as they are written. |
-| `file=<entry name>=<path>` | a nonempty name and path. The recipe replay writes it for a single-file source. | no `=` after the name, or an empty part |
-| `trace-file=` | one path, in any number of groups | two different paths. A run writes one trace. |
+| `output=` | one line, before every other line | a second line. One action packs one jar. |
+| `file=<entry name>=<path>` | a nonempty name and path. A source tree of `dev_plugin_remainder.bzl` writes one per file. | no `=` after the name, or an empty part |
+| `trace-file=` | one path that no other output and no input of the recipe names | a second line, or a path that collides |
 | A source path | a nonempty path | an empty path |
 | The module manifests of one jar | one. A manifest with only the attributes the build rules write does not count. | a second one. The refusal names the jar and both sources. |
 | The `Boot-Class-Path` main attribute of a module manifest | the file name of the jar, or no attribute | every other value. The refusal names the jar, the source and the value. |
@@ -32,9 +33,6 @@ plan files through pluginpack. Each other input fails with an error that names i
 
 The packer writes no directory record, and it refuses `directory-entries=` as an unknown option. A directory of a
 non-class file is an index row of `__index__`.
-
-The one-shot mode with many `output=` groups stays, because the profiling method of the README uses it. No Starlark rule
-writes a `file=` line. The recipe replay of `dist` writes one, so the form stays.
 
 The types state the rest of the grammar. A `Source` is a `Jar` with an `EntryFilter` or a `File` with an entry name, so
 a jar without a filter or a patch of a jar cannot occur. A `NativeSpec` has a `NativeTree` with the family and the
@@ -86,15 +84,15 @@ states.
 
 ## Recipes
 
-`parse_flag_file` returns a `FlagFile`: one `MergeSpec` per `output=` line, and the `trace-file=` destination of the
-run. `trace-file=` is a line inside a group, because a packing action passes no other argument. The packer takes the
-destination from the command line first.
+`parse_flag_file` returns a `FlagFile`: the `MergeSpec` of the `output=` line, and the `trace-file=` destination of the
+run. `trace-file=` is a line of the recipe, because a packing action passes no other argument.
 
 With `validate_entry_names`, the merge checks the name of each entry with `distpath::validate_entry_name` and keeps
 its text. The natives mode checks the name of each tree file the same way.
 
 `resolve_path` joins a relative value to `base_dir` and keeps an absolute one. It refuses a value with a `.` or `..`
-component, because the recipe checks compare the paths as they are written. The packer applies it to `--trace-file=`.
+component, because the recipe checks compare the paths as they are written. The parser applies it to every path of a
+recipe, the `trace-file=` path included.
 
 `EntryFilter::ModuleOutput` is `module_output_name_filter`, and `EntryFilter::Library` is `library_name_filter`. The
 plan contract of pluginpack names the same two filters. A source has no entry overrides, because natives mode

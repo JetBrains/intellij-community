@@ -104,9 +104,9 @@ fn pack_error(spec: &MergeSpec) -> String {
 #[test]
 fn parse_flag_file_natives_mode_takes_all_three_lines_the_lib_or_none() {
     let scratch = Scratch::new();
-    let specs = parse_recipe(
+    let spec = parse_recipe(
         &scratch,
-        "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\nmodule=mod/a.jar\noutput=out/b.jar\nmodule=mod/b.jar\n",
+        "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\nmodule=mod/a.jar\n",
     )
     .unwrap();
     let want = NativeSpec {
@@ -117,15 +117,14 @@ fn parse_flag_file_natives_mode_takes_all_three_lines_the_lib_or_none() {
             arch: Arch::AArch64,
         }),
     };
-    assert_eq!(specs[0].native.as_ref(), Some(&want));
+    assert_eq!(spec.native.as_ref(), Some(&want));
     assert!(
-        is_library(&specs[0].sources[0]) && !is_library(&specs[0].sources[1]),
+        is_library(&spec.sources[0]) && !is_library(&spec.sources[1]),
         "`library=` alone marks a library source"
     );
-    assert_eq!(specs[1].native, None, "the second group inherited the natives mode of the first");
 
     let reserving = parse_recipe(&scratch, "output=out/a.jar\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n").unwrap();
-    let reservation = reserving[0].native.as_ref().unwrap();
+    let reservation = reserving.native.as_ref().unwrap();
     assert_eq!(
         *reservation,
         NativeSpec {
@@ -140,7 +139,7 @@ fn parse_flag_file_natives_mode_takes_all_three_lines_the_lib_or_none() {
         "output=out/a.jar\nnative-tree=/tmp/native\nnative-variant=windows_x64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
     )
     .unwrap();
-    let tree = absolute[0].native.as_ref().unwrap().tree.as_ref().unwrap();
+    let tree = absolute.native.as_ref().unwrap().tree.as_ref().unwrap();
     assert_eq!(tree.dir, Path::new("/tmp/native"));
     assert_eq!((tree.family, tree.arch), (Family::Windows, Arch::X64));
 
@@ -209,11 +208,6 @@ fn parse_flag_file_natives_mode_takes_all_three_lines_the_lib_or_none() {
             "the tree is an input",
             "output=out/a.jar\nnative-tree=lib/jna-5.14.0.jar\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
         ),
-        (
-            "two groups share the tree",
-            "output=out/a.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n\
-             output=out/b.jar\nnative-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=pty4j\nlibrary=lib/pty4j-0.13.jar\n",
-        ),
     ] {
         assert!(
             parse_recipe(&scratch, lines).is_err(),
@@ -230,7 +224,7 @@ fn parse_flag_file_natives_mode_packs() {
     let library = native_library_source(&scratch);
     let module = module_source(&scratch, "module.jar");
     let tree = scratch.dir().join("native");
-    let specs = parse_recipe(
+    let spec = parse_recipe(
         &scratch,
         &format!(
             "output=out/a.jar\nnative-tree={}\nnative-variant=linux_x64\nnative-lib=foo\nlibrary={}\nmodule={}\n",
@@ -240,7 +234,7 @@ fn parse_flag_file_natives_mode_packs() {
         ),
     )
     .unwrap();
-    let (data, _) = pack(&scratch, specs[0].clone());
+    let (data, _) = pack(&scratch, spec);
     assert!(
         !entry_names(&data).iter().any(|name| nativelib::is_native_entry(name)),
         "the natives stayed in the jar"

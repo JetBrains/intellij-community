@@ -6,9 +6,10 @@ methods. These rules apply to both workspaces, this one and `build/dist-tools` i
 
 - **Name no implementation language in a spec or in the guide.** Write "the packer", "the composer", "the collector"
   and "the descriptor writer". The language belongs in the ADRs only.
-- **Pass the two gates.** Run `./build/dist.cmd jars` and
-  `./bazel.cmd test @community//build/dist-tools/... //build/dist-tools/...` from the ultimate root, then
-  `./bazel.cmd test //build/dist-tools/...` in `community/`. The clippy tests of the community crates run only
+- **Pass the gates.** Run `./bazel.cmd test @community//build/dist-tools/... //build/dist-tools/...` from the
+  ultimate root, then `./bazel.cmd test //build/dist-tools/...` in `community/`. They hold the frozen jar digests of
+  `jarpack`. After a change that can move a composed byte, compare the fingerprint and run `./build/dist.cmd snapshot
+  diff`, as the README states. The clippy tests of the community crates run only
   there: the clippy aspect skips a target of an external repository.
 - **Treat a closure change as a choice.** A new crate in the `closure.txt` of an action tool reruns every action of
   that tool at each change of the crate. State the reason in the commit message, and regenerate the file with the

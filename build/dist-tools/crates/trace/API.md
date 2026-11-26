@@ -10,8 +10,7 @@ dependency in the packer re-keys every packing action when the crate changes.
 ```rust
 trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer, stderr| {
     let root = tracer.span("pack content modules");
-    root.tag("jars", specs.len());
-    // On a worker thread: let span = root.child("pack jar"); span.tag("jar", name); span.fail(&error);
+    // let span = root.child("pack jar"); span.tag("jar", name); span.fail(&error);
     root.end();
     0
 })

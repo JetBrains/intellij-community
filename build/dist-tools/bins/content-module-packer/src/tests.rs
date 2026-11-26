@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The tests of the command line, the trace destination, the spans and the parallel run. Each test calls [`run`] as the
+//! The tests of the command line, the trace destination and the spans. Each test calls [`run`] as the
 //! process does, with a scratch directory as the working directory. The bytes of the jars have their tests in
 //! `jarpack`, where the bytes are. The inventory has its tests in `inventory/tests.rs`.
 
@@ -15,8 +15,7 @@ use tempfile::TempDir;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipWriter};
 
-use super::options::{self, Options};
-use super::pack::pack_in_parallel;
+use super::options;
 use super::{FAILURE, run};
 
 /// The content of the class in each fixture jar.
@@ -162,49 +161,27 @@ fn file_size(path: &Path) -> u64 {
 
 #[test]
 fn the_option_surface_is_exactly_what_the_action_passes() {
-    // The rule passes a --flagfile=, a one-shot run can add --trace-file=, and no caller passes more. A typo must fail
-    // the action. A run that skips the trace silently looks like a build that wrote no spans.
+    // The rule passes a --flagfile=, and no caller passes more. A typo must fail the action. The recipe names the trace
+    // destination, so a `--trace-file=` is an unknown option too.
     let parse = |arguments: &[&str]| options::parse(arguments.iter().map(OsString::from));
-    assert_eq!(
-        parse(&["--flagfile=recipe.txt"]).unwrap(),
-        Options {
-            flag_file: "recipe.txt".into(),
-            ..Options::default()
-        }
-    );
-    assert_eq!(
-        parse(&["--flagfile=recipe.txt", "--trace-file=out/a.jar.spans.json"]).unwrap(),
-        Options {
-            flag_file: "recipe.txt".into(),
-            trace_file: Some("out/a.jar.spans.json".into()),
-        }
-    );
+    assert_eq!(parse(&["--flagfile=recipe.txt"]).unwrap(), PathBuf::from("recipe.txt"));
     let refused: [(&[&str], &str); 7] = [
-        (&["--trace-file=out/a.jar.spans.json"], "--flagfile is required"),
+        (&[], "--flagfile is required"),
         (&["--flagfile=recipe.txt", "--tracefile=x"], "unknown option: --tracefile"),
+        (
+            &["--flagfile=recipe.txt", "--trace-file=out/a.jar.spans.json"],
+            "unknown option: --trace-file",
+        ),
         (&["--flagfile=recipe.txt", "x"], "but got \"x\""),
         // The Go `flag` package took these forms. No caller passes them.
         (&["--flagfile", "recipe.txt"], "--flagfile takes a value"),
         (&["-flagfile=recipe.txt"], "in the form --key=value"),
         (&["--flagfile=a.txt", "--flagfile=b.txt"], "at most once"),
-        (&["--flagfile=recipe.txt", "--trace-file="], "must not be empty"),
     ];
     for (arguments, want) in refused {
         let error = format!("{:#}", parse(arguments).expect_err("a refused command line"));
         assert!(error.contains(want), "{arguments:?}: the failure {error:?} must name {want:?}");
     }
-    // A path of the recipe is UTF-8, and the trace destination goes through the same path rule.
-    #[cfg(unix)]
-    {
-        use std::os::unix::ffi::OsStringExt;
-        let arguments = [
-            OsString::from("--flagfile=recipe.txt"),
-            OsString::from_vec(b"--trace-file=out/\xff.spans.json".to_vec()),
-        ];
-        let error = format!("{:#}", options::parse(arguments).expect_err("a refused command line"));
-        assert!(error.contains("not valid UTF-8"), "the failure {error:?} must name the encoding");
-    }
-
     // The process reports an option error with the usage and fails.
     let dir = tempfile::tempdir().expect("a scratch directory");
     let outcome = run_in(dir.path(), &["--flagfile=recipe.txt".into(), "--tracefile=x".into()]);
@@ -271,10 +248,19 @@ fn natives_mode_creates_each_directory_with_mode_0755() {
 #[test]
 fn natives_mode_refuses_a_trace_destination_inside_the_tree() {
     let dir = pack_one_native_jar();
+    write_recipe(
+        dir.path(),
+        "output=out/intellij.libraries.jna.jar\nmetadata-file=jna.metadata.json\ntrace-file=out/native\n\
+         native-tree=out/native\nnative-variant=darwin_aarch64\nnative-lib=jna\nlibrary=jna-5.14.0.jar\n",
+    );
     let before = snapshot(dir.path());
-    let outcome = run_in(dir.path(), &[flag_file_argument(dir.path()), "--trace-file=out/native".into()]);
+    let outcome = run_in(dir.path(), &[flag_file_argument(dir.path())]);
     assert_eq!(outcome.code, FAILURE, "{}", outcome.stderr);
-    assert!(outcome.stderr.contains("native tree output"), "{}", outcome.stderr);
+    assert!(
+        outcome.stderr.contains("a trace destination is another output"),
+        "{}",
+        outcome.stderr
+    );
     assert_eq!(
         snapshot(dir.path()),
         before,
@@ -334,14 +320,12 @@ fn packing_rejects_effective_trace_collisions_before_writing() {
         "out/example.jar",
         "example.metadata.json",
         "module.jar",
-        "out/other.jar",
-        "other.metadata.json",
         "library.jar",
         "resource.txt",
         "plugin.xml",
     ];
     for destination in destinations {
-        for variant in ["relative", "absolute", "absolute dot", "absolute parent", "recipe"] {
+        for variant in ["relative", "absolute", "absolute dot", "absolute parent"] {
             let dir = pack_one_jar("");
             let base = dir.path();
             fs::create_dir(base.join("unused")).expect("a directory");
@@ -355,31 +339,22 @@ fn packing_rejects_effective_trace_collisions_before_writing() {
                 "absolute parent" => format!("{}/unused/../{destination}", base.display()),
                 _ => destination.to_owned(),
             };
-            let mut arguments = vec![flag_file_argument(base)];
-            let recipe_trace = if variant == "recipe" {
-                trace_file.as_str()
-            } else {
-                arguments.push(format!("--trace-file={trace_file}"));
-                "safe.spans.json"
-            };
             write_recipe(
                 base,
                 &format!(
-                    "output=out/example.jar\nmetadata-file=example.metadata.json\ntrace-file={recipe_trace}\n\
-                     module=module.jar\noutput=out/other.jar\nmetadata-file=other.metadata.json\nlibrary=library.jar\n\
-                     file=resource.txt=resource.txt\npatch=META-INF/plugin.xml=plugin.xml\n"
+                    "output=out/example.jar\nmetadata-file=example.metadata.json\ntrace-file={trace_file}\n\
+                     module=module.jar\nlibrary=library.jar\nfile=resource.txt=resource.txt\npatch=META-INF/plugin.xml=plugin.xml\n"
                 ),
             );
             let before = snapshot(base);
-            let outcome = run_in(base, &arguments);
+            let outcome = run_in(base, &[flag_file_argument(base)]);
             let case = format!("{destination}/{variant}");
             assert_eq!(outcome.code, FAILURE, "{case}: {}", outcome.stderr);
-            // The Go packer cleaned an alias and then found the collision. The command line now refuses the alias
-            // itself, as the recipe parser does.
+            // The Go packer cleaned an alias and then found the collision. The recipe parser refuses the alias itself.
             let refused = if variant.starts_with("absolute ") {
                 outcome.stderr.contains("has a `.` or `..` component")
             } else {
-                outcome.stderr.contains("trace destination") || outcome.stderr.contains("conflicting metadata destination")
+                outcome.stderr.contains("a trace destination")
             };
             assert!(refused, "{case}: expected a trace collision, got {}", outcome.stderr);
             assert_eq!(
@@ -408,11 +383,8 @@ fn packing_metadata_read_metrics() {
 
 #[test]
 fn a_run_with_a_trace_file_describes_itself_in_it() {
-    let dir = pack_one_jar("");
-    let outcome = run_in(
-        dir.path(),
-        &[flag_file_argument(dir.path()), "--trace-file=out/example.jar.spans.json".into()],
-    );
+    let dir = pack_one_jar("trace-file=out/example.jar.spans.json\n");
+    let outcome = run_in(dir.path(), &[flag_file_argument(dir.path())]);
     assert_eq!(outcome.code, 0, "{}", outcome.stderr);
 
     // The path is relative, so it resolves against the working directory, which is the exec root in a build. The span
@@ -422,7 +394,7 @@ fn a_run_with_a_trace_file_describes_itself_in_it() {
     assert_eq!(operation_names(&trace), ["pack content modules", "pack jar"]);
     let (root, jar) = (&spans(&trace)[0], &spans(&trace)[1]);
     assert!(root.get("references").is_none(), "the root span has a parent: {root}");
-    assert_eq!(tags(root), owned(&[("jars", "1")]));
+    assert_eq!(tags(root), owned(&[]));
     let references = jar["references"].as_array().expect("a reference array");
     assert_eq!(references.len(), 1, "{jar}");
     assert_eq!(references[0]["refType"], "CHILD_OF");
@@ -437,11 +409,8 @@ fn a_run_with_a_trace_file_describes_itself_in_it() {
 #[test]
 fn a_trace_file_that_cannot_be_written_fails_the_request() {
     // The action declares the span file, so the run must fail.
-    let dir = pack_one_jar("");
-    let outcome = run_in(
-        dir.path(),
-        &[flag_file_argument(dir.path()), "--trace-file=module.jar/spans.json".into()],
-    );
+    let dir = pack_one_jar("trace-file=module.jar/spans.json\n");
+    let outcome = run_in(dir.path(), &[flag_file_argument(dir.path())]);
     assert_eq!(outcome.code, FAILURE, "{}", outcome.stderr);
     assert!(
         outcome.stderr.starts_with("ERROR: writing the span file: "),
@@ -467,26 +436,6 @@ fn the_recipe_can_name_the_trace_destination() {
     ] {
         assert!(content.contains(want), "{want} is missing from {content}");
     }
-}
-
-#[test]
-fn the_command_line_wins_over_the_recipe() {
-    // A flag file from `bazel aquery` holds the `trace-file=` of the action, which points into bazel-out. The option
-    // lets the file run again with the trace in a safe location.
-    let dir = pack_one_jar("trace-file=out/from-the-recipe.json\n");
-    let outcome = run_in(
-        dir.path(),
-        &[flag_file_argument(dir.path()), "--trace-file=out/from-the-flag.json".into()],
-    );
-    assert_eq!(outcome.code, 0, "{}", outcome.stderr);
-    assert!(
-        dir.path().join("out/from-the-flag.json").is_file(),
-        "the destination of the option is missing"
-    );
-    assert!(
-        !dir.path().join("out/from-the-recipe.json").exists(),
-        "the run also wrote the destination of the recipe"
-    );
 }
 
 #[test]
@@ -554,136 +503,14 @@ fn the_duplicate_report_comes_before_the_error_of_a_failed_inventory() {
     assert!(!jar.contains_key("bytes"), "{jar:?}");
 }
 
-/// Writes a recipe of `count` jars. Each jar merges `module.jar` and a copy of it, so each jar reports one duplicate. It
-/// returns the jar names in the order of the recipe.
-fn write_duplicate_recipe(base: &Path, count: usize) -> Vec<String> {
-    fs::copy(base.join("module.jar"), base.join("copy.jar")).expect("a second module jar");
-    let names: Vec<String> = (0..count).map(|index| format!("jar{index:02}.jar")).collect();
-    let recipe: String = names
-        .iter()
-        .map(|name| format!("output=out/{name}\nmodule=module.jar\nmodule=copy.jar\n"))
-        .collect();
-    write_recipe(base, &recipe);
-    names
-}
-
-/// The duplicate report of a jar of [`write_duplicate_recipe`].
-fn duplicate_report(name: &str) -> String {
-    format!("{name}: 1 duplicate entry, first source wins: com/example/Packed.class")
-}
-
 #[test]
-fn a_one_shot_run_packs_each_group_and_reports_in_its_span() {
-    // A whole tranche in one flag file. Each jar merges two copies of one module, so each jar reports one duplicate.
+fn a_recipe_of_two_jars_fails_before_writing() {
     let dir = pack_one_jar("");
     let base = dir.path();
-    let names = write_duplicate_recipe(base, 24);
-    let outcome = run_in(base, &[flag_file_argument(base), "--trace-file=one-shot.spans.json".into()]);
-    assert_eq!(
-        (outcome.code, outcome.stderr.as_str()),
-        (0, ""),
-        "a run that succeeds writes nothing"
-    );
-    assert_eq!(file_names(&base.join("out")), names);
-
-    // The workers record into the tracer of the run, and each jar span is a child of the root.
-    let trace = read_trace(&base.join("one-shot.spans.json"));
-    let all = spans(&trace);
-    assert_eq!(all.len(), names.len() + 1);
-    assert_eq!(all[0]["operationName"], "pack content modules");
-    assert_eq!(tags(&all[0]), owned(&[("jars", "24")]));
-    let mut packed: Vec<String> = Vec::new();
-    for span in &all[1..] {
-        assert_eq!(span["operationName"], "pack jar");
-        assert_eq!(span["references"][0]["spanID"], all[0]["spanID"], "{span}");
-        let jar = tags(span)["jar"].clone();
-        assert_eq!(tags(span).get("duplicateReport"), Some(&duplicate_report(&jar)), "{span}");
-        packed.push(jar);
-    }
-    packed.sort();
-    assert_eq!(packed, names);
-}
-
-#[test]
-fn a_one_shot_run_fails_with_the_error_of_the_failed_group() {
-    let dir = pack_one_jar("");
-    let base = dir.path();
-    let recipe: String = (0..8)
-        .map(|index| {
-            let source = if index == 5 { "missing.jar" } else { "module.jar" };
-            format!("output=out/jar{index}.jar\nmodule={source}\n")
-        })
-        .collect();
-    write_recipe(base, &recipe);
+    write_recipe(base, "output=out/a.jar\nmodule=module.jar\noutput=out/b.jar\nmodule=module.jar\n");
+    let before = snapshot(base);
     let outcome = run_in(base, &[flag_file_argument(base)]);
     assert_eq!(outcome.code, FAILURE, "{}", outcome.stderr);
-    assert!(
-        outcome.stderr.starts_with("ERROR: ") && outcome.stderr.contains("missing.jar"),
-        "{}",
-        outcome.stderr
-    );
-}
-
-/// Parses the recipe of `base` and packs it on `workers` threads. It returns the result, the stderr text, and the names
-/// of the packed jars.
-fn pack_on_workers(base: &Path, workers: usize) -> (anyhow::Result<()>, String, Vec<String>) {
-    let flag_file = jarpack::parse_flag_file(&base.join("recipe.txt"), base).expect("a recipe that parses");
-    let mut stderr = Vec::new();
-    let result = pack_in_parallel(
-        &flag_file.groups,
-        workers,
-        &trace::Tracer::disabled().span("pack content modules"),
-        &mut stderr,
-    );
-    let out = base.join("out");
-    let packed = if out.is_dir() { file_names(&out) } else { Vec::new() };
-    (result, String::from_utf8(stderr).expect("a UTF-8 report"), packed)
-}
-
-#[test]
-fn a_one_shot_run_with_more_groups_than_workers_packs_every_group_in_order() {
-    let dir = pack_one_jar("");
-    let base = dir.path();
-    let names = write_duplicate_recipe(base, 11);
-    let (result, stderr, packed) = pack_on_workers(base, 3);
-    result.expect("every group packs");
-    assert_eq!(stderr, "", "a group that succeeds writes nothing");
-    assert_eq!(packed, names);
-}
-
-#[test]
-fn a_one_shot_run_stops_after_an_early_failure_and_reports_the_first_error() {
-    let dir = pack_one_jar("");
-    let base = dir.path();
-    let recipe = |failing: &[usize]| -> String {
-        (0..8)
-            .map(|index| {
-                let source = if failing.contains(&index) {
-                    format!("missing{index}.jar")
-                } else {
-                    "module.jar".to_owned()
-                };
-                format!("output=out/jar{index}.jar\nmodule={source}\n")
-            })
-            .collect()
-    };
-
-    // One worker takes the groups in order, so no group after the failed first one starts. The failed group can leave
-    // its own output, because the merge creates the jar before it opens the missing source.
-    write_recipe(base, &recipe(&[0]));
-    let (result, stderr, packed) = pack_on_workers(base, 1);
-    let error = format!("{:#}", result.expect_err("the first group fails"));
-    assert!(error.contains("missing0.jar"), "{error}");
-    assert_eq!(stderr, "");
-    assert!(
-        packed.iter().all(|name| name == "jar0.jar"),
-        "groups after the failure packed: {packed:?}"
-    );
-
-    // With several workers, a later failure can also run. The result is the error of the first group in group order.
-    fs::remove_dir_all(base.join("out")).expect("the output of the first run");
-    write_recipe(base, &recipe(&[0, 6]));
-    let (result, _, _) = pack_on_workers(base, 4);
-    let error = format!("{:#}", result.expect_err("two groups fail"));
-    assert!(error.contains("missing0.jar"), "{error}");
+    assert!(outcome.stderr.contains("a recipe packs one jar"), "{}", outcome.stderr);
+    assert_eq!(snapshot(base), before, "a refused recipe changed the packing files");
 }

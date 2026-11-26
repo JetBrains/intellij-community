@@ -1,87 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The packing of the groups of one recipe, and the spans of each jar.
+//! The packing of the jar of a recipe, and its spans.
 
 use std::io::Write;
-use std::num::NonZeroUsize;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::thread;
 
 use jarpack::{MergeReport, MergeSpec};
 use trace::Span;
 
 use crate::inventory;
 
-/// Packs each group of the recipe under `root`.
-///
-/// A Bazel action names one group, and the group runs on the calling thread. A parity run or a profile run names many
-/// groups. They run in parallel on one scoped thread per CPU, and each thread takes the next group from a shared
-/// cursor. After a failure, no new group starts, and the result is the first error in group order.
-///
-/// A group in parallel writes its error report to a buffer. The buffers go to `stderr` in group order after all groups
-/// end. So the lines of two jars do not mix, and the order of the lines does not depend on the timing.
-pub(crate) fn pack_all(specs: &[MergeSpec], root: &Span, stderr: &mut dyn Write) -> anyhow::Result<()> {
-    if let [spec] = specs {
-        return pack_one(spec, root, stderr);
-    }
-    let workers = thread::available_parallelism().map_or(1, NonZeroUsize::get);
-    pack_in_parallel(specs, workers, root, stderr)
-}
-
-/// The report and the result of one group that ran.
-type Outcome = (Vec<u8>, anyhow::Result<()>);
-
-/// Packs the groups on `workers` scoped threads, with the output rules of [`pack_all`].
-///
-/// The pool is written by hand, because a crate dependency in the packer re-keys every packing action when the crate
-/// changes. A panic of a group ends the run with the same panic, after the other threads end.
-pub(crate) fn pack_in_parallel(specs: &[MergeSpec], workers: usize, root: &Span, stderr: &mut dyn Write) -> anyhow::Result<()> {
-    let cursor = AtomicUsize::new(0);
-    let failed = AtomicBool::new(false);
-    let worker = || {
-        let mut outcomes = Vec::new();
-        while !failed.load(Ordering::Relaxed) {
-            let index = cursor.fetch_add(1, Ordering::Relaxed);
-            let Some(spec) = specs.get(index) else {
-                break;
-            };
-            let mut report = Vec::new();
-            let result = pack_one(spec, root, &mut report);
-            if result.is_err() {
-                failed.store(true, Ordering::Relaxed);
-            }
-            outcomes.push((index, (report, result)));
-        }
-        outcomes
-    };
-    let mut outcomes: Vec<Option<Outcome>> = specs.iter().map(|_| None).collect();
-    thread::scope(|scope| {
-        let threads: Vec<_> = (0..workers.clamp(1, specs.len().max(1))).map(|_| scope.spawn(worker)).collect();
-        for thread in threads {
-            let packed = thread.join().unwrap_or_else(|panic| std::panic::resume_unwind(panic));
-            for (index, outcome) in packed {
-                outcomes[index] = Some(outcome);
-            }
-        }
-    });
-    let mut first_error = None;
-    for (report, result) in outcomes.into_iter().flatten() {
-        let _ = stderr.write_all(&report);
-        if let Err(error) = result {
-            first_error.get_or_insert(error);
-        }
-    }
-    first_error.map_or(Ok(()), Err)
-}
-
-/// Packs one group under a `pack jar` span. A group with a metadata file gets an `inventory packing output` child
-/// span.
+/// Packs the jar under a `pack jar` span. A recipe with a metadata file gets an `inventory packing output` child span.
 ///
 /// A duplicate is not a failure. Two merged libraries can hold the same service file or licence stub, and the first
 /// source wins. The `duplicates` tag of the span states the count, and the `duplicateReport` tag states the duplicate
-/// line. A group that succeeds writes nothing to `out`. A failed inventory writes the duplicate line to `out`, before
+/// line. A pack that succeeds writes nothing to `out`. A failed inventory writes the duplicate line to `out`, before
 /// the caller reports the error.
-fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> anyhow::Result<()> {
+pub(crate) fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> anyhow::Result<()> {
     let jar_name = spec.jar_name();
     let span = parent.child("pack jar");
     span.tag("jar", jar_name.as_str());
@@ -125,7 +59,7 @@ pub(crate) fn create_directories(spec: &MergeSpec) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Writes the inventory of the group under an `inventory packing output` span with the counters of the inventory.
+/// Writes the inventory of the jar under an `inventory packing output` span with the counters of the inventory.
 fn write_inventory(spec: &MergeSpec, merged: &MergeReport, parent: &Span) -> anyhow::Result<()> {
     let span = parent.child("inventory packing output");
     match inventory::write_inventory(spec, merged) {

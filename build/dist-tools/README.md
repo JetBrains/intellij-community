@@ -53,18 +53,16 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 The `API.md` of a crate states its supported subset and the input that it refuses. Rustdoc states the public items.
 
-## The two gates
+## The gates
 
-A change to a tool must pass both gates. Run them from the ultimate root, then the third command in `community/`.
+A change to a tool must pass the tests and, when it can move a composed byte, the fingerprint and the snapshot diff.
+Run the tests from the ultimate root, then the second command in `community/`.
 
 ```sh
-./build/dist.cmd jars
 ./bazel.cmd test @community//build/dist-tools/... //build/dist-tools/...
 cd community && ./bazel.cmd test //build/dist-tools/...
 ```
 
-- `jars` pairs each packed content-module jar of the platform payload with its `JarPackager` reference jar and compares the
-  bytes. It fails on a differing jar, on a jar without a partner on either side, and on an empty compare.
 - The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the Kotlin goldens of
   `crates/pluginpack/testdata`, the plan file corpus, the crate closure test of each action tool, and the
   `<crate>-clippy` test of every crate.
@@ -196,13 +194,12 @@ old split until the workspace `Cargo.toml` changes. Touch it (a comment line is 
 
 ## Profile the packer
 
-The packer accepts many `output=` groups in one flag file, so one process can pack the whole population. This command
-gives every recipe as its expanded command line:
+One packer action packs one jar. This command gives the recipe of each action as its expanded command line:
 
 ```sh
 ./bazel.cmd aquery --output=text --include_param_files 'mnemonic("PackContentModuleJar", //... + @community//...)'
 ```
 
-Join the recipes into one flag file, and change each `output=` path so that the run does not write into `bazel-out`.
-Remove the groups whose sources are not in the output base. Then run the packer from the exec root under a sampling
-profiler. The measurement rules are in `build/AGENTS.md` of the ultimate root.
+Copy the recipe of one action into a flag file, and change its `output=`, `metadata-file=` and `trace-file=` paths so
+that the run does not write into `bazel-out`. Then run the packer from the exec root under a sampling profiler. The
+measurement rules are in `build/AGENTS.md` of the ultimate root.

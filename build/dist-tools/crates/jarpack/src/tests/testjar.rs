@@ -238,9 +238,9 @@ pub(crate) fn index_pointer(data: &[u8]) -> i32 {
 
 // The recipes that several test modules share.
 
-/// Returns the groups of a flag file with the text `lines`.
-pub(crate) fn parse_recipe(scratch: &Scratch, lines: &str) -> anyhow::Result<Vec<MergeSpec>> {
-    parse_recipe_file(scratch, lines).map(|flag_file| flag_file.groups)
+/// Returns the jar of a flag file with the text `lines`.
+pub(crate) fn parse_recipe(scratch: &Scratch, lines: &str) -> anyhow::Result<MergeSpec> {
+    parse_recipe_file(scratch, lines).map(|flag_file| flag_file.spec)
 }
 
 pub(crate) fn parse_recipe_file(scratch: &Scratch, lines: &str) -> anyhow::Result<FlagFile> {
