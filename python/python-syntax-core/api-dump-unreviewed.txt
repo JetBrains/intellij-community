@@ -175,6 +175,7 @@ c:com.jetbrains.python.formatter.PyCodeStyleSettings
 - BLANK_LINES_BEFORE_FIRST_METHOD:I
 - BLANK_LINE_AT_FILE_END:Z
 - sf:CHOP_DOWN_IF_LONG:I
+- CHOP_DOWN_LONG_SUBSCRIPTIONS:Z
 - CODE_STYLE_PROFILE:java.lang.String
 - DICT_ALIGNMENT:I
 - sf:DICT_ALIGNMENT_NONE:I
@@ -225,6 +226,7 @@ c:com.jetbrains.python.formatter.PyCodeStyleSettings
 - USE_TRAILING_COMMA_IN_ARGUMENTS_LIST:Z
 - USE_TRAILING_COMMA_IN_COLLECTIONS:Z
 - USE_TRAILING_COMMA_IN_PARAMETER_LIST:Z
+- WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES:Z
 - <init>(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - equals(java.lang.Object):Z
 - readExternal(org.jdom.Element):V

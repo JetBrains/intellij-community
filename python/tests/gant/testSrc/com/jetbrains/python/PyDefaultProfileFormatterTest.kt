@@ -77,6 +77,8 @@ class PyDefaultProfileFormatterTest {
     assertTrue(custom.NEW_LINE_AFTER_COLON)
     assertTrue(custom.HUG_SOLE_COLLECTION_ARGUMENT)
     assertTrue(custom.ELLIPSIS_BODY_ON_SAME_LINE)
+    assertTrue(custom.CHOP_DOWN_LONG_SUBSCRIPTIONS)
+    assertTrue(custom.WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES)
     assertFalse(custom.ALIGN_COLLECTIONS_AND_COMPREHENSIONS)
     assertFalse(custom.USE_CONTINUATION_INDENT_FOR_PARAMETERS)
     assertEquals(PyDefaultStyleGuide.CODE_STYLE_ID, custom.CODE_STYLE_PROFILE)
@@ -107,6 +109,8 @@ class PyDefaultProfileFormatterTest {
     assertTrue(custom.USE_CONTINUATION_INDENT_FOR_PARAMETERS)
     assertFalse(custom.HUG_SOLE_COLLECTION_ARGUMENT)
     assertFalse(custom.ELLIPSIS_BODY_ON_SAME_LINE)
+    assertFalse(custom.CHOP_DOWN_LONG_SUBSCRIPTIONS)
+    assertFalse(custom.WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES)
 
     val common = settings.getCommonSettings(PythonLanguage.getInstance())
     assertEquals(-1, common.RIGHT_MARGIN)

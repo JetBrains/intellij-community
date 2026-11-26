@@ -73,6 +73,9 @@ object PyClassicStyleGuide {
 
       HANG_CLOSING_BRACKETS = false
       DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_NONE
+
+      CHOP_DOWN_LONG_SUBSCRIPTIONS = false
+      WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES = false
     }
   }
 

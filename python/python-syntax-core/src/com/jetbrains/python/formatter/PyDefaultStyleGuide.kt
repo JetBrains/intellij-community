@@ -85,6 +85,10 @@ object PyDefaultStyleGuide {
 
       HANG_CLOSING_BRACKETS = false
       DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_NONE
+
+      // A long subscription splits like a collection, and a long assigned value goes in parentheses.
+      CHOP_DOWN_LONG_SUBSCRIPTIONS = true
+      WRAP_LONG_ASSIGNED_VALUE_IN_PARENTHESES = true
     }
   }
 
