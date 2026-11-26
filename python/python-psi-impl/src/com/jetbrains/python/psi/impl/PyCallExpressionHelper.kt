@@ -902,12 +902,12 @@ object PyCallExpressionHelper {
    * is excluded and the lookup walks the ancestors' MRO, stopping at the first defining class.
    * `object.__init_subclass__`, which accepts no arguments, is the implicit fallback.
    *
-   * The check is skipped when a custom metaclass is involved, since its `__new__`/`__init__` may legitimately
-   * consume the keyword arguments before they reach `__init_subclass__`.
+   * The check is skipped when a metaclass other than `type` or `typing._ProtocolMeta` is involved, since its
+   * `__new__`/`__init__` may consume the keyword arguments before they reach `__init_subclass__`.
    */
   private fun PyClass.resolveInitSubclassCallee(resolveContext: PyResolveContext): List<PyCallableType> {
     val context = resolveContext.typeEvalContext
-    if (this.hasCustomMetaClass(context)) return emptyList()
+    if (this.hasMetaClassThatMayConsumeClassKeywords(context)) return emptyList()
     // TypedDict class-definition keyword arguments (total, closed, ...) are validated by PyTypedDictInspection.
     if (isTypingTypedDictInheritor(context)) return emptyList()
 
@@ -920,10 +920,12 @@ object PyCallExpressionHelper {
     return emptyList()
   }
 
-  private fun PyClass.hasCustomMetaClass(context: TypeEvalContext): Boolean {
+  private fun PyClass.hasMetaClassThatMayConsumeClassKeywords(context: TypeEvalContext): Boolean {
     val classType = context.getType(this) as? PyClassType ?: return false
     val metaClassType = classType.getMetaClassType(context, true) ?: return false
-    return metaClassType !== PyBuiltinCache.getInstance(this).typeType
+    // `typing._ProtocolMeta` passes the class keywords to `__init_subclass__`
+    return metaClassType !== PyBuiltinCache.getInstance(this).typeType &&
+           metaClassType.classQName != PyTypingTypeProvider.PROTOCOL_META
   }
 
   @JvmStatic
