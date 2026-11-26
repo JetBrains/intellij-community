@@ -198,3 +198,51 @@ def rust_test_junit(
         visibility = visibility,
         wrapper = wrapper,
     )
+
+def rust_test_junit_run(
+        name,
+        test,
+        args = [],
+        junit_class = "",
+        optimized = False,
+        platform = None,
+        size = None,
+        tags = [],
+        target_compatible_with = [],
+        timeout = None,
+        visibility = None,
+        wrapper = _WRAPPER):
+    """Declares one more test target that runs the `rust_test` of a `rust_test_junit` through the wrapper.
+
+    The test binary builds once for both targets, when `optimized` and `platform` are the ones of the first target. The
+    target takes its own `args`, such as `--wrapper-include-module=<module>` of the wrapper, which selects a part of the
+    tests of the binary.
+
+    Args:
+        name: Name of the test target.
+        test: The `rust_test` to run, the `<name>_libtest` of the first target.
+        args: Arguments the wrapper gives to the test binary.
+        junit_class: The class name of every test case of the report.
+        optimized: Builds the test target and the `rust_test` with `OPTIMIZED_TEST_RUSTC_FLAGS`.
+        platform: The target platform of the test target and the `rust_test`.
+        size: Size of the test target.
+        tags: Tags of the test target.
+        target_compatible_with: Constraints of the test target.
+        timeout: Timeout of the test target.
+        visibility: Visibility of the test target.
+        wrapper: The binary which runs the test binary and writes the JUnit report.
+    """
+    _rust_test_junit_test(
+        name = name,
+        test = test,
+        args = args,
+        junit_class = junit_class,
+        optimized = optimized,
+        platform = platform,
+        size = size,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        timeout = timeout,
+        visibility = visibility,
+        wrapper = wrapper,
+    )

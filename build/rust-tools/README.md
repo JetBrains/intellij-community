@@ -38,8 +38,15 @@ follow it.
   The `optimized` argument builds the test, the wrapper and their dependencies with `OPTIMIZED_TEST_RUSTC_FLAGS`:
   `-Copt-level=1` with the debug assertions and the overflow checks. `optimized_binary` drops these flags, so a shipped
   binary in the data of such a test builds as it does outside it.
+  `rust_test_junit_run` declares one more test target over the `rust_test` of a `rust_test_junit`, with its own
+  `args`, so a module split of the wrapper puts the tests of one binary into two targets that build it once.
 - `libtest-junit-wrapper/`: the default wrapper binary, a `rust_tool_binary` over the crates of `@dt`. Its `e2e/`
-  test runs a fixture with two failed tests and compares the report with `expected-report.xml`.
+  test runs a fixture with two failed tests and compares the report with `expected-report.xml`. The arguments
+  `--wrapper-include-module=<module>` and `--wrapper-exclude-module=<module>` of a target are the options of the
+  wrapper, which never reach libtest. With one of them, the wrapper lists the tests, keeps those in the module or those
+  outside it, applies `--test_filter`, `--exact` and `--skip` as libtest does, shards the rest, and runs them by their
+  exact names. A module is a segment of the module path of a test name. A sharded run chooses its tests the same way,
+  so a positional filter of the target runs each test in one shard only.
 - `.jscpd.json`: the jscpd configuration of the copy-paste gate over the community workspaces: BT, the Air UI-lane
   tooling, the distribution tools, this directory and `community/tools/jscpd-test`. The thresholds are those of
   the Air gate, 50 tokens and 5 lines, and there is no baseline.

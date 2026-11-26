@@ -15,6 +15,13 @@
 //! libtest knows nothing of Bazel's sharding, and Bazel fails a sharded test whose runner does not say it
 //! shards. So this tool does: it lists the tests, runs the slice of the sorted list that belongs to its shard,
 //! and touches the status file Bazel checks.
+//!
+//! A target can split the tests of its binary by a module, with `--wrapper-include-module=<module>` or
+//! `--wrapper-exclude-module=<module>`, so two targets run the two parts of one binary. libtest would read a
+//! filter and a `--skip` as alternatives, and `--exact` changes the meaning of both. So this tool chooses the
+//! tests itself: it lists them, keeps the part of the split, applies the filters of the target and of Bazel as
+//! libtest does, and runs the result by the exact names. A shard chooses its tests the same way, so a
+//! positional filter of the target holds once and runs no test of another shard.
 
 mod event;
 mod junit;
@@ -25,7 +32,7 @@ use crate::junit::{case_name, write_report, ROOT_CLASS_NAME};
 use crate::report::Report;
 use runfiles::Runfiles;
 use std::error::Error;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -95,6 +102,8 @@ fn main() {
 /// `--format` in `--test_arg` then wins, and libtest writes no event this tool can read.
 fn run() -> Result<i32, Box<dyn Error>> {
     let test = test_binary()?;
+    let args = env::args_os().skip(1).filter(|arg| !is_jvm_flag(arg));
+    let (split, mut target_args) = ModuleSplit::take_from(args);
     let report_path = env::var_os(REPORT_ENV_VAR).map(PathBuf::from);
     let suite = env::var(TARGET_ENV_VAR).unwrap_or_else(|_| DEFAULT_SUITE.to_owned());
     let class = env::var(CLASS_ENV_VAR).ok().filter(|class| !class.is_empty());
@@ -103,14 +112,30 @@ fn run() -> Result<i32, Box<dyn Error>> {
     }
 
     let mut selection = filters(&env::var(FILTER_ENV_VAR).unwrap_or_default(), class.as_deref());
-    if let Some(shard) = shard() {
+    let shard = shard();
+    if shard.is_some() {
         if let Some(status) = env::var_os(SHARD_STATUS_ENV_VAR) {
             File::create(status)?;
         }
-        let mine = shard.slice(list_tests(&test, &selection)?);
+    }
+    let chosen = if split.is_active() || shard.is_some() {
+        // The tool chooses the tests itself and runs them by their exact names, so the filters of the
+        // target, of Bazel and of the split all hold once, and libtest gets no filter that would add an
+        // alternative to the names or that `--exact` changes.
+        let (libtest_filters, rest) = LibtestFilters::take_from(target_args);
+        target_args = rest;
+        let names = select(list_tests(&test, &[])?, &selection, &libtest_filters, &split);
+        Some(match &shard {
+            Some(shard) => shard.slice(names),
+            None => names,
+        })
+    } else {
+        None
+    };
+    if let Some(mine) = chosen {
         if mine.is_empty() {
-            // More shards than tests: this one has nothing to run, which is a pass with an empty report rather
-            // than a test binary that reported nothing.
+            // More shards than tests, or a split that keeps no test: this one has nothing to run, which is
+            // a pass with an empty report rather than a test binary that reported nothing.
             if let Some(path) = &report_path {
                 let mut file = File::create(path)?;
                 write_report(&Report::new(suite), 0.0, class.as_deref(), &mut file)?;
@@ -122,7 +147,7 @@ fn run() -> Result<i32, Box<dyn Error>> {
 
     let started = Instant::now();
     let mut child = Command::new(&test)
-        .args(env::args_os().skip(1).filter(|arg| !is_jvm_flag(arg)))
+        .args(&target_args)
         .args(JSON_FORMAT_ARGS)
         .args(&selection)
         .env(BOOTSTRAP_ENV_VAR, "1")
@@ -235,6 +260,128 @@ fn shard() -> Option<Shard> {
 
 fn parse_shard(total: usize, index: usize) -> Option<Shard> {
     (total > 1 && index < total).then_some(Shard { index, total })
+}
+
+/// The option of the tool that keeps only the tests of a module: `--wrapper-include-module=real_git`.
+const INCLUDE_MODULE_OPTION: &str = "--wrapper-include-module=";
+
+/// The option of the tool that drops the tests of a module: `--wrapper-exclude-module=real_git`.
+const EXCLUDE_MODULE_OPTION: &str = "--wrapper-exclude-module=";
+
+/// The split of the tests of one binary into two targets by a module. A test is in a module when one
+/// segment of the module path of its name, which is every segment but the last, is the module:
+/// `a::real_git::b::c` is in `real_git` and in `b`, and `a::real_git_cache::c` is in neither. The tool reads
+/// the options and never gives them to libtest.
+#[derive(Debug, Default, PartialEq)]
+struct ModuleSplit {
+    include: Vec<String>,
+    exclude: Vec<String>,
+}
+
+impl ModuleSplit {
+    /// The split of the options of the tool in `args`, and the other arguments in their order.
+    fn take_from(args: impl IntoIterator<Item = OsString>) -> (Self, Vec<OsString>) {
+        let mut split = Self::default();
+        let mut rest = Vec::new();
+        for arg in args {
+            let text = arg.to_str().unwrap_or_default();
+            if let Some(module) = text.strip_prefix(INCLUDE_MODULE_OPTION) {
+                split.include.push(module.to_owned());
+            } else if let Some(module) = text.strip_prefix(EXCLUDE_MODULE_OPTION) {
+                split.exclude.push(module.to_owned());
+            } else {
+                rest.push(arg);
+            }
+        }
+        (split, rest)
+    }
+
+    const fn is_active(&self) -> bool {
+        !self.include.is_empty() || !self.exclude.is_empty()
+    }
+
+    /// Whether the test `name` is in the part of the split: in a module of `include`, when it names one,
+    /// and in no module of `exclude`.
+    fn keeps(&self, name: &str) -> bool {
+        let modules: Vec<&str> =
+            name.rsplit_once("::").map_or(Vec::new(), |(path, _)| path.split("::").collect());
+        let is_in = |module: &String| modules.contains(&module.as_str());
+        (self.include.is_empty() || self.include.iter().any(is_in)) && !self.exclude.iter().any(is_in)
+    }
+}
+
+/// The options of libtest whose value is the next argument. An argument after one of them is no filter.
+const VALUED_OPTIONS: [&str; 7] =
+    ["--logfile", "--test-threads", "--color", "--format", "-Z", "--shuffle-seed", "--skip"];
+
+/// The filters of libtest in the arguments of a target: each positional filter, `--exact` and each
+/// `--skip`. A split or a shard reads them, because the tool then runs the tests by their exact names, and
+/// libtest would add a positional filter as an alternative to the names and read `--skip` as exact too.
+#[derive(Debug, Default, PartialEq)]
+struct LibtestFilters {
+    filters: Vec<String>,
+    exact: bool,
+    skip: Vec<String>,
+}
+
+impl LibtestFilters {
+    /// The filters in `args`, and the other arguments in their order. An argument that is no option and
+    /// no value of an option of [`VALUED_OPTIONS`] is a positional filter.
+    fn take_from(args: Vec<OsString>) -> (Self, Vec<OsString>) {
+        let mut filters = Self::default();
+        let mut rest = Vec::new();
+        let mut args = args.into_iter();
+        while let Some(arg) = args.next() {
+            let Some(text) = arg.to_str() else {
+                rest.push(arg);
+                continue;
+            };
+            if text == "--exact" {
+                filters.exact = true;
+            } else if text == "--skip" {
+                filters.skip.extend(args.next().map(|value| value.to_string_lossy().into_owned()));
+            } else if let Some(skip) = text.strip_prefix("--skip=") {
+                filters.skip.push(skip.to_owned());
+            } else if VALUED_OPTIONS.contains(&text) {
+                rest.push(arg);
+                rest.extend(args.next());
+            } else if text.starts_with('-') {
+                rest.push(arg);
+            } else {
+                filters.filters.push(text.to_owned());
+            }
+        }
+        (filters, rest)
+    }
+
+    /// Whether `name` matches `filter` as libtest matches it: the whole name with `--exact`, else a part.
+    fn matches(&self, name: &str, filter: &str) -> bool {
+        if self.exact {
+            name == filter
+        } else {
+            name.contains(filter)
+        }
+    }
+}
+
+/// The tests of `names` that a split or a shard chooses from, in their order: each one that a filter of
+/// Bazel in `filters` or a positional filter of the target matches, when there is one, that no `--skip`
+/// matches, and that the split keeps.
+fn select(
+    names: Vec<String>,
+    filters: &[String],
+    libtest: &LibtestFilters,
+    split: &ModuleSplit,
+) -> Vec<String> {
+    let mut all = filters.iter().chain(&libtest.filters).peekable();
+    let unfiltered = all.peek().is_none();
+    let all: Vec<&String> = all.collect();
+    names
+        .into_iter()
+        .filter(|name| unfiltered || all.iter().any(|filter| libtest.matches(name, filter)))
+        .filter(|name| !libtest.skip.iter().any(|skip| libtest.matches(name, skip)))
+        .filter(|name| split.keeps(name))
+        .collect()
 }
 
 /// The names of the tests the filters select, from libtest's own listing.
