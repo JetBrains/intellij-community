@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.Companion.lightDaemonAnalyzerFixture
+import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.testFramework.LightProjectDescriptor
@@ -46,6 +49,25 @@ fun lombokCodeInsightFixture(
   val fixture = lightJavaCodeInsightFixture(projectFixture, descriptor, basePath = "").init()
   fixture.testDataPath = LombokTestUtil.getTestDataPath() + basePath
   initialized(fixture) {}
+}
+
+/**
+ * Creates the [LightDaemonAnalyzerFixture] of a Lombok highlighting test. Declare it as an instance field.
+ *
+ * [localInspectionTools] gives the inspections of the test profile, as in [lightDaemonAnalyzerFixture].
+ * The test data path is [basePath] in the Lombok test data, as [LombokTestUtil.getTestDataPath] gives it.
+ * [LightDaemonAnalyzerFixture.configureByFile] adds its argument to the test data path without a separator.
+ */
+@TestOnly
+@JvmOverloads
+fun lombokDaemonAnalyzerFixture(
+  projectFixture: TestFixture<LightJavaProject>,
+  basePath: String,
+  localInspectionTools: Supplier<out List<InspectionProfileEntry>> = Supplier { emptyList() },
+): TestFixture<LightDaemonAnalyzerFixture> = testFixture("lombokDaemonAnalyzerFixture") {
+  val daemonFixture = lightDaemonAnalyzerFixture(projectFixture, localInspectionTools).init()
+  daemonFixture.fixture.testDataPath = LombokTestUtil.getTestDataPath() + basePath
+  initialized(daemonFixture) {}
 }
 
 /**

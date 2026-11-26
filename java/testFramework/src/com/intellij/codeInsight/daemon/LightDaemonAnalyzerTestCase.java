@@ -29,6 +29,11 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated For a JUnit 6 test, use {@link LightDaemonAnalyzerFixture#lightDaemonAnalyzerFixture}.
+ * {@link LightDaemonAnalyzerOptions} replaces the {@code doFolding()} and {@code doInspections()} hooks of this class.
+ */
+@Deprecated
 public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTestCase {
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   protected TestDaemonCodeAnalyzerImpl myTestDaemonCodeAnalyzer;
