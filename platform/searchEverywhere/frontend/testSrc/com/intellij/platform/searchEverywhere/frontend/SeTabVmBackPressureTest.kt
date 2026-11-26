@@ -74,6 +74,7 @@ private fun CoroutineScope.startEndlessSearch(tabId: String): RunningSearch {
     vm.searchResults.filterNotNull().first().resultsFlow.collect { search.loadedCount.incrementAndGet() }
   }
   vm.setActive(true)
+  vm.shouldLoadMore = false
   return search
 }
 
