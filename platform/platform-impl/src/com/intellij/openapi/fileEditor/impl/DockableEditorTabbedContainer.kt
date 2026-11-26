@@ -414,7 +414,7 @@ class DockableEditorTabbedContainer internal constructor(
       return null
     }
 
-    val r = Rectangle(tabs.component.size)
+    val r = tabs.dropArea
     TabsUtil.updateBoundsWithDropSide(r, currentDropSide)
     val editorArea = SwingUtilities.convertRectangle(splitters, Rectangle(splitters.size), tabs.component)
     return createDropAreaShape(r, editorArea, TabsUtil.getDropAreaArc())

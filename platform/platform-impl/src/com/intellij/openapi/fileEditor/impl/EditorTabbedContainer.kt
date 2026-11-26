@@ -110,6 +110,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Image
 import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.Robot
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -725,6 +726,8 @@ open class EditorTabs(
   }
 
   override fun getEditorWindow(): EditorWindow = window
+
+  override fun getDropArea(): Rectangle = Rectangle(size)
 
   @Internal
   override fun minHeaderHeight(): Int {
