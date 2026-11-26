@@ -7,11 +7,13 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.psi.findPsiMethodCall
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLambdaExpression
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.ClassUtil
@@ -42,12 +44,13 @@ internal suspend fun filterTraceableStreams(
   if (chains.isEmpty()) return chains
 
   val classified = readAction {
-    val document = contextElement.containingFile?.fileDocument ?: return@readAction null
-    classifyBySourcePosition(chains, document, position.line)
+    if (!contextElement.isValid) return@readAction null
+    val file = contextElement.containingFile ?: return@readAction null
+    classifyBySourcePosition(chains, file, position.line)
   } ?: return chains
   if (classified.uncertain.isEmpty()) return classified.traceable
 
-  val bytecodeFiltered = filterByBytecodeOffset(contextElement, classified.uncertain, method, bytecodeOffset)
+  val bytecodeFiltered = filterByBytecodeOffset(contextElement, classified, method, bytecodeOffset)
   return classified.traceable + bytecodeFiltered
 }
 
@@ -56,32 +59,38 @@ internal suspend fun filterTraceableStreams(
  */
 private fun classifyBySourcePosition(
   chains: List<StreamChain>,
-  document: Document,
+  file: PsiFile,
   currentLine: Int,
-): ClassifiedStreams {
+): ClassifiedStreams? {
+  val document = file.fileDocument
   val traceable = mutableListOf<StreamChain>()
   val notTraceable = mutableListOf<StreamChain>()
   val uncertain = mutableListOf<StreamChain>()
   for (chain in chains) {
-    val startLine = document.getLineNumber(chain.qualifierExpression.textRange.startOffset)
-    val endLine = document.getLineNumber(chain.terminationCall.textRange.endOffset)
+    val startOffset = chain.qualifierExpression.textRange.startOffset
+    val endOffset = chain.terminationCall.textRange.endOffset
+    if (startOffset > document.textLength || endOffset > document.textLength) return null
+    val startLine = document.getLineNumber(startOffset)
+    val endLine = document.getLineNumber(endOffset)
     when {
       endLine < currentLine -> notTraceable += chain
       startLine > currentLine -> traceable += chain
       else -> uncertain += chain
     }
   }
-  return ClassifiedStreams(traceable, notTraceable, uncertain)
+  return ClassifiedStreams(file, document.modificationStamp, traceable, notTraceable, uncertain)
 }
 
 private data class ClassifiedStreams(
+  val file: PsiFile,
+  val documentStamp: Long,
   val traceable: List<StreamChain>,
   val notTraceable: List<StreamChain>,
   val uncertain: List<StreamChain>,
 )
 
 /**
- * Matches the first operator of each chain against the bytecode of [method]
+ * Matches the first operator of each uncertain chain against the bytecode of [method]
  * and keeps the chain if that operator's method call is ahead of [bytecodeOffset].
  *
  * Note: whenever the PSI and the bytecode cannot be matched reliably, the chain is kept.
@@ -90,11 +99,15 @@ private data class ClassifiedStreams(
  */
 private suspend fun filterByBytecodeOffset(
   contextElement: PsiElement,
-  chains: List<StreamChain>,
+  classified: ClassifiedStreams,
   method: Method,
   bytecodeOffset: Long,
 ): List<StreamChain> {
-  val mappings = readAction { computeStreamCallMappings(contextElement, chains) }
+  val file = classified.file
+  val mappings = smartReadAction(file.project) {
+    if (!contextElement.isValid || file.fileDocument.modificationStamp != classified.documentStamp) return@smartReadAction null
+    computeStreamCallMappings(contextElement, classified.uncertain)
+  } ?: return classified.uncertain
   // Nothing to match against the bytecode, so return what the line number-based filtering already decided
   if (mappings.callIdToChain.isEmpty()) return mappings.candidates
 
@@ -132,8 +145,7 @@ private fun computeStreamCallMappings(contextElement: PsiElement, chains: List<S
     when {
       // For Java the operator range is exactly `PsiMethodCallExpression.getTextRange()` and `findPsiMethodCall`
       // requires an exact match, so the call is normally found.
-      // Null means the PSI no longer matches the ranges the chain was built from: chains are collected in a single `smartReadAction`,
-      // while we are in a separate `readAction` on the debugger thread, and the file could have been edited in between.
+      // The file can change between chain discovery and line classification, so the saved ranges can differ from the PSI.
       // We cannot analyze such chain, so keep it.
       firstOperatorCall == null -> candidates += chain
       // The operator belongs to a JVM method other than the one we are stopped in.
