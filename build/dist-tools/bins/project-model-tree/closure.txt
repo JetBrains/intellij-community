@@ -6,7 +6,6 @@ crossbeam_epoch
 crossbeam_utils
 either
 equivalent
-foldhash
 fscopy
 getrandom
 hashbrown

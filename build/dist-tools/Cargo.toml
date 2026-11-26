@@ -141,7 +141,6 @@ rayon = "1.12.0"
 regex = { version = "1.13.1", default-features = false, features = ["std", "perf", "unicode-perl"] }
 ruzstd = "0.9.0"
 same-file = "1.0.6"
-saphyr = "0.0.12"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.151", features = ["preserve_order", "raw_value"] }
 sha2 = "0.11.0"

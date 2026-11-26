@@ -3,7 +3,6 @@ appinfo
 cli
 distpath
 equivalent
-foldhash
 hashbrown
 indexmap
 itoa

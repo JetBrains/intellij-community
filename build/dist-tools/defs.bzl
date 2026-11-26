@@ -46,6 +46,6 @@ def dt_crate(name):
     `bazel mod tidy` removes it. A label here resolves `@dt` through the repository mapping of this module.
 
     Args:
-      name: the crate name, such as `saphyr`. A community crate must depend on it, or `@dt` does not have it.
+      name: the crate name, such as `serde`. A community crate must depend on it, or `@dt` does not have it.
     """
     return Label("@dt//:" + name)

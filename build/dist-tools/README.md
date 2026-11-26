@@ -5,8 +5,8 @@ tool. A crate under `crates/` exists when two tools share it, or when it is the 
 own goldens. Code that one tool uses lives in that tool. Bazel builds every binary through `rules_rs`, and `cargo`
 serves the edit-test loop and rust-analyzer.
 
-The ultimate tools `dist` and `content-report` are a second workspace, `build/dist-tools` in the ultimate root.
-They use the crates of this workspace through path dependencies.
+The ultimate tool `dist` is a second workspace, `build/dist-tools` in the ultimate root.
+It uses the crates of this workspace through path dependencies.
 
 The contracts are in the specs under `build/openspec/specs/` of the ultimate root. The explainer
 [`from-an-iml-to-a-dist.md`](../../../build/docs/explainers/from-an-iml-to-a-dist.md#where-the-code-goes) names each tool by its Bazel label.
@@ -26,7 +26,6 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/checkout-files` | The files of a git checkout, as `git ls-files --cached --others --exclude-standard` lists them, without the `git` executable: the index reader and the walk. BT links it. Its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dist-tools/crates/checkout-files:checkout-files_test` |
 | `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector and the composer: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dist-tools/crates/component:component_test` |
-| `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dist` and `content-report`. | `@community//build/dist-tools/crates/contentreport:contentreport_test` |
 | `crates/dev-launch` | The `java` command line of a distribution: the distribution properties, the class path, the main class, the custom command, and the text of the argument file. The guest agent of `community/tools/vm` links it, and no Bazel action runs it. It links no other crate of this workspace, and its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dist-tools/crates/dev-launch:dev-launch_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the lexical path functions `clean`, `dir` and `join`. | `@community//build/dist-tools/crates/distpath:distpath_test` |
 | `crates/docs-gate` | The docs gate of a docs site on the declared bun and OpenSpec CLI: the declared runtime, the run with a deadline, and the meaning of the sentinel and the exit code. The Rust tests of the docs sites link it. | `@community//build/dist-tools/crates/docs-gate:docs-gate_test` |
@@ -51,7 +50,6 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/runtime-layout` | The runtime layout tool. | `@community//build/dist-tools/bins/runtime-layout:runtime-layout_test` |
 | `bins/tool-identity` | The identity writer: the identity file of each distribution tool, from the facts and the files that `dist_tool` states. | `@community//build/dist-tools/bins/tool-identity:tool-identity_test` |
 | `build/dist-tools/bins/dist` | The binary of `./build/dist.cmd`, in the ultimate root. | `//build/dist-tools/bins/dist:dist_test` |
-| `build/dist-tools/bins/content-report` | The `content-report pure` command, in the ultimate root. | `//build/dist-tools/bins/content-report:content-report_test` |
 
 The `API.md` of a crate states its supported subset and the input that it refuses. Rustdoc states the public items.
 
@@ -86,9 +84,8 @@ cd community && ./bazel.cmd test //build/dist-tools/...
   `./bazel.cmd test @community//platform/build-scripts/bazel-rules:bazel_rules_tests`.
 - Before a commit, run `cargo fmt --check` and `cargo clippy --all-targets` in this directory and in
   `build/dist-tools`, and `bun community/build/rust-tools/sync.mjs --check` from the ultimate root.
-- `./build/dist.cmd` runs `//build/dist-tools/bins/dist:dist_opt`, the binary built in `opt`, and
-  `replay` runs `bins/content-module-packer:content-module-packer_opt`. The unit test of each binary stays on the
-  `rust_binary`.
+- `./build/dist.cmd` runs `//build/dist-tools/bins/dist:dist_opt`, the binary built in `opt`. The unit test stays on
+  the `rust_binary`.
 - A launch target runs one tool of this workspace at start: `bins/dev-home:dev-home_opt`, the generation writer. Its
   stub runs it, and then the native launcher of the generation.
 

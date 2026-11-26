@@ -2,7 +2,6 @@ anyhow
 appinfo
 cli
 equivalent
-foldhash
 hashbrown
 indexmap
 itoa

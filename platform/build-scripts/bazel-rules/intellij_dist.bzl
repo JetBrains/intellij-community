@@ -244,19 +244,6 @@ _TRACE_SPANS_ATTR = {
     ),
 }
 
-# The switch that turns the executed packaging recipe on, carried by the one rule here that runs the reference
-# assembler.
-#
-# A sibling of the above with the same shape rather than a reuse of it: a recipe and a measurement are wanted at
-# different times, and `trace_spans` has a protocol - hold it constant across a comparison, read it only from a cold
-# run - that a recipe request must not drag a build into. See the flag's own comment in this package's `BUILD.bazel`.
-_DIST_PLANS_ATTR = {
-    "_dist_plans": attr.label(
-        default = "//platform/build-scripts/bazel-rules:dist_plans",
-        providers = [BuildSettingInfo],
-    ),
-}
-
 def _declare_side_output(flag, ctx, args, base, suffix, option):
     """Declare one side output of an action and tell its tool where to write it - or do neither.
 
@@ -302,10 +289,6 @@ def _declare_spans(ctx, args, base):
     """
     return _declare_side_output(ctx.attr._trace_spans, ctx, args, base, ".spans.json", "--trace-file")
 
-def _declare_plan(ctx, args, base):
-    """This fragment's executed packaging recipe, or None when `dist_plans` is off."""
-    return _declare_side_output(ctx.attr._dist_plans, ctx, args, base, ".plan.yaml", "--plan")
-
 def _side_output_group(own, dependencies, group_name):
     """One side output group: this target's own files of that group, plus those of the targets it composes.
 
@@ -318,8 +301,8 @@ def _side_output_group(own, dependencies, group_name):
     build already needs is written by that action anyway, since Bazel runs an action for any of its outputs and requires
     all of them.
 
-    Call it through one of the two wrappers below, never directly. The group's name has to be the same on both sides,
-    and a mismatch analyses, passes, and produces a silently empty group.
+    The group's name has to be the same on both sides. A mismatch analyses, passes, and produces a silently empty
+    group, so the span group goes through `_spans_output_group`.
 
     Args:
         own: this target's own files, which may hold None for a flag that is off.
@@ -337,9 +320,6 @@ def _side_output_group(own, dependencies, group_name):
 
 def _spans_output_group(own, dependencies):
     return _side_output_group(own, dependencies, "trace_spans")
-
-def _plans_output_group(own, dependencies):
-    return _side_output_group(own, dependencies, "dist_plans")
 
 def _project_model_tree_impl(ctx):
     tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
@@ -473,10 +453,6 @@ def _fragment_impl(ctx):
     if spans:
         outputs.append(spans)
 
-    plan = _declare_plan(ctx, args, ctx.label.name)
-    if plan:
-        outputs.append(plan)
-
     ctx.actions.run(
         inputs = depset(
             direct = [
@@ -504,8 +480,6 @@ def _fragment_impl(ctx):
             # The spans of this reference and of the shared project model tree. No distribution composes a reference,
             # so a request for the spans of a distribution does not reach the tree.
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
-            # The executed recipe of this reference. Nothing is propagated into it: the tree runs no assembler.
-            dist_plans = _plans_output_group([plan], []),
             runtime_module_repository_layout = depset([runtime_module_repository_layout] if runtime_module_repository_layout else []),
         ),
         IntellijDevReferenceInfo(
@@ -529,7 +503,7 @@ intellij_fragment = rule(
         "build_date_seconds": attr.string(default = DIST_PINNED_BUILD_DATE_IN_SECONDS),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
-        "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its mnemonic, its recipe and its diagnostics."),
+        "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its mnemonic and its diagnostics."),
         "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns: `only` the packed ones, or none when empty."),
         "runtime_module_repository": attr.bool(default = False, doc = "Whether this fragment owns `modules/module-descriptors.dat` and `modules/module-descriptors.jar`."),
         "platform_payload": attr.label(
@@ -543,7 +517,7 @@ intellij_fragment = rule(
         "build_inputs": attr.label(providers = [IntellijDevBuildInputsInfo], mandatory = True),
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
-    } | _TRACE_SPANS_ATTR | _DIST_PLANS_ATTR,
+    } | _TRACE_SPANS_ATTR,
 )
 
 _COLLECTOR_ATTRS = {
@@ -1043,9 +1017,6 @@ def _compose(ctx, fragment_targets):
             # Every span file of this distribution in one request: the composition's own and each component's. This is the
             # group a measuring run asks for.
             trace_spans = _spans_output_group([spans], fragment_targets),
-            # The executed recipe of each component that has one, in one request. The composition itself has none,
-            # because it places files and does not pack them.
-            dist_plans = _plans_output_group([], fragment_targets),
         ),
     ]
 

@@ -6,7 +6,6 @@ component
 distpath
 equivalent
 filemeta
-foldhash
 getrandom
 hashbrown
 httpdate

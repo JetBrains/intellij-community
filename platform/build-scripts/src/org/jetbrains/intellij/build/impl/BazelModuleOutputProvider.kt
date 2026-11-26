@@ -90,29 +90,6 @@ object BazelBuildInputs {
    */
   fun resolveDeclaredFile(execPath: String): Path? = resolver?.resolveDeclaredFile(execPath)
 
-  /**
-   * The manifest key [file] was declared under, or `null` when no manifest is configured or none declares that file.
-   *
-   * The inverse of [resolve], for naming a file the build has already read rather than for finding one: the executed
-   * packaging recipe identifies each source by its key, because a key is the same on every machine and an execution
-   * path is not. It deliberately does **not** mark the input as used - a name is not a read, and counting it as one
-   * would make merely reporting a fragment's recipe shrink its unused-input list.
-   */
-  fun labelOf(file: Path): String? = resolver?.labelOf(file)
-
-  /**
-   * Which file of [label] [file] is, or `null` where no one name answers that.
-   *
-   * `RecipeSource.file` states the rule and what a reader does with an absent value. This function returns `null` in
-   * four cases: no manifest is configured, [label] declares one file, [label] does not declare [file], and no name
-   * separates [file] from a sibling of the same container.
-   *
-   * For **naming**, beside [labelOf], and never for reading bytes. It marks no input as used. That is [labelOf]'s
-   * reason: a name is not a read. Counting one would make merely reporting a recipe shrink a fragment's unused-input
-   * list. [resolveAllIfDeclared] is what reads a container's files.
-   */
-  fun declaredFileNameOf(label: String, file: Path): String? = resolver?.declaredFileNameOf(label = label, file = file)
-
   fun writeUnusedInputs(file: Path) {
     resolver?.writeUnusedInputs(file) ?: run {
       file.parent?.let { Files.createDirectories(it) }
@@ -137,14 +114,7 @@ private data class ExplicitBazelInput(
  */
 internal class ExplicitBazelInputResolver private constructor(
   private val inputs: Map<String, List<ExplicitBazelInput>>,
-  /**
-   * The key each declared file is named by, for [labelOf].
-   *
-   * Built once at load time and never written afterwards, which is why it needs none of this class's synchronization:
-   * it is the only member that is not part of the used-input bookkeeping.
-   */
-  private val labelByPath: Map<Path, String>,
-  /** Every declared file by its normalized execution path, for [resolveDeclaredFile]. Built at load time like [labelByPath]. */
+  /** Every declared file by its normalized execution path, for [resolveDeclaredFile]. Built once at load time. */
   private val inputByExecPath: Map<Path, ExplicitBazelInput>,
 ) {
   private val usedExecPaths = HashSet<String>()
@@ -180,27 +150,6 @@ internal class ExplicitBazelInputResolver private constructor(
     }
   }
 
-  fun labelOf(file: Path): String? = labelByPath.get(file)
-
-  /**
-   * Which file of [label] [file] is, by [discriminateExecPath]'s rule.
-   *
-   * It works on the **execution paths** the manifest wrote, and not on the absolute paths. Every declared file shares
-   * the execution root, so an absolute path lets the search widen above that root. The value would then hold a name
-   * element of this machine, in a report that keys on labels to avoid exactly that.
-   *
-   * Needs no synchronization, for [labelOf]'s reason: [inputs] is built at load time and never written afterwards.
-   */
-  fun declaredFileNameOf(label: String, file: Path): String? {
-    val declared = inputs.get(label) ?: return null
-    if (declared.size < 2) {
-      return null
-    }
-    // A file the key does not declare must get no name. Otherwise the search can hand it a sibling's name.
-    val own = declared.firstOrNull { it.absolutePath == file } ?: return null
-    return discriminateExecPath(declared = declared.map { Path.of(it.execPath) }, execPath = Path.of(own.execPath))
-  }
-
   @Synchronized
   fun writeUnusedInputs(file: Path) {
     file.parent?.let { Files.createDirectories(it) }
@@ -214,7 +163,6 @@ internal class ExplicitBazelInputResolver private constructor(
   companion object {
     fun load(file: Path): ExplicitBazelInputResolver {
       val inputs = LinkedHashMap<String, MutableList<ExplicitBazelInput>>()
-      val labelByPath = HashMap<Path, String>()
       val inputByExecPath = HashMap<Path, ExplicitBazelInput>()
       Files.readAllLines(file).forEachIndexed { index, line ->
         if (line.isBlank()) return@forEachIndexed
@@ -224,10 +172,6 @@ internal class ExplicitBazelInputResolver private constructor(
         val execPath = line.substring(separator + 1)
         check(!Path.of(execPath).isAbsolute) { "Bazel input path '$execPath' must be relative to the execution root" }
         val input = ExplicitBazelInput(execPath = execPath, absolutePath = Path.of(execPath).toAbsolutePath().normalize())
-        // The label as the manifest writes it, not the apparent-repository alias synthesized below: a report has to
-        // name one key per file, and the written one is the key the generator emitted. First wins, so a file declared
-        // under two keys - a module target and the library container that exports it - is named by the first.
-        labelByPath.putIfAbsent(input.absolutePath, label)
         inputByExecPath.putIfAbsent(Path.of(execPath).normalize(), input)
         // A repeated label is how a multi-jar library states its jars, so appending is the normal case and order is
         // preserved. What is still a defect is the *same* file twice under one key: the producer of `library_jars`
@@ -238,7 +182,7 @@ internal class ExplicitBazelInputResolver private constructor(
           declared.add(input)
         }
       }
-      return ExplicitBazelInputResolver(inputs = inputs, labelByPath = labelByPath, inputByExecPath = inputByExecPath)
+      return ExplicitBazelInputResolver(inputs = inputs, inputByExecPath = inputByExecPath)
     }
 
     private fun apparentRepositoryLabel(label: String): String? {
@@ -250,26 +194,6 @@ internal class ExplicitBazelInputResolver private constructor(
       return if (apparentRepository.isEmpty()) label.substring(repositoryEnd) else "@$apparentRepository${label.substring(repositoryEnd)}"
     }
   }
-}
-
-/**
- * The shortest trailing path of [execPath] that exactly one of [declared] ends with, or `null` when no width has one.
- *
- * The search starts at the file name and widens by one name each round. The first width that names one file wins, so the
- * value is the shortest one that separates [execPath] from its siblings. Every candidate is a trailing path of an
- * execution path, so it means the same thing on another machine.
- *
- * The search can end with nothing. Two files of one key can shadow each other, as `a/b.jar` and `x/a/b.jar` do. No width
- * of the shorter path then separates the two. `RecipeSource.file` states what a reader does with that.
- */
-private fun discriminateExecPath(declared: List<Path>, execPath: Path): String? {
-  for (names in 1..execPath.nameCount) {
-    val candidate = execPath.subpath(execPath.nameCount - names, execPath.nameCount)
-    if (declared.count { it.endsWith(candidate) } == 1) {
-      return candidate.invariantSeparatorsPathString
-    }
-  }
-  return null
 }
 
 @Internal

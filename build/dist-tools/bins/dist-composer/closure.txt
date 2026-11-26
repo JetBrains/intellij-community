@@ -9,7 +9,6 @@ distpath
 either
 equivalent
 filemeta
-foldhash
 fscopy
 getrandom
 hashbrown

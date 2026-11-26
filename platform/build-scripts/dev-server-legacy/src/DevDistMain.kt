@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
-import org.jetbrains.intellij.build.dev.DistRecipe
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
@@ -23,7 +22,7 @@ import kotlin.system.exitProcess
 
 /**
  * Assembles a reference fragment of the distribution into a caller-specified output directory. A reference is the
- * second producer of the `jars`, `replay` and `runtime-repo` gates, and no distribution composes it.
+ * second producer of the `jars` and `runtime-repo` gates, and no distribution composes it.
  *
  * Unlike `DevMainImpl`, which builds and launches in the same process from an IDE run configuration, this entry point only
  * builds. The Bazel action gives the run directory ([BuildRequest.runDirOverride]) and the build scratch
@@ -34,7 +33,6 @@ import kotlin.system.exitProcess
  * complete target platform.
  *
  * [TRACE_FILE_OPTION] writes this process's spans out as a side output; without it nothing is written.
- * `--plan` does the same for the packaging recipe this assembly executed. See [DistRecipe].
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
@@ -82,18 +80,10 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
     System.setProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, path.invariantSeparatorsPathString)
   }
   val unusedInputs = options.optionalPath("--unused-inputs")
-  // The packaging recipe this assembly is about to execute, written after it has executed it. A pure side output: with
-  // the option absent nothing is recorded and nothing is written, so an assembly that is not asked for its recipe is
-  // byte-for-byte the assembly it was.
-  val planFile = options.optionalPath("--plan")
-  // The layout the runtime module repository fragment generates the repository from, a side output like the recipe.
+  // The layout the runtime module repository fragment generates the repository from, a side output.
   val runtimeModuleRepositoryLayoutFile = options.optionalPath("--runtime-module-repository-layout")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
-
-  if (planFile != null) {
-    DistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
-  }
 
   val build = buildProductInProcess(
     BuildRequest(
@@ -116,10 +106,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   val mainClassName = build.mainClass
 
   dropEmptyTempDir(runDir)
-
-  planFile?.let {
-    DistRecipe.write(file = it, fragment = fragment.name)
-  }
 
   println("Distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName)")
   if (cleanScratchOnSuccess) {
