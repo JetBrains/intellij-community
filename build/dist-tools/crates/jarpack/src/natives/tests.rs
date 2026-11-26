@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use crate::nativelib::{self, Arch, Family};
 use crate::tests::testjar::{self, Scratch, entry, entry_names, is_library, module_source, pack, parse_recipe, read_entry, write_zip_jar};
-use crate::{INDEX_FILE_NAME, MergeOptions, MergeSpec, NativeSpec, NativeTree, Source};
+use crate::{INDEX_FILE_NAME, MergeSpec, NativeSpec, NativeTree, Source};
 
 /// A presigned library as `JarPackager` sees one. It is a jar with a Maven name and one native per platform under a
 /// common prefix. It also has a class that must stay in the jar.
@@ -340,10 +340,7 @@ fn natives_reservation_packs_the_natives_mode_jar_and_no_tree() {
         }),
         sources(),
     );
-    assert!(
-        missing.pack(&MergeOptions::default()).is_err(),
-        "packed a reservation of a library that no source is"
-    );
+    assert!(missing.pack().is_err(), "packed a reservation of a library that no source is");
 }
 
 #[test]
@@ -683,7 +680,7 @@ fn natives_mode_creates_each_directory_with_mode_0755() {
         Some(native.clone()),
         vec![Source::library(&library)],
     )
-    .pack(&MergeOptions::default())
+    .pack()
     .unwrap();
     for (dir, want) in [(tree.to_path_buf(), 0o775), (tree.join("darwin-aarch64"), 0o755)] {
         let metadata = fs::metadata(&dir).unwrap_or_else(|error| panic!("{}: {error}", dir.display()));
@@ -698,9 +695,7 @@ fn natives_mode_refuses_an_absent_tree() {
     let library_jar = native_library_source(&scratch);
     let native = native_spec(&scratch, "darwin_aarch64", "foo");
     let output = scratch.dir().join("intellij.libraries.foo.jar");
-    let error = spec(&output, Some(native.clone()), vec![library(&library_jar)])
-        .pack(&MergeOptions::default())
-        .unwrap_err();
+    let error = spec(&output, Some(native.clone()), vec![library(&library_jar)]).pack().unwrap_err();
     assert_eq!(
         format!("{error:#}"),
         format!(

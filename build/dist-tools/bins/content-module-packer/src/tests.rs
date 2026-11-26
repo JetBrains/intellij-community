@@ -162,8 +162,8 @@ fn file_size(path: &Path) -> u64 {
 
 #[test]
 fn the_option_surface_is_exactly_what_the_action_passes() {
-    // The rule passes a --flagfile=, a one-shot run can add --trace-file= and --verify-crc, and no caller passes more. A
-    // typo must fail the action. A run that skips the trace silently looks like a build that wrote no spans.
+    // The rule passes a --flagfile=, a one-shot run can add --trace-file=, and no caller passes more. A typo must fail
+    // the action. A run that skips the trace silently looks like a build that wrote no spans.
     let parse = |arguments: &[&str]| options::parse(arguments.iter().map(OsString::from));
     assert_eq!(
         parse(&["--flagfile=recipe.txt"]).unwrap(),
@@ -173,14 +173,13 @@ fn the_option_surface_is_exactly_what_the_action_passes() {
         }
     );
     assert_eq!(
-        parse(&["--verify-crc", "--flagfile=recipe.txt", "--trace-file=out/a.jar.spans.json"]).unwrap(),
+        parse(&["--flagfile=recipe.txt", "--trace-file=out/a.jar.spans.json"]).unwrap(),
         Options {
             flag_file: "recipe.txt".into(),
-            verify_crc: true,
             trace_file: Some("out/a.jar.spans.json".into()),
         }
     );
-    let refused: [(&[&str], &str); 10] = [
+    let refused: [(&[&str], &str); 7] = [
         (&["--trace-file=out/a.jar.spans.json"], "--flagfile is required"),
         (&["--flagfile=recipe.txt", "--tracefile=x"], "unknown option: --tracefile"),
         (&["--flagfile=recipe.txt", "x"], "but got \"x\""),
@@ -188,10 +187,7 @@ fn the_option_surface_is_exactly_what_the_action_passes() {
         (&["--flagfile", "recipe.txt"], "--flagfile takes a value"),
         (&["-flagfile=recipe.txt"], "in the form --key=value"),
         (&["--flagfile=a.txt", "--flagfile=b.txt"], "at most once"),
-        (&["--flagfile=recipe.txt", "--verify-crc", "--verify-crc"], "at most once"),
-        (&["--flagfile=recipe.txt", "--verify-crc=true"], "takes no value"),
         (&["--flagfile=recipe.txt", "--trace-file="], "must not be empty"),
-        (&["--flagfile=recipe.txt", "--cpuprofile=cpu.pprof"], "--trace-file=<path>"),
     ];
     for (arguments, want) in refused {
         let error = format!("{:#}", parse(arguments).expect_err("a refused command line"));
@@ -635,7 +631,6 @@ fn pack_on_workers(base: &Path, workers: usize) -> (anyhow::Result<()>, String, 
     let mut stderr = Vec::new();
     let result = pack_in_parallel(
         &flag_file.groups,
-        &jarpack::MergeOptions::default(),
         workers,
         &trace::Tracer::disabled().span("pack content modules"),
         &mut stderr,
@@ -691,28 +686,4 @@ fn a_one_shot_run_stops_after_an_early_failure_and_reports_the_first_error() {
     let (result, _, _) = pack_on_workers(base, 4);
     let error = format!("{:#}", result.expect_err("two groups fail"));
     assert!(error.contains("missing0.jar"), "{error}");
-}
-
-#[test]
-fn verify_crc_checks_the_data_of_each_source_entry() {
-    // A STORED entry whose data no longer matches the CRC of its record. A build carries the CRC over, and a parity run
-    // refuses it.
-    let dir = tempfile::tempdir().expect("a scratch directory");
-    let base = dir.path();
-    let jar = base.join("module.jar");
-    write_jar(&jar, &[("com/example/Packed.class", CLASS)], CompressionMethod::Stored);
-    let mut content = fs::read(&jar).expect("the fixture jar");
-    let offset = content
-        .windows(CLASS.len())
-        .position(|window| window == CLASS)
-        .expect("the stored data");
-    content[offset + CLASS.len() - 1] ^= 0xff;
-    fs::write(&jar, content).expect("the damaged jar");
-    write_recipe(base, "output=out/example.jar\nmodule=module.jar\n");
-
-    let carried = run_in(base, &[flag_file_argument(base)]);
-    assert_eq!(carried.code, 0, "{}", carried.stderr);
-    let verified = run_in(base, &[flag_file_argument(base), "--verify-crc".into()]);
-    assert_eq!(verified.code, FAILURE, "{}", verified.stderr);
-    assert!(verified.stderr.contains("source CRC is"), "{}", verified.stderr);
 }

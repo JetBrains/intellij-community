@@ -9,7 +9,7 @@ use crate::tests::testjar::{
     module_source_with_manifest, module_source_with_manifest_text, pack, pack_error, raw, read_entry, rule_manifest, write_raw_jar,
     write_zip_jar,
 };
-use crate::{EntryFilter, MANIFEST_ENTRY_NAME, ManifestMode, MergeOptions, MergeSpec, Source, duplicate_line};
+use crate::{EntryFilter, MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Source, duplicate_line};
 
 fn spec(output: &str, sources: Vec<Source>) -> MergeSpec {
     MergeSpec {
@@ -542,7 +542,7 @@ fn pack_reads_the_local_extra_field_rather_than_the_central_one() {
 #[test]
 fn pack_refuses_a_recipe_with_no_sources() {
     assert!(
-        spec("intellij.example.jar", vec![]).pack(&MergeOptions::default()).is_err(),
+        spec("intellij.example.jar", vec![]).pack().is_err(),
         "packing a recipe with no source succeeded"
     );
 }
@@ -566,7 +566,7 @@ fn residual_packing_rejects_native_entries() {
     }
     // `.tbd` is a native only for natives mode, not for the residual check.
     let (recipe, _) = residual_recipe(&scratch, "stub.jar", "lib/native.tbd");
-    recipe.pack(&MergeOptions::default()).unwrap();
+    recipe.pack().unwrap();
 }
 
 /// The residual recipe of `result.jar` from the module jar `jar` with the one entry `name`. It returns the recipe and the
@@ -661,7 +661,7 @@ fn pack_reports_the_size_and_the_duplicates() {
     let second = write_zip_jar(&scratch, "second.jar", &fixture);
     let output = scratch.dir().join("intellij.example.jar");
     let recipe = spec(output.to_str().unwrap(), vec![Source::module(&first), Source::module(&second)]);
-    let report = recipe.pack(&MergeOptions { verify_crc: true }).unwrap();
+    let report = recipe.pack().unwrap();
     assert_eq!(recipe.jar_name(), "intellij.example.jar");
     assert_eq!(report.bytes_written, std::fs::metadata(&output).unwrap().len());
     assert_eq!(report.content_hash, xxh3::hash_file(&output).unwrap());
@@ -701,7 +701,7 @@ fn pack_reports_the_content_hash_of_a_jar_past_the_write_buffer() {
         output.to_str().unwrap(),
         vec![Source::file("resources/large.bin", &file), Source::module(&module)],
     );
-    let report = recipe.pack(&MergeOptions::default()).unwrap();
+    let report = recipe.pack().unwrap();
     assert_eq!(report.bytes_written, std::fs::metadata(&output).unwrap().len());
     assert!(report.bytes_written > large.len() as u64);
     assert_eq!(report.content_hash, xxh3::hash_file(&output).unwrap());
@@ -732,7 +732,7 @@ fn a_failed_write_names_the_jar() {
     let sources = (0..100)
         .map(|number| Source::file(format!("entry-{number:03}.txt"), &file))
         .collect();
-    let error = spec(output.to_str().unwrap(), sources).pack(&MergeOptions::default()).unwrap_err();
+    let error = spec(output.to_str().unwrap(), sources).pack().unwrap_err();
     let text = format!("{error:#}");
     let io_error = error
         .downcast_ref::<std::io::Error>()

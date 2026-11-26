@@ -149,14 +149,6 @@ pub struct MergeSpec {
     pub native: Option<NativeSpec>,
 }
 
-/// The settings of a run, the same for every group that it packs.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct MergeOptions {
-    /// Calculates the CRC of every entry again instead of taking it from the source, and fails on a mismatch. It is off
-    /// in a build and on in a parity run.
-    pub verify_crc: bool,
-}
-
 /// What a merge did.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct MergeReport {
@@ -183,11 +175,11 @@ impl MergeSpec {
         clippy::unnecessary_debug_formatting,
         reason = "the Debug form quotes the path, and a refusal keeps its text"
     )]
-    pub fn pack(&self, options: &MergeOptions) -> Result<MergeReport> {
+    pub fn pack(&self) -> Result<MergeReport> {
         if self.sources.is_empty() {
             bail!("no inputs for {:?}", self.output);
         }
-        self.merge(options)
+        self.merge()
     }
 
     /// Writes [`MergeSpec::output`] from the entries of the sources. It returns the names that more than one source
@@ -205,10 +197,9 @@ impl MergeSpec {
     /// attribute is not the name of the jar, [`MergeSpec::jar_name`]. The manifest that the build rules write into
     /// every module output, with the build-graph attributes and nothing beyond them, is no module manifest: the merge
     /// drops it, see [`is_rule_manifest`]. No entry changes its content in the merge.
-    pub fn merge(&self, options: &MergeOptions) -> Result<MergeReport> {
+    pub fn merge(&self) -> Result<MergeReport> {
         let output = &self.output;
         let jar_name = self.jar_name();
-        let verify_crc = options.verify_crc;
         self.validate_sources()?;
 
         // Every source jar stays open until the output is closed. The duplicate set, the natives state and the entity
@@ -285,9 +276,6 @@ impl MergeSpec {
                 }
                 if self.merge_entities && entry.name == ENTITIES_ENTRY_NAME {
                     let data = jar.data(&entry)?;
-                    if verify_crc && crc32fast::hash(&data) != entry.crc {
-                        bail!("{}: {}: source CRC does not match", path.display(), entry.name);
-                    }
                     entities.push(trim_entity_list(&data, path)?.to_string());
                     continue;
                 }
@@ -342,19 +330,6 @@ impl MergeSpec {
                     Some(data) => data,
                     None => jar.data(&entry)?,
                 };
-                if verify_crc {
-                    // A carried CRC is sound only while the source CRC is right. No build pays for this check, but a
-                    // parity run does: it proves that the copied number describes these bytes.
-                    let actual = crc32fast::hash(&data);
-                    if actual != entry.crc {
-                        bail!(
-                            "{}: {}: source CRC is {:08x} but its data hashes to {actual:08x}",
-                            path.display(),
-                            entry.name,
-                            entry.crc
-                        );
-                    }
-                }
                 if is_module_manifest {
                     check_boot_class_path(&data, path, output, &jar_name)?;
                 }
@@ -375,7 +350,7 @@ impl MergeSpec {
         // After the jar, so a tree never exists without its jar.
         if let (Some(natives), Some(tree)) = (&natives, self.native.as_ref().and_then(|native| native.tree.as_ref())) {
             let jar = jars[natives.index].get().expect("the native source was opened by the merge");
-            self.write_native_tree(natives, tree, jar, verify_crc)?;
+            self.write_native_tree(natives, tree, jar)?;
         }
         Ok(MergeReport {
             duplicates,

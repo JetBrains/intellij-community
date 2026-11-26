@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context as _, Result, bail};
 use distpath::path_identity;
 use filemeta::{Entry, EntryType};
-use jarpack::{ManifestMode, MergeOptions, MergeSpec};
+use jarpack::{ManifestMode, MergeSpec};
 use planfile::contract::{ArtifactKind, Asset, AssetKind, Manifest, Operation, Producer, Reference, Source};
 
 use crate::layout::LayoutScratch;
@@ -133,7 +133,7 @@ impl Execution {
                 Action::Jar(spec) => {
                     let mut spec = (**spec).clone();
                     spec.output = destination.clone();
-                    let merged = spec.merge(&MergeOptions::default()).with_context(|| resolved.destination.clone())?;
+                    let merged = spec.merge().with_context(|| resolved.destination.clone())?;
                     // The merge hashes the jar as it writes it, so the jar is not read again.
                     Entry {
                         relative_path: resolved.destination.clone(),

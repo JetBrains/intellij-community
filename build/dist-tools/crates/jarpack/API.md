@@ -83,8 +83,6 @@ states.
   `xxh3::hash_file` value of the jar, and the packer does not read the jar again for its inventory. The hasher sits
   between the write buffer and the file, so the buffer stays in front of the file. The merge does not hash the files of
   a native tree.
-- `MergeOptions::verify_crc` is the one switch of the CRC check. It is a setting of the run, so the caller passes the
-  same options to every group. pluginpack calls `MergeSpec::merge` with the default options.
 
 ## Recipes
 

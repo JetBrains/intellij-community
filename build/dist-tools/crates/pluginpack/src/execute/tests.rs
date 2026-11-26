@@ -684,7 +684,7 @@ fn batch_writes_only_its_assets_in_layout_order() {
         sources: vec![jarpack::Source::library(root.path().join("first.jar"))],
         ..jarpack::MergeSpec::default()
     }
-    .pack(&jarpack::MergeOptions::default())
+    .pack()
     .unwrap();
     assert_eq!(
         read_bytes(&reference),

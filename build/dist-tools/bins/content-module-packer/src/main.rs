@@ -32,7 +32,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use jarpack::{FlagFile, MergeOptions, MergeSpec};
+use jarpack::{FlagFile, MergeSpec};
 
 /// The name of the producer in the merged build trace.
 const SERVICE_NAME: &str = "content-module-packer";
@@ -79,15 +79,12 @@ fn run(arguments: impl IntoIterator<Item = OsString>, base_dir: &Path, stderr: &
     {
         return report_failure(stderr, &error);
     }
-    let merge_options = MergeOptions {
-        verify_crc: options.verify_crc,
-    };
 
     trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer, stderr| {
         let specs = &flag_file.groups;
         let root = tracer.span("pack content modules");
         root.tag("jars", specs.len());
-        let result = pack::pack_all(specs, &merge_options, &root, stderr);
+        let result = pack::pack_all(specs, &root, stderr);
         if let Err(error) = &result {
             root.fail(&format!("{error:#}"));
         }

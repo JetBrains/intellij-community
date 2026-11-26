@@ -23,7 +23,7 @@ use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, DateTime, ZipArchive, ZipWriter};
 
 use crate::writer::INDEX_FORMAT_VERSION;
-use crate::{EntryFilter, FlagFile, INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, MergeOptions, MergeSpec, Source, parse_flag_file};
+use crate::{EntryFilter, FlagFile, INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, MergeSpec, Source, parse_flag_file};
 
 /// The temporary directories of one test. [`Scratch::dir`] returns a new empty directory, as the Go `t.TempDir()` did.
 pub(crate) struct Scratch {
@@ -169,15 +169,14 @@ pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'
 
 /// Packs the recipe, fails if it packs, and returns the text of the error with its causes.
 pub(crate) fn pack_error(spec: &MergeSpec) -> String {
-    match spec.pack(&MergeOptions::default()) {
+    match spec.pack() {
         Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
         Err(error) => format!("{error:#}"),
     }
 }
 
-/// Runs a recipe and returns the bytes of the packed jar. Every case checks the CRCs: a carried CRC is sound only while
-/// it describes its data, and in a test that check costs nothing. Every case also checks the size and the content hash
-/// of the report against the file.
+/// Runs a recipe and returns the bytes of the packed jar. Every case checks the size and the content hash of the report
+/// against the file.
 pub(crate) fn pack(scratch: &Scratch, mut spec: MergeSpec) -> (Vec<u8>, Vec<String>) {
     let file_name = spec.output.file_name().expect("an output file name").to_owned();
     spec.output = scratch.dir().join(file_name);
@@ -185,9 +184,7 @@ pub(crate) fn pack(scratch: &Scratch, mut spec: MergeSpec) -> (Vec<u8>, Vec<Stri
     if let Some(tree) = spec.native.as_ref().and_then(|native| native.tree.as_ref()) {
         fs::create_dir_all(&tree.dir).expect("the tree root");
     }
-    let report = spec
-        .pack(&MergeOptions { verify_crc: true })
-        .unwrap_or_else(|error| panic!("{error:#}"));
+    let report = spec.pack().unwrap_or_else(|error| panic!("{error:#}"));
     let data = fs::read(&spec.output).expect("the packed jar");
     assert_eq!(report.bytes_written, data.len() as u64, "the size of {}", spec.output.display());
     let content_hash = xxh3::hash_file(&spec.output).expect("the hash of the packed jar");

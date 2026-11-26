@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 
 use filemeta::EntryType;
 use jarpack::nativelib::{Arch, Family};
-use jarpack::{MergeOptions, MergeReport, MergeSpec, NativeSpec, NativeTree, Source};
+use jarpack::{MergeReport, MergeSpec, NativeSpec, NativeTree, Source};
 use tempfile::TempDir;
 use zip::{CompressionMethod, ZipArchive};
 
@@ -26,7 +26,7 @@ use crate::tests::write_jar;
 /// The steps of the binary: the directories, the jar, then the inventory from the report of the merge.
 fn pack(spec: &MergeSpec) -> anyhow::Result<InventoryReport> {
     crate::pack::create_directories(spec)?;
-    let merged = spec.pack(&MergeOptions::default())?;
+    let merged = spec.pack()?;
     write_inventory(spec, &merged)
 }
 

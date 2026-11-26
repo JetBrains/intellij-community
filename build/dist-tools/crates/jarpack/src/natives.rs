@@ -175,7 +175,7 @@ struct PlannedNativeFile<'a> {
 impl MergeSpec {
     /// Writes the native entries of the target platform under the tree, after the jar is closed. The selection and the
     /// layout are the rules of [`nativelib`], and [`NativeTree::file_mode`] states the modes.
-    pub(crate) fn write_native_tree(&self, natives: &NativeMerge<'_>, tree: &NativeTree, jar: &Jar, verify_crc: bool) -> Result<()> {
+    pub(crate) fn write_native_tree(&self, natives: &NativeMerge<'_>, tree: &NativeTree, jar: &Jar) -> Result<()> {
         let lib_name = &self.native.as_ref().expect("a native tree requires a native spec").lib_name;
         let source_path = self.sources[natives.index].path().display();
         let names: Vec<&str> = natives.entries.iter().map(|entry| entry.name).collect();
@@ -205,9 +205,6 @@ impl MergeSpec {
         }
         for file in &planned {
             let data = jar.data(&file.entry).with_context(|| source_path.to_string())?;
-            if verify_crc && crc32fast::hash(&data) != file.entry.crc {
-                bail!("{source_path}: {}: source CRC does not match", file.entry.name);
-            }
             let target = create_tree_directories(&tree.dir, &file.relative_path)?;
             fs::write(&target, &data).with_context(|| target.display().to_string())?;
             // The mode of a new file is subject to the umask, and the inventory of the tree records the mode.

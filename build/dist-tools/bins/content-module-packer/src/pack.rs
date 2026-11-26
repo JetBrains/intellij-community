@@ -7,7 +7,7 @@ use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
 
-use jarpack::{MergeOptions, MergeReport, MergeSpec};
+use jarpack::{MergeReport, MergeSpec};
 use trace::Span;
 
 use crate::inventory;
@@ -20,12 +20,12 @@ use crate::inventory;
 ///
 /// A group in parallel writes its error report to a buffer. The buffers go to `stderr` in group order after all groups
 /// end. So the lines of two jars do not mix, and the order of the lines does not depend on the timing.
-pub(crate) fn pack_all(specs: &[MergeSpec], options: &MergeOptions, root: &Span, stderr: &mut dyn Write) -> anyhow::Result<()> {
+pub(crate) fn pack_all(specs: &[MergeSpec], root: &Span, stderr: &mut dyn Write) -> anyhow::Result<()> {
     if let [spec] = specs {
-        return pack_one(spec, options, root, stderr);
+        return pack_one(spec, root, stderr);
     }
     let workers = thread::available_parallelism().map_or(1, NonZeroUsize::get);
-    pack_in_parallel(specs, options, workers, root, stderr)
+    pack_in_parallel(specs, workers, root, stderr)
 }
 
 /// The report and the result of one group that ran.
@@ -35,13 +35,7 @@ type Outcome = (Vec<u8>, anyhow::Result<()>);
 ///
 /// The pool is written by hand, because a crate dependency in the packer re-keys every packing action when the crate
 /// changes. A panic of a group ends the run with the same panic, after the other threads end.
-pub(crate) fn pack_in_parallel(
-    specs: &[MergeSpec],
-    options: &MergeOptions,
-    workers: usize,
-    root: &Span,
-    stderr: &mut dyn Write,
-) -> anyhow::Result<()> {
+pub(crate) fn pack_in_parallel(specs: &[MergeSpec], workers: usize, root: &Span, stderr: &mut dyn Write) -> anyhow::Result<()> {
     let cursor = AtomicUsize::new(0);
     let failed = AtomicBool::new(false);
     let worker = || {
@@ -52,7 +46,7 @@ pub(crate) fn pack_in_parallel(
                 break;
             };
             let mut report = Vec::new();
-            let result = pack_one(spec, options, root, &mut report);
+            let result = pack_one(spec, root, &mut report);
             if result.is_err() {
                 failed.store(true, Ordering::Relaxed);
             }
@@ -87,12 +81,12 @@ pub(crate) fn pack_in_parallel(
 /// source wins. The `duplicates` tag of the span states the count, and the `duplicateReport` tag states the duplicate
 /// line. A group that succeeds writes nothing to `out`. A failed inventory writes the duplicate line to `out`, before
 /// the caller reports the error.
-fn pack_one(spec: &MergeSpec, options: &MergeOptions, parent: &Span, out: &mut dyn Write) -> anyhow::Result<()> {
+fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> anyhow::Result<()> {
     let jar_name = spec.jar_name();
     let span = parent.child("pack jar");
     span.tag("jar", jar_name.as_str());
     span.tag("sources", spec.sources.len());
-    let merged = match create_directories(spec).and_then(|()| spec.pack(options)) {
+    let merged = match create_directories(spec).and_then(|()| spec.pack()) {
         Ok(merged) => merged,
         Err(error) => {
             span.fail(&format!("{error:#}"));
