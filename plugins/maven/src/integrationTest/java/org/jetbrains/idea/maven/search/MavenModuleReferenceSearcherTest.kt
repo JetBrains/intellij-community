@@ -35,14 +35,15 @@ class MavenModuleReferenceSearcherTest(mavenVersion: String, modelVersion: Strin
   )
   
   private suspend fun renameDirectory(directory: PsiDirectory, newName: String) {
-    // The rename refactoring resolves the <module> references via ReferencesSearch, which MavenModuleReferenceSearcher
-    // answers by walking ModuleManager.getModules() and the MavenProjectsManager model. Make sure the import has fully
-    // settled (Maven model AND workspace model committed, smart mode) before renaming, otherwise the reference is
-    // intermittently not found and the <module> path is left unchanged (flaky).
     maven.awaitConfiguration()
-    IndexingTestUtil.suspendUntilIndexesAreReady(maven.project)
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
+        // RenameProcessor is not dumb-aware: BaseRefactoringProcessor.doRun() cancels the rename without an error when
+        // the project is dumb, and the <module> path stays unchanged. The import queues the scan from the event queue,
+        // so a wait outside the EDT can return before the scan starts. This wait dispatches the queued events and
+        // returns in smart mode with an empty event queue. The write-intent lock is kept until the rename starts, so
+        // no scan can start in between.
+        IndexingTestUtil.waitUntilIndexesAreReady(maven.project)
         val renameDialog = RenameDialog(maven.project, directory, directory, null)
         try {
           renameDialog.performRename(newName)
