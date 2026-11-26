@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
@@ -641,6 +642,25 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     console.flushDeferredText()
     console.waitAllRequests()
     assertEquals("!Foo!!Bar!!Baz!", console.text)
+  }
+
+  fun testFailedConsoleInitializationDoesNotLeak() {
+    var failedConsole: ConsoleView? = null
+    val filterProvider = object : ConsoleDependentInputFilterProvider() {
+      override fun getDefaultFilters(consoleView: ConsoleView, project: Project, scope: GlobalSearchScope): List<InputFilter> {
+        failedConsole = consoleView
+        throw AlreadyDisposedException("The project closed during console initialization")
+      }
+    }
+    maskExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS, listOf(filterProvider), testRootDisposable)
+
+    try {
+      assertThrows(AlreadyDisposedException::class.java) { ConsoleViewImpl(project, true) }
+      Disposer.getTree().assertNoReferenceKeptInTree(checkNotNull(failedConsole))
+    }
+    finally {
+      failedConsole?.let { Disposer.dispose(it) }
+    }
   }
 
   fun testCustomFiltersPrecedence() {

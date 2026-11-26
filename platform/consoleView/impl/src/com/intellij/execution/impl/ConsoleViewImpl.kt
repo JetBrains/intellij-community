@@ -151,8 +151,20 @@ open class ConsoleViewImpl protected constructor(
     ThreadingAssertions.softAssertAwtOperationsThread()
   }
 
-  @Suppress("LeakingThis")
-  private val flushUserInputAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+  private val consoleResources = Disposer.newDisposable()
+
+  /** Sends console input to the running process on a pooled thread. */
+  private val flushUserInputAlarm: Alarm
+
+  /** Rechecks for deferred output on the EDT before it runs the callbacks. */
+  private val spareTimeAlarm: Alarm
+
+  /** Runs heavy console filters on a pooled thread. */
+  private val heavyAlarm: Alarm
+
+  /** Queues output flush, clear, and scroll requests on the EDT. */
+  private val flushAlarm: Alarm
+
   private val commandLineFolding: CommandLineFolding = CommandLineFolding()
 
   private val psiDisposedCheck: DisposedPsiManagerCheck
@@ -163,12 +175,6 @@ open class ConsoleViewImpl protected constructor(
   @get:VisibleForTesting
   var state: ConsoleState
     private set
-
-  @Suppress("LeakingThis")
-  private val spareTimeAlarm: Alarm = Alarm(this)
-
-  @Suppress("LeakingThis")
-  private val heavyAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   @Volatile
   private var heavyUpdateTicket: Int = 0
@@ -190,9 +196,6 @@ open class ConsoleViewImpl protected constructor(
   private var myMainPanel: JPanel? = null
   private var myAllowHeavyFilters: Boolean = false
   protected var myCancelStickToEnd: Boolean = false // accessed in EDT only
-
-  @Suppress("LeakingThis")
-  private val flushAlarm: Alarm = Alarm(this)
 
   val project: Project
 
@@ -259,7 +262,7 @@ open class ConsoleViewImpl protected constructor(
         ConsoleViewUtil.computeConsoleFilters(
           project, this, mySearchScope)
       }
-      .expireWith(this)
+      .expireWith(consoleResources)
       .finishOnUiThread(modalityState ?: ModalityState.stateForComponent(this)
       ) { filters: List<Filter> ->
         predefinedFilters = filters
@@ -1615,15 +1618,30 @@ open class ConsoleViewImpl protected constructor(
   private val CLEAR: ClearRunnable = ClearRunnable()
 
   init {
-    initTypedHandler()
-    isViewer = viewer
-    state = initialState
-    psiDisposedCheck = DisposedPsiManagerCheck(project)
-    this.project = project
-    mySearchScope = searchScope
+    var initialized = false
+    try {
+      flushUserInputAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, consoleResources)
+      spareTimeAlarm = Alarm(consoleResources)
+      heavyAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, consoleResources)
+      flushAlarm = Alarm(consoleResources)
+      initTypedHandler()
+      isViewer = viewer
+      state = initialState
+      psiDisposedCheck = DisposedPsiManagerCheck(project)
+      this.project = project
+      mySearchScope = searchScope
+      initializeFiltersAndListeners(usePredefinedMessageFilter)
+      Disposer.register(this, consoleResources)
+      initialized = true
+    }
+    finally {
+      if (!initialized) Disposer.dispose(consoleResources)
+    }
+  }
 
+  private fun initializeFiltersAndListeners(usePredefinedMessageFilter: Boolean) {
     updateInputMessageFilter()
-    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+    project.messageBus.connect(consoleResources).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       private var myLastStamp: Long = 0
 
       override fun enteredDumbMode() {
@@ -1645,8 +1663,7 @@ open class ConsoleViewImpl protected constructor(
         }
       }
     })
-    @Suppress("LeakingThis")
-    ApplicationManager.getApplication().messageBus.connect(this)
+    ApplicationManager.getApplication().messageBus.connect(consoleResources)
       .subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener { _: EditorColorsScheme? ->
         ThreadingAssertions.assertEventDispatchThread()
         if (isDisposed) {
@@ -1659,7 +1676,6 @@ open class ConsoleViewImpl protected constructor(
       if (!isCurrentlyUnderLocalId && predefinedFilters.isEmpty()) {
         updatePredefinedFiltersLater(ModalityState.defaultModalityState())
       }
-      @Suppress("LeakingThis")
       addAncestorListener(object : AncestorListenerAdapter() {
         override fun ancestorAdded(event: AncestorEvent) {
           if (predefinedFilters.isEmpty()) {
@@ -1667,7 +1683,7 @@ open class ConsoleViewImpl protected constructor(
           }
         }
       })
-      ApplicationManager.getApplication().messageBus.connect(this)
+      ApplicationManager.getApplication().messageBus.connect(consoleResources)
         .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
           override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
             updatePredefinedFiltersLater()
