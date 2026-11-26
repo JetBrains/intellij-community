@@ -959,33 +959,50 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myDropTarget = new ProjectViewDropTarget(myTree, myProject) {
-        @Override
-        protected @Nullable PsiElement getPsiElement(@NotNull TreePath path) {
-          return getFirstElementFromNode(path.getLastPathComponent());
-        }
-
-        @Override
-        protected @Nullable Module getModule(@NotNull PsiElement element) {
-          return getNodeModule(element);
-        }
-
-        @Override
-        public void cleanUpOnLeave() {
-          beforeDnDLeave();
-          super.cleanUpOnLeave();
-        }
-
-        @Override
-        public boolean update(DnDEvent event) {
-          beforeDnDUpdate(event);
-          return super.update(event);
-        }
-      };
+      myDropTarget = createDropTarget();
       myDragSource = new MyDragSource();
       DnDManager dndManager = DnDManager.getInstance();
       dndManager.registerSource(myDragSource, myTree);
       dndManager.registerTarget(myDropTarget, myTree);
+    }
+  }
+
+  /**
+   * Creates the drop target of the tree of this pane. A pane that handles a drop of its own returns a subclass of
+   * {@link PaneDropTarget}, and gives each other drop to it.
+   */
+  @ApiStatus.Internal
+  protected @NotNull ProjectViewDropTarget createDropTarget() {
+    return new PaneDropTarget();
+  }
+
+  /** The drop target of the tree of this pane: it moves or copies the dragged elements into the element of the target row. */
+  @ApiStatus.Internal
+  protected class PaneDropTarget extends ProjectViewDropTarget {
+    public PaneDropTarget() {
+      super(myTree, myProject);
+    }
+
+    @Override
+    protected @Nullable PsiElement getPsiElement(@NotNull TreePath path) {
+      return getFirstElementFromNode(path.getLastPathComponent());
+    }
+
+    @Override
+    protected @Nullable Module getModule(@NotNull PsiElement element) {
+      return getNodeModule(element);
+    }
+
+    @Override
+    public void cleanUpOnLeave() {
+      beforeDnDLeave();
+      super.cleanUpOnLeave();
+    }
+
+    @Override
+    public boolean update(DnDEvent event) {
+      beforeDnDUpdate(event);
+      return super.update(event);
     }
   }
 
