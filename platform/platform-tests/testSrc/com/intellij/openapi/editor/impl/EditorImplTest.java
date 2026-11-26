@@ -430,6 +430,25 @@ public class EditorImplTest {
   }
 
   @Test
+  public void testRemovalOfTheLongestLineNarrowsTheEditor() {
+    myFixture.runTest(() -> {
+      myFixture.initText("aaa\nbbbbb\nc\nd");
+      EditorImpl editor = (EditorImpl)myFixture.getEditor();
+      editor.getSettings().setAdditionalColumnsCount(0);
+      editor.getSettings().setAdditionalLinesCount(0);
+      DocumentEx document = editor.getDocument();
+      assertEquals(50, editor.getContentComponent().getPreferredSize().width);
+
+      myFixture.runWriteCommand(() -> document.deleteString(4, 10));
+      assertEquals("aaa\nc\nd", document.getText());
+      assertEquals(30, editor.getContentComponent().getPreferredSize().width);
+
+      myFixture.runWriteCommand(() -> document.insertString(4, "bbbbbb\n"));
+      assertEquals(60, editor.getContentComponent().getPreferredSize().width);
+    });
+  }
+
+  @Test
   public void testCollapsingRegionContainingSoftWrap() {
     myFixture.runTest(() -> {
       myFixture.initText("abcdef abcdef");

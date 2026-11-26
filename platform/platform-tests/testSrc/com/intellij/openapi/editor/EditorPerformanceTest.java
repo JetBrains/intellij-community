@@ -86,6 +86,26 @@ public class EditorPerformanceTest {
   }
 
   /**
+   * Each edit adds or removes a line break in the middle of a large file.
+   * The editor must recalculate only the widths of the changed lines, not of all lines.
+   */
+  @Test
+  public void testNewAndRemovedLineInLargeFile() {
+    Document document = initLargeFile();
+    int offset = document.getLineEndOffset(LARGE_FILE_LINE_COUNT / 2) - 1;
+    Benchmark.newBenchmark("New and removed line in a large file", () -> {
+      for (int i = 0; i < 50; i++) {
+        myFixture.runWriteCommand(() -> document.insertString(offset, "\n"));
+        myFixture.getEditor().getContentComponent().getPreferredSize();
+        myFixture.runWriteCommand(() -> document.deleteString(offset, offset + 1));
+        myFixture.getEditor().getContentComponent().getPreferredSize();
+      }
+    }).warmupIterations(20)
+      .attempts(50)
+      .start();
+  }
+
+  /**
    * Makes a file of {@link #LARGE_FILE_LINE_COUNT} lines, with the longest line at the start, and calculates the editor width once.
    */
   private Document initLargeFile() {
