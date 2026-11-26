@@ -9,8 +9,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
@@ -99,6 +101,44 @@ public class SimpleGlyphFragmentTest {
     });
     assertEquals(List.of("abc"), drawn);
     assertEquals(TEST_CHAR_WIDTH * 3, fragment.visualColumnToX(0, 3), 0);
+  }
+
+  @Test
+  public void testTranslucentLcdTextDrawsEachGlyphAtItsPosition() {
+    var fragment = new SimpleGlyphFragment("abcd".toCharArray(), 0, 4, createFontInfo(0));
+    var positions = new ArrayList<Double>();
+    graphics.setColor(new Color(0, 0, 0, 128));
+    graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+    fragment.draw(5, 15, 1, 4).accept(new Graphics2DDelegate(graphics) {
+      @Override
+      public void drawGlyphVector(GlyphVector glyphVector, float x, float y) {
+        assertEquals(5, x, 0);
+        for (int i = 0; i < glyphVector.getNumGlyphs(); i++) {
+          positions.add(glyphVector.getGlyphPosition(i).getX());
+        }
+      }
+    });
+    assertEquals(List.of(0.0, 10.0, 20.0), positions);
+  }
+
+  @Test
+  public void testTranslucentGrayscaleTextDrawsTheChars() {
+    var fragment = new SimpleGlyphFragment("abc".toCharArray(), 0, 3, createFontInfo(0));
+    var drawn = new ArrayList<String>();
+    graphics.setColor(new Color(0, 0, 0, 128));
+    graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    fragment.draw(0, 15, 0, 3).accept(new Graphics2DDelegate(graphics) {
+      @Override
+      public void drawChars(char[] data, int offset, int length, int x, int y) {
+        drawn.add(new String(data, offset, length));
+      }
+
+      @Override
+      public void drawGlyphVector(GlyphVector glyphVector, float x, float y) {
+        drawn.add("glyph vector");
+      }
+    });
+    assertEquals(List.of("abc"), drawn);
   }
 
   /**

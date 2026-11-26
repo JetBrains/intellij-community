@@ -6,7 +6,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
@@ -101,6 +104,21 @@ public abstract sealed class GlyphFragment implements LineFragment permits Simpl
   protected static void moveGlyph(@NotNull GlyphVector glyphVector, int glyphIndex, double x) {
     double y = glyphVector.getGlyphPosition(glyphIndex).getY();
     glyphVector.setGlyphPosition(glyphIndex, new Point2D.Double(x, y));
+  }
+
+  /**
+   * Returns true when {@code g} draws LCD text and its color is not opaque.
+   */
+  protected static boolean isTranslucentLcdText(@NotNull Graphics2D g) {
+    Color color = g.getColor();
+    if (color == null || color.getAlpha() == 255) {
+      return false;
+    }
+    Object antialiasing = g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+    return antialiasing == RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB ||
+           antialiasing == RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR ||
+           antialiasing == RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_VRGB ||
+           antialiasing == RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_VBGR;
   }
 
   @Override

@@ -78,7 +78,7 @@ public final class SimpleGlyphFragment extends GlyphFragment {
       g.setFont(myFont);
       int xAsInt = (int)x;
       int yAsInt = (int)y;
-      if (myLetterSpacing != 0) {
+      if (myLetterSpacing != 0 || isTranslucentLcdText(g)) {
         drawSpaced(g, startColumn, endColumn, x, y);
       } else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
         g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
