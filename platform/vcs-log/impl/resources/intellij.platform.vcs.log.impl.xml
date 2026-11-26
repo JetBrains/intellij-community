@@ -118,6 +118,8 @@
                  description="Build the small data pack from the recent commits that the refresh loads, instead of loading it separately"/>
     <registryKey key="vcs.log.joiner.indexed.insert" defaultValue="true"
                  description="Find the place of each new commit in the log with a binary search, instead of reading the log from the start"/>
+    <registryKey key="vcs.log.commit.hash.cross.project" defaultValue="false"
+                 description="Search the commit of a hash link also in the other open projects"/>
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
