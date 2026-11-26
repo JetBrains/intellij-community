@@ -602,8 +602,12 @@ fun ProductLaunchModel.frontendVmOptionsFileName(os: OsFamily): String? {
   return name
 }
 
-/** The vmoptions file of a launch, as the distribution holds it. */
-internal fun vmOptionsFileName(os: OsFamily, baseFileName: String, languageServer: Boolean): String {
+/**
+ * The vmoptions file of a launch, as the distribution holds it. `vm_options_file_name` of `dist_product_files.bzl`
+ * derives the same name, and `VmOptionsFileNameTest` pins the cases of both.
+ */
+@ApiStatus.Internal
+fun vmOptionsFileName(os: OsFamily, baseFileName: String, languageServer: Boolean): String {
   return when (os) {
     OsFamily.MACOS -> "$baseFileName.vmoptions"
     OsFamily.LINUX -> "${add64IfNeeded(baseFileName, languageServer)}.vmoptions"

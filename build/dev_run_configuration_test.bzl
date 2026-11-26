@@ -10,7 +10,7 @@ platform resources and the native launcher read `product-info.json`.
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//build/dist-content:dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
-load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "build_txt_destination", "home_prefix", "product_info_destination")
+load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "build_txt_destination", "home_prefix", "product_info_destination", "vm_options_file_name")
 load(":dev_server_run_configurations.bzl", "DEV_RUN_CONFIGURATIONS")
 load(":dist_plan.bzl", "DIST_PLANS")
 load(
@@ -123,6 +123,22 @@ def _build_txt_destination_test_impl(ctx):
 
 build_txt_destination_test = unittest.make(_build_txt_destination_test_impl)
 
+# The cases of `VmOptionsFileNameTest`, which pins the same names of `vmOptionsFileName` in Kotlin.
+_VM_OPTIONS_FILE_NAMES = [
+    ("idea", False, {"darwin": "idea.vmoptions", "linux": "idea64.vmoptions", "windows": "idea64.exe.vmoptions"}),
+    ("jetbrains_client", False, {"darwin": "jetbrains_client.vmoptions", "linux": "jetbrains_client64.vmoptions", "windows": "jetbrains_client64.exe.vmoptions"}),
+    ("intellij-server", True, {"darwin": "intellij-server.vmoptions", "linux": "intellij-server.vmoptions", "windows": "intellij-server.exe.vmoptions"}),
+]
+
+def _vm_options_file_name_test_impl(ctx):
+    env = unittest.begin(ctx)
+    for base_file_name, language_server, names in _VM_OPTIONS_FILE_NAMES:
+        for os, expected in names.items():
+            asserts.equals(env, expected, vm_options_file_name(os, base_file_name, language_server), "%s on %s" % (base_file_name, os))
+    return unittest.end(env)
+
+vm_options_file_name_test = unittest.make(_vm_options_file_name_test_impl)
+
 def _home_prefix_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(env, "Contents", home_prefix("darwin", False), "a macOS app")
@@ -143,5 +159,6 @@ def dev_run_configuration_test_suite(name):
         android_studio_platform_fragments_test,
         product_info_destination_test,
         build_txt_destination_test,
+        vm_options_file_name_test,
         home_prefix_test,
     )

@@ -11,7 +11,7 @@ tables name the community products and the community tables in `community`, see 
 
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dist_platform_jar")
 load("//platform/build-scripts/bazel-rules:dist_content.bzl", "dist_platform_payload")
-load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "MAC_APP_FILES", "build_txt_destination", "dist_product_files", "home_prefix", "mac_app_icon_roles", "product_info_destination")
+load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "MAC_APP_FILES", "build_txt_destination", "dist_product_files", "home_prefix", "mac_app_icon_roles", "product_info_destination", "vm_options_file_name")
 load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_layout_parts", "dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_fragments_dist", "intellij_packed_jars_component")
 load(":download_rules.bzl", "EXECUTABLE_LIST_NAME")
@@ -311,18 +311,44 @@ def _runtime_executable_lists(platform):
 # files action renders from the launch model of the product.
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
 
+# The OS tokens of `platform_parts`, one per launch of a product.
+_OS_TOKENS = ["darwin", "linux", "windows"]
+
+def _vm_options_file_name(launch, os):
+    """The name of the main vmoptions file of `launch`, the `launch` struct of a plan, for the OS token `os`.
+
+    The name follows from the launcher facts, see `vm_options_file_name`. A plan of an older generator states the names
+    in `vmoptions`, and then the plan wins.
+    """
+    stated = getattr(launch, "vmoptions", None)
+    if stated != None:
+        return stated[os]
+    return vm_options_file_name(os, launch.launcher.base_file_name, launch.launcher.language_server)
+
+def _launch_model(tables, product):
+    """The label of the launch model of `product`: `<build package>/dist-launch:<case-safe name>.launch.json`.
+
+    `tables.case_safe_names` maps a product to its case-safe name when the name differs from the product key. A
+    table set of an older generator states every label in `launch_models`, and then the table wins.
+    """
+    stated = getattr(tables, "launch_models", None)
+    if stated != None:
+        return stated[product]
+    name = getattr(tables, "case_safe_names", {}).get(product, product)
+    return "%s/dist-launch:%s.launch.json" % (tables.build_package, name)
+
 def _launch_destinations(plan, os):
     """The destinations of the launch files, as `struct(vm_options, product_info, build_txt, frontend_vm_options)`.
 
     `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The native
     launcher of a row reads the main vmoptions file and `product-info.json` there. A vmoptions file is `bin/<name>`,
-    with the name of the plan. `product_info_destination` and `build_txt_destination` state the paths of
+    with the name of `_vm_options_file_name`. `product_info_destination` and `build_txt_destination` state the paths of
     `product-info.json` and `build.txt`. `frontend_vm_options` is `None` for a product without an embedded frontend.
     """
     frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
     language_server = plan.launch.launcher.language_server
     return struct(
-        vm_options = "bin/" + plan.launch.vmoptions[os],
+        vm_options = "bin/" + _vm_options_file_name(plan.launch, os),
         product_info = product_info_destination(os, language_server),
         build_txt = build_txt_destination(os, language_server),
         frontend_vm_options = "bin/" + frontend_vmoptions[os] if frontend_vmoptions else None,
@@ -595,7 +621,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
         dist_product_files(
             name = files,
             tags = ["manual"],
-            model = tables.launch_models[product],
+            model = _launch_model(tables, product),
             application_info = application_info.source,
             host_application_info = getattr(application_info, "host", None),
             replacements = getattr(application_info, "replacements", []),
@@ -933,7 +959,7 @@ def _declare_run_launcher(
         data = tables.launcher_data(product, additional_modules, data)
 
     plan = _plan(tables, product)
-    destinations = {os: _launch_destinations(plan, os) for os in plan.launch.vmoptions}
+    destinations = {os: _launch_destinations(plan, os) for os in _OS_TOKENS}
     intellij_dev_java_launcher_binary(
         name = name,
         visibility = visibility,
@@ -1062,7 +1088,9 @@ def intellij_dist_declarations(tables):
 
     `tables` is a struct with these fields:
 
-    - `plans`, `launch_models`: the generated plan tables, keyed by product.
+    - `plans`: the generated plan table, keyed by product.
+    - `case_safe_names`: the case-safe name of each product whose name differs from its key. The launch model of a
+      product is `<build_package>/dist-launch:<case-safe name>.launch.json`.
     - `platform_jar_orders`: the generated platform jar orders, keyed by product. Each entry is `struct(first, last)`,
       the platform jars before and after the sorted range.
     - `application_infos`: the generated application info sources, keyed by product. Each entry is

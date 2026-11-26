@@ -35,6 +35,20 @@ def build_txt_destination(os, language_server):
     """
     return _resources_directory(os, language_server) + "build.txt"
 
+def vm_options_file_name(os, base_file_name, language_server):
+    """The name of the main vmoptions file in `bin/`, for an OS token of `platform_parts`.
+
+    The rule is `vmOptionsFileName` of `ProductLaunchModel.kt`. macOS takes `<base>.vmoptions`. Linux takes
+    `<base>64.vmoptions`, and Windows takes `<base>64.exe.vmoptions`. A language server gets no `64`, as
+    `add64IfNeeded` decides.
+    """
+    if os not in ("darwin", "linux", "windows"):
+        fail("'%s' is not an OS token of platform_parts" % os)
+    if os == "darwin":
+        return base_file_name + ".vmoptions"
+    base = base_file_name if language_server else base_file_name + "64"
+    return base + (".exe.vmoptions" if os == "windows" else ".vmoptions")
+
 def home_prefix(os, language_server):
     """The directory of a distribution that holds the home of the IDE, for an OS token of `platform_parts`.
 
