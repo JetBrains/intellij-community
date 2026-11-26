@@ -12,11 +12,11 @@ load(":dist_runtime_module_repository.bzl", "dist_runtime_module_repository")
 load(
     ":intellij_dist.bzl",
     "DistPlacementInfo",
-    "IntellijDevFragmentInfo",
+    "IntellijDevComponentInfo",
     "IntellijDistInfo",
     "IntellijProjectModelTreeInfo",
     "dist_home_path",
-    "intellij_fragments_dist",
+    "intellij_components_dist",
     "intellij_packed_jars_component",
 )
 
@@ -342,7 +342,7 @@ def _fake_component_impl(ctx):
     return [
         DefaultInfo(files = depset([manifest, plugin_output]), runfiles = ctx.runfiles(files = [payload])),
         OutputGroupInfo(dist_plugin_outputs = depset([plugin_output])),
-        IntellijDevFragmentInfo(
+        IntellijDevComponentInfo(
             name = ctx.attr.component_name,
             payload = depset([payload]),
             manifest = manifest,
@@ -369,7 +369,7 @@ def _distribution_groups_test_impl(ctx):
 _distribution_groups_test = analysistest.make(
     _distribution_groups_test_impl,
     attrs = {
-        "production": attr.label_list(mandatory = True, providers = [IntellijDevFragmentInfo]),
+        "production": attr.label_list(mandatory = True, providers = [IntellijDevComponentInfo]),
     },
     config_settings = {_TRACE_SPANS: False},
 )
@@ -413,7 +413,7 @@ _sibling_vm_options_test = analysistest.make(
 def _packed_component_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    component = target[IntellijDevFragmentInfo]
+    component = target[IntellijDevComponentInfo]
     payload = component.payload.to_list()
     natives = ctx.attr.natives[ContentModuleJarInfo]
     native = natives.native_trees[_PAYLOAD_PLATFORM]
@@ -962,12 +962,12 @@ def dist_content_test_suite(name):
     for component in production:
         _fake_component(name = component, component_name = component)
     distribution = name + "_distribution"
-    intellij_fragments_dist(
+    intellij_components_dist(
         name = distribution,
         composer = ":" + fixture,
-        fragments = [":" + component for component in production],
+        components = [":" + component for component in production],
         platform_prefix = "idea",
-        expect_fragments = production,
+        expect_components = production,
         tags = ["manual"],
     )
     tests.append(distribution + "_test")
@@ -981,12 +981,12 @@ def dist_content_test_suite(name):
     # that the rule refuses.
     for suffix, prefix in [("", ""), ("_contents", "Contents")]:
         sibling = name + "_sibling_distribution" + suffix
-        intellij_fragments_dist(
+        intellij_components_dist(
             name = sibling,
             composer = ":" + fixture,
-            fragments = [":" + component for component in production],
+            components = [":" + component for component in production],
             platform_prefix = "idea",
-            expect_fragments = production,
+            expect_components = production,
             sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
             output_base = "/output-base",
             home_prefix = prefix,
@@ -1001,12 +1001,12 @@ def dist_content_test_suite(name):
         ("no_output_base", False, ["-Dexport=${EXPORT}"], "", "names ${EXPORT}, so output_base is required"),
     ]:
         refused = "%s_sibling_%s" % (name, suffix)
-        intellij_fragments_dist(
+        intellij_components_dist(
             name = refused,
             composer = ":" + fixture,
-            fragments = [":" + component for component in production],
+            components = [":" + component for component in production],
             platform_prefix = "idea",
-            expect_fragments = production,
+            expect_components = production,
             local_launch = local_launch,
             sibling_vm_options = lines,
             output_base = output_base,

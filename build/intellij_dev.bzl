@@ -102,7 +102,7 @@ _RUNTIME_MODULE_REPOSITORY_FILE = "modules/module-descriptors.dat"
 _RUNTIME_MODULE_REPOSITORY_PROPERTY = "-Dintellij.platform.runtime.repository.path="
 
 def export_vm_options(name, runtime_module_repository):
-    """The attributes of the sibling vmoptions file of the export `<name>.dist`, for `intellij_fragments_dist`.
+    """The attributes of the sibling vmoptions file of the export `<name>.dist`, for `intellij_components_dist`.
 
     The lines are `dev_launch_jvm_flags` over `out/dev-data/<name>`, with absolute paths. With
     `runtime_module_repository`, the last line names `modules/module-descriptors.dat` of the home of the export as the

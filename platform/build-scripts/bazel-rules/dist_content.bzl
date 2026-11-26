@@ -176,7 +176,7 @@ dist_plugin_content = rule(
     re-keys no reference through this target.
 
     `plugins` are the components of the product's own bundled plugins. They need the mode of the product, which
-    `stamp_class` sets on the way down, exactly as `intellij_fragments_dist` does. The module jars below them
+    `stamp_class` sets on the way down, exactly as `intellij_components_dist` does. The module jars below them
     still come from the neutral configuration through each component's inputs target, so no module compiles twice.
     `deps` are other content targets, already configured: the content of the embedded frontend's own bundled plugins,
     collected under the frontend's product.

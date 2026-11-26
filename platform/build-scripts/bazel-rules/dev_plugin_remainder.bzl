@@ -10,7 +10,7 @@ load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":dist_content.bzl", "DistContentInfo")
 load(":dist_plugin_descriptor.bzl", "DIST_STAMP_CLASS_ATTRS", "DIST_STAMP_CLASS_FLAG_ATTR", "DistPluginDescriptorInfo", "dist_check_stamp_class", "dist_mode_refusals", "dist_neutral_product_transition", "dist_stamp_class_transition")
 load(":dist_tool_info.bzl", "dist_tool_inputs")
-load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevComponentInfo")
 load(":java_glob.bzl", "executable_destinations")
 
 def _graph_info_init(**_kwargs):
@@ -1323,7 +1323,7 @@ def _dev_plugin_component_impl(ctx):
         # The raw content of the plugin, forwarded from the remainder: `dist_plugin_content` unions it per product.
         ctx.attr.remainder[DistContentInfo],
         ctx.attr.remainder[DistRuntimeLayoutInfo],
-        IntellijDevFragmentInfo(
+        IntellijDevComponentInfo(
             name = ctx.attr.component_name,
             payload = payload,
             manifest = manifest,

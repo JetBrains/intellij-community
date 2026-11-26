@@ -12,7 +12,7 @@ load("//build:host_platforms.bzl", "platform_parts")
 load(":dist_content.bzl", "DistPlatformPayloadInfo")
 load(":dist_plugin_descriptor.bzl", "dist_stamp_class_consumer_transition")
 
-IntellijDevFragmentInfo = provider(
+IntellijDevComponentInfo = provider(
     doc = "A component that a distribution composes. Its manifest names each file where it already is.",
     fields = {
         "name": "The component name, which is also the `kind` of its manifest.",
@@ -266,7 +266,7 @@ def _collect_component(ctx, files, collection_args, inputs, mnemonic, progress_m
     return [
         DefaultInfo(files = depset([component_manifest] + files), runfiles = ctx.runfiles(files = files)),
         OutputGroupInfo(trace_spans = _spans_output_group([spans], [])),
-        IntellijDevFragmentInfo(
+        IntellijDevComponentInfo(
             name = ctx.attr.component_name,
             payload = depset(files),
             manifest = component_manifest,
@@ -522,17 +522,17 @@ def _runfile_path(ctx, file):
 def _binding_input(member):
     return None
 
-def _add_source_bindings(args, fragment, anchor):
+def _add_source_bindings(args, component, anchor):
     def source_binding(source, expander):
         return json.encode({
-            "component": fragment.manifest.path,
+            "component": component.manifest.path,
             "source": source.path,
             "anchorRelativePath": _binding_relative_path(source, anchor),
             "type": "directory" if source.is_directory else "symlink" if source.is_symlink else "file",
             "members": [member.tree_relative_path for member in expander.expand(source)] if source.is_directory else [],
         })
 
-    sources = fragment.payload if fragment.payload else depset()
+    sources = component.payload if component.payload else depset()
     args.add_all(sources, map_each = _binding_input, expand_directories = True)
     args.add_all(sources, map_each = source_binding, expand_directories = False, allow_closure = True)
 
@@ -551,7 +551,7 @@ def _parents(path):
     parts = path.split("/")
     return ["/".join(parts[:index]) for index in range(len(parts) - 1, 0, -1)]
 
-def _merge_placements(ctx, fragment_targets):
+def _merge_placements(ctx, component_targets):
     """The merged placement of every component, or None when a component states none.
 
     A destination belongs to one component. No file and no directory lies below a tree, because a runfiles tree cannot
@@ -561,11 +561,11 @@ def _merge_placements(ctx, fragment_targets):
     trees = {}
     executables = []
     owners = {}
-    for target in fragment_targets:
+    for target in component_targets:
         if DistPlacementInfo not in target:
             return None
         placement = target[DistPlacementInfo]
-        kind = target[IntellijDevFragmentInfo].name
+        kind = target[IntellijDevComponentInfo].name
         for into, entries in [(files, placement.files), (trees, placement.trees)]:
             for destination, file in entries.items():
                 if destination in owners:
@@ -612,25 +612,25 @@ def _sibling_vm_options(ctx, home):
     ctx.actions.write(file, "".join([line + "\n" for line in resolved]))
     return file
 
-def _compose(ctx, fragment_targets):
+def _compose(ctx, component_targets):
     local_launch = ctx.attr.local_launch
     home = ctx.actions.declare_directory(ctx.label.name + (".metadata" if local_launch else ".dist"))
     sibling_vm_options = _sibling_vm_options(ctx, home)
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
     fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
     mac_binaries = None if local_launch else ctx.actions.declare_file(ctx.label.name + ".mac-binaries.json")
-    fragments = [target[IntellijDevFragmentInfo] for target in fragment_targets]
-    component_files = depset(transitive = [fragment.payload for fragment in fragments if fragment.payload])
+    components = [target[IntellijDevComponentInfo] for target in component_targets]
+    component_files = depset(transitive = [component.payload for component in components if component.payload])
     runtime_files = component_files if local_launch else depset()
 
-    prefixes = [fragment.plugin_classpath_prefix for fragment in fragments if fragment.plugin_classpath_prefix]
-    parts = [fragment.plugin_classpath_part for fragment in fragments if fragment.plugin_classpath_part]
+    prefixes = [component.plugin_classpath_prefix for component in components if component.plugin_classpath_prefix]
+    parts = [component.plugin_classpath_part for component in components if component.plugin_classpath_part]
     if parts and len(prefixes) != 1:
         fail("%s: exactly one component must provide the plugin-classpath prefix, got %d" % (ctx.label, len(prefixes)))
 
     # A local launch also writes the two metadata files as files of their own, and checks the placement of a launcher
     # that links its home in the runfiles tree.
-    placement = _merge_placements(ctx, fragment_targets) if local_launch else None
+    placement = _merge_placements(ctx, component_targets) if local_launch else None
     core_classpath = ctx.actions.declare_file(ctx.label.name + ".core-classpath.txt") if local_launch else None
     plugin_classpath = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath.txt") if local_launch and parts else None
 
@@ -639,8 +639,8 @@ def _compose(ctx, fragment_targets):
         source_bindings = ctx.actions.declare_file(ctx.label.name + ".source-bindings.jsonl")
         bindings = ctx.actions.args()
         bindings.set_param_file_format("multiline")
-        for fragment in fragments:
-            _add_source_bindings(bindings, fragment, source_bindings)
+        for component in components:
+            _add_source_bindings(bindings, component, source_bindings)
         ctx.actions.write(source_bindings, bindings)
 
     composition_spec = ctx.actions.declare_file(ctx.label.name + ".composition.json")
@@ -648,16 +648,16 @@ def _compose(ctx, fragment_targets):
         composition_spec,
         json.encode({
             "platformPrefix": ctx.attr.platform_prefix,
-            "expectedFragments": ctx.attr.expect_fragments,
+            "expectedFragments": ctx.attr.expect_components,
             "additionalModules": ctx.attr.additional_modules,
             "bundledModules": ctx.attr.bundled_modules,
             "components": [
                 {
                     # The manifest names each file where it already is, and the composer copies from there.
-                    "manifest": fragment.manifest.path,
-                    "pluginClasspathPart": fragment.plugin_classpath_part.path if fragment.plugin_classpath_part else None,
+                    "manifest": component.manifest.path,
+                    "pluginClasspathPart": component.plugin_classpath_part.path if component.plugin_classpath_part else None,
                 }
-                for fragment in fragments
+                for component in components
             ],
             "pluginClasspathPrefix": prefixes[0].path if prefixes else None,
             "sourceRunfiles": {file.path: _runfile_path(ctx, file) for file in runtime_files.to_list()} if local_launch else None,
@@ -689,8 +689,8 @@ def _compose(ctx, fragment_targets):
     ctx.actions.run(
         inputs = depset(
             direct = [composition_spec] + ([source_bindings] if source_bindings else []) +
-                     [fragment.manifest for fragment in fragments] + parts + prefixes,
-            transitive = [fragment.payload for fragment in fragments if fragment.payload] if not local_launch else [],
+                     [component.manifest for component in components] + parts + prefixes,
+            transitive = [component.payload for component in components if component.payload] if not local_launch else [],
         ),
         outputs = [home, ide_config, fingerprint] + metadata_files + ([spans] if spans else []),
         executable = ctx.executable.composer,
@@ -726,34 +726,34 @@ def _compose(ctx, fragment_targets):
         OutputGroupInfo(
             ide_config = depset([ide_config]),
             # The complete production plugin payload, without opening component archives or directories.
-            dist_plugin_outputs = _side_output_group([], fragment_targets, "dist_plugin_outputs"),
+            dist_plugin_outputs = _side_output_group([], component_targets, "dist_plugin_outputs"),
             # Every span file of this distribution in one request: the composition's own and each component's. This is the
             # group a measuring run asks for.
-            trace_spans = _spans_output_group([spans], fragment_targets),
+            trace_spans = _spans_output_group([spans], component_targets),
         ),
     ]
 
-def _compose_fragments_impl(ctx):
+def _compose_components_impl(ctx):
     if ctx.attr.plugin_components and not ctx.attr.stamp_class:
         fail("%s composes plugin components and states no stamp_class" % ctx.label, attr = "stamp_class")
 
     # The plugin components follow the platform components. The composer checks the set of kinds, not their order.
-    return _compose(ctx, ctx.attr.fragments + ctx.attr.plugin_components)
+    return _compose(ctx, ctx.attr.components + ctx.attr.plugin_components)
 
-intellij_fragments_dist = rule(
-    implementation = _compose_fragments_impl,
+intellij_components_dist = rule(
+    implementation = _compose_components_impl,
     attrs = {
         "composer": attr.label(executable = True, cfg = "exec", mandatory = True),
-        "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
+        "components": attr.label_list(providers = [IntellijDevComponentInfo], mandatory = True),
         "platform_prefix": attr.string(
             mandatory = True,
             doc = """The `build/dev-build.json` key of the product. The composer writes it as `platform.prefix` of `DevIdeConfig`,
 and the fingerprint hashes it. No component manifest states a product, so a plugin component serves every product.""",
         ),
         "plugin_components": attr.label_list(
-            providers = [IntellijDevFragmentInfo],
+            providers = [IntellijDevComponentInfo],
             cfg = dist_stamp_class_consumer_transition,
-            doc = """The plugin components of this product, composed after the components of `fragments`.
+            doc = """The plugin components of this product, composed after the platform components of `components`.
 
 Transitioned onto `stamp_class`. Each component keeps only its stamp class, so one component target per plugin serves
 every product of one stamp class.""",
@@ -763,8 +763,8 @@ every product of one stamp class.""",
         ),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
         "local_launch": attr.bool(default = False, doc = "Compose metadata that refers to component runfiles instead of copying their contents."),
-        "expect_fragments": attr.string_list(
-            doc = "The component names of this distribution, stated independently of `fragments`. A component missing from that list then fails composition and does not thin the IDE.",
+        "expect_components": attr.string_list(
+            doc = "The component names of this distribution, stated independently of `components`. A component missing from that list then fails composition and does not thin the IDE.",
         ),
         "additional_modules": attr.string_list(
             doc = "The plugin modules this distribution declares it contains, for `DevIdeConfig`. What the " +

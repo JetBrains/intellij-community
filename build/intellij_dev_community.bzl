@@ -8,12 +8,12 @@ load("//build:bazel_targets_json.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("//build/dist-content:dist_content_sets.bzl", "DIST_PLUGIN_COMPONENTS")
 load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_module_facts")
 load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_project_model_tree")
+load(":component_names.bzl", "PLATFORM_LIB_COMPONENT", "PLATFORM_RUNTIME_MODULE_REPOSITORY_COMPONENT")
 load(":dist_fragment_inputs.bzl", "DIST_FRAGMENT_INPUTS")
 load(":dist_module_sets.bzl", "DIST_MODULE_SETS")
 load(":dist_plan.bzl", "DIST_APPLICATION_INFOS", "DIST_CASE_SAFE_NAMES", "DIST_PLANS", "DIST_PLATFORM_JAR_ORDERS")
 load(":dist_product_info.bzl", "DIST_PRODUCT_INFO")
 load(":dist_products.bzl", "DIST_PRODUCTS", "dist_product")
-load(":fragment_names.bzl", "PLATFORM_LIB_FRAGMENT", "PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT")
 load(":intellij_dist_declarations.bzl", "intellij_dist_declarations")
 load(":packed_labels.bzl", "packed_labels")
 
@@ -51,11 +51,11 @@ _DECLARATIONS = intellij_dist_declarations(struct(
     case_safe_names = DIST_CASE_SAFE_NAMES,
     application_infos = DIST_APPLICATION_INFOS,
     platform_jar_orders = DIST_PLATFORM_JAR_ORDERS,
-    fragment_inputs = DIST_FRAGMENT_INPUTS,
+    component_inputs = DIST_FRAGMENT_INPUTS,
     plugin_components = DIST_PLUGIN_COMPONENTS,
     product = dist_product,
-    platform_lib_fragment = PLATFORM_LIB_FRAGMENT,
-    runtime_module_repository_fragment = PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT,
+    platform_lib_component = PLATFORM_LIB_COMPONENT,
+    runtime_module_repository_component = PLATFORM_RUNTIME_MODULE_REPOSITORY_COMPONENT,
     platform_lib_payload = _platform_lib_payload,
     bazel_targets_json = BAZEL_TARGETS_JSON_COMMUNITY,
     runtime_module_facts = _RUNTIME_MODULE_FACTS,
@@ -72,7 +72,7 @@ _DECLARATIONS = intellij_dist_declarations(struct(
 intellij_platform_set_community = _DECLARATIONS.platform_set
 
 # The platform component labels of one split product, for a distribution declared outside `build/BUILD.bazel`.
-dist_platform_fragments = _DECLARATIONS.platform_fragments
+dist_platform_components = _DECLARATIONS.platform_components
 
 # Fails at load time when the generated plan cannot serve a launcher.
 dev_run_configuration_check_plan = _DECLARATIONS.check_plan

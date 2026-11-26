@@ -9,7 +9,7 @@ into `<context>/plugins`.
 """
 
 load(":dist_plugin_descriptor.bzl", "DIST_STAMP_CLASS_CONSUMER_ATTRS", "dist_stamp_class_consumer_transition")
-load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevComponentInfo")
 
 ContextPluginInfo = provider(
     doc = "The files and the directory trees of the plugin directories of an IDE context.",
@@ -74,7 +74,7 @@ def _context_plugin_dir_impl(ctx):
         if directory in owners:
             fail("%s and %s both place the plugin directory %s" % (owners[directory], plugin.label, directory), attr = "plugins")
         owners[directory] = plugin.label
-        module = plugin[IntellijDevFragmentInfo].name
+        module = plugin[IntellijDevComponentInfo].name
         if module in directories:
             fail("Two components have the main module %s" % module, attr = "plugins")
         directories[module] = directory
@@ -106,7 +106,7 @@ def _context_plugin_dir_impl(ctx):
         for module in sorted(directories)
     ]))
     executable_list = ctx.actions.declare_file(ctx.label.name + ".context-plugin-executables.txt")
-    component_manifests = [plugin[IntellijDevFragmentInfo].manifest for plugin in ctx.attr.plugins]
+    component_manifests = [plugin[IntellijDevComponentInfo].manifest for plugin in ctx.attr.plugins]
     arguments = ctx.actions.args()
     arguments.add(executable_list, format = "--context-plugin-executables=%s")
     arguments.add_all(component_manifests, format_each = "--component-manifest=%s")
@@ -158,7 +158,7 @@ too. The composer writes it. It is a runfile too and the `context_plugin_executa
             doc = "The `dev_plugin` component of each plugin.",
             mandatory = True,
             allow_empty = False,
-            providers = [DistPlacementInfo, IntellijDevFragmentInfo],
+            providers = [DistPlacementInfo, IntellijDevComponentInfo],
             cfg = dist_stamp_class_consumer_transition,
         ),
         _composer = attr.label(default = "//platform/build-scripts/bazel-rules:dist_composer", executable = True, cfg = "exec"),

@@ -13,7 +13,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dist_platfo
 load("//platform/build-scripts/bazel-rules:dist_content.bzl", "dist_platform_payload")
 load("//platform/build-scripts/bazel-rules:dist_product_files.bzl", "MAC_APP_FILES", "build_txt_destination", "dist_product_files", "home_prefix", "mac_app_icon_roles", "product_info_destination", "vm_options_file_name")
 load("//platform/build-scripts/bazel-rules:dist_runtime_module_repository.bzl", "dist_runtime_layout_parts", "dist_runtime_module_repository")
-load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_fragments_dist", "intellij_packed_jars_component")
+load("//platform/build-scripts/bazel-rules:intellij_dist.bzl", "intellij_components_dist", "intellij_packed_jars_component")
 load(":download_rules.bzl", "EXECUTABLE_LIST_NAME")
 load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":intellij_dev.bzl", "dist_build_test", "export_vm_options", "intellij_dev_java_launcher_binary", "intellij_dist_config")
@@ -143,7 +143,7 @@ def _product_descriptor(tables, product):
     That is the descriptor of the plugin-classpath prefix, which the platform payload names. It embeds the descriptor of
     every content module, a scrambled one too, as the core plugin of the runtime module repository needs.
     """
-    inputs = tables.fragment_inputs.get(product, {}).get(tables.platform_lib_fragment)
+    inputs = tables.component_inputs.get(product, {}).get(tables.platform_lib_component)
     prefix = getattr(inputs, "plugin_classpath_prefix", "") if inputs else ""
     if not prefix.endswith(".plugin-classpath-prefix"):
         fail("The plan of '%s' names no product descriptor, so its runtime module repository has no core plugin descriptor" % product)
@@ -309,7 +309,7 @@ def _runtime_executable_lists(platform):
 
 # The component of `bin/idea.properties`, the vmoptions files, `product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
-_PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
+_PLATFORM_RESOURCES_COMPONENT = "platform_resources"
 
 # The OS tokens of `platform_parts`, one per launch of a product.
 _OS_TOKENS = ["darwin", "linux", "windows"]
@@ -373,9 +373,9 @@ def _env_var_base_name(launch, program_args):
         return commands[program_args[0]]
     return launch.env_var_base_name
 
-def _fragment_suffix(fragment_name):
+def _component_suffix(component_name):
     """The target suffix of a platform component, `<platform set>_<suffix>`."""
-    return fragment_name[len("platform_"):]
+    return component_name[len("platform_"):]
 
 def _plan(tables, product):
     """The generated plan of `product`, or a failure that names the product. The plan of a community product is the community one."""
@@ -392,10 +392,10 @@ def _product_mode(tables, product):
         return community.product_mode(product)
     return tables.product_mode(product)
 
-def _platform_fragment_layout(tables, product):
-    """The ordered platform components of one product, as `struct(suffix, fragment_name)` entries.
+def _platform_component_layout(tables, product):
+    """The ordered platform components of one product, as `struct(suffix, component_name)` entries.
 
-    `suffix` names the target, `<platform set>_<suffix>`. `fragment_name` is the composer's name for it. The order is
+    `suffix` names the target, `<platform set>_<suffix>`. `component_name` is the composer's name for it. The order is
     the composition order: `platform_resources`, then the packed content-module jars, then the platform assets. This is
     the one owner of that list; the declaring macro and the label lookup both read it. Every product has the platform
     assets, because every product places the native launcher.
@@ -404,15 +404,15 @@ def _platform_fragment_layout(tables, product):
     # A product without a plan fails here, with its name.
     _plan(tables, product)
     return [
-        struct(suffix = _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT), fragment_name = _PLATFORM_RESOURCES_FRAGMENT),
-        struct(suffix = PACKED_JARS_COMPONENT, fragment_name = PACKED_JARS_COMPONENT),
-        struct(suffix = "assets", fragment_name = PLATFORM_ASSETS_COMPONENT),
+        struct(suffix = _component_suffix(_PLATFORM_RESOURCES_COMPONENT), component_name = _PLATFORM_RESOURCES_COMPONENT),
+        struct(suffix = PACKED_JARS_COMPONENT, component_name = PACKED_JARS_COMPONENT),
+        struct(suffix = "assets", component_name = PLATFORM_ASSETS_COMPONENT),
     ]
 
 def _has_runtime_module_repository(tables, product):
     """Whether the plan of `product` has the runtime module repository component.
 
-    The generator states it for a product with a row that asks for the repository. `_platform_fragment_layout` never
+    The generator states it for a product with a row that asks for the repository. `_platform_component_layout` never
     lists the component.
     """
     return getattr(_plan(tables, product), "runtime_module_repository", False)
@@ -421,10 +421,10 @@ def _modular_loader(tables, product):
     """Whether the generated plan says `product` starts through the modular loader, which reads the repository at every start."""
     return getattr(_plan(tables, product), "modular_loader", False)
 
-def _platform_fragments(tables, product, runtime_module_repository = False, platform_set = None):
+def _platform_components(tables, product, runtime_module_repository = False, platform_set = None):
     """The platform component labels of one split product, for a distribution declared outside the build package.
 
-    Returns `struct(fragments, fragment_names)` in composition order, with absolute labels into `tables.build_package`.
+    Returns `struct(components, component_names)` in composition order, with absolute labels into `tables.build_package`.
     The product's platform set must be declared there through the platform set macro. For a community product, the
     labels name the community platform set in the community build package. With `runtime_module_repository`, or for a
     product the plan marks `modular_loader`, the list ends with the `platform_runtime_module_repository` component; a
@@ -439,23 +439,23 @@ def _platform_fragments(tables, product, runtime_module_repository = False, plat
         fail("Product '%s' is a community product, so the community half owns its platform sets; do not pass platform_set '%s'" % (product, platform_set))
     build_package = community.build_package if community != None else tables.build_package
     platform_set = platform_set or (community.product if community != None else tables.product)(product).platform_set
-    layout = _platform_fragment_layout(tables, product)
-    fragments = ["%s:%s_%s" % (build_package, platform_set, entry.suffix) for entry in layout]
-    fragment_names = [entry.fragment_name for entry in layout]
+    layout = _platform_component_layout(tables, product)
+    components = ["%s:%s_%s" % (build_package, platform_set, entry.suffix) for entry in layout]
+    component_names = [entry.component_name for entry in layout]
     if runtime_module_repository or _modular_loader(tables, product):
         if not _has_runtime_module_repository(tables, product):
-            fail("The generated distribution plan of '%s' has no runtime module repository fragment: no run configuration of the product asks for one" % product)
-        fragments.append("%s:%s_%s" % (build_package, platform_set, _fragment_suffix(tables.runtime_module_repository_fragment)))
-        fragment_names.append(tables.runtime_module_repository_fragment)
+            fail("The generated distribution plan of '%s' has no runtime module repository component: no run configuration of the product asks for one" % product)
+        components.append("%s:%s_%s" % (build_package, platform_set, _component_suffix(tables.runtime_module_repository_component)))
+        component_names.append(tables.runtime_module_repository_component)
     return struct(
-        fragments = fragments,
-        fragment_names = fragment_names,
+        components = components,
+        component_names = component_names,
     )
 
 def _platform_set(tables, product, name, target_platform, visibility):
     """The platform set of one split product. The factory result documents it as `platform_set`."""
     if _community_product(tables, product) != None:
-        fail("Product '%s' is a community product, so the community half declares its platform set; compose it through platform_fragments" % product)
+        fail("Product '%s' is a community product, so the community half declares its platform set; compose it through platform_components" % product)
     name = name or tables.product(product).platform_set
     plan = _plan(tables, product)
 
@@ -472,7 +472,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
 
     # The `plugins/plugin-classpath.txt` prefix that `dist_product_descriptor` writes. The packed-jars component
     # carries it to the composer.
-    plugin_classpath_prefix = tables.fragment_inputs[product][tables.platform_lib_fragment].plugin_classpath_prefix
+    plugin_classpath_prefix = tables.component_inputs[product][tables.platform_lib_component].plugin_classpath_prefix
 
     def runtime_module_repository_component():
         # The runtime module repository from Bazel facts, see `dist_runtime_module_repository`. The component places
@@ -525,13 +525,13 @@ def _platform_set(tables, product, name, target_platform, visibility):
             tags = ["manual"],
             **frontend_attrs
         )
-        component = name + "_" + _fragment_suffix(tables.runtime_module_repository_fragment)
+        component = name + "_" + _component_suffix(tables.runtime_module_repository_component)
         intellij_packed_jars_component(
             name = component,
             visibility = visibility,
             tags = ["manual"],
             collector = tables.collector,
-            component_name = tables.runtime_module_repository_fragment,
+            component_name = tables.runtime_module_repository_component,
             platform_prefix = product,
             target_platform = target_platform,
             files = {
@@ -546,7 +546,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
         # component composes their jars in, and the reference target packs the same jars and nothing else.
         residual_jars = []
         residual_jar_targets = {}
-        for destination, jar in getattr(tables.fragment_inputs[product][tables.platform_lib_fragment], "residual_jars", {}).items():
+        for destination, jar in getattr(tables.component_inputs[product][tables.platform_lib_component], "residual_jars", {}).items():
             # A destination can name a subdirectory of `lib/`, and a target name cannot hold a `/`. Two destinations
             # that differ only in a separator would collapse to one target, which Bazel reports as a duplicate rule in
             # a generated file - so name the pair here, where the destinations are still readable.
@@ -646,11 +646,11 @@ def _platform_set(tables, product, name, target_platform, visibility):
             return result
 
         intellij_packed_jars_component(
-            name = name + "_" + _fragment_suffix(_PLATFORM_RESOURCES_FRAGMENT),
+            name = name + "_" + _component_suffix(_PLATFORM_RESOURCES_COMPONENT),
             visibility = visibility,
             tags = ["manual"],
             collector = tables.collector,
-            component_name = _PLATFORM_RESOURCES_FRAGMENT,
+            component_name = _PLATFORM_RESOURCES_COMPONENT,
             platform_prefix = product,
             target_platform = target_platform,
             files = per_platform(placed),
@@ -693,16 +693,16 @@ def _platform_set(tables, product, name, target_platform, visibility):
         )
 
     # Declared in the layout's order, which is the composition order the returned lists state.
-    layout = _platform_fragment_layout(tables, product)
+    layout = _platform_component_layout(tables, product)
     for entry in layout:
-        if entry.fragment_name == _PLATFORM_RESOURCES_FRAGMENT:
+        if entry.component_name == _PLATFORM_RESOURCES_COMPONENT:
             product_files_component()
-        elif entry.fragment_name == PACKED_JARS_COMPONENT:
+        elif entry.component_name == PACKED_JARS_COMPONENT:
             packed_jars_component()
-        elif entry.fragment_name == PLATFORM_ASSETS_COMPONENT:
+        elif entry.component_name == PLATFORM_ASSETS_COMPONENT:
             assets_component()
         else:
-            fail("Platform fragment layout of '%s' names the unknown component '%s'" % (product, entry.fragment_name))
+            fail("Platform component layout of '%s' names the unknown component '%s'" % (product, entry.component_name))
 
     # Declared after the layout and returned apart from it: only a row that asks for the runtime module repository
     # composes the component. Every row is a host row, so a set for an explicit target platform declares it only for a
@@ -712,17 +712,17 @@ def _platform_set(tables, product, name, target_platform, visibility):
         runtime_module_repository = runtime_module_repository_component()
 
     return struct(
-        fragments = [":" + name + "_" + entry.suffix for entry in layout],
-        fragment_names = [entry.fragment_name for entry in layout],
+        components = [":" + name + "_" + entry.suffix for entry in layout],
+        component_names = [entry.component_name for entry in layout],
         runtime_module_repository = runtime_module_repository,
     )
 
-def _declare_fragments_dist(
+def _declare_components_dist(
         tables,
         name,
         visibility,
-        platform_fragments,
-        platform_fragment_names,
+        platform_components,
+        platform_component_names,
         product,
         additional_modules,
         target_platform,
@@ -762,12 +762,12 @@ def _declare_fragments_dist(
 
     # The plugin components are declared apart from the platform components: the dist rule configures them for the
     # product, and the platform components keep their configuration. Every plugin of the distribution is a component.
-    fragments = list(platform_fragments)
+    components = list(platform_components)
     plugin_components = bundled_components.labels + additional_components.labels
 
     # The component name of a plugin component is its main module (`component_name` in `dev_plugin_component`).
-    expect_fragments = (
-        list(platform_fragment_names) +
+    expect_components = (
+        list(platform_component_names) +
         bundled_components.modules +
         additional_components.modules
     )
@@ -776,16 +776,16 @@ def _declare_fragments_dist(
     # export.
     prefix = _home_prefix(_plan(tables, product), target_platform)
     for local_launch in [False, True] if create_local_launch else [False]:
-        intellij_fragments_dist(
+        intellij_components_dist(
             name = name + ("_launch" if local_launch else ""),
             visibility = visibility if local_launch or export_visibility == None else export_visibility,
             tags = ["manual"],
             composer = tables.composer,
-            fragments = fragments,
+            components = components,
             platform_prefix = product,
             plugin_components = plugin_components,
             stamp_class = _product_mode(tables, product),
-            expect_fragments = expect_fragments,
+            expect_components = expect_components,
             additional_modules = additional_modules,
             bundled_modules = bundled_components.modules,
             local_launch = local_launch,
@@ -878,13 +878,13 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
     `product-info.json`.
     """
     _check_plan(tables, name, product)
-    platform = _platform_fragments(tables, product, runtime_module_repository = runtime_module_repository)
-    _declare_fragments_dist(
+    platform = _platform_components(tables, product, runtime_module_repository = runtime_module_repository)
+    _declare_components_dist(
         tables = tables,
         name = name + "_dist",
         visibility = visibility,
-        platform_fragments = platform.fragments,
-        platform_fragment_names = platform.fragment_names,
+        platform_components = platform.components,
+        platform_component_names = platform.component_names,
         product = product,
         additional_modules = additional_modules,
         target_platform = "",
@@ -1087,10 +1087,10 @@ def intellij_dist_declarations(tables):
       the platform jars before and after the sorted range.
     - `application_infos`: the generated application info sources, keyed by product. Each entry is
       `struct(source, host, replacements)`, where `host` and `replacements` are present only when set.
-    - `fragment_inputs`: the generated input table, keyed by product.
+    - `component_inputs`: the generated input table, keyed by product.
     - `plugin_components`: the generated component catalogue, keyed by product.
     - `product(key)`: the product entry, with its `platform_set`. It fails for an unknown product.
-    - `platform_lib_fragment`, `runtime_module_repository_fragment`: the payload names of the input tables.
+    - `platform_lib_component`, `runtime_module_repository_component`: the payload names of the input tables.
     - `platform_lib_payload(product)`: the `struct(packed, module_system_loaded)` of the packing targets of the `lib/`
       jars, as `packed_labels` returns it.
     - `bazel_targets_json`, `runtime_module_facts`, `collector`, `composer`: the labels of the shared inputs and
@@ -1112,44 +1112,44 @@ def intellij_dist_declarations(tables):
         `product` is the `build/dev-build.json` key and a product entry. The community rules take it as `platform_prefix`.
         `name` defaults to the entry's `platform_set`. A second set of the same product for another target platform
         names it. `visibility` is the visibility of every component of the set. A community product fails: the
-        community half declares its set, and a distribution of it reads the set through `platform_fragments`.
+        community half declares its set, and a distribution of it reads the set through `platform_components`.
 
         The set declares only what a distribution composes.
 
         Returns a struct of the component labels in composition order. `runtime_module_repository` is the label of the
         `platform_runtime_module_repository` component when the plan has one, else `None`. It is kept out of
-        `fragments`: only a row that asks for the repository composes it, or every row of a product the plan marks
+        `components`: only a row that asks for the repository composes it, or every row of a product the plan marks
         `modular_loader`. A set with a `target_platform` has none unless the product is `modular_loader`, because every
         row is a host row.
         """
         return _platform_set(tables, product, name, target_platform, visibility)
 
-    def platform_fragments(product, runtime_module_repository = False, platform_set = None):
-        """The platform component labels of one split product. See `_platform_fragments`."""
-        return _platform_fragments(
+    def platform_components(product, runtime_module_repository = False, platform_set = None):
+        """The platform component labels of one split product. See `_platform_components`."""
+        return _platform_components(
             tables,
             product,
             runtime_module_repository = runtime_module_repository,
             platform_set = platform_set,
         )
 
-    def declare_fragments_dist(
+    def declare_components_dist(
             name,
             visibility,
-            platform_fragments,
-            platform_fragment_names,
+            platform_components,
+            platform_component_names,
             product,
             additional_modules,
             target_platform,
             create_local_launch,
             catalogue):
         """Declares the distribution `name` and, with `create_local_launch`, `<name>_launch` over `catalogue`."""
-        _declare_fragments_dist(
+        _declare_components_dist(
             tables = tables,
             name = name,
             visibility = visibility,
-            platform_fragments = platform_fragments,
-            platform_fragment_names = platform_fragment_names,
+            platform_components = platform_components,
+            platform_component_names = platform_component_names,
             product = product,
             additional_modules = additional_modules,
             target_platform = target_platform,
@@ -1204,8 +1204,8 @@ def intellij_dist_declarations(tables):
 
     return struct(
         platform_set = platform_set,
-        platform_fragments = platform_fragments,
-        declare_fragments_dist = declare_fragments_dist,
+        platform_components = platform_components,
+        declare_components_dist = declare_components_dist,
         check_plan = check_plan,
         run_configurations = run_configurations,
         launch_assembles_test = launch_assembles_test,

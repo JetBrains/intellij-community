@@ -15,7 +15,7 @@ load(
     "dist_plugin_descriptor_target_name",
     "dist_stamp_class_consumer_transition",
 )
-load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevComponentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
@@ -372,12 +372,12 @@ def _component_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
     remainder = ctx.attr.remainder[0][DevPluginRemainderInfo]
-    fragment = target[IntellijDevFragmentInfo]
+    component = target[IntellijDevComponentInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "CollectDevPluginComponent"]
     asserts.equals(env, 1, len(actions))
     action = actions[0]
-    asserts.equals(env, ctx.attr.kind, fragment.name)
-    asserts.equals(env, _short_paths(remainder.outputs.values()), _short_paths(fragment.payload.to_list()))
+    asserts.equals(env, ctx.attr.kind, component.name)
+    asserts.equals(env, _short_paths(remainder.outputs.values()), _short_paths(component.payload.to_list()))
 
     # A remainder without a reused jar places each of its outputs at its own destination.
     placement = target[DistPlacementInfo]
@@ -670,7 +670,7 @@ def _split_component_test_impl(ctx):
     # every content module and the component keeps a mode.
     configuration = specs[0].outputs.to_list()[0].path.split("/bin/", 1)[0]
     asserts.equals(env, ctx.attr.own_class, descriptor_part.split("/bin/", 1)[0] == configuration, descriptor_part + " and " + configuration)
-    placed = sorted([file.path.split(".plugin/", 1)[1] for file in target[IntellijDevFragmentInfo].payload.to_list() if ".plugin/" in file.path])
+    placed = sorted([file.path.split(".plugin/", 1)[1] for file in target[IntellijDevComponentInfo].payload.to_list() if ".plugin/" in file.path])
     asserts.equals(env, ctx.attr.placed, placed)
     return analysistest.end(env)
 
@@ -747,13 +747,13 @@ def _reused_component_test_impl(ctx):
     target = analysistest.target_under_test(env)
     remainder = ctx.attr.remainder[0][DevPluginRemainderInfo]
     content = ctx.attr.content_jar[ContentModuleJarInfo]
-    fragment = target[IntellijDevFragmentInfo]
+    component = target[IntellijDevComponentInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "CollectDevPluginComponent"]
     asserts.equals(env, 1, len(actions))
 
     # The macro derives the remainder and the component from one list of owner targets, so the reused content module
     # jar reaches the payload beside the remainder.
-    payload = fragment.payload.to_list()
+    payload = component.payload.to_list()
     asserts.equals(env, 2, len(payload))
     asserts.true(env, remainder.outputs["lib/test.jar"].short_path in _short_paths(payload))
     asserts.true(env, content.jar.short_path in [file.short_path for file in payload])

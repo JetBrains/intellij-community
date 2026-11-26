@@ -43,7 +43,7 @@ ContentModuleJarInfo = provider(
     doc = """A packed `lib/<module>.jar` of the platform distribution, and what went into it.
 
     The recipe travels with the jar because everything downstream needs it and this is the only target that knows it. A
-    fragment handed this jar must stop declaring the module jars and libraries whose bytes are now inside it, and the
+    component handed this jar must stop declaring the module jars and libraries whose bytes are now inside it, and the
     reference target that packs the same jars the `JarPackager` way declares exactly these two lists. Reading them here
     is what replaced `dist_content.bzl` asking another rule for attributes by name - `getattr(ctx.rule.attr,
     "content_module_jar_libraries", None)`, which answered `None` rather than failing when the name was wrong.""",
@@ -61,7 +61,7 @@ ContentModuleJarInfo = provider(
         "member_jars": "tuple of File: the own jar of every merged module, this jar's own module included.",
         "member_modules": """tuple of string: the same members by JPS module name.
 
-        The names, because that is what a payload is written in: a fragment's declared inputs are pruned by asking which
+        The names, because that is what a payload is written in: a component's declared inputs are pruned by asking which
         module contributed each one, and a module name is the one key that means the same thing on both sides of the
         loading/analysis boundary - a label does not, since a repository rule writes `@community//...` where an
         analysis-time `Label` reads back canonically.""",
@@ -499,7 +499,7 @@ DistPlatformJarInfo = provider(
         "metadata": "The file hash metadata from the same packing action.",
         # The jar's own file name says where the jar goes only while every destination is flat. A platform jar can name
         # a subdirectory of the plugin's `lib/`, so the destination travels with the jar. The consumers that place it
-        # and the fragment that stops packing it must agree on `ext/platform-main.jar`, not on `platform-main.jar`.
+        # and the component that stops packing it must agree on `ext/platform-main.jar`, not on `platform-main.jar`.
         "relative_path": "string: the jar's destination, relative to the plugin's own `lib/`.",
         "member_jars": "tuple of File: the own jar of every merged module.",
         "member_modules": "tuple of string: the same members by JPS module name.",

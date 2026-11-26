@@ -15,7 +15,7 @@ load(
     "dist_plugin_descriptor_group",
     "dist_plugin_descriptor_target_name",
 )
-load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dist.bzl", "DistPlacementInfo", "IntellijDevComponentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
 
@@ -137,7 +137,7 @@ def _pack_action(actions, basename):
 def _dev_plugin_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    fragment = target[IntellijDevFragmentInfo]
+    component = target[IntellijDevComponentInfo]
     groups = target[OutputGroupInfo]
     actions = analysistest.target_actions(env)
 
@@ -153,8 +153,8 @@ def _dev_plugin_test_impl(ctx):
     asserts.false(env, [argument for argument in collect.argv if argument.startswith("--platform-prefix")])
     asserts.true(env, "--kind=" + _MAIN_MODULE in collect.argv)
     asserts.equals(env, [], [argument for argument in collect.argv if argument.startswith("--os=") or argument.startswith("--arch=")])
-    asserts.equals(env, _MAIN_MODULE, fragment.name)
-    asserts.equals(env, [fragment.plugin_classpath_part], groups.dist_plugin_classpath.to_list())
+    asserts.equals(env, _MAIN_MODULE, component.name)
+    asserts.equals(env, [component.plugin_classpath_part], groups.dist_plugin_classpath.to_list())
     asserts.equals(env, 4, len(groups.file_metadata.to_list()))
     asserts.equals(env, 4 if ctx.attr.spans else 0, len(groups.trace_spans.to_list()))
 
@@ -162,7 +162,7 @@ def _dev_plugin_test_impl(ctx):
     # copied directory. The file outside the prefix is not copied.
     # Files are compared by short path: the test's own attributes are configured with the test, and the component's
     # inputs with the reset, so the same jar arrives as two `File` objects.
-    payload = fragment.payload.to_list()
+    payload = component.payload.to_list()
     payload_paths = [file.short_path for file in payload]
     content = ctx.attr.content_jar[ContentModuleJarInfo]
     asserts.equals(env, 7, len(payload))
@@ -189,7 +189,7 @@ def _dev_plugin_test_impl(ctx):
     # inputs, its descriptor and the component itself then share the neutral configuration, and no product packs it
     # again. The roots are compared, and not tested for `-ST-`: under an analysis test the neutral configuration still
     # carries the analysis-test marker and therefore a hash of its own.
-    component_root = fragment.manifest.root.path
+    component_root = component.manifest.root.path
     for file in payload:
         if not file.is_source:
             asserts.equals(env, component_root, file.root.path, file.path)
@@ -400,7 +400,7 @@ def _tree_test_impl(ctx):
     asserts.equals(env, 1, len(collects))
     directories = [file for file in collects[0].inputs.to_list() if file.is_directory]
     asserts.equals(env, [copies[1]["source"]], [file.path for file in directories])
-    payload = target[IntellijDevFragmentInfo].payload.to_list()
+    payload = target[IntellijDevComponentInfo].payload.to_list()
     asserts.equals(env, [copies[1]["source"]], [file.path for file in payload if file.is_directory])
     return analysistest.end(env)
 
@@ -426,9 +426,9 @@ def _mode_test_impl(ctx):
 
     # The leaf embeds every content module, so its bytes read no mode. The jar of the main module then packs without
     # the mode, in another configuration than the component of the frontend.
-    payload = target[IntellijDevFragmentInfo].payload.to_list()
+    payload = target[IntellijDevComponentInfo].payload.to_list()
     asserts.equals(env, sorted([destination.split("/")[-1] for destination in ctx.attr.expected_destinations]), sorted([file.basename for file in payload]))
-    component_root = target[IntellijDevFragmentInfo].manifest.root.path
+    component_root = target[IntellijDevComponentInfo].manifest.root.path
     for file in payload:
         asserts.false(env, component_root == file.root.path, file.path)
     return analysistest.end(env)

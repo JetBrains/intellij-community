@@ -87,8 +87,8 @@ internal class UndeclaredDevDistMessageTest {
     val text = message(modules = listOf("intellij.java.plugin", "intellij.space", "intellij.go"))
     assertTrue(text.contains("No distribution of the index has the product 'idea' and the additional modules [intellij.go, intellij.space]. "), text)
     assertTrue(text.contains("'-Dadditional.modules=intellij.go,intellij.space'. Then run `bazel run //platform/buildScripts:plugin-model-tool`"), text)
-    assertTrue(text.contains("`intellij_fragments_dist_ultimate` of `//build:intellij_dev_ultimate.bzl` with these `additional_modules`. "), text)
-    assertTrue(text.contains("come from `dist_platform_fragments(product = \"idea\")` of the same file. "), text)
+    assertTrue(text.contains("`intellij_components_dist_ultimate` of `//build:intellij_dev_ultimate.bzl` with these `additional_modules`. "), text)
+    assertTrue(text.contains("come from `dist_platform_components(product = \"idea\")` of the same file. "), text)
     assertTrue(text.contains("`intellij_dist_config` of `@community//build:intellij_dev.bzl`"), text)
     assertFalse(text.contains("runtime.module.repository"), text)
   }
@@ -99,7 +99,7 @@ internal class UndeclaredDevDistMessageTest {
     assertTrue(text.contains("  runtime module repository: requested\n"), text)
     assertTrue(text.contains("No distribution of the index has the product 'idea' with a runtime module repository. "), text)
     assertTrue(text.contains("`.idea/runConfigurations`, with '-Dintellij.build.generate.runtime.module.repository=true'. "), text)
-    assertTrue(text.contains("`dist_platform_fragments(product = \"idea\", runtime_module_repository = True)`"), text)
+    assertTrue(text.contains("`dist_platform_components(product = \"idea\", runtime_module_repository = True)`"), text)
     assertFalse(text.contains("additional"), text)
   }
 
