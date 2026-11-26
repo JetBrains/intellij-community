@@ -7,7 +7,8 @@ tool that needs a hash links no other crate for it.
 
 The tests pin every hash form:
 
-- `hash_bytes` gives the 2 050 reference vectors of `XxHash3Test.java` and its string vectors.
+- `hash_bytes` gives the reference vectors of `XxHash3Test.java` at both sides of each branch edge, and its string
+  vectors.
 - `hash_chars` gives the string and package vectors of `XxHash3Test.java`.
 - `hash_file` and `Hasher` give the file hashes of the Kotlin build, for sizes from 0 bytes to past two blocks.
 - `Hasher` gives the value of `hash_file` for every split of the stream into chunks.

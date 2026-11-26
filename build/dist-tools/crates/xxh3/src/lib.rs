@@ -7,8 +7,9 @@
 //! different. The content hash of a file frames the bytes in blocks of 256 KiB. [`Hasher`] computes it over a stream,
 //! and [`hash_file`] over a file.
 //!
-//! The algorithm is `xxhash_rust::xxh3`. The tests check it against the 2 050 reference vectors that the Java
-//! implementation of the platform also uses. They check the block framing against the file hashes of the Kotlin build.
+//! The algorithm is `xxhash_rust::xxh3`. The tests check it against the reference vectors that the Java implementation
+//! of the platform also uses, at both sides of each branch edge. They check the block framing against the file hashes of
+//! the Kotlin build.
 
 use std::fs::File;
 use std::io::{self, Read};

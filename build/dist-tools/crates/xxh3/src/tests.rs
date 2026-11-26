@@ -11,12 +11,12 @@ use std::fs;
 use super::*;
 use reference_hashes::REFERENCE_HASHES;
 
-/// The test uses every length of the reference table. The short paths are for 1 to 3, 4 to 8, 9 to 16, 17 to 128
-/// and 129 to 240 bytes. The block loop starts above 240 bytes, and length 1 025 crosses the 1 024-byte block.
+/// The reference table holds both sides of each branch edge of the algorithm. Its module doc lists the edges.
 #[test]
 fn hash_bytes_matches_the_reference_vectors() {
-    let data: Vec<u8> = (0..REFERENCE_HASHES.len()).map(|index| index as u8).collect();
-    for (length, &expected) in REFERENCE_HASHES.iter().enumerate() {
+    let longest = REFERENCE_HASHES.iter().map(|&(length, _)| length).max().unwrap_or_default();
+    let data: Vec<u8> = (0..longest).map(|index| index as u8).collect();
+    for &(length, expected) in &REFERENCE_HASHES {
         assert_eq!(hash_bytes(&data[..length]), expected, "hash_bytes(src[..{length}])");
     }
 }
