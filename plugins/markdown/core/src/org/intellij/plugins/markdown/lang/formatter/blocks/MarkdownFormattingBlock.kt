@@ -24,6 +24,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownWrappingFormattingBlock
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.hasType
@@ -35,13 +36,17 @@ private fun ASTNode.isBlockQuoteContinuationMarker(): Boolean = elementType == M
  * Formatting block used by markdown plugin
  *
  * It defines alignment equal for all block on the same line, and new for inner lists
+ *
+ * @param quoteMarkerAlignment the alignment of a `>` marker inside this block.
+ * When it is `null`, the marker gets the alignment that the `align` function of [MarkdownBlocks.create] returns.
  */
 internal open class MarkdownFormattingBlock(
   node: ASTNode,
   private val settings: CodeStyleSettings,
   protected val spacing: SpacingBuilder,
   alignment: Alignment? = null,
-  wrap: Wrap? = null
+  wrap: Wrap? = null,
+  protected val quoteMarkerAlignment: Alignment? = null,
 ) : AbstractBlock(node, wrap, alignment), SettingsAwareBlock {
 
   companion object {
@@ -169,13 +174,36 @@ internal open class MarkdownFormattingBlock(
           if (it.elementType in nonAlignable || it.isBlockQuoteContinuationMarker()) alignment else newAlignment
         }.toList()
       }
-      MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.BLOCK_QUOTE -> {
+      MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.CODE_BLOCK -> {
         MarkdownBlocks.create(node.children(), settings, spacing) { alignment ?: newAlignment }.toList()
       }
+      MarkdownElementTypes.BLOCK_QUOTE -> {
+        val quoteAlignment = alignment ?: newAlignment
+        MarkdownBlocks.filterFromWhitespaces(node.children()).map {
+          if (alignsTextOf(it)) {
+            MarkdownWrappingFormattingBlock(settings, spacing, it, quoteAlignment,
+                                            contentAlignment = Alignment.createAlignment(), quoteMarkerAlignment = quoteAlignment)
+          }
+          else {
+            MarkdownBlocks.create(it, settings, spacing) { quoteAlignment }
+          }
+        }.toList()
+      }
       else -> {
-        MarkdownBlocks.create(node.children(), settings, spacing) { alignment }.toList()
+        MarkdownBlocks.create(node.children(), settings, spacing, quoteMarkerAlignment) { alignment }.toList()
       }
     }
+  }
+
+  /**
+   * Tells if the text of [child], a child of this block quote, aligns to the column after the `>` markers.
+   * Only a paragraph that wraps and a quote outside a container other than a block quote get it.
+   */
+  private fun alignsTextOf(child: ASTNode): Boolean {
+    return child.elementType == MarkdownElementTypes.PARAGRAPH
+           && MarkdownBlocks.shouldWrapText(child, settings)
+           && obtainCustomSettings().INSERT_QUOTE_ARROWS_ON_WRAP
+           && node.parents(withSelf = false).all { it.elementType == MarkdownElementTypes.BLOCK_QUOTE || it.treeParent == null }
   }
 
   private fun ASTNode.canBeFormatted(): Boolean {

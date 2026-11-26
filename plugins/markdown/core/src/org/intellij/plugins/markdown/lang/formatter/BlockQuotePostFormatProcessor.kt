@@ -36,16 +36,28 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
     if (!shouldProcess(source, settings)) {
       return rangeToReformat
     }
+    val document = obtainDocument(source) ?: return rangeToReformat
     commit(source)
     val firstChild = source.firstChild ?: return rangeToReformat
     val quotes = firstChild.siblings(forward = true, withSelf = true).filterIsInstance<MarkdownBlockQuote>().toList().asReversed()
-    for (quote in quotes) {
-      if (rangeToReformat.intersects(rangeToReformat)) {
-        processBlockQuote(quote)
-      }
+    val validRange = rangeToReformat.intersection(TextRange(0, document.textLength)) ?: return rangeToReformat
+    // The inserted `>` markers move the end of the range
+    val range = document.createRangeMarker(validRange).apply {
+      isGreedyToLeft = true
+      isGreedyToRight = true
     }
-    doPostponedFormatting(source)
-    return rangeToReformat
+    try {
+      for (quote in quotes) {
+        if (validRange.intersectsStrict(quote.textRange)) {
+          processBlockQuote(quote)
+        }
+      }
+      doPostponedFormatting(source)
+      return range.textRange
+    }
+    finally {
+      range.dispose()
+    }
   }
 
   private fun shouldProcess(file: PsiFile, settings: CodeStyleSettings): Boolean {

@@ -22,14 +22,18 @@ import org.intellij.plugins.markdown.lang.psi.util.children
  * Markdown special formatting block that puts all it [MarkdownTokenTypes.TEXT] children inside wrap.
  *
  * Allows wrapping paragraphs around right margin. So, it kind of emulates reflow formatting for paragraphs.
+ *
+ * @param contentAlignment the alignment of the children except the `>` markers
  */
 internal open class MarkdownWrappingFormattingBlock(
   settings: CodeStyleSettings,
   spacing: SpacingBuilder,
   node: ASTNode,
   alignment: Alignment? = null,
-  wrap: Wrap? = null
-) : MarkdownFormattingBlock(node, settings, spacing, alignment, wrap) {
+  wrap: Wrap? = null,
+  protected val contentAlignment: Alignment? = alignment,
+  quoteMarkerAlignment: Alignment? = null,
+) : MarkdownFormattingBlock(node, settings, spacing, alignment, wrap, quoteMarkerAlignment) {
   /** Number of newlines in this block's text */
   val newlines: Int
     get() = node.text.count { it == '\n' }
@@ -53,7 +57,7 @@ internal open class MarkdownWrappingFormattingBlock(
       when (child.elementType) {
         MarkdownTokenTypes.LPAREN -> {
           val wrap = if (isAfterMarker) noneWrap else childWrap
-          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, wrap))
+          result.add(MarkdownFormattingBlock(child, settings, spacing, contentAlignment, wrap))
         }
 
         MarkdownTokenTypes.TEXT -> {
@@ -65,7 +69,7 @@ internal open class MarkdownWrappingFormattingBlock(
           val isAttachedToPreviousText = previous?.elementType == MarkdownTokenTypes.TEXT
                                          && previous.textRange.endOffset == child.textRange.startOffset
           val wrap = if (isAfterMarker || isAttachedToPreviousText) noneWrap else childWrap
-          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, wrap))
+          result.add(MarkdownFormattingBlock(child, settings, spacing, contentAlignment, wrap))
         }
 
         in MarkdownTokenTypeSets.WHITE_SPACES -> {
@@ -74,7 +78,7 @@ internal open class MarkdownWrappingFormattingBlock(
 
         else -> {
           val wrap = if (isAfterMarker || isAfterOpeningParenthesis) noneWrap else null
-          result.add(MarkdownBlocks.create(child, settings, spacing, wrap) { alignment })
+          result.add(MarkdownBlocks.create(child, settings, spacing, wrap, quoteMarkerAlignment) { contentAlignment })
         }
       }
     }
@@ -105,7 +109,7 @@ internal open class MarkdownWrappingFormattingBlock(
         else -> wrapping
       }
       val range = split.shiftRight(shift)
-      val block = MarkdownRangedFormattingBlock(node, range, settings, spacing, alignment, actualWrapping)
+      val block = MarkdownRangedFormattingBlock(node, range, settings, spacing, contentAlignment, actualWrapping)
       result.add(block)
     }
   }

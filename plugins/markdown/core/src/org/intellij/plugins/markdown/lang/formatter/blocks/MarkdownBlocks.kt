@@ -31,20 +31,33 @@ internal object MarkdownBlocks {
     nodes: Sequence<ASTNode>,
     settings: CodeStyleSettings,
     spacing: SpacingBuilder,
+    quoteMarkerAlignment: Alignment? = null,
     align: (ASTNode) -> Alignment?
   ): Sequence<MarkdownFormattingBlock> {
-    return filterFromWhitespaces(nodes).map { create(it, settings, spacing, null, align) }
+    return filterFromWhitespaces(nodes).map { create(it, settings, spacing, null, quoteMarkerAlignment, align) }
   }
 
   /**
    * Create formatting block from node.
    * Would not ignore real whitespace blocks
+   *
+   * @param quoteMarkerAlignment the alignment of a `>` marker in [node], see [MarkdownFormattingBlock]
    */
   @JvmOverloads
-  fun create(node: ASTNode, settings: CodeStyleSettings, spacing: SpacingBuilder, wrap: Wrap? = null, align: (ASTNode) -> Alignment?): MarkdownFormattingBlock {
+  fun create(
+    node: ASTNode,
+    settings: CodeStyleSettings,
+    spacing: SpacingBuilder,
+    wrap: Wrap? = null,
+    quoteMarkerAlignment: Alignment? = null,
+    align: (ASTNode) -> Alignment?
+  ): MarkdownFormattingBlock {
     return when (node.elementType) {
-      in MarkdownTokenTypeSets.LIST_MARKERS, in MarkdownTokenTypeSets.WHITE_SPACES, MarkdownTokenTypes.BLOCK_QUOTE -> {
+      in MarkdownTokenTypeSets.LIST_MARKERS, in MarkdownTokenTypeSets.WHITE_SPACES -> {
         MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, align(node), wrap)
+      }
+      MarkdownTokenTypes.BLOCK_QUOTE -> {
+        MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, quoteMarkerAlignment ?: align(node), wrap)
       }
       MarkdownTokenTypes.TABLE_SEPARATOR -> TableSeparatorFormattingBlock(node, settings, spacing, align(node), wrap)
       MarkdownElementTypes.CODE_SPAN -> MarkdownFormattingBlock(
@@ -53,14 +66,15 @@ internal object MarkdownBlocks {
       )
       in linkLikeElements -> MarkdownFormattingBlock(
         node, settings, spacing, align(node),
-        wrap ?: if (shouldWrapLinkLikeElement(node, settings)) Wrap.createWrap(WrapType.NORMAL, false) else null
+        wrap ?: if (shouldWrapLinkLikeElement(node, settings)) Wrap.createWrap(WrapType.NORMAL, false) else null,
+        quoteMarkerAlignment
       )
-      in MarkdownTokenTypeSets.EMPHASIS_LIKE_ELEMENTS -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap)
+      in MarkdownTokenTypeSets.EMPHASIS_LIKE_ELEMENTS -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap, quoteMarkerAlignment)
       MarkdownElementTypes.PARAGRAPH -> when {
         isInsideBlockquote(node) && !shouldWrapText(node, settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
         else -> MarkdownWrappingFormattingBlock(settings, spacing, node, align(node), wrap)
       }
-      else -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
+      else -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap, quoteMarkerAlignment)
     }
   }
 

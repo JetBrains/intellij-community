@@ -41,6 +41,7 @@ import kotlin.reflect.KMutableProperty1
  * While live preview is on, keeps soft wraps on. Only a document above the IntelliSense size limit keeps its soft-wrap flag.
  * A wrapped line starts at the first non-blank character of its first line, with no soft-wrap sign before it.
  * A wrapped list item line starts under the item text.
+ * A wrapped block quote line starts under the quote text.
  */
 internal class MarkdownLivePreviewEditorAppearance private constructor(
   private val editor: EditorEx,
@@ -198,7 +199,7 @@ private class MarkdownLivePreviewSoftWrapPainter(
   override fun getMinDrawingWidth(drawingType: SoftWrapDrawingType): Int =
     if (drawingType == SoftWrapDrawingType.AFTER_SOFT_WRAP) 0 else delegate.getMinDrawingWidth(drawingType)
 
-  /** Returns the x of the item text from the line start on a list item marker line */
+  /** Returns the x of the text after the list item and block quote markers from the line start, or -1 on a line without markers */
   override fun getIndentOffset(lineStartOffset: Int, offsetToX: IntUnaryOperator): Int {
     val document = editor.document
     val lineEnd = document.getLineEndOffset(document.getLineNumber(lineStartOffset))
@@ -206,8 +207,9 @@ private class MarkdownLivePreviewSoftWrapPainter(
     var markerEnd = -1
     while (!iterator.atEnd() && iterator.start < lineEnd) {
       when (iterator.tokenType) {
-        MarkdownTokenTypes.LIST_BULLET, MarkdownTokenTypes.LIST_NUMBER, MarkdownTokenTypes.CHECK_BOX -> markerEnd = iterator.end
-        MarkdownTokenTypes.WHITE_SPACE, MarkdownTokenTypes.BLOCK_QUOTE -> Unit
+        MarkdownTokenTypes.LIST_BULLET, MarkdownTokenTypes.LIST_NUMBER, MarkdownTokenTypes.CHECK_BOX,
+        MarkdownTokenTypes.BLOCK_QUOTE -> markerEnd = iterator.end
+        MarkdownTokenTypes.WHITE_SPACE -> Unit
         else -> break
       }
       iterator.advance()

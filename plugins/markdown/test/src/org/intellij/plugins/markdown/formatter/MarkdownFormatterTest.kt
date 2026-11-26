@@ -6,6 +6,7 @@ import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePr
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -19,6 +20,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.formatter.BlockQuotePostFormatProcessor
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -216,10 +218,28 @@ class MarkdownFormatterTest {
   fun `test blockquote with emphasis wrap`(): Unit = doTest(rightMargin = 80, insertQuoteArrows = true)
 
   @Test
+  fun `test blockquote continuation lines respect right margin`(): Unit = doTest(rightMargin = 90, keepLineBreaks = true, insertQuoteArrows = true)
+
+  @Test
+  fun `test multiline blockquote continuation lines respect right margin`(): Unit = doTest(rightMargin = 90, keepLineBreaks = true, insertQuoteArrows = true)
+
+  @Test
+  fun `test multiline blockquote continuation lines respect right margin without line breaks`(): Unit = doTest(rightMargin = 90, insertQuoteArrows = true)
+
+  @Test
+  fun `test nested blockquote continuation lines respect right margin`(): Unit = doTest(rightMargin = 90, keepLineBreaks = true, insertQuoteArrows = true)
+
+  @Test
+  fun `test blockquote with multiline inline elements keeps markers`(): Unit = doTest(rightMargin = 80, keepLineBreaks = true, insertQuoteArrows = true)
+
+  @Test
   fun `test blockquote with long link`(): Unit = doTest(rightMargin = 80, keepLineBreaks = true, insertQuoteArrows = true)
 
   @Test
   fun `test do not wrap text inside block quotes`(): Unit = doTest(rightMargin = 80, wrapTextInsideBlockquotes = false)
+
+  @Test
+  fun `test do not wrap text inside block quotes with quote arrows`(): Unit = doTest(rightMargin = 80, wrapTextInsideBlockquotes = false, insertQuoteArrows = true)
 
   @Test
   fun `test blockquote with list item wrap`(): Unit = doTest(rightMargin = 80, insertQuoteArrows = true)
@@ -281,6 +301,67 @@ class MarkdownFormatterTest {
         performReformatting(myFixture.project, myFixture.file)
 
         myFixture.checkResult("1. foo\n   * bar\n     * baz")
+      }
+    }
+  }
+
+  @Test
+  fun `test reformat of a range keeps a block quote outside the range`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      runWithTemporaryStyleSettings(myFixture.project) { settings ->
+        settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).INSERT_QUOTE_ARROWS_ON_WRAP = true
+        val text = "> Quote\nLazy text\n\nParagraph"
+        myFixture.configureByText("range.md", text)
+        val paragraph = TextRange.from(text.indexOf("Paragraph"), "Paragraph".length)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, listOf(paragraph))
+        }
+        myFixture.checkResult(text)
+      }
+    }
+  }
+
+  @Test
+  fun `test block quote post format processor returns the range with the inserted markers`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      runWithTemporaryStyleSettings(myFixture.project) { settings ->
+        settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).INSERT_QUOTE_ARROWS_ON_WRAP = true
+        myFixture.configureByText("range.md", "> Quote\nLazy text\n\nParagraph")
+        val range = WriteCommandAction.runWriteCommandAction<TextRange>(myFixture.project) {
+          BlockQuotePostFormatProcessor().processText(myFixture.file, myFixture.file.textRange, settings)
+        }
+        myFixture.checkResult("> Quote\n> Lazy text\n\nParagraph")
+        assertEquals(myFixture.file.textRange, range)
+      }
+    }
+  }
+
+  @Test
+  fun `test block quote post format processor returns the range with a marker at its end`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      runWithTemporaryStyleSettings(myFixture.project) { settings ->
+        settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).INSERT_QUOTE_ARROWS_ON_WRAP = true
+        myFixture.configureByText("range.md", "> Quote\nLazy text")
+        val range = WriteCommandAction.runWriteCommandAction<TextRange>(myFixture.project) {
+          BlockQuotePostFormatProcessor().processText(myFixture.file, TextRange(0, "> Quote\n".length), settings)
+        }
+        myFixture.checkResult("> Quote\n> Lazy text")
+        assertEquals(TextRange(0, "> Quote\n> ".length), range)
+      }
+    }
+  }
+
+  @Test
+  fun `test block quote post format processor skips a quote that only touches the range`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      runWithTemporaryStyleSettings(myFixture.project) { settings ->
+        settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).INSERT_QUOTE_ARROWS_ON_WRAP = true
+        val text = "> Quote\nLazy text"
+        myFixture.configureByText("range.md", text)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          BlockQuotePostFormatProcessor().processText(myFixture.file, TextRange("> Quote".length, text.length), settings)
+        }
+        myFixture.checkResult(text)
       }
     }
   }

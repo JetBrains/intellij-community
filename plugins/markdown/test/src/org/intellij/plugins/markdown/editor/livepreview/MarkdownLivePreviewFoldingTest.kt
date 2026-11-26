@@ -1028,6 +1028,26 @@ class MarkdownLivePreviewFoldingTest {
   }
 
   @Test
+  fun testSoftWrappedBlockQuoteContinuationStartsUnderTheQuoteText(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "> quote text that wraps over several visual lines\n\n" +
+                    "> > nested quote text that wraps over several visual lines\n\ntail"
+      configure("$content<caret>")
+      val editor = myFixture.editor
+      val softWrapModel = editor.softWrapModel as SoftWrapModelImpl
+      softWrapModel.applianceManager.setWidthProvider { 200 }
+      EditorTestUtil.setEditorVisibleSizeInPixels(editor, 200, 1000)
+      softWrapModel.applianceManager.recalculateIfNecessary("test")
+      MarkdownLivePreviewReconciler.getExisting(editor)!!.reconcileNow()
+      for (quote in listOf("quote", "nested quote")) {
+        val textStart = content.indexOf("$quote text")
+        val softWrap = softWrapModel.getSoftWrapsForRange(textStart + 1, content.indexOf('\n', textStart)).first()
+        assertEquals(editor.offsetToXY(textStart).x, editor.offsetToXY(softWrap.start, true, false).x, quote)
+      }
+    }
+  }
+
+  @Test
   fun testSelectionAndMultipleCaretsRevealListMarkers(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val content = "- first\n- [ ] second\n- third\n\ntail"

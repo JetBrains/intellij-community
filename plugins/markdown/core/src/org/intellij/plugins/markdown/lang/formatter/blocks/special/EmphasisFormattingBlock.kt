@@ -17,8 +17,9 @@ internal class EmphasisFormattingBlock(
   spacing: SpacingBuilder,
   node: ASTNode,
   alignment: Alignment?,
-  private val wrap: Wrap? = null
-) : MarkdownWrappingFormattingBlock(settings, spacing, node, alignment, wrap = wrap) {
+  private val wrap: Wrap? = null,
+  quoteMarkerAlignment: Alignment? = null,
+) : MarkdownWrappingFormattingBlock(settings, spacing, node, alignment, wrap = wrap, quoteMarkerAlignment = quoteMarkerAlignment) {
   override fun buildChildren(): List<Block> {
     val contentWrap = createWrapForChildren(wrapFirstElement = true)
     val noneWrap = Wrap.createWrap(WrapType.NONE, false)
@@ -33,7 +34,7 @@ internal class EmphasisFormattingBlock(
           }
           else -> {
             val childWrap = if (node.isFirstContentElement()) noneWrap else null
-            add(MarkdownBlocks.create(node, settings, spacing, childWrap) { alignment })
+            add(MarkdownBlocks.create(node, settings, spacing, childWrap, quoteMarkerAlignment) { alignment })
           }
         }
       }
