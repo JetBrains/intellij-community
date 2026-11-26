@@ -28,10 +28,10 @@ def get_test_runner():
 
             class PythonVersionAwareTestResultClass(TeamcityTestResult):
                 @staticmethod
-                def get_test_id(test):
+                def get_test_id_with_description(test):
                     major, minor = sys.version_info[:2]
                     interpreter_id = 'py{}{}'.format(major, minor)
-                    return '{}.{}'.format(interpreter_id, TeamcityTestResult.get_test_id(test))
+                    return '{}.{}'.format(interpreter_id, TeamcityTestResult.get_test_id_with_description(test))
 
             class PythonVersionAwareTeamcityTestRunner(TeamcityTestRunner):
                 resultclass = PythonVersionAwareTestResultClass
