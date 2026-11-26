@@ -312,6 +312,63 @@ class AnalysisIgnoreTest {
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
+  fun `a directory below a nested root that gets a listed name is excluded after an earlier question`() = runBlocking {
+    val keepDir = dir("projectRoot/keep")
+    val pkgDir = dir("projectRoot/keep/pkg")
+    val source = file("projectRoot/keep/pkg/sub/Main.kt")
+    PsiTestUtil.addContentRoot(module, keepDir)
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "build")
+    discover(excludeFile)
+
+    // The index keeps the answer "no match" for the file and for each directory up to 'keep'. The second question reads that answer.
+    assertTrue(isInContent(source))
+    assertTrue(isInContent(source))
+
+    writeAction { pkgDir.rename(this@AnalysisIgnoreTest, "build") }
+    assertFalse(isInContent(source))
+
+    writeAction { pkgDir.rename(this@AnalysisIgnoreTest, "pkg") }
+    assertTrue(isInContent(source))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a directory below a nested root that moves into a listed directory is excluded after an earlier question`() = runBlocking {
+    val keepDir = dir("projectRoot/keep")
+    val buildDir = dir("projectRoot/keep/build")
+    val pkgDir = dir("projectRoot/keep/pkg")
+    val source = file("projectRoot/keep/pkg/Main.kt")
+    PsiTestUtil.addContentRoot(module, keepDir)
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "build")
+    discover(excludeFile)
+    assertTrue(isInContent(source))
+
+    writeAction { pkgDir.move(this@AnalysisIgnoreTest, buildDir) }
+
+    assertFalse(isInContent(source))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
+  fun `a new pattern excludes a file below a nested root after an earlier question`() = runBlocking {
+    val keepDir = dir("projectRoot/keep")
+    val source = file("projectRoot/keep/pkg/Main.kt")
+    val other = file("projectRoot/keep/other/Main.kt")
+    PsiTestUtil.addContentRoot(module, keepDir)
+    val excludeFile = writeAnalysisIgnoreFile("projectRoot", "build")
+    discover(excludeFile)
+    assertTrue(isInContent(source))
+    assertTrue(isInContent(other))
+
+    writeAction { VfsUtil.saveText(excludeFile, "pkg") }
+    discover(excludeFile)
+
+    assertFalse(isInContent(source))
+    assertTrue(isInContent(other))
+  }
+
+  @Test
+  @RegistryKey(key = ENABLED, value = "true")
   fun `the index holds a file below a nested root as excluded and not as content of that root`() = runBlocking {
     val srcDir = dir("projectRoot/src")
     val log = file("projectRoot/src/a.log")

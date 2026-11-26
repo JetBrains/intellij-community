@@ -592,17 +592,18 @@ internal sealed interface ExcludedFileSet : StoredFileSet, WorkspaceExcludeFileS
                             override val entityStorageKind: EntityStorageKind)
     : ExcludedFileSet, WorkspaceExcludeFileSet.ByUnscopedCondition {
     /**
-     * Returns `true` if [condition] matches [file] or a parent of it up to [nestedRoot], with [nestedRoot] included.
-     * [nestedRoot] is the root of the nearest inclusion rule of [file] below [root].
-     * A match above [nestedRoot] does not count, so that inclusion rule includes the files again.
+     * Returns `true` if [condition] matches [file] or a parent of it up to [upTo], with [upTo] included.
+     * [upTo] is the root of the nearest inclusion rule of [file] below [root], or a file below that root if the index knows that
+     * [condition] matches nothing above [upTo].
+     * A match above that root does not count, so that inclusion rule includes the files again.
      */
-    fun excludesUpTo(file: VirtualFile, nestedRoot: VirtualFile): Boolean {
+    fun excludesUpTo(file: VirtualFile, upTo: VirtualFile): Boolean {
       var current: VirtualFile? = file
       while (current != null) {
         if (condition.shouldExclude(current)) {
           return true
         }
-        if (current == nestedRoot) {
+        if (current == upTo) {
           return false
         }
         current = current.parent

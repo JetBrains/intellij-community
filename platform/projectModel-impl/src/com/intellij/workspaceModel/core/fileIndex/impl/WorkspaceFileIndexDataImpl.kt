@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -180,6 +181,12 @@ internal class WorkspaceFileIndexDataImpl(
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   // A set bit for a directory means: no collection at the directory or above it holds an unscoped exclusion.
   private val fileIdWithoutUnscopedConditionsAbove = ConcurrentBitSet.create()
+  // A set bit for a file means: no unscoped exclusion above the nearest directory with file sets matches the file or a directory from
+  // the file up to that directory. The bits hold for one state of the VFS structure, and [unscopedMatchStructureStamp] names that state.
+  private val fileIdWithoutUnscopedMatch = ConcurrentBitSet.create()
+  @Volatile
+  private var unscopedMatchStructureStamp = -1L
+  private val virtualFileManager = VirtualFileManager.getInstance()
   @Volatile
   private var hasUnscopedExclusions = fileSets.values.any { it.hasUnscopedExclusion() }
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
@@ -212,6 +219,7 @@ internal class WorkspaceFileIndexDataImpl(
       (if (includeExternalNonIndexableSets) WorkspaceFileKindMask.EXTERNAL_NON_INDEXABLE else 0) or
       (if (includeCustomKindSets) WorkspaceFileKindMask.CUSTOM else 0)
     var acceptedKindsMask = originalAcceptedKindMask
+    var fileSetsBelow = false
     var current: VirtualFile? = file
     while (current != null) {
       val fileId = (current as? VirtualFileWithId)?.id ?: -1
@@ -228,7 +236,7 @@ internal class WorkspaceFileIndexDataImpl(
           }
 
           if (storedKindMask and StoredFileSetKindMask.ACCEPTED_FILE_SET != 0) {
-            if (honorExclusion && hasUnscopedExclusions && isExcludedAbove(file, current)) {
+            if (honorExclusion && hasUnscopedExclusions && isExcludedAbove(file, current, !fileSetsBelow)) {
               return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
             }
             val result: WorkspaceFileInternalInfo?
@@ -251,6 +259,7 @@ internal class WorkspaceFileIndexDataImpl(
               return@addMeasuredTime result
             }
           }
+          fileSetsBelow = true
         }
         if (fileTypeRegistry.isFileIgnored(current)) {
           return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.IGNORED
@@ -270,9 +279,32 @@ internal class WorkspaceFileIndexDataImpl(
   /**
    * Returns `true` if an [unscoped exclusion][isUnscopedExclusion] above [nestedRoot] excludes [file]. [nestedRoot] is the nearest root of
    * [file]. The exclusion checks only the path from [file] up to [nestedRoot], so a file set below the matched path includes the files again.
+   * [noFileSetsBelow] is `true` if no directory below [nestedRoot] on that path has file sets. Then [fileIdWithoutUnscopedMatch] holds
+   * the answers of this path, and the exclusion checks only the part of the path without an answer.
    */
-  private fun isExcludedAbove(file: VirtualFile, nestedRoot: VirtualFile): Boolean {
-    var current = nestedRoot.parent
+  private fun isExcludedAbove(file: VirtualFile, nestedRoot: VirtualFile, noFileSetsBelow: Boolean): Boolean {
+    val firstAbove = nestedRoot.parent ?: return false
+    val firstAboveId = (firstAbove as? VirtualFileWithId)?.id ?: -1
+    if (firstAboveId >= 0 && fileIdWithoutUnscopedConditionsAbove.get(firstAboveId)) return false
+
+    // The highest file of the path without an answer. The path above it up to [nestedRoot] has no match.
+    var upTo = nestedRoot
+    if (noFileSetsBelow) {
+      dropUnscopedMatchAnswersOfOldStructure()
+      var withoutAnswer = file
+      while (true) {
+        val fileId = (withoutAnswer as? VirtualFileWithId)?.id ?: -1
+        if (fileId >= 0 && fileIdWithoutUnscopedMatch.get(fileId)) {
+          if (withoutAnswer == file) return false
+          break
+        }
+        upTo = withoutAnswer
+        if (withoutAnswer == nestedRoot) break
+        withoutAnswer = parentOf(withoutAnswer) ?: break
+      }
+    }
+
+    var current: VirtualFile? = firstAbove
     var highestUnscopedConditionRoot: VirtualFile? = null
     while (current != null) {
       val fileId = (current as? VirtualFileWithId)?.id ?: -1
@@ -281,15 +313,38 @@ internal class WorkspaceFileIndexDataImpl(
         val storedFileSets = fileSets[current]
         if (storedFileSets != null && storedFileSets.hasUnscopedExclusion()) {
           highestUnscopedConditionRoot = current
-          if (storedFileSets.excludesByUnscopedExclusion(file, nestedRoot)) {
+          if (storedFileSets.excludesByUnscopedExclusion(file, upTo)) {
             return true
           }
         }
       }
       current = parentOf(current)
     }
-    markWithoutUnscopedConditionsAbove(if (highestUnscopedConditionRoot == null) nestedRoot.parent else parentOf(highestUnscopedConditionRoot))
+    markWithoutUnscopedConditionsAbove(if (highestUnscopedConditionRoot == null) firstAbove else parentOf(highestUnscopedConditionRoot))
+    if (noFileSetsBelow && highestUnscopedConditionRoot != null) {
+      markWithoutUnscopedMatch(file, upTo)
+    }
     return false
+  }
+
+  /** Drops the answers of [fileIdWithoutUnscopedMatch] if the VFS structure changed after the index kept them. */
+  private fun dropUnscopedMatchAnswersOfOldStructure() {
+    val stamp = virtualFileManager.structureModificationCount
+    if (stamp != unscopedMatchStructureStamp) {
+      // The new stamp goes last. A thread that reads it thus reads no answer of the old structure.
+      fileIdWithoutUnscopedMatch.clear()
+      unscopedMatchStructureStamp = stamp
+    }
+  }
+
+  private fun markWithoutUnscopedMatch(file: VirtualFile, upTo: VirtualFile) {
+    var current: VirtualFile? = file
+    while (current != null) {
+      val fileId = (current as? VirtualFileWithId)?.id ?: -1
+      if (fileId >= 0) fileIdWithoutUnscopedMatch.set(fileId)
+      if (current == upTo) break
+      current = parentOf(current)
+    }
   }
 
   private fun StoredFileSetCollection.hasUnscopedExclusion(): Boolean {
@@ -310,9 +365,9 @@ internal class WorkspaceFileIndexDataImpl(
     }
   }
 
-  private fun StoredFileSetCollection.excludesByUnscopedExclusion(file: VirtualFile, nestedRoot: VirtualFile): Boolean {
+  private fun StoredFileSetCollection.excludesByUnscopedExclusion(file: VirtualFile, upTo: VirtualFile): Boolean {
     var excluded = false
-    forEach { if (!excluded && it is ExcludedFileSet.ByUnscopedCondition) excluded = it.excludesUpTo(file, nestedRoot) }
+    forEach { if (!excluded && it is ExcludedFileSet.ByUnscopedCondition) excluded = it.excludesUpTo(file, upTo) }
     return excluded
   }
 
@@ -632,6 +687,7 @@ internal class WorkspaceFileIndexDataImpl(
   override fun resetFileCache() {
     fileIdWithoutFileSets.clear()
     fileIdWithoutUnscopedConditionsAbove.clear()
+    fileIdWithoutUnscopedMatch.clear()
     packageDirectoryCache.clear()
   }
 
