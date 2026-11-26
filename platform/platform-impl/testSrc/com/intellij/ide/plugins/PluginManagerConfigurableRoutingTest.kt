@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.options.Configurable
@@ -35,10 +37,9 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.awt.Component
 import java.awt.Container
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import java.awt.Point
 import java.util.function.Consumer
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -323,16 +324,17 @@ internal class PluginManagerConfigurableRoutingTest {
     val configurable = PluginManagerConfigurable()
     try {
       val header = configurable.getCenterComponent(Configurable.TopComponentController.EMPTY)
-      val layout = header.layout as GridBagLayout
-      val search = header.components[0]
-      val updateAll = header.components[1]
-      val settings = header.components[2]
+      val search = header.components.filterIsInstance<SearchFieldWithExtension>().single()
+      val gear = header.components.filterIsInstance<ActionToolbar>().single().component
+      val updateAll = header.components.filterIsInstance<JButton>().single { it.icon !== AllIcons.Actions.Restart }
+      updateAll.text = IdeBundle.message("plugins.configurable.update.all.button")
+      updateAll.isVisible = true
+      header.size = header.preferredSize
+      header.doLayout()
 
       assertThat(header.border).isNull()
-      assertThat(layout.getConstraints(search).insets.right).isEqualTo(JBUI.scale(4))
-      assertThat(layout.getConstraints(updateAll).insets.right).isEqualTo(JBUI.scale(4))
-      assertThat(layout.getConstraints(settings).weightx).isEqualTo(1.0)
-      assertThat(layout.getConstraints(settings).anchor).isEqualTo(GridBagConstraints.WEST)
+      assertThat(gear.x - (search.x + search.width)).isEqualTo(JBUI.scale(4))
+      assertThat(updateAll.x - (gear.x + gear.width)).isEqualTo(JBUI.scale(4))
     }
     finally {
       configurable.disposeUIResources()
