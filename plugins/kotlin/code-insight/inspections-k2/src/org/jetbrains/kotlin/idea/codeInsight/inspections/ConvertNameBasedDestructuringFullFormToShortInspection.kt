@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractDestructuringComponentNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFullValueClassDestructuring
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -63,7 +64,9 @@ internal class ConvertNameBasedDestructuringFullFormToShortInspection :
     override fun prepareContext(element: KtDestructuringDeclaration): Context? {
         val keywordType = element.commonEntryKeywordType() ?: return null
 
-        if (!element.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm)) {
+        if (!element.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm) &&
+            !element.isFullValueClassDestructuring()
+        ) {
             val componentNames = session.extractDestructuringComponentNames(element) ?: return null
             if (element.entries.map { it.nameAsName } != componentNames) return null
         }

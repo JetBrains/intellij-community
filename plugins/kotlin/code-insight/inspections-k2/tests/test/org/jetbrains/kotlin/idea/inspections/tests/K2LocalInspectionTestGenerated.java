@@ -15986,6 +15986,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/reversedEntriesNameMismatchOptionNoWarn.kt");
             }
 
+            @TestMetadata("reversedEntriesValueClassNameMismatchOption.kt")
+            public void testReversedEntriesValueClassNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/reversedEntriesValueClassNameMismatchOption.kt");
+            }
+
             @TestMetadata("shortFormCompleteOptionNoWarn.kt")
             public void testShortFormCompleteOptionNoWarn() throws Exception {
                 runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/shortFormCompleteOptionNoWarn.kt");
