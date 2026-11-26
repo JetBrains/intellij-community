@@ -31,7 +31,7 @@
       "name": "air-slow",
       "axis": "category",
       "excludedFromBroadRuns": "fast-lane",
-      "description": "An IDE-free target that is slow by nature: it sweeps many cases through the platform editor of an open project, it creates the production preview of each entry of the showcase catalog, it starts many processes, it drives a platform Git operation of an open project, it tests a Git adapter on real repositories, it checks many generated seeds through a durable store, or it measures the cost of many calls and checks no time. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
+      "description": "An IDE-free target that is slow by nature: it sweeps many cases through the platform editor of an open project, it creates the production preview of each entry of the showcase catalog, it starts many processes, it starts a real Git process, it checks many generated seeds through a durable store, or it measures the cost of many calls and checks no time. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
     },
     {
       "name": "air-integration-ui-flow",
