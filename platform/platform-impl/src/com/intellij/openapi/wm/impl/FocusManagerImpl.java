@@ -98,6 +98,10 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         }
       }
     });
+    // a frame that got the focus before this service exists sent its event to no listener, see EarlyProjectFrame
+    if (myLastFocusedFrame == null && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame frame) {
+      myLastFocusedFrame = frame;
+    }
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(event -> {
       if (FOCUS_REQUESTS_LOG.isDebugEnabled()) {
         FOCUS_REQUESTS_LOG.debug(event.getPropertyName() + "=" + event.getNewValue());
