@@ -64,4 +64,15 @@ internal class DevBuildServerRunnerChoiceTest {
       legacyEngineReason(scrambling = false, docker = false, platformPrefix = "Gateway", baseIdePlatformPrefixForFrontend = null),
     )
   }
+
+  @Test
+  fun `CLion, its frontend keeps the legacy engine`() {
+    assertEquals(
+      "the Bazel dev distribution of 'CLion' has known gaps",
+      legacyEngineReason(scrambling = false, docker = false, platformPrefix = "CLion", baseIdePlatformPrefixForFrontend = null),
+    )
+    assertEquals(
+      "the Bazel dev distribution of 'CLionJetBrainsClient' has known gaps",
+      legacyEngineReason(scrambling = false, docker = false, platformPrefix = "JetBrainsClient", baseIdePlatformPrefixForFrontend = "CLion"))
+  }
 }

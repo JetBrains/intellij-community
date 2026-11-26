@@ -32,10 +32,10 @@ import kotlin.io.path.pathString
 /**
  * Products whose Bazel dev distribution has known gaps (MRI-5558).
  *
- * The Rider distribution lacks the files of `RiderProperties.registerDistFiles`. The Gateway distribution has no
- * embedded frontend.
+ * The CLion distribution lacks the .NET backend. The Rider distribution lacks the files of `RiderProperties.registerDistFiles`.
+ * The Gateway distribution has no embedded frontend.
  */
-private val LEGACY_ENGINE_PRODUCTS = setOf("Rider", "Gateway")
+private val LEGACY_ENGINE_PRODUCTS = setOf("CLion", "Rider", "Gateway")
 
 /** Serializes the Bazel builds of all [LocalBazelDevDistRunner] instances in this JVM. */
 private val devDistBuildLock = ReentrantLock()
