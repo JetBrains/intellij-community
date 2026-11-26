@@ -81,6 +81,7 @@
     "//plugins/air/backend/workflows/git:air-backend-workflows-git-tests_test_lib",
     "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
     "//plugins/air/frontback/cloud:air-cloud-git-tests_test_lib",
+    "//plugins/air/frontback/session/runtime:air-session-runtime-tests_test_lib",
     "//plugins/air/frontback/session/view.gui:air-session-view-gui-tests_test_lib",
     "//plugins/air/frontback/session/working-tree-git:air-session-working-tree-git-tests_test_lib",
     "//plugins/air/frontback/vcs/commit/git:air-vcs-commit-git-tests_test_lib",
