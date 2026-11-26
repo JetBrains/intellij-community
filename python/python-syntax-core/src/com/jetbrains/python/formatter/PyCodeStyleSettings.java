@@ -155,6 +155,13 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = false;
 
   /**
+   * Puts the brackets of the only argument of a call next to the parentheses, when the argument is a list, set
+   * or dict literal or a tuple in parentheses: {@code print([} on the first line and {@code ])} on the last line.
+   * Black does this with {@code --unstable}, and Ruff with {@code --preview}.
+   */
+  public boolean HUG_SOLE_COLLECTION_ARGUMENT = false;
+
+  /**
    * Identifies the active code style profile ({@link PyDefaultStyleGuide#CODE_STYLE_ID} or
    * {@link PyClassicStyleGuide#CODE_STYLE_ID}). {@code null} means a legacy scheme that predates the
    * PY-85946 migration and is therefore treated as "classic". Excluded from {@link #equals} so that

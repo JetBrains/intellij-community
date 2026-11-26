@@ -59,6 +59,7 @@ import com.jetbrains.python.ast.PyAstRaiseStatement;
 import com.jetbrains.python.ast.PyAstReturnStatement;
 import com.jetbrains.python.ast.PyAstSequenceExpression;
 import com.jetbrains.python.ast.PyAstSliceItem;
+import com.jetbrains.python.ast.PyAstStarArgument;
 import com.jetbrains.python.ast.PyAstStatement;
 import com.jetbrains.python.ast.PyAstStatementList;
 import com.jetbrains.python.ast.PyAstStatementListContainer;
@@ -89,6 +90,10 @@ import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_
 
 
 public class PyBlock implements ASTBlock {
+  private static final TokenSet ourHuggableArgumentTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                                          PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                                          PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                          PyElementTypes.PARENTHESIZED_EXPRESSION);
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
@@ -591,7 +596,7 @@ public class PyBlock implements ASTBlock {
       // (...)
       if (childType != PyTokenTypes.LPAR && childType != PyTokenTypes.RPAR) {
         if (parentType == PyElementTypes.PARAMETER_LIST) return myParameterListWrapping;
-        if (parentType == PyElementTypes.ARGUMENT_LIST) return myArgumentListWrapping;
+        if (parentType == PyElementTypes.ARGUMENT_LIST) return isHuggedArgument(child) ? null : myArgumentListWrapping;
         if (parentType == PyElementTypes.TUPLE_EXPRESSION && !isInsideSubscriptionExpression(child)) return myTupleWrapping;
       }
       // [...]
@@ -607,6 +612,34 @@ public class PyBlock implements ASTBlock {
       return myDictWrapping;
     }
     return childWrap;
+  }
+
+  /**
+   * Tells if the node is the only argument of a call, the argument is a list, set or dict literal or a tuple
+   * in parentheses, and {@link PyCodeStyleSettings#HUG_SOLE_COLLECTION_ARGUMENT} puts its brackets next to
+   * the parentheses: {@code print([} ... {@code ])}. A {@code *} or {@code **} before the collection does not
+   * change this. A comma after the argument, a comment in the parentheses, or an f-string fragment around
+   * the call keeps the usual layout.
+   */
+  private boolean isHuggedArgument(@NotNull ASTNode node) {
+    if (!myContext.getPySettings().HUG_SOLE_COLLECTION_ARGUMENT) return false;
+    if (!(node.getPsi() instanceof PyAstExpression argument) || !(argument.getParent() instanceof PyAstArgumentList argumentList)) {
+      return false;
+    }
+    // The only argument is between the parentheses. This check is first, because it is the cheapest one.
+    final PsiElement beforeArgument = PsiTreeUtil.skipWhitespacesBackward(argument);
+    final PsiElement afterArgument = PsiTreeUtil.skipWhitespacesForward(argument);
+    if (beforeArgument == null || beforeArgument.getNode().getElementType() != PyTokenTypes.LPAR ||
+        afterArgument == null || afterArgument.getNode().getElementType() != PyTokenTypes.RPAR) {
+      return false;
+    }
+    if (PsiTreeUtil.getChildOfType(argumentList, PsiComment.class) != null) return false;
+    // The text of an f-string fragment, such as f"{foo( [1] )=}", is printed as written.
+    if (TreeUtil.findParent(node, PyElementTypes.FSTRING_FRAGMENT) != null) return false;
+    final PyAstExpression collection = argument instanceof PyAstStarArgument starArgument ? starArgument.getExpression() : argument;
+    return collection != null && ourHuggableArgumentTypes.contains(collection.getNode().getElementType()) &&
+           (collection.getNode().getElementType() != PyElementTypes.PARENTHESIZED_EXPRESSION ||
+            ((PyAstParenthesizedExpression)collection).getContainedExpression() instanceof PyAstTupleExpression);
   }
 
   private static boolean isInsideSubscriptionExpression(ASTNode child) {
@@ -1086,6 +1119,13 @@ public class PyBlock implements ASTBlock {
       final PsiElement psi1 = node1.getPsi();
 
       PsiElement psi2 = node2.getPsi();
+
+      if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST &&
+          (childType1 == PyTokenTypes.LPAR && isHuggedArgument(node2) ||
+           node2.getElementType() == PyTokenTypes.RPAR && isHuggedArgument(node1))) {
+        final int spaces = settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ? 1 : 0;
+        return Spacing.createSpacing(spaces, spaces, 0, false, 0);
+      }
 
       if (psi2 instanceof PyAstStatementList) {
         // Quite odd getSpacing() doesn't get called with child1=null for the first statement
