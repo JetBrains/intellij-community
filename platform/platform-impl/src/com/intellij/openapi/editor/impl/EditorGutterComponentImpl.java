@@ -25,6 +25,7 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EnumEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
@@ -56,6 +57,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -2610,7 +2612,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       }
     }
 
-    GutterIconClickCollectors.logClick(project, language, renderer.getFeatureId(), isDumbMode(), pluginInfo);
+    GutterIconClickCollectors.logClick(project, language, renderer.getFeatureId(), isDumbMode(), pluginInfo, myEditor.getEditorKind());
   }
 
   private boolean isDumbMode() {
@@ -3215,16 +3217,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   };
 
   private static final class GutterIconClickCollectors extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 5);
+    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 6);
 
     private static final StringEventField ICON = EventFields.StringValidatedByCustomRule("icon_id", PluginInfoValidationRule.class);
+    private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
 
     private static final VarargEventId CLICKED = GROUP.registerVarargEvent(
       "clicked",
       EventFields.Language,
       ICON,
       EventFields.Dumb,
-      EventFields.PluginInfo
+      EventFields.PluginInfo,
+      EDITOR_KIND
     );
 
     @Override
@@ -3236,13 +3240,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
                                  @Nullable Language language,
                                  @NotNull String icon,
                                  boolean isDumb,
-                                 @Nullable PluginInfo pluginInfo) {
+                                 @Nullable PluginInfo pluginInfo,
+                                 @NotNull EditorKind editorKind) {
       CLICKED.log(
         project,
         EventFields.Language.with(language),
         ICON.with(icon),
         EventFields.Dumb.with(isDumb),
-        EventFields.PluginInfo.with(pluginInfo)
+        EventFields.PluginInfo.with(pluginInfo),
+        EDITOR_KIND.with(editorKind)
       );
     }
   }
