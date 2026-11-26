@@ -106,6 +106,14 @@ internal class UnifiedPluginUpdateAllController(
     }
   }
 
+  fun clearAvailableUpdates() {
+    synchronized(lock) {
+      if (closed) return
+      latestUpdates = emptyList()
+      if (activeRequest == null) publishSnapshotAvailability()
+    }
+  }
+
   fun acceptOperationEvent(event: PluginModelEvent) {
     try {
       synchronized(lock) {

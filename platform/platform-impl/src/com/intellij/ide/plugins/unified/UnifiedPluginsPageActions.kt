@@ -34,6 +34,7 @@ internal class UnifiedPluginsPageActions @RequiresEdt constructor(
   private val host: LegacyPluginUiHost,
   private val customizer: PluginManagerCustomizer?,
   private val onRefreshRequested: () -> Unit,
+  private val onCheckForUpdatesRequested: () -> Unit,
   private val installedPlugins: () -> List<PluginUiModel>,
   private val onPluginInstalledFromDisk: (PluginInstallCallbackData) -> Unit,
 ) {
@@ -70,8 +71,9 @@ internal class UnifiedPluginsPageActions @RequiresEdt constructor(
           }
         })
       actions.add(UpdatePluginsAutomaticallyToggleAction())
-      actions.addSeparator()
     }
+    actions.add(CheckForUpdatesAction())
+    actions.addSeparator()
 
     actions.add(ManagePluginRepositoriesAction())
     actions.add(OpenHttpProxyConfigurableAction())
@@ -142,6 +144,12 @@ internal class UnifiedPluginsPageActions @RequiresEdt constructor(
     override fun actionPerformed(event: AnActionEvent) {
       PluginManagerUsageCollector.manageActionInvoked(PluginManagerManageAction.RESET)
       onRefreshRequested()
+    }
+  }
+
+  private inner class CheckForUpdatesAction : DumbAwareAction(IdeBundle.message("plugins.configurable.check.for.updates.action")) {
+    override fun actionPerformed(event: AnActionEvent) {
+      onCheckForUpdatesRequested()
     }
   }
 

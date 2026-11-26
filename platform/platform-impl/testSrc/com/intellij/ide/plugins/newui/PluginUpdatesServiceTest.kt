@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -238,6 +239,30 @@ internal class PluginUpdatesServiceTest {
     }
 
   @Test
+  fun `manual check clears cached results before requesting all providers`(@TestDisposable disposable: Disposable): Unit = runTest {
+    val firstEvents = MutableStateFlow(eventWith("plugin.old.first"))
+    val secondEvents = MutableStateFlow(eventWith("plugin.old.second"))
+    val requests = Channel<String>(Channel.UNLIMITED)
+    ExtensionTestUtil.maskExtensions(PluginUpdatesProvider.EP_NAME, listOf(
+      FakeProvider(firstEvents) { requests.trySend("first") },
+      FakeProvider(secondEvents) { requests.trySend("second") },
+    ), disposable)
+    val service = PluginUpdatesService(backgroundScope)
+
+    withTimeout(1.seconds) {
+      service.flow().filterNotNull().first { it.hasUpdateFor("plugin.old.first") && it.hasUpdateFor("plugin.old.second") }
+      service.clearAndRecalculateUpdates()
+      service.updatesFlow().first { it.all.isEmpty() }
+      assertThat(service.awaitHasUpdate(PluginId.getId("plugin.old.first"))).isFalse()
+      assertThat(listOf(requests.receive(), requests.receive())).containsExactlyInAnyOrder("first", "second")
+
+      firstEvents.value = eventWith("plugin.new.first")
+      val refreshed = service.updatesFlow().first { it.hasUpdateFor("plugin.new.first") }
+      assertThat(refreshed.all.map { it.pluginId.idString }).containsExactly("plugin.new.first")
+    }
+  }
+
+  @Test
   fun `incremental updates are delivered as each provider emits`(@TestDisposable disposable: Disposable): Unit =
     runTest {
       val providerA = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
@@ -266,9 +291,12 @@ internal class PluginUpdatesServiceTest {
       }
     }
 
-  private class FakeProvider(private val events: Flow<PluginUpdatesEvent?>) : PluginUpdatesProvider {
+  private class FakeProvider(
+    private val events: Flow<PluginUpdatesEvent?>,
+    private val onUpdate: () -> Unit = {},
+  ) : PluginUpdatesProvider {
     override suspend fun pluginUpdateEvents(): Flow<PluginUpdatesEvent?> = events
-    override suspend fun update() {}
+    override suspend fun update() = onUpdate()
   }
 
   private fun emptyEvent(): PluginUpdatesEvent = PluginUpdatesEvent(emptyList(), emptyList(), emptyList())

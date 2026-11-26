@@ -32,6 +32,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginManagerButtonUsageTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginModelEventPublisherTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateSourceFilterTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdatesServiceTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedgerTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalSourceCoordinatorTest.kt
@@ -288,6 +289,19 @@ Untested: No focused test verifies state isolation across two page sessions.
 - Apply or OK must commit a changed automatic-update setting. Reset must restore the stored setting.
 
 Untested: No focused test covers the complete Settings menu or the staged automatic-update setting.
+
+- The Settings menu must offer Check for Updates after Update Plugins Automatically when the toggle is available.
+- Check for Updates must clear the cached updates and request a fresh check from each provider.
+- The check must leave active plugin operations and pending restart requests in effect.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `settings menu offers Check for Updates after automatic updates`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdatesServiceTest.kt (
+    `manual check clears cached results before requesting all providers`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllControllerTest.kt (
+    `clearing available updates preserves active progress and prepared restart`
+  )
 
 - After a successful disk installation, the page must clear the Plugins search and select the installed plugin before Apply.
 - The page must scroll the selected row into view and expand its section when necessary.

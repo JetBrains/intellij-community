@@ -212,6 +212,23 @@ internal class UnifiedPluginUpdateAllControllerTest {
   }
 
   @Test
+  fun `clearing available updates preserves active progress and prepared restart`() {
+    val target = plugin("target")
+    controller.acceptUpdates(updates(target))
+    controller.requestUpdateAll()
+    controller.clearAvailableUpdates()
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Running(0, 1))
+
+    executor.callbacks.single().prepared(target.pluginId, restartRequired = true)
+    controller.clearAvailableUpdates()
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Hidden)
+    assertThat(controller.state.value.restartRequired).isTrue()
+
+    controller.acceptUpdates(updates(plugin("new.target")))
+    assertThat(controller.state.value.presentation).isEqualTo(UnifiedPluginUpdateAllPresentation.Available)
+  }
+
+  @Test
   fun `reset clears prepared state and restores snapshot availability`() {
     val target = plugin("target")
     controller.acceptUpdates(updates(target))

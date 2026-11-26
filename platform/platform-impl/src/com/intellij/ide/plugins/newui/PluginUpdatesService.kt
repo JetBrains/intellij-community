@@ -36,7 +36,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
@@ -60,7 +59,7 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
   @Volatile private var lastUpdates: PluginUpdatesEvent? = null
   private val updateIdsFlow = MutableStateFlow<Set<PluginId>?>(null)
   private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val providerSnapshots = ConcurrentHashMap<PluginUpdatesProvider, PluginUpdatesEvent>()
+  private val providerSnapshots = HashMap<PluginUpdatesProvider, PluginUpdatesEvent>()
   private val updateMutex = Mutex()
 
   companion object {
@@ -96,22 +95,23 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
             LOG.warn("Plugin update provider failed: ${provider.javaClass.name}", e)
           }
           .collect { event ->
-            event?.let {
-              providerSnapshots[provider] = event
-              onProviderUpdated()
-            }
+            if (event != null) onProviderUpdated(provider, event)
           }
         }
     }
   }
 
-  private suspend fun onProviderUpdated() {
+  private suspend fun onProviderUpdated(provider: PluginUpdatesProvider, event: PluginUpdatesEvent) {
     updateMutex.withLock {
-      val merged = mergeUpdates(providerSnapshots.values)
-      lastUpdates = merged
-      pluginUpdateFlow.emit(merged)
-      updateIdsFlow.value = merged.all.mapTo(HashSet()) { plugin -> plugin.pluginId }
+      providerSnapshots[provider] = event
+      publishUpdates(mergeUpdates(providerSnapshots.values))
     }
+  }
+
+  private suspend fun publishUpdates(updates: PluginUpdatesEvent) {
+    lastUpdates = updates
+    updateIdsFlow.value = updates.all.mapTo(HashSet()) { it.pluginId }
+    pluginUpdateFlow.emit(updates)
   }
 
   private fun startDispatchingCallbacks() = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
@@ -157,6 +157,16 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
 
   fun recalculateUpdates() {
     coroutineScope.launch { triggerUpdates() }
+  }
+
+  internal fun clearAndRecalculateUpdates() {
+    coroutineScope.launch {
+      updateMutex.withLock {
+        providerSnapshots.clear()
+        publishUpdates(PluginUpdatesEvent(emptyList(), emptyList(), emptyList()))
+      }
+      triggerUpdates()
+    }
   }
 
   suspend fun awaitUpdates(): Collection<PluginUiModel> {

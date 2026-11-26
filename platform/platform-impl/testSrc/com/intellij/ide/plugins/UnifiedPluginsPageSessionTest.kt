@@ -40,6 +40,7 @@ import com.intellij.ide.plugins.unified.UnifiedPluginRepositoryDataProvider
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllCallback
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllExecutor
 import com.intellij.ide.plugins.unified.UnifiedPluginUpdateAllRequest
+import com.intellij.ide.plugins.unified.UnifiedPluginsPageActions
 import com.intellij.ide.plugins.unified.buildLocalSnapshot
 import com.intellij.ide.plugins.unified.buildMarketplaceSnapshot
 import com.intellij.ide.ui.LafManager
@@ -176,6 +177,41 @@ internal class UnifiedPluginsPageSessionTest {
         Disposer.dispose(session)
       }
     }
+
+  @Test
+  fun `settings menu offers Check for Updates after automatic updates`(@TestDisposable disposable: Disposable): Unit = uiTest {
+    val policy = object : PluginManagementPolicy by PluginManagementPolicy.getInstance() {
+      override fun isAvailable(): Boolean = true
+      override fun isPluginAutoUpdateAllowed(): Boolean = true
+    }
+    ExtensionTestUtil.maskExtensions(PluginManagementPolicy.EP, listOf(policy), disposable)
+    val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+    try {
+      var checks = 0
+      val actions = UnifiedPluginsPageActions(
+        parentComponent = JPanel(),
+        pageScope = this,
+        host = host,
+        customizer = null,
+        onRefreshRequested = { error("Unexpected page refresh") },
+        onCheckForUpdatesRequested = { checks++ },
+        installedPlugins = { emptyList() },
+        onPluginInstalledFromDisk = { error("Unexpected disk installation") },
+      )
+      val children = actions.group.getChildren(null)
+      val automaticUpdates = children.indexOfFirst {
+        it.templatePresentation.text == IdeBundle.message("updates.plugins.autoupdate.settings.action")
+      }
+      assertThat(automaticUpdates).isZero()
+      val check = children[automaticUpdates + 1]
+      assertThat(check.templatePresentation.text).isEqualTo(IdeBundle.message("plugins.configurable.check.for.updates.action"))
+      check.actionPerformed(TestActionEvent.createTestEvent(check))
+      assertThat(checks).isEqualTo(1)
+    }
+    finally {
+      host.dispose(closeSession = true)
+    }
+  }
 
   @Test
   fun `disk install selects the new plugin before Apply`() = uiTest {

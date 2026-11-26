@@ -332,6 +332,10 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
       host = host,
       customizer = customizer,
       onRefreshRequested = ::refresh,
+      onCheckForUpdatesRequested = {
+        updateAllController.clearAvailableUpdates()
+        PluginUpdatesService.getInstance().clearAndRecalculateUpdates()
+      },
       installedPlugins = {
         val localState = localSource.state.value
         eligibleInstalledPluginModels(localState.sections, localState.listModelData.installedModels.keys)
