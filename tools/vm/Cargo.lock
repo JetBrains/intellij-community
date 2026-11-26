@@ -34,6 +34,7 @@ dependencies = [
  "bt-core",
  "bt-junit",
  "bytes",
+ "checkout-files",
  "clap",
  "expect-test",
  "fscopy",

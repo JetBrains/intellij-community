@@ -26,6 +26,7 @@ axum.workspace = true
 bt-core.workspace = true
 bt-junit.workspace = true
 bytes.workspace = true
+checkout-files.workspace = true
 clap.workspace = true
 fscopy.workspace = true
 futures.workspace = true

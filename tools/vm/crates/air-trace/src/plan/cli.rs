@@ -2,7 +2,6 @@
 
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use avl_trace_tools::discover::{Root, RootKind, default_roots};
 
@@ -111,7 +110,8 @@ fn plan_to(args: &PlanArgs, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Res
 }
 
 /// The checkout to plan against: the flag, then `BUILD_WORKSPACE_DIRECTORY`, which `trace.cmd` sets because a
-/// Bazel-built binary's own path says nothing about the checkout, then the work tree around the working directory.
+/// Bazel-built binary's own path says nothing about the checkout, then the nearest directory with `.git` from the working
+/// directory upwards.
 fn checkout_root(flag: Option<&Path>) -> Result<PathBuf, Refusal> {
     let candidate = match flag {
         Some(flag) => flag.to_path_buf(),
@@ -119,13 +119,10 @@ fn checkout_root(flag: Option<&Path>) -> Result<PathBuf, Refusal> {
             if let Some(workspace) = std::env::var_os("BUILD_WORKSPACE_DIRECTORY").filter(|value| !value.is_empty()) {
                 PathBuf::from(workspace)
             } else {
-                let output = Command::new("git")
-                    .args(["rev-parse", "--show-toplevel"])
-                    .output()
+                std::env::current_dir()
                     .ok()
-                    .filter(|output| output.status.success())
-                    .ok_or_else(|| no_checkout("no checkout: pass --repo, or run it through community/tools/trace.cmd"))?;
-                PathBuf::from(String::from_utf8_lossy(&output.stdout).trim())
+                    .and_then(|dir| checkout_files::checkout_root(&dir).ok())
+                    .ok_or_else(|| no_checkout("no checkout: pass --repo, or run it through community/tools/trace.cmd"))?
             }
         }
     };
