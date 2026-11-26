@@ -143,6 +143,9 @@ class LspClientImpl internal constructor(
   ): Lsp4jResponse? =
     requestExecutor.sendRequestSync(timeoutMs, lsp4jSender)
 
+  @RequiresBackgroundThread
+  override fun findTargetFile(targetUri: String): VirtualFile? = dynamicFiles.findTargetFile(targetUri)
+
   override fun getDocumentIdentifier(file: VirtualFile): TextDocumentIdentifier =
     TextDocumentIdentifier(descriptor.getFileUri(file))
 

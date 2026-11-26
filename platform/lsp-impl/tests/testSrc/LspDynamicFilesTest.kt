@@ -262,7 +262,8 @@ internal class LspDynamicFilesTest {
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
       TextDocumentContentResult("served text")
     }
-    val target = client.dynamicFiles.findTargetFile(uri)
+    // the public API of LspClient, which a plugin calls for its own navigation
+    val target = (client as LspClient).findTargetFile(uri)
     serverSession.awaitExpected()
 
     assertNotNull(target)
@@ -285,7 +286,7 @@ internal class LspDynamicFilesTest {
       }
     }
     val target = LoggedErrorProcessor.executeWith(processor).use {
-      client.dynamicFiles.findTargetFile("zip:///lib/foo.zip!/com/foo/Bar.txt")
+      (client as LspClient).findTargetFile("zip:///lib/foo.zip!/com/foo/Bar.txt")
     }
 
     assertNull(target)

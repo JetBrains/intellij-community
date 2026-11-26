@@ -168,6 +168,18 @@ interface LspClient {
   ): Lsp4jResponse?
 
   /**
+   * Finds the navigation target for [targetUri], the way Go to Declaration does.
+   *
+   * When the server declares the URI scheme in its `workspace.textDocumentContent` capability, the target is an in-memory
+   * file with server-provided content, and the function may send a `workspace/textDocumentContent` request and wait for
+   * the answer. Repeated calls with one URI return the same file instance, so an existing editor tab is reused.
+   * For any other URI the target is the file that [LspClientDescriptor.findFileByUri] resolves.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  fun findTargetFile(targetUri: String): VirtualFile? = descriptor.findFileByUri(targetUri)
+
+  /**
    * Creates [TextDocumentIdentifier](https://microsoft.github.io/language-server-protocol/specification/#textDocumentIdentifier)
    * for the given [file] to be used in various LSP requests.
    */
