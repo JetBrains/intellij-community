@@ -33,7 +33,10 @@
     <!-- An application service, so a light IDE reaches it without the rpc backend; intellij.platform.problemView.rpc.backend serves it to a frontend. -->
     <applicationService serviceInterface="com.intellij.platform.problemsView.shared.ProblemsViewApi"
                         serviceImplementation="com.intellij.platform.problemsView.backend.BackendProblemsViewApi"/>
+    <!-- the backend creates the Problems tool window in split mode (IJPL-223406) -->
+    <!--suppress SplitModeXmlApiUsage -->
     <problemsViewPanelProvider id="backendCurrentFile" implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewHighlightingPanelProvider" order="first"/>
+    <!--suppress SplitModeXmlApiUsage -->
     <problemsViewPanelProvider id="backendProjectErrors" implementation="com.intellij.platform.problemsView.backend.BackendProblemsViewProjectErrorsPanelProvider" order="first, after backendCurrentFile"/>
     
     <buildProgressListenerRegistrar implementation="com.intellij.platform.problemsView.backend.BuildViewProblemsListenerRegistrar"/>
