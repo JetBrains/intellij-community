@@ -2,20 +2,29 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.JavaExpectedHighlightingData;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.ReassignedVariableInspection;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new ReassignedVariableInspection()};
-  }
+import java.util.List;
 
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+
+@TestApplication
+public class JavaSymbolHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture =
+    lightDaemonAnalyzerFixture(projectFixture, () -> List.of(new ReassignedVariableInspection()));
+
+  @Test
   public void testImplicitAnonymousClassParameterHighlighting_InsideLambda() {
-    configureFromFileText("Test.java",
+    daemonFixture.get().configureFromFileText("Test.java",
                           """
                             class T {    private T(int i){}
                                 public void test() {
@@ -26,11 +35,12 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
                                 public void check(int a) {}
                             }""");
     
-    doTestConfiguredFile(true, true, true, null);
+    checkSymbolHighlighting();
   }
 
+  @Test
   public void testReassignedVariables() {
-    configureFromFileText("Test.java",
+    daemonFixture.get().configureFromFileText("Test.java",
                           """
                             class Test {
                               void foo() {
@@ -49,13 +59,14 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
                                 return <text_attr descr="Reassigned local variable">a</text_attr>;
                               }
                             }""");
-    doTestConfiguredFile(true, true, true, null);
+    checkSymbolHighlighting();
   }
   
-  @Override
-  protected ExpectedHighlightingData getExpectedHighlightingData(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
-    JavaExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos, true);
+  private void checkSymbolHighlighting() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    JavaExpectedHighlightingData data = ReadAction.computeBlocking(
+      () -> new JavaExpectedHighlightingData(daemon.getFixture().getEditor().getDocument(), true, true, true, true));
     data.checkSymbolNames();
-    return data;
+    daemon.checkHighlighting(data, null);
   }
 }

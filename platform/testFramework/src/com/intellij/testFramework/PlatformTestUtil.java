@@ -1103,7 +1103,11 @@ public final class PlatformTestUtil {
     }
   }
 
-  static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
+  /**
+   * Fails when the canonical path of {@code ioFile} ends with {@code fullOrRelativePath} only if the letter case is ignored.
+   * The check finds a wrong letter case of a test data path on a file system that ignores the case.
+   */
+  public static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
     fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
     var canonicalPath = ioFile.getCanonicalPath();
     if (!canonicalPath.endsWith(fullOrRelativePath) && StringUtil.endsWithIgnoreCase(canonicalPath, fullOrRelativePath)) {

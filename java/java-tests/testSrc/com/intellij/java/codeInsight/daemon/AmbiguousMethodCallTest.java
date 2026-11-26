@@ -15,52 +15,57 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
 /**
  * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
  * For "heavyweight" tests use AdvHighlightingTest
  */
-public class AmbiguousMethodCallTest extends LightDaemonAnalyzerTestCase {
+@TestApplication
+public class AmbiguousMethodCallTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_7));
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture, () -> List.of(
+    new UncheckedWarningLocalInspection(),
+    new JavacQuirksInspection(),
+    new RedundantCastInspection()
+  ));
+
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/ambiguousCalls";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
+  @BeforeEach
+  void setUp() {
+    daemonFixture.get().getFixture().enableInspections(new UnusedDeclarationInspection());
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+    daemonFixture.get().doTest(BASE_PATH + "/" + daemonFixture.get().getFixture().getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new UncheckedWarningLocalInspection(),
-      new JavacQuirksInspection(),
-      new RedundantCastInspection()
-    };
-  }
-
+  @Test
   public void testBoxingAndStaticMethods() {
     doTest(false, false);
   }
 
+  @Test
   public void testMultipleInheritance() {
     doTest(false, false);
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_7;
   }
 }

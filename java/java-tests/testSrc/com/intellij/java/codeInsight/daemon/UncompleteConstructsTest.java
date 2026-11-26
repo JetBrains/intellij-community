@@ -14,43 +14,55 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.daemon;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-public class UncompleteConstructsTest extends LightDaemonAnalyzerTestCase {
+
+@TestApplication
+public class UncompleteConstructsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/uncompleteConstructs";
 
-  public void testIf1() { doTest(); }
-  public void testIf2() { doTest(); }
-  public void testIf3() { doTest(); }
-  public void testIf4() { doTest(); }
-  public void testIf5() { doTest(); }
-  public void testIf6() { doTest(); }
+  @Test public void testIf1() { doTest(); }
+  @Test public void testIf2() { doTest(); }
+  @Test public void testIf3() { doTest(); }
+  @Test public void testIf4() { doTest(); }
+  @Test public void testIf5() { doTest(); }
+  @Test public void testIf6() { doTest(); }
 
-  public void testWhile1() { doTest();}
-  public void testWhile2() { doTest();}
-  public void testWhile3() { doTest();}
-  public void testWhile4() { doTest();}
-  public void testWhile5() { doTest();}
+  @Test public void testWhile1() { doTest();}
+  @Test public void testWhile2() { doTest();}
+  @Test public void testWhile3() { doTest();}
+  @Test public void testWhile4() { doTest();}
+  @Test public void testWhile5() { doTest();}
 
-  public void testFor1() { doTest(); }
-  public void testFor2() { doTest(); }
-  public void testFor3() { doTest(); }
-  public void testFor4() { doTest(); }
-  public void testFor5() { doTest(); }
-  public void testFor6() { doTest(); }
-  public void testFor7() { doTest(); }
-  public void testFor8() { doTest(); }
-  public void testFor9() { doTest(); }
-  public void testFor10() { doTest(); }
+  @Test public void testFor1() { doTest(); }
+  @Test public void testFor2() { doTest(); }
+  @Test public void testFor3() { doTest(); }
+  @Test public void testFor4() { doTest(); }
+  @Test public void testFor5() { doTest(); }
+  @Test public void testFor6() { doTest(); }
+  @Test public void testFor7() { doTest(); }
+  @Test public void testFor8() { doTest(); }
+  @Test public void testFor9() { doTest(); }
+  @Test public void testFor10() { doTest(); }
 
-  public void testReturn1() { doTest(); }
-  public void testReturn2() { doTest(); }
+  @Test public void testReturn1() { doTest(); }
+  @Test public void testReturn2() { doTest(); }
 
   private void doTest() {
-    doTest(getTestName(false)+".java");
+    doTest(daemonFixture.get().getFixture().getTestName(false)+".java");
   }
-  protected void doTest(String filePath) {
-    super.doTest(BASE_PATH + "/" + filePath, false, false);
+  private void doTest(String filePath) {
+    daemonFixture.get().doTest(BASE_PATH + "/" + filePath, false, false);
   }
 }

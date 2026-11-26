@@ -14,30 +14,46 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.daemon;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-public class TypeMatchingTest extends LightDaemonAnalyzerTestCase {
+
+@TestApplication
+public class TypeMatchingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typeMatching";
 
+  @Test
   public void testIf() {
     doTest("If.java");
   }
 
+  @Test
   public void testWhile() {
     doTest("While.java");
   }
 
+  @Test
   public void testFor() {
     doTest("For1.java");
     doTest("For2.java");
   }
 
+  @Test
   public void testShortConstWithCast() {
     doTest("ShortConstWithCast.java");
   }
 
-  protected void doTest(String filePath) {
-    super.doTest(BASE_PATH + "/" + filePath, false, false);
+  private void doTest(String filePath) {
+    daemonFixture.get().doTest(BASE_PATH + "/" + filePath, false, false);
   }
 }
