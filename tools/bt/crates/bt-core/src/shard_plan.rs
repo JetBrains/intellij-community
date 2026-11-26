@@ -18,6 +18,11 @@
 //! [`ShardPlan::groups`] names only the targets that `bazel query` finds for the patterns of the run ([`TreeTargets`]).
 //! The same query gives the rule kind of each target, and so the Rust test targets.
 //!
+//! The plan keeps the day of the last run of each target. A run gives this day to each target that ran a shard, also a
+//! cached or a failed target ([`ShardPlan::mark_seen`]). The update then removes each target that no run named for
+//! [`PLAN_TARGET_TTL_DAYS`] days ([`ShardPlan::forget_older_than`]). So a target that a move or a removal took out of
+//! the tree leaves the plan.
+//!
 //! Each invocation passes the plan file to each test in [`SHARD_PLAN_ENV`]. The JUnit runner (`ShardFilter` of
 //! `community/platform/testFramework/bootstrap`) reads the line of its own target. A shard at or above the planned
 //! count exits before the test framework starts, and the other shards split the classes of the target by their
@@ -38,7 +43,8 @@
 //! linked work tree read and write this one file. A lease of Branch Deck starts without `out/`, and the file stays
 //! after the lease is returned. So a new lease does not run its heavy targets with two shards into the Bazel timeout.
 //! A checkout outside git has only the checkout file. A run takes the shared plan, and adds each target of the checkout
-//! file that the shared plan does not name ([`ShardPlan::add_missing_targets`]).
+//! file that the shared plan does not name ([`ShardPlan::add_missing_targets`]). For a target that both files name, the
+//! run takes the later day of the last run. So an old checkout copy cannot keep a forgotten target in the plan.
 //!
 //! The tests read the checkout copy [`SHARD_PLAN_FILE`]. Before its first test invocation, a planned run writes the
 //! text of the plan it read to that copy. After the run, bt writes the updated plan to the shared file and to the copy.
@@ -95,6 +101,17 @@ pub const HEAVY_SHARDS: u32 = 8;
 /// The shard count of a target the plan has no record of.
 const DEFAULT_SHARDS: u32 = 2;
 
+/// The days that the plan keeps a target that no run names.
+///
+/// Fourteen, not one or two: a lease of Branch Deck lives for days, and a branch can wait some days for its next run.
+/// Each run of a branch that still has the target gives it a new day. So only a target that no checkout ran for two
+/// weeks leaves the plan.
+pub const PLAN_TARGET_TTL_DAYS: u64 = 14;
+
+/// The day of a target that only an undated checkout copy names, when the shared plan takes it: the Unix epoch. So such
+/// a target is older than [`PLAN_TARGET_TTL_DAYS`] on each real day, and it stays only when the run names it.
+const UNDATED_COPY_DAY: u64 = 0;
+
 /// The recorded test seconds that one shard takes.
 ///
 /// Simulated with the runner's partition on the test.xml files of a `--lane fast` run (148 JVM targets): against
@@ -108,6 +125,9 @@ pub struct ShardPlan {
     targets: BTreeMap<String, BTreeMap<String, f64>>,
     /// The fixed seconds of a shard of each target, see [`TargetTiming::fixed_seconds`].
     fixed: BTreeMap<String, f64>,
+    /// The day of the last run of each target, in days since the Unix epoch. A target without a day counts as seen on
+    /// the day of the next update, see [`ShardPlan::forget_older_than`].
+    seen: BTreeMap<String, u64>,
 }
 
 /// The targets of a planned run that run in an invocation of their own, each group in the order of the labels.
@@ -206,28 +226,67 @@ impl ShardPlan {
                         plan.fixed.insert(label.to_owned(), seconds);
                     }
                 }
+                ["seen", label, day] => {
+                    if let Ok(day) = day.parse::<u64>() {
+                        plan.seen.insert(label.to_owned(), day);
+                    }
+                }
                 _ => {}
             }
         }
         plan
     }
 
-    /// Adds each target of `other` that this plan has no record of, and answers whether it added one.
+    /// Adds each target of `other` that this plan has no record of, with its fixed seconds and its day. For a target
+    /// that both plans have, this plan keeps its record and takes the later day. Answers whether the plan changed.
     ///
-    /// The plan of the repository only gains targets. So a target that only a checkout copy names comes from a plan
-    /// that the checkout kept before the plan was shared, and the shared plan takes it.
+    /// A target that only a checkout copy names comes from a copy older than the last update of the shared plan. The
+    /// shared plan takes it with the day of the copy. A target without a day in the copy gets [`UNDATED_COPY_DAY`]. So
+    /// the next update forgets it unless a run named it in the last [`PLAN_TARGET_TTL_DAYS`] days.
     pub fn add_missing_targets(&mut self, other: &Self) -> bool {
-        let mut added = false;
+        let mut changed = false;
         for (label, classes) in &other.targets {
             if !self.targets.contains_key(label) {
                 self.targets.insert(label.clone(), classes.clone());
                 if let Some(fixed) = other.fixed.get(label) {
                     self.fixed.insert(label.clone(), *fixed);
                 }
-                added = true;
+                self.seen
+                    .insert(label.clone(), other.seen.get(label).copied().unwrap_or(UNDATED_COPY_DAY));
+                changed = true;
+            } else if let (Some(day), Some(other_day)) = (self.seen.get_mut(label), other.seen.get(label))
+                && *other_day > *day
+            {
+                // A target without a day counts as seen today, which is never earlier than the day of the other plan.
+                *day = *other_day;
+                changed = true;
             }
         }
-        added
+        changed
+    }
+
+    /// Gives the day `today` to each target of the plan that the labels name. A label without a record stays out of the
+    /// plan.
+    pub fn mark_seen<'a>(&mut self, labels: impl IntoIterator<Item = &'a str>, today: u64) {
+        for label in labels {
+            if self.targets.contains_key(label) {
+                self.seen.insert(label.to_owned(), today);
+            }
+        }
+    }
+
+    /// Removes each target whose last run is more than `days` days before `today`, with its fixed seconds and its day.
+    ///
+    /// A target without a day gets the day `today` first. An older bt writes the shared plan without days, so its targets
+    /// stay for `days` days more. A target that [`Self::add_missing_targets`] took from a copy always has a day.
+    pub fn forget_older_than(&mut self, today: u64, days: u64) {
+        for label in self.targets.keys() {
+            self.seen.entry(label.clone()).or_insert(today);
+        }
+        let Self { targets, fixed, seen } = self;
+        seen.retain(|label, day| targets.contains_key(label) && today.saturating_sub(*day) <= days);
+        targets.retain(|label, _| seen.contains_key(label));
+        fixed.retain(|label, _| seen.contains_key(label));
     }
 
     /// Replaces the class times of the target of a finished run, and its fixed seconds when the run measured them.
@@ -345,6 +404,9 @@ impl ShardPlan {
             }
             if let Some(fixed) = self.fixed.get(label) {
                 let _ = writeln!(text, "fixed\t{label}\t{fixed:.3}");
+            }
+            if let Some(day) = self.seen.get(label) {
+                let _ = writeln!(text, "seen\t{label}\t{day}");
             }
         }
         text

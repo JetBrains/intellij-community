@@ -30,8 +30,8 @@ use bt_core::selector::{
     Resolution, Selector, SelectorKind, apparent_label, as_filter_or_package, canonical_filter, no_tests_hint, resolve_selector,
 };
 use bt_core::shard_plan::{
-    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS,
-    ShardPlan, TreeTargets,
+    Groups, HEAVY_PROFILE_FILE, HEAVY_SHARDS, PLAN_TARGET_TTL_DAYS, PROFILE_FILE, SHARD_PLAN_FILE, SHARED_SHARD_PLAN_FILE,
+    SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan, TreeTargets,
 };
 use bt_core::suites::resolve_suite_run;
 
@@ -465,12 +465,20 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     // Before anything else reads the run: the next run of a failed target overwrites its logs.
     let kept_run = keep_failed_evidence(runtime, &bep);
 
-    // A filtered run times only some classes of a target, and they must not replace its record.
-    if planned
-        && runs_all_classes(&plan)
-        && let Some(files) = &plan_files
-    {
-        update_shard_plan(runtime, files, &result.timings, &result.lower_bounds);
+    // A filtered run times only some classes of a target, and they must not replace its record. Each run gives the day
+    // of the run to its targets, so a target that only filtered runs use stays in the plan.
+    if let Some(files) = &plan_files {
+        let (timings, lower_bounds) = if planned && runs_all_classes(&plan) {
+            (result.timings.as_slice(), result.lower_bounds.as_slice())
+        } else {
+            (&[][..], &[][..])
+        };
+        let run_targets = result
+            .targets
+            .iter()
+            .filter(|target| target.shards > 0)
+            .map(|target| target.label.as_str());
+        update_shard_plan(runtime, files, timings, lower_bounds, run_targets);
     }
 
     let class_time_budget_violations = if let (Some(budget), Some(baseline)) = (class_time_budget, class_time_budget_baseline.as_ref()) {
@@ -773,17 +781,28 @@ impl PlanFiles {
     }
 }
 
+/// The milliseconds of a day, to turn [`Runtime::now_ms`] into the day of a run in the shard plan.
+const MS_PER_DAY: u64 = 86_400_000;
+
 fn write_plan(runtime: &dyn Runtime, path: &Path, text: &str) {
     if let Err(error) = runtime.write_text_file(path, text) {
         runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
     }
 }
 
-/// Records the class times and the lower bounds of a run in the shard plan.
+/// Records the class times and the lower bounds of a run in the shard plan. A filtered run gives none, because it times
+/// only some classes of a target. Then it gives the day of the run to each
+/// target that ran a shard, `run_targets`, and forgets each target that no run named for [`PLAN_TARGET_TTL_DAYS`] days.
 ///
 /// It reads the plan again just before it writes, so an update of a run in another work tree since the start of this
 /// run stays. Two runs that update the plan at the same time can lose one update. That costs only speed.
-fn update_shard_plan(runtime: &dyn Runtime, files: &PlanFiles, timings: &[TargetTiming], lower_bounds: &[TargetTiming]) {
+fn update_shard_plan<'a>(
+    runtime: &dyn Runtime,
+    files: &PlanFiles,
+    timings: &[TargetTiming],
+    lower_bounds: &[TargetTiming],
+    run_targets: impl IntoIterator<Item = &'a str>,
+) {
     let mut plan = files.read(runtime).map_or_else(ShardPlan::default, |text| ShardPlan::parse(&text));
     for timing in timings {
         plan.record(timing);
@@ -797,6 +816,9 @@ fn update_shard_plan(runtime: &dyn Runtime, files: &PlanFiles, timings: &[Target
             ));
         }
     }
+    let today = runtime.now_ms() / MS_PER_DAY;
+    plan.mark_seen(run_targets, today);
+    plan.forget_older_than(today, PLAN_TARGET_TTL_DAYS);
     files.write_all(runtime, &plan.render());
 }
 

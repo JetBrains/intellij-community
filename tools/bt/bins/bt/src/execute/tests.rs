@@ -354,12 +354,15 @@ fn a_lane_run_records_the_class_times_of_the_targets_that_passed() {
                 "default\t2",
                 &format!("target\t{OTHER_LABEL}\t1"),
                 &format!("class\t{OTHER_LABEL}\tcom.Old\t7.000"),
+                // the failed target ran, so it gets the day of the run too
+                &format!("seen\t{OTHER_LABEL}\t0"),
                 &format!("target\t{CORE_LABEL}\t2"),
                 &format!("class\t{CORE_LABEL}\tcom.A\t72.000"),
                 &format!("class\t{CORE_LABEL}\tcom.A$Inner\t2.000"),
                 &format!("class\t{CORE_LABEL}\tcom.B\t30.000"),
                 // the fake shards report no wall time, so their class seconds leave no fixed seconds
                 &format!("fixed\t{CORE_LABEL}\t0.000"),
+                &format!("seen\t{CORE_LABEL}\t0"),
                 "",
             ]
             .join("\n")
@@ -1057,17 +1060,73 @@ fn a_work_tree_without_a_checkout_copy_takes_the_heavy_count_from_the_shared_pla
 }
 
 /// The tests read the checkout copy, so a planned run writes the text of the shared plan there before it starts bazel. A
-/// filtered run records nothing, so the copy keeps that text after the run. For a target that both files name, the
-/// shared plan wins.
+/// filtered run records no class times, so the copy keeps the class lines of that text after the run. For a target
+/// that both files name, the shared plan wins.
 #[test]
 fn a_planned_run_copies_the_shared_plan_into_the_checkout() {
     let fake = heavy_work_tree(SHARED_PLAN);
     fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{CORE_LABEL}\tcom.Old\t1.000\n"));
     run(&["--lane", "fast", "--", "--test_filter=com.A"], &fake);
 
+    let expected = [
+        "# The shard plan of bt. bt rewrites this file after each multi-target run.",
+        "default\t2",
+        &format!("target\t{OTHER_LABEL}\t2"),
+        &format!("class\t{OTHER_LABEL}\tcom.B\t120.000"),
+        &format!("seen\t{OTHER_LABEL}\t0"),
+        &format!("target\t{CORE_LABEL}\t6"),
+        &format!("class\t{CORE_LABEL}\tcom.A\t530.000"),
+        &format!("seen\t{CORE_LABEL}\t0"),
+        "",
+    ]
+    .join("\n");
     let state = fake.state();
-    assert_eq!(state.files.get(SHARD_PLAN), Some(&heavy_plan_text()));
-    assert_eq!(state.files.get(SHARED_PLAN), Some(&heavy_plan_text()));
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
+}
+
+/// A filtered run records no class times, but it gives the day of the run to each target that ran a shard. So a target
+/// that only filtered runs use keeps its heavy count.
+#[test]
+fn a_filtered_run_gives_the_day_of_the_run_and_keeps_the_class_times() {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(
+        SHARED_PLAN,
+        &format!(
+            "default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nseen\t{CORE_LABEL}\t10\nclass\t{OTHER_LABEL}\tcom.B\t120.000\nseen\t{OTHER_LABEL}\t10\n"
+        ),
+    );
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    fake.put_absolute(
+        XML_PATH,
+        r#"<testsuites><testsuite name="com.A" tests="1" time="9.0"/></testsuites>"#,
+    );
+    fake.put_absolute(
+        HEAVY_BEP_PATH,
+        &bep_lines(&[test_result_event(&AttemptSpec {
+            xml: XML_PATH,
+            ..attempt(CORE_LABEL)
+        })]),
+    );
+    fake.state().clock = 24 * MS_PER_DAY;
+    let outcome = run(&["--lane", "fast", "--", "--test_filter=com.A"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+
+    let expected = [
+        "# The shard plan of bt. bt rewrites this file after each multi-target run.",
+        "default\t2",
+        &format!("target\t{OTHER_LABEL}\t2"),
+        &format!("class\t{OTHER_LABEL}\tcom.B\t120.000"),
+        &format!("seen\t{OTHER_LABEL}\t10"),
+        &format!("target\t{CORE_LABEL}\t6"),
+        &format!("class\t{CORE_LABEL}\tcom.A\t530.000"),
+        &format!("seen\t{CORE_LABEL}\t24"),
+        "",
+    ]
+    .join("\n");
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
 }
 
 /// The update reads the shared plan again, and it writes the shared plan and the checkout copy. A target that only the
@@ -1078,7 +1137,7 @@ fn a_run_records_the_class_times_in_the_shared_plan_and_in_the_checkout_copy() {
     fake.put_absolute(SHARED_PLAN, &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"));
     fake.put_absolute(
         SHARD_PLAN,
-        &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nclass\t{OLD_LABEL}\tcom.Old\t7.000\n"),
+        &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nclass\t{OLD_LABEL}\tcom.Old\t7.000\nseen\t{OLD_LABEL}\t0\n"),
     );
     // The old target is a single-shard target that the current tree does not have.
     tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
@@ -1092,17 +1151,138 @@ fn a_run_records_the_class_times_in_the_shared_plan_and_in_the_checkout_copy() {
         "default\t2",
         &format!("target\t{OTHER_LABEL}\t2"),
         &format!("class\t{OTHER_LABEL}\tcom.B\t120.000"),
+        // a target without a day counts as seen on the day of the update
+        &format!("seen\t{OTHER_LABEL}\t0"),
         &format!("target\t{CORE_LABEL}\t1"),
         &format!("class\t{CORE_LABEL}\tcom.air.RecordedTest\t40.000"),
         &format!("fixed\t{CORE_LABEL}\t0.000"),
+        &format!("seen\t{CORE_LABEL}\t0"),
         &format!("target\t{OLD_LABEL}\t1"),
         &format!("class\t{OLD_LABEL}\tcom.Old\t7.000"),
+        &format!("seen\t{OLD_LABEL}\t0"),
         "",
     ]
     .join("\n");
     let state = fake.state();
     assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
     assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
+}
+
+/// A target that a run takes from the cache ran no class, so its class times stay. It still gets the day of the run, so
+/// a target that each run takes from the cache stays in the plan.
+#[test]
+fn a_cached_target_gets_the_day_of_the_run() {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(
+        SHARED_PLAN,
+        &format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t3.000\nseen\t{CORE_LABEL}\t3\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nseen\t{OTHER_LABEL}\t3\n"),
+    );
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    fake.put_absolute(
+        XML_PATH,
+        r#"<testsuites><testsuite name="com.A" tests="1" time="9.0"/></testsuites>"#,
+    );
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&[test_result_event(&AttemptSpec {
+            cached: true,
+            xml: XML_PATH,
+            ..attempt(CORE_LABEL)
+        })]),
+    );
+    fake.state().clock = 10 * MS_PER_DAY;
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+
+    let expected = [
+        "# The shard plan of bt. bt rewrites this file after each multi-target run.",
+        "default\t2",
+        &format!("target\t{OTHER_LABEL}\t1"),
+        &format!("class\t{OTHER_LABEL}\tcom.B\t5.000"),
+        &format!("seen\t{OTHER_LABEL}\t3"),
+        &format!("target\t{CORE_LABEL}\t1"),
+        &format!("class\t{CORE_LABEL}\tcom.A\t3.000"),
+        &format!("seen\t{CORE_LABEL}\t10"),
+        "",
+    ]
+    .join("\n");
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
+}
+
+/// A target that no run named for [`PLAN_TARGET_TTL_DAYS`] days leaves the shared plan and the checkout copy, also when
+/// the checkout copy still names it. A target of exactly that age stays.
+#[test]
+fn a_target_that_no_run_named_for_the_ttl_leaves_both_plan_files() {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(
+        SHARED_PLAN,
+        &format!(
+            "default\t2\nclass\t{OLD_LABEL}\tcom.Old\t7.000\nfixed\t{OLD_LABEL}\t2.000\nseen\t{OLD_LABEL}\t5\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nseen\t{OTHER_LABEL}\t6\n"
+        ),
+    );
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!("default\t2\nclass\t{OLD_LABEL}\tcom.Old\t7.000\nseen\t{OLD_LABEL}\t4\n"),
+    );
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    one_attempt(
+        &fake,
+        "PASSED",
+        r#"<testsuites><testsuite name="com.air.RecordedTest" tests="1" time="40.0"/></testsuites>"#,
+    );
+    fake.state().clock = 20 * MS_PER_DAY;
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+
+    let expected = [
+        "# The shard plan of bt. bt rewrites this file after each multi-target run.",
+        "default\t2",
+        &format!("target\t{OTHER_LABEL}\t1"),
+        &format!("class\t{OTHER_LABEL}\tcom.B\t5.000"),
+        &format!("seen\t{OTHER_LABEL}\t6"),
+        &format!("target\t{CORE_LABEL}\t1"),
+        &format!("class\t{CORE_LABEL}\tcom.air.RecordedTest\t40.000"),
+        &format!("fixed\t{CORE_LABEL}\t0.000"),
+        &format!("seen\t{CORE_LABEL}\t20"),
+        "",
+    ]
+    .join("\n");
+    let state = fake.state();
+    assert_eq!(state.files.get(SHARED_PLAN), Some(&expected));
+    assert_eq!(state.files.get(SHARD_PLAN), Some(&expected));
+}
+
+/// A checkout copy from before the `seen` line names a target without a day. The shared plan forgot the target, so the
+/// copy brings it back with no claim to the day of the run, and the update forgets it again.
+#[test]
+fn an_undated_target_of_the_checkout_copy_does_not_come_back() {
+    let fake = work_tree(fake_air_tree());
+    fake.put_absolute(
+        SHARED_PLAN,
+        &format!("default\t2\nclass\t{OTHER_LABEL}\tcom.B\t5.000\nseen\t{OTHER_LABEL}\t20\n"),
+    );
+    fake.put_absolute(SHARD_PLAN, &format!("default\t2\nclass\t{OLD_LABEL}\tcom.Old\t7.000\n"));
+    tree_has(&fake, &[CORE_LABEL, OTHER_LABEL]);
+    one_attempt(
+        &fake,
+        "PASSED",
+        r#"<testsuites><testsuite name="com.air.RecordedTest" tests="1" time="40.0"/></testsuites>"#,
+    );
+    fake.state().clock = 20 * MS_PER_DAY;
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+
+    let state = fake.state();
+    for path in [SHARED_PLAN, SHARD_PLAN] {
+        let plan = state.files.get(path).cloned().unwrap_or_default();
+        assert!(!plan.contains(OLD_LABEL), "{path}:\n{plan}");
+        assert_mentions(
+            &plan,
+            &[&format!("seen\t{OTHER_LABEL}\t20\n"), &format!("seen\t{CORE_LABEL}\t20\n")],
+        );
+    }
 }
 
 /// A checkout outside git reads and writes only the checkout copy.

@@ -228,6 +228,7 @@ fn the_tree_reads_the_rule_kind_of_each_target() {
 fn the_rendered_plan_has_the_lines_the_runner_reads() {
     let mut plan = ShardPlan::default();
     plan.record(&timing("//a:t", &[("com.B", 100.0), ("com.A", 1.5)]));
+    plan.mark_seen(["//a:t"], 20_418);
 
     assert_eq!(
         plan.render(),
@@ -235,7 +236,8 @@ fn the_rendered_plan_has_the_lines_the_runner_reads() {
          default\t2\n\
          target\t//a:t\t2\n\
          class\t//a:t\tcom.A\t1.500\n\
-         class\t//a:t\tcom.B\t100.000\n"
+         class\t//a:t\tcom.B\t100.000\n\
+         seen\t//a:t\t20418\n"
     );
 }
 
@@ -350,4 +352,108 @@ fn the_fixed_seconds_of_a_target_read_back_and_a_record_without_them_keeps_the_o
     plan.record(&timing("//a:t", &[("com.A", 2.0)]));
     assert_eq!(plan.fixed_of("//a:t"), Some(8.5));
     assert_eq!(ShardPlan::parse("fixed\t//a:t\tmany\nfixed\t//a:t\n").fixed_of("//a:t"), None);
+}
+
+/// The day of the last run of a target travels in a line of its own, which the runner and an older bt skip.
+#[test]
+fn the_day_of_a_target_reads_back_and_a_bad_day_is_skipped() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing("//a:t", &[("com.A", 1.0)]));
+    plan.record(&timing("//b:t", &[("com.B", 1.0)]));
+    plan.mark_seen(["//a:t", "//c:no_record"], 7);
+    let text = plan.render();
+    assert!(text.contains("class\t//a:t\tcom.A\t1.000\nseen\t//a:t\t7\n"), "{text}");
+    // a label without a record gets no day, and a target that no run named has none yet
+    assert!(!text.contains("//c:no_record") && !text.contains("seen\t//b:t"), "{text}");
+    assert_eq!(ShardPlan::parse(&text), plan);
+
+    let bad = ShardPlan::parse("class\t//a:t\tcom.A\t1.000\nseen\t//a:t\tyesterday\nseen\t//a:t\n");
+    assert_eq!(bad, ShardPlan::parse("class\t//a:t\tcom.A\t1.000\n"));
+}
+
+/// An older bt writes no day. Its targets count as seen on the day of the next update, so none of them leaves at once.
+#[test]
+fn a_target_without_a_day_gets_the_day_of_the_update() {
+    let mut plan = ShardPlan::parse("class\t//a:t\tcom.A\t1.000\nclass\t//b:t\tcom.B\t1.000\nseen\t//b:t\t90\n");
+    plan.forget_older_than(100, PLAN_TARGET_TTL_DAYS);
+    let text = plan.render();
+    assert!(text.contains("seen\t//a:t\t100\n") && text.contains("seen\t//b:t\t90\n"), "{text}");
+}
+
+/// A target that no run named for more than the TTL leaves the plan with its fixed seconds and its day. A target of
+/// exactly that age stays.
+#[test]
+fn a_target_older_than_the_ttl_leaves_the_plan_with_its_fixed_seconds() {
+    let mut plan = ShardPlan::default();
+    for label in ["//a:old", "//a:edge", "//a:new"] {
+        plan.record(&TargetTiming {
+            fixed_seconds: Some(3.0),
+            ..timing(label, &[("com.A", 1.0)])
+        });
+    }
+    plan.mark_seen(["//a:old"], 85);
+    plan.mark_seen(["//a:edge"], 86);
+    plan.mark_seen(["//a:new"], 100);
+    plan.forget_older_than(100, PLAN_TARGET_TTL_DAYS);
+
+    assert_eq!(
+        plan.class_times().map(|(label, _, _)| label).collect::<Vec<_>>(),
+        ["//a:edge", "//a:new"]
+    );
+    assert_eq!(plan.fixed_of("//a:old"), None);
+    assert_eq!(plan.fixed_of("//a:edge"), Some(3.0));
+    assert!(!plan.render().contains("//a:old"), "{}", plan.render());
+    // a later record of the target starts without the old day
+    plan.record(&timing("//a:old", &[("com.A", 1.0)]));
+    assert!(!plan.render().contains("seen\t//a:old"), "{}", plan.render());
+}
+
+/// For a target that both plans name, the merge takes the later day. A target without a day counts as seen today, so
+/// it keeps no day. A target that only the other plan names comes with its day, so an old copy cannot keep a target
+/// that the shared plan forgot.
+#[test]
+fn a_merge_takes_the_later_day_of_a_target() {
+    let mut shared = ShardPlan::parse(
+        "class\t//a:both\tA\t1.000\nseen\t//a:both\t50\nclass\t//a:later\tA\t1.000\nseen\t//a:later\t60\nclass\t//a:no_day\tA\t1.000\n",
+    );
+    let copy = ShardPlan::parse(
+        "class\t//a:both\tA\t1.000\nseen\t//a:both\t70\nclass\t//a:later\tA\t1.000\nseen\t//a:later\t40\n\
+         class\t//a:no_day\tA\t1.000\nseen\t//a:no_day\t10\nclass\t//a:forgotten\tA\t1.000\nfixed\t//a:forgotten\t2.000\nseen\t//a:forgotten\t3\n",
+    );
+
+    assert!(shared.add_missing_targets(&copy));
+    let text = shared.render();
+    for line in [
+        "seen\t//a:both\t70\n",
+        "seen\t//a:later\t60\n",
+        "fixed\t//a:forgotten\t2.000\nseen\t//a:forgotten\t3\n",
+    ] {
+        assert!(text.contains(line), "no {line:?} in:\n{text}");
+    }
+    assert!(!text.contains("seen\t//a:no_day"), "{text}");
+    assert!(!shared.add_missing_targets(&copy), "a second merge changes nothing");
+
+    shared.forget_older_than(70, PLAN_TARGET_TTL_DAYS);
+    assert_eq!(
+        shared.class_times().map(|(label, _, _)| label).collect::<Vec<_>>(),
+        ["//a:both", "//a:later", "//a:no_day"]
+    );
+}
+
+/// A copy from before the `seen` line names a target without a day. The shared plan takes it with no claim to today, so
+/// it stays only when the run names it. An undated target of the shared plan still counts as seen today.
+#[test]
+fn an_undated_target_of_the_copy_stays_only_when_the_run_names_it() {
+    let mut shared = ShardPlan::parse("class\t//a:shared_undated\tA\t1.000\n");
+    let copy = ShardPlan::parse("class\t//a:gone\tA\t1.000\nclass\t//a:live\tA\t1.000\n");
+
+    assert!(shared.add_missing_targets(&copy));
+    assert!(shared.render().contains("seen\t//a:gone\t0\n"), "{}", shared.render());
+    shared.mark_seen(["//a:live"], 100);
+    shared.forget_older_than(100, PLAN_TARGET_TTL_DAYS);
+    assert_eq!(
+        shared.class_times().map(|(label, _, _)| label).collect::<Vec<_>>(),
+        ["//a:live", "//a:shared_undated"]
+    );
+    assert!(shared.render().contains("seen\t//a:shared_undated\t100\n"), "{}", shared.render());
 }

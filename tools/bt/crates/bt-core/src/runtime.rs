@@ -168,7 +168,8 @@ pub trait Runtime: Sync {
     /// The home directory of the user, when the platform names one.
     fn home_dir(&self) -> Option<PathBuf>;
 
-    /// Wall-clock milliseconds. Only differences are used, so a fake can start anywhere.
+    /// Wall-clock milliseconds since the Unix epoch. A run takes differences for durations, and the absolute value for
+    /// a stamp, a record time and the day of the shard plan.
     fn now_ms(&self) -> u64;
 
     /// How long the wrapper built this binary before it started it, in milliseconds, or `None` when the wrapper named
