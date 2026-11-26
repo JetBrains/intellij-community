@@ -346,8 +346,8 @@ data class PluginBuildDescriptor(
  * Writes everything in `plugin-classpath.txt` that precedes the plugin count: the format version and the product descriptor.
  *
  * The count is not written here because it is not always known to whoever knows the descriptor. A split assembly
- * has the platform fragment produce this prefix while each plugin fragment produces only its own records, so the count
- * is the sum the composer arrives at once every fragment is in - see `writePluginClassPathCount`.
+ * has the platform component produce this prefix while each plugin component produces only its own records, so the count
+ * is the sum the composer arrives at once every component is in - see `writePluginClassPathCount`.
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 internal fun writePluginClassPathPrefix(
