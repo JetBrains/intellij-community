@@ -901,15 +901,16 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
 
   /**
    * Checks every shred of {@code shreds}.
-   * Keeps the result until the host file or {@code hostDocument} changes.
+   * Keeps a positive result until the host file or {@code hostDocument} changes.
    * A change of {@code hostDocument} can make a host range marker invalid before the commit.
+   * Keeps no negative result, because a host pointer can find no element during the commit of the host document.
    */
   private static @NotNull CachedValue<Boolean> createShredsValidity(@NotNull Place shreds, @NotNull Document hostDocument) {
     SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = shreds.getHostPointer();
     return CachedValuesManager.getManager(hostPointer.getProject()).createCachedValue(() -> {
       PsiFile hostFile = hostPointer.getContainingFile();
-      if (hostFile == null) return CachedValueProvider.Result.create(false, ModificationTracker.EVER_CHANGED);
-      return CachedValueProvider.Result.create(shreds.isValid(), hostFile, hostDocument);
+      if (hostFile == null || !shreds.isValid()) return CachedValueProvider.Result.create(false, ModificationTracker.EVER_CHANGED);
+      return CachedValueProvider.Result.create(true, hostFile, hostDocument);
     }, false);
   }
 

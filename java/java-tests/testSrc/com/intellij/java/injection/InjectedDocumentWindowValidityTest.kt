@@ -3,20 +3,33 @@ package com.intellij.java.injection
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.lang.injection.MultiHostInjector
+import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTreeChangeAdapter
+import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.javadoc.PsiSnippetDocTag
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.ReadActionCache
 import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -35,6 +48,7 @@ internal class InjectedDocumentWindowValidityTest {
 
     private const val MANY_PLACES = 2_000
     private const val CALLS = 10_000
+    private const val INJECT_PREFIX = "inject:"
   }
 
   private val fixture by codeInsightModuleFixture(projectFixture)
@@ -108,6 +122,53 @@ internal class InjectedDocumentWindowValidityTest {
   }
 
   /**
+   * The reparse replaces the comment that hosts the injection.
+   * Until the commit is published, the smart pointer of the host holds the range of the old comment and finds no element.
+   */
+  @Test
+  fun `a window keeps no result of a check during the host reparse`() {
+    val disposable = Disposer.newDisposable()
+    try {
+      InjectedLanguageManager.getInstance(fixture.project).registerMultiHostInjector(CommentInjector(), disposable)
+      EdtTestUtil.runInEdtAndWait<Throwable> {
+        fixture.configureByText("A.java", "class A {\n  void m() {\n    // inject:abc\n  }\n}\n")
+      }
+      val injected = commentInjectedWindow()
+      assertThat(runReadAction { injected.window.isValid }).isTrue()
+
+      Registry.get("platform.random.idempotence.check.rate").setValue(1, disposable)
+      val validityDuringReparse = mutableListOf<Boolean>()
+      PsiManager.getInstance(fixture.project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
+        override fun childReplaced(event: PsiTreeChangeEvent) {
+          validityDuringReparse.add(injected.window.isValid)
+        }
+      }, disposable)
+      val errors = mutableListOf<String>()
+      LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+          errors.add(message)
+          return Action.NONE
+        }
+      }) {
+        EdtTestUtil.runInEdtAndWait<Throwable> {
+          WriteCommandAction.runWriteCommandAction(fixture.project) {
+            val document = fixture.editor.document
+            document.insertString(document.text.indexOf("abc") + "abc".length, "def")
+            PsiDocumentManager.getInstance(fixture.project).commitAllDocuments()
+          }
+        }
+      }
+
+      assertThat(validityDuringReparse).isNotEmpty()
+      assertThat(errors).isEmpty()
+      assertThat(runReadAction { injected.window.isValid }).isTrue()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+  }
+
+  /**
    * Compares the time of [CALLS] calls of [onePlace] and of [manyPlaces].
    * A check of every place makes the many-place calls cost hundreds of times more.
    */
@@ -160,6 +221,27 @@ internal class InjectedDocumentWindowValidityTest {
     InjectedLanguageManager.getInstance(fixture.project).enumerate(snippet) { injectedPsi, _ -> injectedFile = injectedPsi }
     val file = injectedFile!!
     InjectedWindow(file, PsiDocumentManager.getInstance(fixture.project).getCachedDocument(file) as DocumentWindow)
+  }
+
+  private fun commentInjectedWindow(): InjectedWindow = runReadAction {
+    val comment = PsiTreeUtil.findChildOfType(fixture.file, PsiComment::class.java)!!
+    var injectedFile: PsiFile? = null
+    InjectedLanguageManager.getInstance(fixture.project).enumerate(comment) { injectedPsi, _ -> injectedFile = injectedPsi }
+    val file = injectedFile!!
+    InjectedWindow(file, PsiDocumentManager.getInstance(fixture.project).getCachedDocument(file) as DocumentWindow)
+  }
+
+  /** Injects plain text after the `inject:` prefix of a comment. */
+  private class CommentInjector : MultiHostInjector {
+    override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
+      val prefix = context.text.indexOf(INJECT_PREFIX)
+      if (prefix < 0) return
+      registrar.startInjecting(PlainTextLanguage.INSTANCE)
+        .addPlace(null, null, context as PsiLanguageInjectionHost, TextRange(prefix + INJECT_PREFIX.length, context.textLength))
+        .doneInjecting()
+    }
+
+    override fun elementsToInjectIn(): List<Class<out PsiElement>> = listOf(PsiComment::class.java)
   }
 
   /** Holds the injected [file], so that its view provider stays cached while the test checks the [window]. */
