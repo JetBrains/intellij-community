@@ -18,6 +18,7 @@ import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor
 import com.intellij.ide.plugins.newui.PluginModelEvent
 import com.intellij.ide.plugins.newui.PluginPriceService
 import com.intellij.ide.plugins.newui.PluginSource
+import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
 import com.intellij.ide.plugins.newui.PluginUpdatesService
@@ -379,13 +380,20 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
     }
     updateAllUpdatesCollectionJob = pageScope.launch(start = CoroutineStart.UNDISPATCHED) {
       sessionPluginUpdates.combine(localSource.state) { updates, localState ->
-        val enabledPluginIds = localState.sections.asSequence()
+        if (localState.facetsLoading) return@combine updates.copy(enabledUpdates = emptyList())
+        val eligiblePluginIds = localState.sections.asSequence()
           .filter { it.id == PluginSectionId.Installed || it.id == PluginSectionId.Bundled }
           .flatMap { it.items.asSequence() }
-          .filter { it.rowInput?.enabled == true }
+          .filter { item ->
+            val input = item.rowInput ?: return@filter false
+            val status = input.installationState.status
+            val applied = input.installedPlugin?.source != PluginSource.BOTH &&
+                          (status == PluginStatus.UPDATED || status == PluginStatus.UPDATED_WITH_RESTART)
+            input.enabled && item.pluginId !in localState.manualUpdates && !applied
+          }
           .map { it.pluginId }
           .toHashSet()
-        updates.copy(enabledUpdates = updates.all.filter { it.pluginId in enabledPluginIds })
+        updates.copy(enabledUpdates = updates.all.filter { it.pluginId in eligiblePluginIds })
       }.collect(updateAllController::acceptUpdates)
     }
     PluginManagerUsageCollector.logUnifiedSessionStarted(openSource)

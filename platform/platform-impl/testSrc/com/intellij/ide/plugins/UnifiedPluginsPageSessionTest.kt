@@ -18,12 +18,14 @@ import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.EventHandler.SelectionType
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSession
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.ide.plugins.newui.PluginOperationContext
 import com.intellij.ide.plugins.newui.PluginOperationKind
 import com.intellij.ide.plugins.newui.PluginOperationTerminalResult
 import com.intellij.ide.plugins.newui.PluginSource
+import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdateSourceState
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
@@ -859,6 +861,54 @@ internal class UnifiedPluginsPageSessionTest {
         Disposer.dispose(session)
       }
     }
+
+  @Test
+  fun `Update All excludes prepared and applied individual updates`(): Unit = uiTest {
+    val first = PluginDto("First", PluginId.getId("manual.first"))
+    val second = PluginDto("Second", PluginId.getId("manual.second"))
+    val applied = PluginDto("Applied", PluginId.getId("manual.applied"))
+    val candidates = listOf(first, second, applied)
+    val updates = flowOf(PluginUpdatesEvent(candidates, emptyList(), emptyList()))
+    val provider = FixedLocalDataProvider(
+      UnifiedPluginInventory(candidates.map { inventoryItem(it.pluginId.idString, checkNotNull(it.name)) }, emptyList()),
+      installationStates = mapOf(applied.pluginId to PluginInstallationState(true, PluginStatus.UPDATED)),
+    )
+    val executor = RecordingUpdateAllExecutor()
+    val session = createSession(null, provider, pluginUpdates = updates, updateAllExecutor = executor)
+    try {
+      val content = session.getComponent()
+      val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+      val button = updateAllButton(header)
+      val status = header.components.filterIsInstance<JLabel>().single()
+      waitForPluginIds(content, candidates.map { it.pluginId.idString }.toSet())
+      val model = componentsOfType(content, ListPluginComponent::class.java).first().getModelFacade().getModel()
+
+      suspend fun prepareUpdate(update: PluginDto) {
+        val operation = PluginOperationContext.create(update.pluginId, PluginSource.LOCAL, PluginOperationKind.UPDATE)
+        model.operationStarted(operation, update)
+        waitUntilAssertSucceeds { assertThat(status.isVisible).isTrue() }
+        model.operationTargetFinished(operation, PluginSource.LOCAL, PluginOperationTerminalResult.SUCCEEDED)
+        model.operationFinished(operation)
+        waitUntilAssertSucceeds { assertThat(status.isVisible).isFalse() }
+      }
+
+      waitForButton(button, "Update All", enabled = true)
+      prepareUpdate(first)
+      waitForButton(button, "Update All", enabled = true)
+      prepareUpdate(second)
+      waitUntilAssertSucceeds { assertThat(button.isVisible).isFalse() }
+
+      session.reset()
+      waitForButton(button, "Update All", enabled = true)
+      prepareUpdate(first)
+      waitForButton(button, "Update All", enabled = true)
+      button.doClick()
+      assertThat(executor.requests.single().updates).containsExactly(second)
+    }
+    finally {
+      Disposer.dispose(session)
+    }
+  }
 
   @Test
   fun `Update All follows session enablement with cached disabled updates`(): Unit =
@@ -1929,6 +1979,7 @@ internal class UnifiedPluginsPageSessionTest {
     private val onEnrichmentRequested: () -> Unit = {},
     private val errors: Map<PluginId, List<HtmlChunk>> = emptyMap(),
     private val enabledStates: Map<PluginId, Boolean> = emptyMap(),
+    private val installationStates: Map<PluginId, PluginInstallationState> = emptyMap(),
   ) : UnifiedPluginLocalDataProvider {
     override suspend fun loadInventory(): UnifiedPluginInventory {
       onInventoryLoaded()
@@ -1950,7 +2001,7 @@ internal class UnifiedPluginsPageSessionTest {
         contentRevision = contentRevision,
         enabledStates = plugins.associate { it.model.pluginId to (enabledStates[it.model.pluginId] ?: true) },
         errors = errors,
-        installationStates = emptyMap(),
+        installationStates = installationStates,
         restrictions = emptyMap(),
       )
     }

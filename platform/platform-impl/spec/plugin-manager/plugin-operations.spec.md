@@ -345,6 +345,12 @@ Untested: No focused test covers every management edit and refresh path.
     `Update All follows session enablement with cached disabled updates`
   )
 
+- Update All must exclude updates that are downloading, prepared, or already applied to their targets.
+- Reset must restore eligible updates that were prepared in the session.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Update All excludes prepared and applied individual updates`
+  )
+
 - The captured total must stay fixed while that request runs.
 - A successful prepared update must advance the prepared count.
 - A failed or cancelled update must not advance the prepared count.
