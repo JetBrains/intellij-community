@@ -19,7 +19,7 @@ load("//build:dist_product_info.bzl", "DIST_MARKETPLACE_NAMES")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "library_entries")
 load(":dist_build_date.bzl", "DIST_PINNED_BUILD_DATE_IN_SECONDS")
-load(":dist_product_content.bzl", "descriptor_rows")
+load(":dist_product_content.bzl", "descriptor_rows", "module_descriptor_rows")
 load(":dist_tool_info.bzl", "dist_tool_inputs")
 
 DistPluginDescriptorInfo = provider(
@@ -298,7 +298,7 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     # One answer per load path. The writer seeds the files first and puts a jar entry in only when the path is
     # absent. So a load path two declarations answer is refused here, where every declaration is visible.
     answered_by = {}
-    for row in _descriptor_rows(ctx):
+    for row in module_descriptor_rows(ctx):
         if len(row.files) != 1:
             fail("%s declares %d files, and a descriptor must name exactly one" % (row.label, len(row.files)), attr = "descriptors")
         if row.load_path in answered_by:
@@ -328,41 +328,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
                 parameters.append(("--plugin-descriptor-in-jar", load_path + "=" + jar.path, "literal"))
         inputs.extend(library.jars)
     return struct(parameters = tuple(parameters), inputs = tuple(inputs), sources = tuple(sources), stamps = stamps)
-
-def _descriptor_rows(ctx):
-    """The `descriptors` rows of the leaf, and a row for the descriptor of each module of `module_model_files`.
-
-    The record of a module names its `<module>.xml` in the `<module>_model_files` group, see `jps_module`. Only that file
-    goes into the action, never the `.iml` file. A group without such a file gives no row. A stated row wins by label
-    and by load path, as `withConventionalDescriptorRows` of the generator decides.
-
-    The leaf sorts every row by its canonical label, so the order does not depend on how a call spells a label. The
-    order has no meaning, because the leaf refuses two answers for one load path, see `_descriptor_request`.
-
-    Args:
-        ctx: the rule context.
-
-    Returns:
-        A list of `struct(label, load_path, files)`.
-    """
-    rows = [
-        struct(label = target.label, load_path = load_path, files = target.files.to_list())
-        for target, load_path in ctx.attr.descriptors.items()
-    ]
-    stated_labels = {row.label: True for row in rows}
-    stated_load_paths = {row.load_path: True for row in rows}
-    derived = []
-    for group, module_name in ctx.attr.module_model_files.items():
-        load_path = module_name + ".xml"
-        files = [file for file in group.files.to_list() if file.basename == load_path]
-        if len(files) > 1:
-            fail("%s holds %d files named %s, and a module has one descriptor" % (group.label, len(files), load_path), attr = "module_model_files")
-        if not files or files[0].owner in stated_labels or load_path in stated_load_paths:
-            continue
-        derived.append(struct(label = files[0].owner, load_path = load_path, files = files))
-
-    # One key for every row: the canonical label. The order has no meaning, because each load path has one answer.
-    return sorted(rows + derived, key = lambda row: str(row.label))
 
 def _compatible_build_range(ctx):
     """The since and until range of the leaf: the stated one, `EXACT` for an exact version, else `NEWER_WITH_SAME_BASELINE`.
@@ -673,7 +638,7 @@ action run with no JPS project model: `resolveElement` reads the cache before it
         "module_model_files": attr.label_keyed_string_dict(
             doc = """The `<module>_model_files` group of each module of the plugin, valued by the module name.
 
-The leaf adds the `<module>.xml` of each group as a row at the load path `<module>.xml`, see `_descriptor_rows`.""",
+The leaf adds the `<module>.xml` of each group as a row at the load path `<module>.xml`, see `module_descriptor_rows`.""",
             allow_files = True,
         ),
         "variant": attr.string(
@@ -982,7 +947,7 @@ def dist_plugin_descriptor(
 
     descriptors = descriptor_rows("dist_plugin_descriptor", kwargs.pop("descriptors", {}), kwargs.pop("module_descriptors", []))
 
-    # The leaf owns the order of the rows, see `_descriptor_rows`.
+    # The leaf owns the order of the rows, see `module_descriptor_rows`.
     if descriptors:
         kwargs["descriptors"] = descriptors
     name = dist_plugin_descriptor_target_name(main_module, variant)

@@ -6,7 +6,7 @@ See `dist_product_content.bzl`.
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load(":content_module_jar.bzl", "library_entries")
-load(":dist_product_content.bzl", "descriptor_rows", "product_content_attributes")
+load(":dist_product_content.bzl", "descriptor_rows", "module_descriptor_rows", "product_content_attributes")
 load(":dist_tool_info.bzl", "dist_tool_inputs")
 
 def dist_embedded_product_descriptor_target_name(main_module, product = None):
@@ -20,13 +20,13 @@ def dist_embedded_product_descriptor_target_name(main_module, product = None):
     return name if not product else name + "_" + product
 
 def declared_descriptors(ctx):
-    """The `descriptors` and `library_descriptors` attributes as action inputs and writer arguments.
+    """The `descriptors`, `module_model_files` and `library_descriptors` attributes as action inputs and writer arguments.
 
     One answer per load path: a load path that two declarations answer fails the analysis. The product descriptor rule
-    shares this with the embedded product descriptor rule.
+    shares this with the embedded product descriptor rule. The rows come from `module_descriptor_rows`.
 
     Args:
-        ctx: the rule context. The rule declares `descriptors` and `library_descriptors`.
+        ctx: the rule context. The rule declares `descriptors`, `module_model_files` and `library_descriptors`.
 
     Returns:
         `struct(inputs, descriptor_args, descriptor_jar_args)`.
@@ -35,15 +35,14 @@ def declared_descriptors(ctx):
     answered_by = {}
     descriptor_args = []
     descriptor_jar_args = []
-    for target, load_path in ctx.attr.descriptors.items():
-        files = target.files.to_list()
-        if len(files) != 1:
-            fail("%s provides %d files. An embedded descriptor input must provide one" % (target.label, len(files)), attr = "descriptors")
-        if load_path in answered_by:
-            fail("%s and %s both provide '%s'" % (answered_by[load_path], target.label, load_path), attr = "descriptors")
-        answered_by[load_path] = target.label
-        inputs.append(files[0])
-        descriptor_args.append(load_path + "=" + files[0].path)
+    for row in module_descriptor_rows(ctx):
+        if len(row.files) != 1:
+            fail("%s provides %d files. An embedded descriptor input must provide one" % (row.label, len(row.files)), attr = "descriptors")
+        if row.load_path in answered_by:
+            fail("%s and %s both provide '%s'" % (answered_by[row.load_path], row.label, row.load_path), attr = "descriptors")
+        answered_by[row.load_path] = row.label
+        inputs.append(row.files[0])
+        descriptor_args.append(row.load_path + "=" + row.files[0].path)
     for container, load_paths in ctx.attr.library_descriptors.items():
         jars = library_entries(ctx, [container], attr_name = "library_descriptors")[0].jars
         for load_path in load_paths.split(" "):
@@ -115,6 +114,12 @@ _dist_embedded_product_descriptor = rule(
             providers = [[JavaInfo]],
             doc = "Ordered runtime jar containers valued by space-separated resolver load paths.",
         ),
+        "module_model_files": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """The `<module>_model_files` group of each additional module, valued by the module name.
+
+The rule adds the `<module>.xml` of each group as a row at the load path `<module>.xml`, see `module_descriptor_rows`.""",
+        ),
         "separate_jar": attr.string_list(
             doc = "Content modules whose embedded descriptor takes separate-jar=true.",
         ),
@@ -159,12 +164,13 @@ def dist_embedded_product_descriptor(
         module_sets: the top-level set names, in DSL order.
         module_set_table: `DIST_MODULE_SETS` of the half.
         loading_overrides: the loading rule of a member, which a top-level set states for its own members.
-        content_modules: the additional modules, in DSL order.
+        content_modules: the additional modules in DSL order: a list of names, or a dict from each name to its rule
+            label. With the dict, the rule takes the descriptor of each module from its record.
         private_content_modules: the additional modules without a namespace.
         content_module_loading: the loading rule of an additional module.
         content_module_required_if_available: the `required-if-available` module of an additional module.
-        descriptors: the explicit descriptor rows, keyed by label and valued by load path. The conventional row of each
-            additional module is explicit too.
+        descriptors: the explicit descriptor rows, keyed by label and valued by load path. With a list of
+            `content_modules`, the conventional row of each additional module is explicit too.
         module_descriptors: the labels of the explicit rows whose load path is the base name of the file.
         tags: extra tags. `manual` is added.
         visibility: public by default.

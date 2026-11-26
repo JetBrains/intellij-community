@@ -1,7 +1,8 @@
 """Derives the content rows of a product descriptor from the module-set table.
 
 `dist_product_descriptor` and `dist_embedded_product_descriptor` share this. The descriptor writer composes the
-`<idea-plugin>` element from the rows that `product_content_rows` returns.
+`<idea-plugin>` element from the rows that `product_content_rows` returns. The descriptor leaf shares the descriptor rows
+of a module record, see `module_descriptor_rows`.
 """
 
 # The loading rule that a module row omits, as the Product DSL renderer omits it.
@@ -37,6 +38,61 @@ def _record_alias(alias_sources, alias, source):
     if alias in alias_sources:
         fail("the alias '%s' of %s is already declared by %s" % (alias, source, alias_sources[alias]))
     alias_sources[alias] = source
+
+def module_label(label):
+    """`label` in the form `<package>:<target>`, or `None` when it is no module label.
+
+    A label without a target name names the target of the last package segment, as in Bazel: `//java/vcs` gives
+    `//java/vcs:vcs`. A root package needs the target name.
+    """
+    if type(label) != "string":
+        return None
+    if ":" in label:
+        return label if label.rpartition(":")[2] else None
+    package = label.partition("//")[2]
+    if not package:
+        return None
+    return label + ":" + package.rpartition("/")[2]
+
+def module_model_files_label(label, module_name):
+    """The `<module>_model_files` group of the record of `module_name`, in the package of its label, see `jps_module`."""
+    return label.rpartition(":")[0] + ":" + module_name + "_model_files"
+
+def module_descriptor_rows(ctx):
+    """The `descriptors` rows of a rule, and a row for the descriptor of each module of `module_model_files`.
+
+    The record of a module names its `<module>.xml` in the `<module>_model_files` group, see `jps_module`. Only that file
+    goes into the action, never the `.iml` file. A group without such a file gives no row. A stated row wins by label
+    and by load path, as `withConventionalDescriptorRows` of the generator decides.
+
+    The rows are sorted by the canonical label, so the order does not depend on how a call spells a label. The order has
+    no meaning, because a rule refuses two answers for one load path. The descriptor leaf, the product descriptor and the
+    embedded product descriptor share this.
+
+    Args:
+        ctx: the rule context. The rule declares `descriptors` and `module_model_files`.
+
+    Returns:
+        A list of `struct(label, load_path, files)`.
+    """
+    rows = [
+        struct(label = target.label, load_path = load_path, files = target.files.to_list())
+        for target, load_path in ctx.attr.descriptors.items()
+    ]
+    stated_labels = {row.label: True for row in rows}
+    stated_load_paths = {row.load_path: True for row in rows}
+    derived = []
+    for group, module_name in ctx.attr.module_model_files.items():
+        load_path = module_name + ".xml"
+        files = [file for file in group.files.to_list() if file.basename == load_path]
+        if len(files) > 1:
+            fail("%s holds %d files named %s, and a module has one descriptor" % (group.label, len(files), load_path), attr = "module_model_files")
+        if not files or files[0].owner in stated_labels or load_path in stated_load_paths:
+            continue
+        derived.append(struct(label = files[0].owner, load_path = load_path, files = files))
+
+    # One key for every row: the canonical label. The order has no meaning, because each load path has one answer.
+    return sorted(rows + derived, key = lambda row: str(row.label))
 
 def product_content_rows(
         module_sets,
@@ -238,6 +294,10 @@ def product_content_attributes(
     A target that states no alias, no include, no set and no additional module fails, because the descriptor writer
     refuses a request without a composition flag.
 
+    `content_modules` is a list of names, or a dict from each name to its rule label in DSL order. With the dict, the
+    attributes name the `<module>_model_files` group of each additional module that the product does not refuse. The
+    rule then takes the descriptor of the module from the record, see `module_descriptor_rows`.
+
     Args:
         caller: the macro name for a failure message.
         aliases: see `product_content_rows`.
@@ -245,11 +305,13 @@ def product_content_attributes(
         module_sets: see `product_content_rows`.
         module_set_table: see `product_content_rows`.
         loading_overrides: see `product_content_rows`.
-        content_modules: see `product_content_rows`.
+        content_modules: the additional modules in DSL order: a list of names, or a dict from each name to its rule
+            label.
         private_content_modules: see `product_content_rows`.
         content_module_loading: see `product_content_rows`.
         content_module_required_if_available: see `product_content_rows`.
-        descriptors: the explicit `descriptors` rows, the conventional rows of the additional modules included.
+        descriptors: the explicit `descriptors` rows. With a list of `content_modules`, the conventional rows of the
+            additional modules are explicit too.
         refused_content_modules: see `derived_descriptor_rows`.
 
     Returns:
@@ -260,11 +322,22 @@ def product_content_attributes(
     for href, kind in includes.items():
         if kind not in _INCLUDE_KINDS:
             fail("%s: the include '%s' has the kind '%s'. The kind must be one of %s" % (caller, href, kind, _INCLUDE_KINDS))
+    if type(content_modules) not in ["dict", "list"]:
+        fail("%s states content modules that are neither a dict nor a list" % caller)
+    module_model_files = {}
+    if type(content_modules) == "dict":
+        refused = {name: True for name in refused_content_modules}
+        for name, label in content_modules.items():
+            normalized = module_label(label)
+            if normalized == None:
+                fail("%s states '%s' for the content module '%s', which is no module label" % (caller, label, name))
+            if name not in refused:
+                module_model_files[module_model_files_label(normalized, name)] = name
     content = product_content_rows(
         module_sets = module_sets,
         module_set_table = module_set_table,
         loading_overrides = loading_overrides,
-        content_modules = content_modules,
+        content_modules = list(content_modules),
         private_content_modules = private_content_modules,
         content_module_loading = content_module_loading,
         content_module_required_if_available = content_module_required_if_available,
@@ -284,4 +357,6 @@ def product_content_attributes(
     )
     if rows:
         attributes["descriptors"] = rows
+    if module_model_files:
+        attributes["module_model_files"] = module_model_files
     return attributes

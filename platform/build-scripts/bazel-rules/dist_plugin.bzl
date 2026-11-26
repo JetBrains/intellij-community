@@ -4,6 +4,7 @@ load(":content_module_jar.bzl", "content_module_jar_target_name")
 load(":dev_plugin.bzl", "dev_plugin", "dist_plugin_directory", "is_library_token")
 load(":dist_frontend_application_info.bzl", "dist_frontend_application_info")
 load(":dist_plugin_descriptor.bzl", "dist_plugin_descriptor", "dist_plugin_descriptor_target_name")
+load(":dist_product_content.bzl", "module_label", "module_model_files_label")
 load(":jvm_runtime_jars.bzl", "jvm_runtime_jars")
 
 _SHARED_LEAF_ATTRS = ["tags", "visibility"]
@@ -19,21 +20,6 @@ _DEV_PLUGIN_SUFFIX = "_dev_plugin"
 def dist_plugin_component_target_name(main_module):
     """The packed component's target name - `"intellij.json"` gives `"intellij.json_dev_plugin"`."""
     return main_module + _DEV_PLUGIN_SUFFIX
-
-def module_label(label):
-    """`label` in the form `<package>:<target>`, or `None` when it is no module label.
-
-    A label without a target name names the target of the last package segment, as in Bazel: `//java/vcs` gives
-    `//java/vcs:vcs`. A root package needs the target name.
-    """
-    if type(label) != "string":
-        return None
-    if ":" in label:
-        return label if label.rpartition(":")[2] else None
-    package = label.partition("//")[2]
-    if not package:
-        return None
-    return label + ":" + package.rpartition("/")[2]
 
 def resolve_module_labels(main_module, names, module_labels):
     """The labels of `names` from the labels of a `dist_plugin` call, and the problems of that map.
@@ -77,10 +63,6 @@ def resolve_module_labels(main_module, names, module_labels):
             ", ".join(extra),
         ))
     return struct(labels = labels, stale = stale, messages = messages)
-
-def _module_model_files_label(label, module_name):
-    """The `<module>_model_files` group of the record of `module_name`, in the package of its label, see `jps_module`."""
-    return label.rpartition(":")[0] + ":" + module_name + "_model_files"
 
 def _content_module_jar_label(label):
     return label.rpartition(":")[0] + ":" + content_module_jar_target_name(label)
@@ -221,7 +203,7 @@ def dist_plugin(
     if descriptor:
         # The leaf takes the descriptor of each module of the call from the record of the module.
         module_model_files = {
-            _module_model_files_label(resolved.labels[name], name): name
+            module_model_files_label(resolved.labels[name], name): name
             for name in [main_module] + content_modules
             if name in resolved.labels
         }

@@ -75,6 +75,12 @@ descriptor of that prefix alone, `<name>.classpath.xml`: the core plugin descrip
             providers = [[JavaInfo]],
             doc = "Ordered runtime jar containers valued by space-separated resolver load paths.",
         ),
+        "module_model_files": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """The `<module>_model_files` group of each additional module, valued by the module name.
+
+The rule adds the `<module>.xml` of each group as a row at the load path `<module>.xml`, see `module_descriptor_rows`.""",
+        ),
         "refused_content_modules": attr.string_list(
             doc = "The optional content modules that the content module filter of the product refuses.",
         ),
@@ -162,12 +168,14 @@ def dist_product_descriptor(
         module_sets: the top-level set names, in DSL order.
         module_set_table: `DIST_MODULE_SETS` of the half.
         loading_overrides: the loading rule of a member, which a top-level set states for its own members.
-        content_modules: the additional modules, in DSL order.
+        content_modules: the additional modules in DSL order: a list of names, or a dict from each name to its rule
+            label. With the dict, the rule takes the descriptor of each module that the product does not refuse from
+            its record.
         private_content_modules: the additional modules without a namespace.
         content_module_loading: the loading rule of an additional module.
         content_module_required_if_available: the `required-if-available` module of an additional module.
-        descriptors: the explicit descriptor rows, keyed by label and valued by load path. The conventional row of each
-            additional module is explicit too.
+        descriptors: the explicit descriptor rows, keyed by label and valued by load path. With a list of
+            `content_modules`, the conventional row of each additional module is explicit too.
         module_descriptors: the labels of the explicit rows whose load path is the base name of the file.
         tags: extra tags. `manual` is added.
         visibility: public by default.

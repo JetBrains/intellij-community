@@ -215,6 +215,27 @@ def _attributes_test_impl(ctx):
 
 _attributes_test = unittest.make(_attributes_test_impl)
 
+def _module_model_files_test_impl(ctx):
+    env = unittest.begin(ctx)
+    attributes = _attributes(
+        content_modules = {"intellij.x": "//x", "intellij.y": "@community//y:y-impl", "intellij.refused": "//r:r"},
+        refused_content_modules = ["intellij.refused"],
+    )
+
+    # A dict of labels names the record group of each additional module that the product does not refuse.
+    asserts.equals(
+        env,
+        {"//x:intellij.x_model_files": "intellij.x", "@community//y:intellij.y_model_files": "intellij.y"},
+        attributes["module_model_files"],
+    )
+    asserts.equals(env, ["intellij.x", "intellij.y", "intellij.refused"], attributes["additional_rows"])
+
+    # A list of names names no group, so the call states the row of each additional module.
+    asserts.false(env, "module_model_files" in _attributes(content_modules = ["intellij.x"]))
+    return unittest.end(env)
+
+_module_model_files_test = unittest.make(_module_model_files_test_impl)
+
 # The failure cases. Each one calls the helper with data that it must refuse.
 _BROKEN_TABLE = {_A: struct(modules = ["a1"], nested = ["intellij.moduleSets.missing"])}
 
@@ -246,6 +267,8 @@ def _content_failure_probe_impl(ctx):
         _attributes(module_set_table = _TABLE)
     elif case == "include_kind":
         _attributes(includes = {"META-INF/a.xml": "fallback"})
+    elif case == "content_module_without_label":
+        _attributes(content_modules = {"intellij.x": "//"})
     else:
         fail("unknown probe case '%s'" % case)
     return []
@@ -268,6 +291,7 @@ _content_failure_test = analysistest.make(
 
 _FAILURES = {
     "additional_module_twice": "the module 'x' of content_modules is already in content_modules",
+    "content_module_without_label": "probe states '//' for the content module 'intellij.x', which is no module label",
     "alias_of_two_sets": "the alias 'com.intellij.modules.d' of the module set 'intellij.moduleSets.alias' is already declared by the module set 'intellij.moduleSets.d'",
     "module_of_two_sets": "the module 'c1' of the module set 'intellij.moduleSets.shared' is already in the module set 'intellij.moduleSets.c'",
     "product_alias_of_set": "the alias 'com.intellij.modules.a' of the module set 'intellij.moduleSets.a' is already declared by the product",
@@ -346,7 +370,10 @@ def _embedded_content_form_test_impl(ctx):
         "--additional-module=intellij.fixture.extra;loading=embedded",
         "--separate-jar=c1",
     ], _stripped(arguments))
-    asserts.equals(env, ["c1.xml", "META-INF/required.xml"], _load_paths(arguments, "--descriptor="))
+
+    # The call names the label of the additional module, so the rule takes its descriptor from the record group. The
+    # group also holds a file of another name, which the rule leaves out.
+    asserts.equals(env, ["c1.xml", "intellij.fixture.extra.xml", "META-INF/required.xml"], _load_paths(arguments, "--descriptor="))
     return analysistest.end(env)
 
 _embedded_content_form_test = analysistest.make(_embedded_content_form_test_impl)
@@ -394,6 +421,21 @@ def _rule_tests(name):
     tests.append(content_form + "_test")
     _product_content_form_test(name = tests[-1], target_under_test = ":" + content_form)
 
+    # The record group of `intellij.fixture.extra`, as `jps_module` declares it beside the module.
+    write_file(
+        name = name + "_extra_module_descriptor",
+        out = "intellij.fixture.extra.xml",
+        content = ["<idea-plugin/>", ""],
+        testonly = True,
+        tags = ["manual"],
+    )
+    native.filegroup(
+        name = "intellij.fixture.extra_model_files",
+        srcs = [":" + name + "_extra_module_descriptor", _fixture_descriptor(name + "_extra_other")],
+        testonly = True,
+        tags = ["manual"],
+    )
+
     embedded_main_module = name + "_embedded"
     dist_embedded_product_descriptor(
         testonly = True,
@@ -402,7 +444,7 @@ def _rule_tests(name):
         includes = {"/META-INF/required.xml": "required"},
         module_sets = [_C],
         module_set_table = _table_with_descriptors({"c1": descriptor_files["c1"]}),
-        content_modules = ["intellij.fixture.extra"],
+        content_modules = {"intellij.fixture.extra": ":intellij.fixture.extra"},
         content_module_loading = {"intellij.fixture.extra": "embedded"},
         descriptors = {required_include: "META-INF/required.xml"},
         separate_jar = ["c1"],
@@ -430,6 +472,7 @@ def dist_product_content_test_suite(name):
         _additional_rows_test,
         _derived_descriptors_test,
         _attributes_test,
+        _module_model_files_test,
     )
     tests = [name + "_rows"]
     for case, message in _FAILURES.items():
