@@ -1,21 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use crate::{Item, Tone, mark, message};
+use std::io;
+
+use crate::{answered, follow_stderr_colors};
 
 #[test]
-fn a_message_starts_with_the_mark_of_its_tone_and_keeps_its_text() {
-    for tone in [Tone::Info, Tone::Success, Tone::Warning, Tone::Error, Tone::Detail] {
-        let line = message(tone, "the text");
-        assert!(line.contains(mark(tone)), "{line:?}");
-        assert!(line.contains("the text"), "{line:?}");
-    }
+fn an_answer_is_some_value() {
+    assert_eq!(answered(Ok(3)).unwrap(), Some(3));
 }
 
 #[test]
-fn a_menu_row_shows_its_label() {
-    let item = Item {
-        label: "JetBrains Light › JetBrains IDE".to_owned(),
-        answer: "JetBrains IDE".to_owned(),
-    };
-    assert_eq!(item.to_string(), "JetBrains Light › JetBrains IDE");
+fn esc_or_ctrl_c_gives_none() {
+    let answer: io::Result<usize> = Err(io::ErrorKind::Interrupted.into());
+    assert_eq!(answered(answer).unwrap(), None);
+}
+
+#[test]
+fn another_error_names_the_answer() {
+    let answer: io::Result<usize> = Err(io::ErrorKind::NotConnected.into());
+    let error = answered(answer).unwrap_err();
+    assert_eq!(format!("{error:#}"), "cannot read the answer: not connected");
+}
+
+#[test]
+fn the_colors_of_the_theme_follow_the_stderr_switch() {
+    for enabled in [false, true] {
+        console::set_colors_enabled_stderr(enabled);
+        follow_stderr_colors();
+        assert_eq!(console::colors_enabled(), enabled);
+    }
 }

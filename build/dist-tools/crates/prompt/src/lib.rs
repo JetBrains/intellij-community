@@ -1,16 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The prompts of a dialog in a terminal: a menu, a yes or no question and a line of text. `inquire` draws them on
-//! stderr, on macOS, Linux and Windows. Esc gives `None`. Ctrl+C restores the terminal and ends the process as SIGINT
-//! does.
+//! The prompts of a dialog in a terminal: a menu, a yes or no question, a line of text, the message lines and a wait.
+//! `cliclack` draws them on stderr with its stock theme, on macOS, Linux and Windows. Esc and Ctrl+C at a prompt give
+//! `None`. On macOS and Linux the terminal has no echo and no signal keys while a prompt runs.
 
-use std::fmt;
+use std::io;
 
 use anyhow::{Context as _, Result};
-use crossterm::style::{StyledContent, Stylize as _};
-use inquire::error::InquireResult;
-use inquire::ui::RenderConfig;
-use inquire::{Confirm, InquireError, Select, Text};
 
 /// The kind of a message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,116 +26,119 @@ pub enum Tone {
 /// One option of a menu.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Item {
-    /// The row of the menu.
+    /// The row of the menu. It stays below the question after the answer.
     pub label: String,
-    /// The text after the question once the user selected the option.
-    pub answer: String,
-}
-
-impl fmt::Display for Item {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.label)
-    }
+    /// The text after the row under the cursor. An empty hint shows nothing.
+    pub hint: String,
 }
 
 /// Asks for one of `items`, with the cursor on `default` first. Typing filters the rows. Returns the index of the
-/// option, or `None` for Esc.
+/// option, or `None` for Esc or Ctrl+C.
 pub fn select(title: &str, items: Vec<Item>, default: usize) -> Result<Option<usize>> {
-    let page_size = items.len().clamp(1, 12);
-    let answer = Select::new(title, items)
-        .with_starting_cursor(default)
-        .with_page_size(page_size)
-        .with_formatter(&|option| option.value.answer.clone())
-        .with_render_config(render_config())
-        .raw_prompt_skippable();
-    Ok(finished(answer)?.map(|option| option.index))
+    let _quiet = start_prompt();
+    let mut select = cliclack::select(title).filter_mode().max_rows(MAX_ROWS);
+    for (index, item) in items.into_iter().enumerate() {
+        select = select.item(index, item.label, item.hint);
+    }
+    answered(select.initial_value(default).interact())
 }
 
-/// Asks a yes or no question. Returns `None` for Esc.
+/// Asks a yes or no question as a menu of the rows "Yes" and "No", with the cursor on `default` first. The menu has no
+/// filter, so only Enter answers, and a typed `y` never takes the Enter of the next question. Returns `None` for Esc or
+/// Ctrl+C.
 pub fn confirm(question: &str, default: bool) -> Result<Option<bool>> {
-    let answer = Confirm::new(question)
-        .with_default(default)
-        .with_render_config(render_config())
-        .prompt_skippable();
-    finished(answer)
+    let _quiet = start_prompt();
+    let mut menu = cliclack::select(question)
+        .item(true, "Yes", "")
+        .item(false, "No", "")
+        .initial_value(default);
+    answered(menu.interact())
 }
 
-/// Asks for one line of text, such as a path. Returns `None` for Esc.
+/// Asks for one line of text, such as a path. An empty line is refused at the prompt. Returns `None` for Esc or
+/// Ctrl+C.
 pub fn text(prompt: &str) -> Result<Option<String>> {
-    let answer = Text::new(prompt).with_render_config(render_config()).prompt_skippable();
-    finished(answer)
+    let _quiet = start_prompt();
+    answered(cliclack::input(prompt).interact())
 }
 
-/// A message line with the mark of its tone, such as `✔` for a result. `NO_COLOR` turns the colors off.
-pub fn message(tone: Tone, text: &str) -> String {
-    if !ansi() {
-        return format!("{} {text}", mark(tone));
-    }
-    let mark: StyledContent<&str> = match tone {
-        Tone::Info => mark(tone).cyan(),
-        Tone::Success => mark(tone).green(),
-        Tone::Warning => mark(tone).yellow(),
-        Tone::Error => mark(tone).red(),
-        Tone::Detail => return format!("{} {}", mark(tone), text.dark_grey()),
+/// Writes a message line with the symbol of its tone. A [`Tone::Detail`] line continues the frame without a symbol of
+/// its own.
+pub fn message(tone: Tone, text: &str) {
+    follow_stderr_colors();
+    let _ = match tone {
+        Tone::Info => cliclack::log::info(text),
+        Tone::Success => cliclack::log::success(text),
+        Tone::Warning => cliclack::log::warning(text),
+        Tone::Error => cliclack::log::error(text),
+        Tone::Detail => cliclack::log::remark(text),
     };
-    format!("{mark} {text}")
 }
 
-/// The mark at the start of a message line.
-#[must_use]
-pub const fn mark(tone: Tone) -> &'static str {
-    match tone {
-        Tone::Info => "▸",
-        Tone::Success => "✔",
-        Tone::Warning => "!",
-        Tone::Error => "✖",
-        Tone::Detail => " ",
+/// Writes the first line of the frame of a dialog, with its title.
+pub fn intro(title: &str) {
+    follow_stderr_colors();
+    let _ = cliclack::intro(title);
+}
+
+/// Writes the last line of the frame of a dialog that reached its end.
+pub fn outro(text: &str) {
+    follow_stderr_colors();
+    let _ = cliclack::outro(text);
+}
+
+/// Writes the last line of the frame of a dialog that stopped before its end.
+pub fn outro_cancel(text: &str) {
+    follow_stderr_colors();
+    let _ = cliclack::outro_cancel(text);
+}
+
+/// Starts a spinner with `text` until [`Wait::done`].
+pub fn wait(text: &str) -> Wait {
+    follow_stderr_colors();
+    let spinner = cliclack::spinner();
+    spinner.start(text);
+    Wait { spinner }
+}
+
+/// A running spinner, from [`wait`].
+pub struct Wait {
+    spinner: cliclack::ProgressBar,
+}
+
+impl Wait {
+    /// Stops the spinner and writes `text` as the line of a finished step.
+    pub fn done(self, text: &str) {
+        self.spinner.stop(text);
     }
 }
 
-/// Ends the process after Ctrl+C. `inquire` has restored the terminal at that point.
-fn finished<T>(answer: InquireResult<T>) -> Result<T> {
+/// The number of menu rows on screen. A longer menu scrolls.
+const MAX_ROWS: usize = 12;
+
+/// The answer of a prompt: `None` for Esc or Ctrl+C, which `cliclack` both report as `Interrupted`.
+fn answered<T>(answer: io::Result<T>) -> Result<Option<T>> {
     match answer {
-        Err(InquireError::OperationInterrupted) => interrupt(),
-        answer => answer.context("cannot read the answer"),
+        Ok(value) => Ok(Some(value)),
+        Err(error) if error.kind() == io::ErrorKind::Interrupted => Ok(None),
+        Err(error) => Err(error).context("cannot read the answer"),
     }
 }
 
-fn render_config() -> RenderConfig<'static> {
-    if std::env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty()) || !ansi() {
-        RenderConfig::empty()
-    } else {
-        RenderConfig::default_colored()
-    }
+/// Prepares the terminal for one prompt: the colors, and a quiet terminal until the returned guard drops.
+fn start_prompt() -> Option<quiet::QuietTerminal> {
+    follow_stderr_colors();
+    quiet::QuietTerminal::start()
 }
 
-/// Returns whether the terminal takes escape sequences. The call turns them on in the console.
-#[cfg(windows)]
-fn ansi() -> bool {
-    crossterm::ansi_support::supports_ansi()
+/// Makes the colors of the stdout switch of `console` follow its stderr switch. The theme styles of `cliclack` read the
+/// stdout switch, but the dialog draws on stderr, and stdout can be a pipe. The stderr switch is off for `NO_COLOR`
+/// and for a terminal without colors.
+fn follow_stderr_colors() {
+    console::set_colors_enabled(console::colors_enabled_stderr());
 }
 
-/// Returns whether the terminal takes escape sequences. Each terminal of macOS and Linux does.
-#[cfg(not(windows))]
-const fn ansi() -> bool {
-    true
-}
-
-/// Ends the process with the default action of SIGINT, as Ctrl+C does without raw mode.
-#[cfg(unix)]
-fn interrupt() -> ! {
-    // SAFETY: `SIG_DFL` is a valid disposition for SIGINT.
-    unsafe { libc::signal(libc::SIGINT, libc::SIG_DFL) };
-    // SAFETY: `raise` sends a signal to the calling thread and has no memory effects.
-    unsafe { libc::raise(libc::SIGINT) };
-    std::process::exit(130)
-}
-
-/// Ends the process with the exit code of Ctrl+C in a console.
-#[cfg(not(unix))]
-fn interrupt() -> ! {
-    std::process::exit(130)
-}
+mod quiet;
 
 #[cfg(test)]
 mod tests;

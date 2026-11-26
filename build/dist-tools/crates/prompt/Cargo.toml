@@ -11,8 +11,8 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
-crossterm.workspace = true
-inquire.workspace = true
+cliclack.workspace = true
+console.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true
