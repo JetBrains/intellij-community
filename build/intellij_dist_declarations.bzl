@@ -1093,8 +1093,8 @@ def intellij_dist_declarations(tables):
     - `platform_lib_fragment`, `runtime_module_repository_fragment`: the payload names of the input tables.
     - `platform_lib_payload(product)`: the `struct(packed, module_system_loaded)` of the packing targets of the `lib/`
       jars, as `packed_labels` returns it.
-    - `bazel_targets_json`, `project_model_tree`, `runtime_module_facts`, `collector`, `composer`: the labels of the
-      shared inputs and tools.
+    - `bazel_targets_json`, `runtime_module_facts`, `collector`, `composer`: the labels of the shared inputs and
+      tools.
     - `build_package`: the package that declares the platform sets, for example `//build`.
     - `product_mode(product)`: the mode of `product`, its stamp class.
     - `launcher_jvm_flags(product, additional_modules, jvm_flags)`: the `jvm_flags` of a launcher, or `None`.
@@ -1114,8 +1114,7 @@ def intellij_dist_declarations(tables):
         names it. `visibility` is the visibility of every component of the set. A community product fails: the
         community half declares its set, and a distribution of it reads the set through `platform_fragments`.
 
-        The set declares only what a distribution composes. A reference of a gate is declared elsewhere, with the same
-        `product`, `name` and `target_platform`.
+        The set declares only what a distribution composes.
 
         Returns a struct of the component labels in composition order. `runtime_module_repository` is the label of the
         `platform_runtime_module_repository` component when the plan has one, else `None`. It is kept out of
@@ -1217,10 +1216,4 @@ def intellij_dist_declarations(tables):
         ),
         distribution_groups = _distribution_groups,
         plugin_component_catalogue = lambda product: _plugin_component_catalogue(tables, product),
-        plugin_components = _plugin_components,
-        fragment_suffix = _fragment_suffix,
-        has_runtime_module_repository = lambda product: _has_runtime_module_repository(tables, product),
-        modular_loader = lambda product: _modular_loader(tables, product),
-        product_descriptor = lambda product: _product_descriptor(tables, product),
-        project_model_tree = tables.project_model_tree,
     )

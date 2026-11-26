@@ -58,7 +58,6 @@ _DECLARATIONS = intellij_dist_declarations(struct(
     runtime_module_repository_fragment = PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT,
     platform_lib_payload = _platform_lib_payload,
     bazel_targets_json = BAZEL_TARGETS_JSON_COMMUNITY,
-    project_model_tree = _PROJECT_MODEL_TREE,
     runtime_module_facts = _RUNTIME_MODULE_FACTS,
     collector = "//build:dist_packed_jars",
     composer = "//build:dist_composer",
