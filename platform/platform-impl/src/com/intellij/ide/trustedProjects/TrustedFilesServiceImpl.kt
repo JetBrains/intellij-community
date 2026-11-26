@@ -129,12 +129,15 @@ internal class TrustedFilesCache(private val project: Project, private val scope
   }
 
   fun isTrusted(file: VirtualFile): Boolean {
+    verdicts[file]?.let { return it }
+    return computeVerdict(file, invalidations.get(), lazy { TrustedProjectsLocator.locateProject(project) })
+  }
+
+  private fun computeVerdict(file: VirtualFile, invalidation: Long, locatedProject: Lazy<LocatedProject>): Boolean {
     // a non-local file (remote, injected, a diff preview, a light file) keeps the project-level trust model;
     // it never enters the map, so the cache does not pin it
     val nioPath = file.fileSystem.getNioPath(file) ?: return true
-    verdicts[file]?.let { return it }
-    val invalidation = invalidations.get()
-    val trusted = computeTrusted(nioPath)
+    val trusted = computeTrusted(nioPath, locatedProject)
     synchronized(verdicts) {
       if (invalidation == invalidations.get()) {
         verdicts.putIfAbsent(file, trusted)
@@ -172,18 +175,17 @@ internal class TrustedFilesCache(private val project: Project, private val scope
     }
   }
 
-  private fun computeTrusted(nioPath: Path): Boolean {
+  private fun computeTrusted(nioPath: Path, locatedProject: Lazy<LocatedProject>): Boolean {
     // Explicitly trusted locations override the project trust state.
     if (TrustedProjects.getProjectTrustedState(nioPath) == ThreeState.YES) {
       return true
     }
 
-    val roots = TrustedProjectsLocator.locateProject(project).projectRoots
-    val isInsideProject = roots.any { nioPath.startsWith(it) }
+    val isInsideProject = locatedProject.value.projectRoots.any { nioPath.startsWith(it) }
 
     // Files inside the project follow the project trust unless explicitly trusted above.
     if (isInsideProject) {
-      return TrustedProjects.isProjectTrusted(project)
+      return TrustedProjects.isProjectTrusted(locatedProject.value)
     }
 
     // IDE-internal files outside the project are not subject to per-file safe mode.
@@ -195,13 +197,17 @@ internal class TrustedFilesCache(private val project: Project, private val scope
     return false
   }
 
-  /** Recomputes every cached verdict and reopens the editors of files that became trusted. */
+  /** Recomputes every cached verdict and reopens the editors of files whose verdict changed. */
   fun resetVerdicts() {
-    val wasUntrusted = verdicts.entries.mapNotNull { (file, trusted) -> file.takeIf { !trusted } }
-    invalidate(file = null)
-    val upgraded = wasUntrusted.filter { it.isValid && isTrusted(it) }
-    if (upgraded.isNotEmpty()) {
-      scheduleEditorRefresh(upgraded)
+    val (before, invalidation) = synchronized(verdicts) {
+      val before = verdicts.toMap()
+      invalidate(file = null)
+      before to invalidations.get()
+    }
+    val locatedProject = lazy { TrustedProjectsLocator.locateProject(project) }
+    val changed = before.filter { [file, trusted] -> file.isValid && computeVerdict(file, invalidation, locatedProject) != trusted }.keys
+    if (changed.isNotEmpty()) {
+      scheduleEditorRefresh(changed.toList())
     }
   }
 
