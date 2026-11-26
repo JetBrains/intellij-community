@@ -145,7 +145,14 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
                                                                              int bytesPerRow,
                                                                              boolean checkFileIdBelowMax) throws IOException {
     MappedFileStorageHelper helper = openHelper(vfs, absoluteStoragePath, bytesPerRow, checkFileIdBelowMax);
-    verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
+    try {
+      verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
+    }
+    catch (IOException | RuntimeException | Error e) {
+      //until the helper is returned to the client, we own it => must close the helper on error:
+      helper.close();
+      throw e;
+    }
     return helper;
   }
 
