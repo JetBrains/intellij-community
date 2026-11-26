@@ -1,20 +1,15 @@
-load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 # The tag concurrency-tests adds this target to the CI build of the CONCURRENCY_TESTS group.
 jps_test(
     name = "tests-concurrency_test",
     timeout = "eternal",
-    data = [BAZEL_TARGETS_JSON],
     env_inherit = [
         "LANG",
         "SHELL",
     ],
-    jvm_flags = ["-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON],
     tags = ["concurrency-tests"],
     runtime_deps = [":tests-concurrency_test_lib"],
 )
