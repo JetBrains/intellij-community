@@ -976,6 +976,7 @@ elements:
                   ```
         - element:
             name: technology
+            renderContexts: [doc_provider]
             description: |
               Declares a technology of JetBrains Light, for example a language ecosystem.
               A plugin or a content module can contain multiple `<technology>` elements.
@@ -1018,6 +1019,7 @@ elements:
                 ```
         - element:
             name: technology-neutral
+            renderContexts: [doc_provider]
             description: |
               Makes the plugin or the content module technology-neutral in JetBrains Light.
               The module gets no technology from its dependencies or from its plugin.
