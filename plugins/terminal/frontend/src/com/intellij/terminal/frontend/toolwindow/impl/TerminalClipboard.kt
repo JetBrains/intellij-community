@@ -20,8 +20,8 @@ import org.jetbrains.plugins.terminal.fus.TerminalInsertedContentType
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
-import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import javax.imageio.ImageIO
 import kotlin.io.path.isDirectory
@@ -81,6 +81,9 @@ internal object TerminalClipboard {
     catch (e: CancellationException) {
       throw e
     }
+    catch (e: IOException) {
+      logger<TerminalClipboard>().warn("Failed to get text from clipboard", e)
+    }
     catch (t: Throwable) {
       logger<TerminalClipboard>().error("Failed to get text from clipboard", t)
     }
@@ -104,7 +107,7 @@ internal object TerminalClipboard {
     }
 
     override fun getTransferData(flavor: DataFlavor): Any {
-      return CopyPasteManager.getInstance().getContents(flavor) ?: throw UnsupportedFlavorException(flavor)
+      return CopyPasteManager.getInstance().getContents(flavor) ?: throw IOException("Failed to read $flavor from the clipboard")
     }
   }
 
