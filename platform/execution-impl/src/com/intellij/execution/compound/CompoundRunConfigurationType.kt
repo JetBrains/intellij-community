@@ -24,4 +24,6 @@ class CompoundRunConfigurationType : SimpleConfigurationType("CompoundRunConfigu
   override fun getHelpTopic() = "reference.dialogs.rundebug.CompoundRunConfigurationType"
 
   override fun getOptionsClass() = CompoundRunConfigurationOptions::class.java
+
+  override fun isDumbAware(): Boolean = true
 }

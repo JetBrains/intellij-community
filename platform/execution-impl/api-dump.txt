@@ -125,6 +125,7 @@ f:com.intellij.execution.compound.CompoundRunConfiguration
 f:com.intellij.execution.compound.CompoundRunConfigurationType
 - com.intellij.execution.configurations.SimpleConfigurationType
 - <init>():V
+- isDumbAware():Z
 f:com.intellij.execution.compound.SettingsAndEffectiveTarget
 - f:getConfiguration():com.intellij.execution.configurations.RunConfiguration
 a:com.intellij.execution.configuration.BrowseModuleValueActionListener
