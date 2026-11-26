@@ -198,6 +198,103 @@ class PyDefaultProfileFormatterTest {
     assertTrue(restoredCustom.USE_CONTINUATION_INDENT_FOR_PARAMETERS)
   }
 
+  // --- Visual guides round-trip ---
+
+  @Test
+  @TestFor(issues = ["PY-94039"])
+  fun `default profile keeps changed visual guides after a round trip`() {
+    val restored = roundTripSoftMargins(listOf(100, 120)) { PyDefaultStyleGuide.apply(it) }
+
+    assertEquals(PyDefaultStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+    assertEquals(listOf(100, 120), restored.pyCommonSettings!!.softMargins)
+    assertEquals(88, restored.pyCommonSettings!!.RIGHT_MARGIN)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94039"])
+  fun `default profile keeps no visual guides after a round trip`() {
+    val restored = roundTripSoftMargins(emptyList()) { PyDefaultStyleGuide.apply(it) }
+
+    assertEquals(PyDefaultStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+    assertEquals(emptyList<Int>(), restored.pyCommonSettings!!.softMargins)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94039"])
+  fun `classic profile keeps changed visual guides after a round trip`() {
+    val restored = roundTripSoftMargins(listOf(100)) { PyClassicStyleGuide.apply(it) }
+
+    assertEquals(PyClassicStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+    assertEquals(listOf(100), restored.pyCommonSettings!!.softMargins)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94039"])
+  fun `visual guides write only the changed soft margins`() {
+    val source = CodeStyle.createTestSettings()
+    PyDefaultStyleGuide.apply(source)
+    source.pyCommonSettings!!.softMargins = listOf(100)
+
+    val element = Element("code_scheme")
+    source.writeExternal(element)
+
+    val written = JDOMUtil.write(element)
+    assertTrue(written.contains("""<option name="SOFT_MARGINS" value="100" />"""), written)
+    assertFalse(written.contains("softMargins"), written)
+    assertFalse(written.contains("RIGHT_MARGIN"), written)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94039"])
+  fun `visual guides read back from the soft margins list of a 2026_3 scheme`() {
+    val element = JDOMUtil.load(
+      """
+      <code_scheme name="Project" version="173">
+        <Python>
+          <option name="CODE_STYLE_PROFILE" value="PY_DEFAULT" />
+        </Python>
+        <codeStyleSettings language="Python">
+          <option name="CODE_STYLE_PROFILE" value="PY_DEFAULT" />
+          <option name="arrangementSettings" />
+          <option name="forceArrangeMenuAvailable" value="false" />
+          <option name="softMargins">
+            <list>
+              <option value="100" />
+            </list>
+          </option>
+          <option name="CODE_STYLE_PROFILE" value="PY_DEFAULT" />
+          <option name="RIGHT_MARGIN" value="88" />
+        </codeStyleSettings>
+      </code_scheme>
+      """.trimIndent()
+    )
+
+    val restored = CodeStyle.createTestSettings()
+    restored.readExternal(element)
+
+    assertEquals(PyDefaultStyleGuide.CODE_STYLE_ID, restored.pyCodeStyleProfile())
+    assertEquals(listOf(100), restored.pyCommonSettings!!.softMargins)
+
+    val resaved = Element("code_scheme")
+    restored.writeExternal(resaved)
+    val written = JDOMUtil.write(resaved)
+    assertTrue(written.contains("""<option name="SOFT_MARGINS" value="100" />"""), written)
+    assertFalse(written.contains("softMargins"), written)
+  }
+
+  private fun roundTripSoftMargins(softMargins: List<Int>, applyProfile: (CodeStyleSettings) -> Unit): CodeStyleSettings {
+    val source = CodeStyle.createTestSettings()
+    applyProfile(source)
+    source.pyCommonSettings!!.softMargins = softMargins
+
+    val element = Element("code_scheme")
+    source.writeExternal(element)
+
+    val restored = CodeStyle.createTestSettings()
+    restored.readExternal(element)
+    return restored
+  }
+
   // --- .editorconfig property round-trip ---
 
   /**
@@ -251,8 +348,8 @@ class PyDefaultProfileFormatterTest {
 
   /**
    * The classic profile has no soft margins, so its common-settings profile id must be serialized by
-   * `DefaultJDOMExternalizer` (public-field reflection), not the soft-margins-only `XmlSerializer`
-   * fallback. Before `CODE_STYLE_PROFILE` was a public `@JvmField`, the id was lost here.
+   * `DefaultJDOMExternalizer` (public-field reflection). Before `CODE_STYLE_PROFILE` was a public
+   * `@JvmField`, the id was lost here.
    */
   @Test
   @TestFor(issues = ["PY-85946"])
