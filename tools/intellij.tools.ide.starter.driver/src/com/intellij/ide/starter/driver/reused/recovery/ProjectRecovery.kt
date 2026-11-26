@@ -4,7 +4,6 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
-import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.Project
@@ -83,15 +82,20 @@ internal fun Driver.saveAndStabilizeStateForReuse() {
   }
 }
 
+/**
+ * Closes each open project without a save.
+ *
+ * The close runs from a background thread, so `forceCloseProjectAsync` switches to the EDT with the non-modal state.
+ * This makes the close write-safe, and a disposer can change a document. A Driver call on the EDT has no such state.
+ */
 internal fun Driver.closeProjects() {
   val projects = getOpenProjects(RdTarget.BACKEND)
   val projectManager = utility<ProjectManagerEx>().getInstanceEx()
-  withContext(OnDispatcher.EDT, LockSemantics.READ_ACTION) {
-    projects.forEach { project ->
-      val basePath = project.getBasePath()
-      if (!projectManager.forceCloseProject(project, save = false)) {
-        error("Failed to close project left by test: $basePath")
-      }
+  projects.forEach { project ->
+    val basePath = project.getBasePath()
+    val closed = withContext(OnDispatcher.DEFAULT) { projectManager.forceCloseProjectAsync(project, save = false) }
+    if (!closed) {
+      error("Failed to close project left by test: $basePath")
     }
   }
   if (isRemDevMode) {
@@ -349,7 +353,8 @@ private interface JpsProjectLoadingManagerImpl {
 @Remote("com.intellij.openapi.project.ex.ProjectManagerEx", rdTarget = RdTarget.BACKEND)
 private interface ProjectManagerEx {
   fun getInstanceEx(): ProjectManagerEx
-  fun forceCloseProject(project: Project, save: Boolean): Boolean
+  /** A `suspend` function. The Driver runs it in `runBlocking`. */
+  fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean
 }
 
 @Remote("com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager", rdTarget = RdTarget.BACKEND)
