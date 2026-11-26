@@ -104,6 +104,12 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 *:com.intellij.psi.impl.PsiDocumentTransactionListenerBackgroundable
 - com.intellij.psi.impl.PsiDocumentTransactionListener
 - sf:TOPIC:com.intellij.util.messages.Topic
+*f:com.intellij.psi.impl.PsiElementIconRequest
+- s:create(com.intellij.psi.PsiElement,I):com.intellij.psi.impl.PsiElementIconRequest
+- equals(java.lang.Object):Z
+- getElement():com.intellij.psi.PsiElement
+- getFlags():I
+- hashCode():I
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z

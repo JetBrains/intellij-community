@@ -5,13 +5,11 @@ import com.intellij.diagnostic.ControlFlowExceptionsKt;
 import com.intellij.ide.FileIconUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.LastComputedIconCache;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -20,8 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CoreAwareIconManager;
@@ -46,14 +42,14 @@ public abstract class ElementBase extends VersionedUserDataHolderBase implements
   private static boolean forceDeferredIconsInTests = false;
 
   public static final int FLAGS_LOCKED = 0x800;
-  private static final Function1<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
-    PsiElement element = request.myPointer.getElement();
+  private static final Function1<PsiElementIconRequest,Icon> ICON_COMPUTE = request -> {
+    PsiElement element = request.getElement();
     if (element == null) {
       return null;
     }
 
-    Icon icon = computeIconNow(element, request.myFlags);
-    LastComputedIconCache.put(element, icon, request.myFlags);
+    Icon icon = computeIconNow(element, request.getFlags());
+    LastComputedIconCache.put(element, icon, request.getFlags());
     return icon;
   };
 
@@ -93,7 +89,7 @@ public abstract class ElementBase extends VersionedUserDataHolderBase implements
       if (baseIcon == null) {
         return null;
       }
-      ElementIconRequest param = ReadAction.computeBlocking(() -> new ElementIconRequest(psiElement, psiElement.getProject(), flags));
+      PsiElementIconRequest param = PsiElementIconRequest.create(psiElement, flags);
       return IconManager.getInstance().createDeferredIcon(baseIcon, param, ICON_COMPUTE);
     }
 
@@ -196,36 +192,6 @@ public abstract class ElementBase extends VersionedUserDataHolderBase implements
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
     return BitUtil.isSet(flags, ICON_FLAG_VISIBILITY) ? buildRowIcon(baseIcon, visibility) : baseIcon;
-  }
-
-  private static final class ElementIconRequest {
-    private final SmartPsiElementPointer<?> myPointer;
-    @Iconable.IconFlags private final int myFlags;
-
-    private ElementIconRequest(@NotNull PsiElement element, @NotNull Project project, @IconFlags int flags) {
-      myPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
-      myFlags = flags;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof ElementIconRequest)) return false;
-
-      ElementIconRequest request = (ElementIconRequest)o;
-
-      if (myFlags != request.myFlags) return false;
-      if (myPointer != request.myPointer) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = System.identityHashCode(myPointer);
-      result = 31 * result + myFlags;
-      return result;
-    }
   }
 
   protected @Nullable Icon getElementIcon(@Iconable.IconFlags int flags) {
