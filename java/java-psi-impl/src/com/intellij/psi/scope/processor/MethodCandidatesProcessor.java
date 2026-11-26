@@ -67,7 +67,8 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
           if (myAccessClass != null) {
             staticProblem = true;
           }
-          else {
+          else if (!(myCurrentFileContext instanceof PsiClass &&
+                     containingClass.getManager().areElementsEquivalent(myCurrentFileContext, containingClass))) {
             problematicInterfaceStaticMethod = true;
           }
         }

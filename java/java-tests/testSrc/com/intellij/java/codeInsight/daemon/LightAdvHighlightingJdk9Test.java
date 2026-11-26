@@ -35,6 +35,7 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   public void testPrivateInInterfaces() { doTest(false, false); }
   public void testPrivateInInterfacesOverriding() { doTest(false, false); }
   public void testPrivateInInterfacesAnonymousThis() { doTest(false, false); }
+  public void testPrivateStaticInterfaceMethodNotInherited() { doTest(false, false); }
   public void testUnderscore() { doTest(false, false); }
   public void testTryWithResources() { doTest(false, false); }
 
