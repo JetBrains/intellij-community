@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -72,8 +73,13 @@ public class MovePackageTest {
     final PsiDirectory[] dirs = newParentPackage.getDirectories();
     assertEquals(1, dirs.length);
 
-    new MoveClassesOrPackagesProcessor(myFixture.getProject(), packagesAndClasses,
-                                       new SingleSourceRootMoveDestination(PackageWrapper.create(newParentPackage), dirs[0]),
+    move(packagesAndClasses, dirs[0]);
+  }
+
+  protected void move(PsiElement[] packagesAndClasses, PsiDirectory targetDirectory) {
+    PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
+    new MoveClassesOrPackagesProcessor(packagesAndClasses[0].getProject(), packagesAndClasses,
+                                       new SingleSourceRootMoveDestination(PackageWrapper.create(targetPackage), targetDirectory),
                                        true, false, null).run();
   }
 }

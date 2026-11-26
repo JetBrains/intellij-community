@@ -140,10 +140,7 @@ public class MoveClassTest {
   public void testImplicitClass() {
     LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
-      multiFile.get().doTest(() ->
-               WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-                 myFixture.moveFile("pack1/Class1.java", "pack2");
-               }));
+      multiFile.get().doTest(() -> moveFile(myFixture, "pack1/Class1.java", "pack2"));
     });
   }
 
@@ -194,10 +191,19 @@ public class MoveClassTest {
     final PsiDirectory[] dirs = aPackage.getDirectories(GlobalSearchScope.projectScope(myFixture.getProject()));
     assertEquals(1, dirs.length);
 
-    new MoveClassesOrPackagesProcessor(myFixture.getProject(), classes,
-                                       new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService
-                                                                                                   .getInstance().getPackage(dirs[0])),
-                                                                           dirs[0]),
+    move(classes, dirs[0]);
+  }
+
+  protected void move(PsiClass[] classes, PsiDirectory targetDirectory) {
+    PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
+    new MoveClassesOrPackagesProcessor(classes[0].getProject(), classes,
+                                       new SingleSourceRootMoveDestination(PackageWrapper.create(targetPackage), targetDirectory),
                                        true, true, null).run();
+  }
+
+  protected void moveFile(LightJavaCodeInsightTestFixture fixture, String filePath, String targetPath) {
+    WriteCommandAction.runWriteCommandAction(fixture.getProject(), () -> {
+      fixture.moveFile(filePath, targetPath);
+    });
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -60,9 +61,7 @@ public class MovePackageMultirootTest {
 
       PsiPackage[] sourcePackages = new PsiPackage[]{pack1};
       PsiPackage targetPackage = facade.findPackage("target");
-      new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), sourcePackages,
-                                         new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
-                                         true, true, null).run();
+      move(sourcePackages, targetPackage, true, true);
       FileDocumentManager.getInstance().saveAllDocuments();
 
       assertEquals(2, facade.findPackage("target.pack1").getDirectories().length);
@@ -120,8 +119,7 @@ public class MovePackageMultirootTest {
         PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name, GlobalSearchScope.allScope(heavyFixture.get().getProject())))
           .toArray(PsiClass[]::new);
         PsiPackage targetPackage = facade.findPackage(targetPackageName);
-        new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
-                                           true, false, null).run();
+        move(sourceClasses, targetPackage, true, false);
         FileDocumentManager.getInstance().saveAllDocuments();
       });
     });
@@ -136,8 +134,7 @@ public class MovePackageMultirootTest {
       PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name)).toArray(PsiClass[]::new);
       PsiPackage targetPackage = facade.findPackage(targetPackageName);
       try {
-        new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
-                                           true, false, null).run();
+        move(sourceClasses, targetPackage, true, false);
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
         assertEquals(message, e.getMessage());
@@ -153,5 +150,11 @@ public class MovePackageMultirootTest {
   private void doTest(@NotNull HeavyJavaCodeInsightFixture.MultiFileAction action) {
     HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     fixture.doMultiFileTest("/refactoring/movePackageMultiroot/" + fixture.getTestName(true), this::prepareProject, true, action);
+  }
+
+  protected void move(PsiElement[] elements, PsiPackage targetPackage, boolean searchInComments, boolean searchInNonJavaFiles) {
+    new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), elements,
+                                       new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)), searchInComments,
+                                       searchInNonJavaFiles, null).run();
   }
 }

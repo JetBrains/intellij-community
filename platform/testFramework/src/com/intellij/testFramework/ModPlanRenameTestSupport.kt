@@ -7,14 +7,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.modplan.ModPlan
-import com.intellij.refactoring.modplan.ModPlanConflictKind
-import com.intellij.refactoring.modplan.ModPlanExecutionResult
-import com.intellij.refactoring.modplan.ModPlanExecutor
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
 import com.intellij.refactoring.modplan.rename.ModPlanRenameRefactoring
@@ -43,22 +39,7 @@ object ModPlanRenameTestSupport {
       } ?: AssertionError("refused: ${plan.reason} ${plan.message.orEmpty()} at ${runReadActionBlocking { placeOf(plan) }}")
       is ModPlan.AcceptedPlan -> plan
     }
-    if (ready.conflicts.needsConfirmation() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
-      throw BaseRefactoringProcessor.ConflictsInTestsException(
-        ready.conflicts.conflicts
-          .filter { it.kind != ModPlanConflictKind.NON_CODE_USAGE && it.kind != ModPlanConflictKind.CHANGED_NON_CODE_USAGE }
-          .flatMap { it.messages })
-    }
-    val result = ModPlanExecutor.execute(ready.execution, true, ready.writeEvents)
-    if (result !is ModPlanExecutionResult.Applied) throw AssertionError("not applied: $result")
-  }
-
-  /** @return the file and the text of the place where [plan] refuses, for the message of a failed test */
-  private fun placeOf(plan: ModPlan.RefusedPlan): String {
-    val location = plan.location ?: return "no place"
-    val range = location.range ?: return "${location.virtualFile.name}, a gone range"
-    val text = location.containingFile?.text?.let { TextRange.create(range).substring(it) }
-    return "${location.virtualFile.name} $range '$text'"
+    applyAsLegacyTest(ready)
   }
 
   /**

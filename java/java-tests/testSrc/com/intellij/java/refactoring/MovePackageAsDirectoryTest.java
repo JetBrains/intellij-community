@@ -156,6 +156,11 @@ public class MovePackageAsDirectoryTest {
     });
   }
 
+  protected void moveDirectory(PsiDirectory directory, PsiDirectory targetDirectory) {
+    new MoveDirectoryWithClassesProcessor(heavyFixture.get().getProject(), new PsiDirectory[]{directory}, targetDirectory, false, false, true,
+                                          null).run();
+  }
+
   private MyPerformAction createMoveAction(final String packageName, final String targetPackageName) {
     return new MyPerformAction(packageName, targetPackageName);
   }
@@ -196,7 +201,7 @@ public class MovePackageAsDirectoryTest {
       Arrays.sort(targetDirectories, directoryComparator);
       assertTrue(targetDirectories.length > 0);
       preprocessSrcDir(srcDirectories[0]);
-      new MoveDirectoryWithClassesProcessor(heavyFixture.get().getProject(), new PsiDirectory[]{srcDirectories[0]}, targetDirectories[0], false, false, true, null).run();
+      moveDirectory(srcDirectories[0], targetDirectories[0]);
       postProcessTargetDir(targetDirectories[0]);
       FileDocumentManager.getInstance().saveAllDocuments();
     }

@@ -7,7 +7,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.testFramework.PlatformTestUtil
@@ -22,6 +24,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertNotNull
 import java.nio.file.Path
+import java.util.function.BiConsumer
 
 /**
  * The fixture of the tests that copy a directory of the test data to the project, change it, and compare the result.
@@ -90,6 +93,13 @@ class LightMultiFileFixture internal constructor(
    * Both paths are relative to the source root.
    */
   fun doMoveFileTest(targetDirName: String, fileToMove: String) {
+    doMoveFileTest(targetDirName, fileToMove) { file, targetDirectory ->
+      MoveFilesOrDirectoriesProcessor(fixture.project, arrayOf<PsiElement>(file), targetDirectory, false, false, null, null).run()
+    }
+  }
+
+  /** Moves the file [fileToMove] to the directory [targetDirName] with [move] in [doTest]. Both paths are relative to the source root. */
+  fun doMoveFileTest(targetDirName: String, fileToMove: String, move: BiConsumer<PsiFile, PsiDirectory>) {
     doTest(ThrowableRunnable {
       val child = fixture.findFileInTempDir(fileToMove)
       assertNotNull(child, "File $fileToMove not found")
@@ -101,7 +111,7 @@ class LightMultiFileFixture internal constructor(
       val targetDirectory = PsiManager.getInstance(fixture.project).findDirectory(child1!!)
       assertNotNull(targetDirectory)
 
-      MoveFilesOrDirectoriesProcessor(fixture.project, arrayOf<PsiElement>(file!!), targetDirectory!!, false, false, null, null).run()
+      move.accept(file!!, targetDirectory!!)
 
       val index = fileToMove.lastIndexOf("/")
       val psiFile = targetDirectory.findFile(if (index == -1) fileToMove else fileToMove.substring(index + 1))

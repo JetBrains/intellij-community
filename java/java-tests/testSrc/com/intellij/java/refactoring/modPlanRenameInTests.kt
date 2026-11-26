@@ -58,4 +58,45 @@ private class KnownGap(val failure: String, val testNames: List<String>)
 private val KNOWN_GAPS: Map<String, KnownGap> = mapOf(
   "The package is the prefix of a source root. Its rename changes the module model, so the ModPlan rename refuses it, and the interactive rename runs the legacy one (ModPlanJavaPackageRenameProvider.isLegacyOnly)" to
     KnownGap("refused: NOT_SUPPORTED", listOf("RenamePackageOnModPlanTest.testRenameInPackagePrefix")),
+  "A directory of a package with several directories. The ModPlan move refuses it, " +
+    "as the rename refuses it (RenamePsiDirectoryProcessor.directoryOrItsPackage)" to
+    KnownGap("refused: NOT_SUPPORTED", listOf(
+      "MovePackageAsDirectoryOnModPlanTest.testMovePackage",
+      "MovePackageAsDirectoryOnModPlanTest.testMovePackageWithTxtFilesInside",
+      "MovePackageAsDirectoryOnModPlanTest.testMultipleClassesInOneFile",
+      "MovePackageAsDirectoryOnModPlanTest.testRemoveUnresolvedImports",
+      "MovePackageAsDirectoryOnModPlanTest.testXmlDirRefs"
+    )),
+  "No Java move provider owns the subject, so the engine refuses it." to
+    KnownGap("refused: NOT_SUPPORTED", listOf(
+      "MoveClassOnModPlanTest.testWithoutReference",
+      "MoveClassOnModPlanTest.testConflictingNames",
+      "MoveClassOnModPlanTest.testLocalClass",
+      "MoveClassOnModPlanTest.testRefInPropertiesFile",
+      "MoveClassOnModPlanTest.testIdeadev27996",
+      "MoveClassOnModPlanTest.testMoveMultiple1",
+      "MoveClassOnModPlanTest.testContextChange2",
+      "MoveClassOnModPlanTest.testImplicitClass",
+      "MoveClassOnModPlanTest.testContextChange1",
+      "MoveClassOnModPlanTest.testNonJava",
+      "MoveClassOnModPlanTest.testSecondaryClass",
+      "MoveClassOnModPlanTest.testStringsAndComments2",
+      "MoveClassOnModPlanTest.testToDefaultPackage",
+      "MoveClassOnModPlanTest.testQualifiedRef",
+      "MoveClassOnModPlanTest.testClassAndSecondary",
+      "MoveClassOnModPlanTest.testUnusedImport",
+      "MoveClassOnModPlanTest.testStringsAndComments",
+      "MovePackageOnModPlanTest.testMoveSingle",
+      "MovePackageOnModPlanTest.testQualifiedRef",
+      "MovePackageOnModPlanTest.testInsidePackage",
+      "MovePackageOnModPlanTest.testPackageAndReferencedClass",
+      "MovePackageMultirootOnModPlanTest.testMovePackage",
+      "MovePackageMultirootOnModPlanTest.testMoveFilesToEmptyPkg1",
+      "MovePackageMultirootOnModPlanTest.testMoveFilesToEmptyPkg2",
+      "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg1",
+      "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg2",
+      "MovePackageMultirootOnModPlanTest.testMoveFilesToNonEmptyPkg3",
+      "MoveJavaFileOnModPlanTest.testPackageInfo",
+      "MoveJavaFileOnModPlanTest.testConflict"
+    )),
 )
