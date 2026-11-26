@@ -28,10 +28,7 @@ const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
  *
  * A search asks many modules for the same file and at most one of them has it, so the two places have to be
  * separated rather than tried module by module. [MODULE_OUTPUT] resolves a module's Bazel output *before* it can
- * look inside, and under an explicit input manifest that resolution is the declaration - see
- * `org.jetbrains.intellij.build.impl.BazelBuildInputs`. Asking three hundred modules "do you have this?" that way
- * makes three hundred jars an input of a distribution fragment that packs four of them, whether or not a byte
- * is read.
+ * look inside, so asking three hundred modules "do you have this?" that way resolves three hundred jars.
  *
  * So a search over several candidates runs [PRODUCTION_SOURCES] across all of them first and falls through to
  * [MODULE_OUTPUT] only when none of them had the file. Each pass needs its own "already visited" set - a set shared

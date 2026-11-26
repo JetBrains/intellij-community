@@ -15,7 +15,6 @@ import java.nio.file.Path
  * @param logFilter If non-null, enables debug output. Empty set = all debug, non-empty = only matching tags.
  * @param traceFile If non-null, the run writes an OpenTelemetry trace of itself into this file in the Jaeger JSON format
  * @param verifyPlanUnits If true, the distribution plan also computes the plan of every request and checks it against its plan unit
- * @param unusedInputsFile If non-null, the run writes the declared Bazel inputs that it did not read into this file
  */
 data class GeneratorRunOptions(
   @JvmField val jsonFilter: String? = null,
@@ -25,7 +24,6 @@ data class GeneratorRunOptions(
   @JvmField val logFilter: Set<String>? = null,
   @JvmField val traceFile: Path? = null,
   @JvmField val verifyPlanUnits: Boolean = false,
-  @JvmField val unusedInputsFile: Path? = null,
 )
 
 /**
@@ -35,12 +33,6 @@ data class GeneratorRunOptions(
  * The path is absolute, because the trace writer creates the parent directory of the file.
  */
 private fun parseTraceFile(args: Array<String>): Path? = parseFileOption(args, "--trace")
-
-/**
- * Parses `--unused-inputs=<file>`.
- * Returns null when the argument is absent.
- */
-private fun parseUnusedInputsFile(args: Array<String>): Path? = parseFileOption(args, "--unused-inputs")
 
 private fun parseFileOption(args: Array<String>, name: String): Path? {
   val arg = args.firstOrNull { it.startsWith("$name=") } ?: return null
@@ -103,6 +95,5 @@ fun parseGeneratorOptions(args: Array<String>): GeneratorRunOptions {
     logFilter = logFilter,
     traceFile = traceFile,
     verifyPlanUnits = args.any { it == "--verify-plan-units" },
-    unusedInputsFile = parseUnusedInputsFile(args),
   )
 }
