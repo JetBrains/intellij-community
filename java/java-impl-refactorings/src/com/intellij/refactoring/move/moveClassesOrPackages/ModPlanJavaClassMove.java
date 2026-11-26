@@ -23,8 +23,8 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.SmartPointersKt;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.RenamedClassForm;
-import com.intellij.psi.impl.source.resolve.RenamedClassView;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.ChangedClassForm;
+import com.intellij.psi.impl.source.resolve.ChangedClassView;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -189,9 +189,9 @@ final class ModPlanJavaClassMove {
                                     @NotNull List<PsiClass> movedClasses,
                                     @NotNull String targetPackage,
                                     @NotNull ModPlanConflicts detectedConflicts) {
-    var views = new HashMap<PsiElement, RenamedClassView>();
+    var views = new HashMap<PsiElement, ChangedClassView>();
     for (var aClass : movedClasses) {
-      views.put(aClass, RenamedClassView.moved(aClass, targetPackage, myWholeFiles));
+      views.put(aClass, ChangedClassView.moved(aClass, targetPackage, myWholeFiles));
     }
     var edits = new ArrayList<ModPlanEdit>();
     for (var file : myWholeFiles) {
@@ -203,7 +203,7 @@ final class ModPlanJavaClassMove {
     var conflicts = ModPlanConflicts.builder();
     var imports = new ImportEdits(targetPackage, movedClasses);
     var references = new ArrayList<UsageInfo>();
-    var viewsOfReferences = new IdentityHashMap<UsageInfo, RenamedClassView>();
+    var viewsOfReferences = new IdentityHashMap<UsageInfo, ChangedClassView>();
     for (var usage : usages) {
       var element = usage.getElement();
       if (element == null) continue;
@@ -321,7 +321,7 @@ final class ModPlanJavaClassMove {
       myMovedClasses = movedClasses;
     }
 
-    boolean collect(@NotNull UsageInfo usage, @NotNull RenamedClassView view) {
+    boolean collect(@NotNull UsageInfo usage, @NotNull ChangedClassView view) {
       var element = usage.getElement();
       var file = usage.getFile();
       if (!(element instanceof PsiJavaCodeReferenceElement reference) || !(file instanceof PsiJavaFile javaFile)) return false;
@@ -334,12 +334,12 @@ final class ModPlanJavaClassMove {
       myBoundReferences.add(reference);
       var importList = javaFile.getImportList();
       if (importList == null) return false;
-      var qualifiedName = view.getToRename().getQualifiedName();
+      var qualifiedName = view.getOriginalClass().getQualifiedName();
       var oldPackage = StringUtil.getPackageName(StringUtil.notNullize(qualifiedName));
       var oldImport = importList.findOnDemandImportStatement(oldPackage);
       if (oldImport != null && !myWholeFiles.contains(javaFile)) myOnDemandImportsOfOldPackage.add(oldImport);
       if (!myWholeFiles.contains(javaFile) && !javaFile.getPackageName().equals(myTargetPackage) &&
-          PsiJavaCodeReferenceElementImpl.formAfterRename(reference, view) == RenamedClassForm.SHORT &&
+          PsiJavaCodeReferenceElementImpl.formAfterChange(reference, view) == ChangedClassForm.SHORT &&
           qualifiedName != null && importList.findSingleClassImportStatement(qualifiedName) == null) {
         var targetImport = importList.findOnDemandImportStatement(myTargetPackage);
         if (targetImport != null) myKeptImports.add(targetImport);

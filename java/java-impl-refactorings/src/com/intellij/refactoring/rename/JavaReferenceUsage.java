@@ -15,8 +15,8 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.RenamedClassForm;
-import com.intellij.psi.impl.source.resolve.RenamedClassView;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.ChangedClassForm;
+import com.intellij.psi.impl.source.resolve.ChangedClassView;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,8 +45,8 @@ abstract class JavaReferenceUsage extends MoveRenameUsageInfo implements ModPlan
 
   /**
    * A reference to the renamed class that does not keep its form: the write qualifies it, shortens it, or shortens it with a single
-   * import. The search decides the form for the edits of the imports, see {@link PsiJavaCodeReferenceElementImpl#formAfterRename}. The
-   * write binds the reference to a {@link RenamedClassView}, which decides the form again in the copy.
+   * import. The search decides the form for the edits of the imports, see {@link PsiJavaCodeReferenceElementImpl#formAfterChange}. The
+   * write binds the reference to a {@link ChangedClassView}, which decides the form again in the copy.
    * <pre>{@code
    * package q; class Use { p.Old o; }
    * // rename p.Old to New
@@ -54,21 +54,21 @@ abstract class JavaReferenceUsage extends MoveRenameUsageInfo implements ModPlan
    * }</pre>
    */
   static final class ClassReferenceUsage extends JavaReferenceUsage {
-    private final @NotNull RenamedClassForm myForm;
+    private final @NotNull ChangedClassForm myForm;
 
-    ClassReferenceUsage(@NotNull PsiReference reference, @NotNull PsiClass aClass, @NotNull RenamedClassForm form) {
+    ClassReferenceUsage(@NotNull PsiReference reference, @NotNull PsiClass aClass, @NotNull ChangedClassForm form) {
       super(reference, aClass);
       myForm = form;
     }
 
     @Override
     boolean isQualified() {
-      return myForm == RenamedClassForm.QUALIFIED;
+      return myForm == ChangedClassForm.QUALIFIED;
     }
 
     /** @return whether the write shortens the reference, so that it needs the single import of the renamed class in the file */
     boolean isShortened() {
-      return myForm == RenamedClassForm.SHORT;
+      return myForm == ChangedClassForm.SHORT;
     }
 
     /**
@@ -81,10 +81,10 @@ abstract class JavaReferenceUsage extends MoveRenameUsageInfo implements ModPlan
         return List.of();
       }
       if (reference.getContainingFile() != aClass.getContainingFile()) {
-        return List.of(ModPlanEdit.update(reference, copy -> copy.bindToElement(new RenamedClassView(aClass, newName, List.of(), null))));
+        return List.of(ModPlanEdit.update(reference, copy -> copy.bindToElement(new ChangedClassView(aClass, newName, List.of(), null))));
       }
       return List.of(ModPlanEdit.update(List.of(reference, aClass), copies -> {
-        RenamedClassView view = new RenamedClassView(aClass, newName, List.of(), (PsiClass)copies.get(1));
+        ChangedClassView view = new ChangedClassView(aClass, newName, List.of(), (PsiClass)copies.get(1));
         ((PsiJavaCodeReferenceElement)copies.getFirst()).bindToElement(view);
       }));
     }

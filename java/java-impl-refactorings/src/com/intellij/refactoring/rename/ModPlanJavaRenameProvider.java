@@ -27,9 +27,9 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.RenamedClassForm;
-import com.intellij.psi.impl.source.resolve.RenamedClassView;
-import com.intellij.psi.impl.source.resolve.ResolveAfterRenameUtil;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.ChangedClassForm;
+import com.intellij.psi.impl.source.resolve.ChangedClassView;
+import com.intellij.psi.impl.source.resolve.ResolveAfterChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.InheritanceUtil;
@@ -137,9 +137,9 @@ public abstract class ModPlanJavaRenameProvider extends ModPlanBridgeRenameProvi
     }
     if (reference.getElement() != usage.getElement()) return usage;
     if (element instanceof PsiClass aClass && usage.getElement() instanceof PsiJavaCodeReferenceElement classReference) {
-      RenamedClassForm form =
-        PsiJavaCodeReferenceElementImpl.formAfterRename(classReference, new RenamedClassView(aClass, newName, deletedImports, null));
-      if (form != RenamedClassForm.RENAMED) {
+      ChangedClassForm form =
+        PsiJavaCodeReferenceElementImpl.formAfterChange(classReference, new ChangedClassView(aClass, newName, deletedImports, null));
+      if (form != ChangedClassForm.KEPT) {
         return new JavaReferenceUsage.ClassReferenceUsage(reference, aClass, form);
       }
     }
@@ -355,7 +355,7 @@ public abstract class ModPlanJavaRenameProvider extends ModPlanBridgeRenameProvi
     if (element instanceof PsiMethod) {
       List<PsiMethod> renamedMethods =
         ContainerUtil.filter(ContainerUtil.filterIsInstance(renamed.keySet(), PsiMethod.class), method -> method.getContainingClass() != null);
-      PsiClass methodClass = ResolveAfterRenameUtil.methodClass(renamedMethods, newName, occurrence);
+      PsiClass methodClass = ResolveAfterChangeUtil.methodClass(renamedMethods, newName, occurrence);
       if (methodClass == null || inheritsRenamed(methodClass, renamedMethods)) return null;
       for (PsiClass outer = PsiTreeUtil.getParentOfType(methodClass, PsiClass.class); outer != null;
            outer = PsiTreeUtil.getParentOfType(outer, PsiClass.class)) {
@@ -366,8 +366,8 @@ public abstract class ModPlanJavaRenameProvider extends ModPlanBridgeRenameProvi
       return null;
     }
     if (!(element instanceof PsiField field) || !(field.getContainingClass() instanceof PsiClass fieldClass)) return null;
-    return switch (ResolveAfterRenameUtil.resolveField(field, newName, occurrence).kind()) {
-      case RENAMED, NONE -> null;
+    return switch (ResolveAfterChangeUtil.resolveField(field, newName, occurrence).kind()) {
+      case CHANGED, NONE -> null;
       case OTHER, AMBIGUOUS -> qualifiedMemberEdit(occurrence, newName, fieldClass, isStatic);
     };
   }

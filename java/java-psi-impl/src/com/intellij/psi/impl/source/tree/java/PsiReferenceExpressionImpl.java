@@ -68,10 +68,10 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.resolve.ChangedClassView;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.resolve.RenamedClassView;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -722,9 +722,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     PsiJavaParserFacade parserFacade = facade.getParserFacade();
     // The view is equivalent to the class to rename, so isReferenceTo is true for it.
-    if (element instanceof RenamedClassView) {
-      String name = PsiJavaCodeReferenceElementImpl.nameAfterRename(this, (RenamedClassView)element);
-      if (name == null) return handleElementRename(((RenamedClassView)element).getName());
+    if (element instanceof ChangedClassView) {
+      String name = PsiJavaCodeReferenceElementImpl.nameAfterChange(this, (ChangedClassView)element);
+      if (name == null) return handleElementRename(((ChangedClassView)element).getName());
       PsiExpression ref = parserFacade.createExpressionFromText(name, this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       return ref;

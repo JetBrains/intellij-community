@@ -13,8 +13,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.RenamedClassForm;
-import com.intellij.psi.impl.source.resolve.RenamedClassView;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.ChangedClassForm;
+import com.intellij.psi.impl.source.resolve.ChangedClassView;
 import com.intellij.refactoring.modplan.ModPlanEdit;
 import com.intellij.refactoring.modplan.rename.ModPlanWritableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -83,8 +83,8 @@ public class ClassHidesImportedClassUsageInfo extends ResolvableCollisionUsageIn
     PsiElement renamedClass = getReferencedElement();
     boolean inRenamedFile = renamedClass != null && reference.getContainingFile() == renamedClass.getContainingFile();
     if (!inRenamedFile && renamedClass instanceof PsiClass aClass) {
-      RenamedClassView view = new RenamedClassView(aClass, newName, collidingImports(reference, hidden), null);
-      if (PsiJavaCodeReferenceElementImpl.formAfterRename(reference, view) == RenamedClassForm.QUALIFIED) return List.of();
+      ChangedClassView view = new ChangedClassView(aClass, newName, collidingImports(reference, hidden), null);
+      if (PsiJavaCodeReferenceElementImpl.formAfterChange(reference, view) == ChangedClassForm.QUALIFIED) return List.of();
     }
     return List.of(ModPlanJavaRenameProvider.nameEdit(reference, hidden.getQualifiedName(), inRenamedFile));
   }

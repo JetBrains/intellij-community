@@ -46,14 +46,14 @@ import java.util.Map;
  * package and its imports on demand. Nothing is written.
  */
 @ApiStatus.Internal
-public final class ResolveAfterRenameUtil {
+public final class ResolveAfterChangeUtil {
   private static final int INNER = 0;
   private static final int FILE = 1;
   private static final int PACKAGE = 2;
   private static final int ON_DEMAND = 3;
   private static final int NOWHERE = 4;
 
-  private ResolveAfterRenameUtil() {
+  private ResolveAfterChangeUtil() {
   }
 
   /**
@@ -68,7 +68,7 @@ public final class ResolveAfterRenameUtil {
        * package q; import p.*; class Use { Old o; }
        * }</pre>
        */
-      RENAMED,
+      CHANGED,
       /**
        * Another element, which the resolve finds first, see {@link #element()} and {@link #fileContext()}. Here it is the member class
        * {@code Use.New}:
@@ -128,8 +128,8 @@ public final class ResolveAfterRenameUtil {
   }
 
   /**
-   * The resolve offers {@code view} instead of the class to rename and instead of its renamed copy. It skips the imports that
-   * {@link RenamedClassView#getIgnoredImports} holds: the rename deletes them. The rename of {@code pack1.MyList} to {@code List} deletes
+   * The resolve offers {@code view} instead of the class to change and instead of its changed copy. It skips the imports that
+   * {@link ChangedClassView#getIgnoredImports} holds: the change deletes them. The rename of {@code pack1.MyList} to {@code List} deletes
    * the single import of {@code java.util.List}, so {@code List} at {@code MyList myList} means the renamed class:
    * <pre>{@code
    * package pack2;
@@ -140,10 +140,10 @@ public final class ResolveAfterRenameUtil {
    * With no ignored import, the result is {@link Target.Kind#OTHER}, {@code java.util.List} of the single import. See {@link Target.Kind}
    * for the other results.
    *
-   * @return what a short class reference of the new name of {@code view} at {@code place} resolves to after the rename
+   * @return what a short class reference of the new name of {@code view} at {@code place} resolves to after the change
    */
   @RequiresReadLock
-  public static @NotNull Target resolveClass(@NotNull RenamedClassView view, @NotNull PsiElement place) {
+  public static @NotNull Target resolveClass(@NotNull ChangedClassView view, @NotNull PsiElement place) {
     String newName = view.getName();
     PsiJavaCodeReferenceElement reference = referenceAt(newName, place);
     if (reference == null) return Target.NOTHING;
@@ -165,7 +165,7 @@ public final class ResolveAfterRenameUtil {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (myFileContext != null && ignoredImports.contains(myFileContext)) return true;
-        boolean original = view.isRenamed(element);
+        boolean original = view.isOriginalClass(element);
         if (!moved || !(element instanceof PsiClass)) return super.execute(original ? view : element, state);
         if (original && !isOfferedAfterMove(view, element, myFileContext, placeFile)) return true;
         PsiElement offered = original ? view : element;
@@ -182,10 +182,10 @@ public final class ResolveAfterRenameUtil {
     PsiScopesUtil.resolveAndWalk(processor, reference, null);
     JavaResolveResult[] results = processor.getResult();
     if (moved) results = showMovedClass(view, results, levels, placeFile);
-    return targetOf(results, view.getToRename(), view);
+    return targetOf(results, view.getOriginalClass(), view);
   }
 
-  private static boolean isOfferedAfterMove(@NotNull RenamedClassView view,
+  private static boolean isOfferedAfterMove(@NotNull ChangedClassView view,
                                             @NotNull PsiElement element,
                                             @Nullable PsiElement fileContext,
                                             @Nullable PsiFile placeFile) {
@@ -212,7 +212,7 @@ public final class ResolveAfterRenameUtil {
     return ON_DEMAND;
   }
 
-  private static JavaResolveResult @NotNull [] showMovedClass(@NotNull RenamedClassView view,
+  private static JavaResolveResult @NotNull [] showMovedClass(@NotNull ChangedClassView view,
                                                               JavaResolveResult @NotNull [] results,
                                                               @NotNull Map<PsiElement, Integer> levels,
                                                               @Nullable PsiFile placeFile) {
@@ -227,7 +227,7 @@ public final class ResolveAfterRenameUtil {
     return walked > shown ? new JavaResolveResult[]{movedResult} : ArrayUtil.append(results, movedResult);
   }
 
-  private static int shownLevel(@NotNull RenamedClassView view, @Nullable PsiFile placeFile) {
+  private static int shownLevel(@NotNull ChangedClassView view, @Nullable PsiFile placeFile) {
     if (!(placeFile instanceof PsiJavaFile)) return NOWHERE;
     PsiJavaFile javaFile = (PsiJavaFile)placeFile;
     String packageAfterMove = view.isMovedFile(javaFile) ? view.getTargetPackage() : javaFile.getPackageName();
@@ -320,7 +320,7 @@ public final class ResolveAfterRenameUtil {
     }
     JavaResolveResult result = results[0];
     PsiElement element = result.getElement();
-    if (element == renamedView) return new Target(Target.Kind.RENAMED, Collections.emptyList(), null);
+    if (element == renamedView) return new Target(Target.Kind.CHANGED, Collections.emptyList(), null);
     if (element == null) return Target.NOTHING;
     return new Target(Target.Kind.OTHER, Collections.singletonList(element), result.getCurrentFileResolveScope());
   }

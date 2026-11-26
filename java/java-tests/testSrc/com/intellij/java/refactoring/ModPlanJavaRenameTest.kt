@@ -23,8 +23,8 @@ import com.intellij.psi.PsiParameter
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.RenamedClassForm
-import com.intellij.psi.impl.source.resolve.RenamedClassView
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl.ChangedClassForm
+import com.intellij.psi.impl.source.resolve.ChangedClassView
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -923,20 +923,20 @@ class ModPlanJavaRenameTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/refactoring/renameClass/collision"
     myFixture.copyDirectoryToProject("before", "")
     val aClass = findClass("pack1.MyList")
-    val expectedForms = mapOf("Usage" to listOf(RenamedClassForm.RENAMED),
-                              "Usage2" to listOf(RenamedClassForm.RENAMED),
-                              "Usage3" to listOf(RenamedClassForm.IMPORTED))
+    val expectedForms = mapOf("Usage" to listOf(ChangedClassForm.KEPT),
+                              "Usage2" to listOf(ChangedClassForm.KEPT),
+                              "Usage3" to listOf(ChangedClassForm.IMPORTED))
     for ([className, expected] in expectedForms) {
       val file = findClass("pack2.$className").containingFile as PsiJavaFile
       val references = PsiTreeUtil.findChildrenOfType(file, PsiJavaCodeReferenceElement::class.java).filter { it.referenceName == "MyList" }
       val collidingImports = listOfNotNull(file.importList!!.findSingleClassImportStatement("java.util.List"))
-      val planView = RenamedClassView(aClass, "List", collidingImports, null)
-      val planForms = references.map { PsiJavaCodeReferenceElementImpl.formAfterRename(it, planView) }
-      val writeForms = ArrayList<RenamedClassForm>()
+      val planView = ChangedClassView(aClass, "List", collidingImports, null)
+      val planForms = references.map { PsiJavaCodeReferenceElementImpl.formAfterChange(it, planView) }
+      val writeForms = ArrayList<ChangedClassForm>()
       ModCommand.psiUpdate(ActionContext.from(null, file)) { updater ->
         val copies = references.map { updater.getWritable(it) }
         collidingImports.map { updater.getWritable(it) }.forEach { it.delete() }
-        copies.mapTo(writeForms) { PsiJavaCodeReferenceElementImpl.formAfterRename(it, RenamedClassView(aClass, "List", listOf(), null)) }
+        copies.mapTo(writeForms) { PsiJavaCodeReferenceElementImpl.formAfterChange(it, ChangedClassView(aClass, "List", listOf(), null)) }
       }
       assertEquals(className, expected, planForms)
       assertEquals(className, planForms, writeForms)
