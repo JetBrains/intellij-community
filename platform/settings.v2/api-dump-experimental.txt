@@ -13,6 +13,11 @@
 - sf:INSTANCE:com.intellij.platform.settings.v2.DumbMapValueSerializer
 - deserialize(com.intellij.platform.settings.v2.SettingsValue):com.intellij.platform.settings.v2.SettingsValue$MapValue
 - serialize(com.intellij.platform.settings.v2.SettingsValue$MapValue):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.FloatSerializer
+- com.intellij.platform.settings.v2.Serializer
+- sf:INSTANCE:com.intellij.platform.settings.v2.FloatSerializer
+- deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Float
+- serialize(F):com.intellij.platform.settings.v2.SettingsValue
 *f:com.intellij.platform.settings.v2.IntSerializer
 - com.intellij.platform.settings.v2.Serializer
 - sf:INSTANCE:com.intellij.platform.settings.v2.IntSerializer

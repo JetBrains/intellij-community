@@ -66,12 +66,55 @@ object LongSerializer : Serializer<Long> {
   override fun deserialize(value: SettingsValue): Long = value.requireValue<LongValue>().value
 }
 
-/** Serializes a [Double] as a [DoubleValue]. The eager-default constructor of [SettingsKey] infers it. */
+/**
+ * Serializes a [Double] as a [DoubleValue]. It also reads an [IntValue] or a [LongValue], such as a hand-edited `2`.
+ * The eager-default constructor of [SettingsKey] infers it.
+ */
 @Experimental
 object DoubleSerializer : Serializer<Double> {
   override fun serialize(value: Double): SettingsValue = DoubleValue(value)
 
-  override fun deserialize(value: SettingsValue): Double = value.requireValue<DoubleValue>().value
+  override fun deserialize(value: SettingsValue): Double = value.requireNumber().toDouble()
+}
+
+/**
+ * Serializes a [Float] as a [DoubleValue] of its shortest decimal form, so `1.1f` is stored as `1.1`, not as
+ * `1.100000023841858` (ADR 00F5FN). For a few floats that double narrows to a neighbor float, because the conversion
+ * rounds twice. Such a float is stored as its exact double, so every float reads back as itself.
+ *
+ * A read narrows a stored double to a [Float], so the digits that a [Float] cannot hold are lost. It also reads an
+ * [IntValue] or a [LongValue], such as a hand-edited `2`. A stored infinity or NaN reads as the same [Float]. A
+ * finite stored number out of the range of a [Float] is incorrect, so the read throws [IllegalArgumentException].
+ *
+ * The eager-default constructor of [SettingsKey] infers it.
+ */
+@Experimental
+object FloatSerializer : Serializer<Float> {
+  override fun serialize(value: Float): SettingsValue {
+    val shortest = value.toString().toDouble()
+    return DoubleValue(if (shortest.toFloat() == value) shortest else value.toDouble())
+  }
+
+  override fun deserialize(value: SettingsValue): Float {
+    val number = value.requireNumber()
+    val float = number.toFloat()
+    require(float.isFinite() || !number.toDouble().isFinite()) { "The stored $value is out of the range of a Float" }
+    return float
+  }
+}
+
+/**
+ * Returns this stored number, for a deserializer of a floating point type: a [DoubleValue], an [IntValue] or a
+ * [LongValue]. The [Number] keeps the stored type, so each conversion of it rounds once.
+ *
+ * @throws IllegalArgumentException when this value is not a number
+ */
+private fun SettingsValue.requireNumber(): Number = when (this) {
+  is DoubleValue -> value
+  is IntValue -> value
+  is LongValue -> value
+  SettingsValue.NullValue, is StringValue, is BooleanValue, is ListValue, is MapValue ->
+    throw IllegalArgumentException("Expected a stored DoubleValue, IntValue or LongValue, but found $this")
 }
 
 /** Serializes a [Boolean] as a [BooleanValue]. The eager-default constructor of [SettingsKey] infers it. */
@@ -179,25 +222,26 @@ private class EnumSerializer<E : Enum<E>>(private val enumClass: Class<E>) : Ser
  * Backs the eager-default constructor of [SettingsKey]: `SettingsKey<Int>("editor.indent.size", default = 4)`.
  *
  * @throws IllegalStateException when [default] is not an enum entry or one of the scalar types [Int], [Long],
- *   [Double], [Boolean] and [String]
+ *   [Float], [Double], [Boolean] and [String]
  */
 @Suppress("UNCHECKED_CAST")
 internal fun <T> inferSerializerFromDefault(default: T): Serializer<T> = when (default) {
   is Int -> IntSerializer as Serializer<T>
   is Long -> LongSerializer as Serializer<T>
+  is Float -> FloatSerializer as Serializer<T>
   is Double -> DoubleSerializer as Serializer<T>
   is Boolean -> BooleanSerializer as Serializer<T>
   is String -> StringSerializer as Serializer<T>
   is Enum<*> -> enumSerializer(default.declaringJavaClass) as Serializer<T>
   else -> error("Cannot infer a serializer from default '$default'; pass one explicitly (only an enum and the scalars " +
-                "Int/Long/Double/Boolean/String are inferred).")
+                "Int/Long/Float/Double/Boolean/String are inferred).")
 }
 
 /**
  * Returns the built-in serializer inferred from the static type [T], with its nullability. [inferSerializerFromDefault]
  * needs a runtime value instead. A nullable [T] gives a [nullable] serializer, so a key can have no default at all:
- * `SettingsKey<String?>("x")`. Only the scalar types [Int], [Long], [Double], [Boolean] and [String] are supported.
- * Any other type must pass a serializer explicitly.
+ * `SettingsKey<String?>("x")`. Only the scalar types [Int], [Long], [Float], [Double], [Boolean] and [String] are
+ * supported. Any other type must pass a serializer explicitly.
  *
  * @throws IllegalStateException when [T] is not a supported scalar type
  */
@@ -207,10 +251,12 @@ inline fun <reified T> inferSerializer(): Serializer<T> {
   val base = when (T::class) {
     Int::class -> IntSerializer
     Long::class -> LongSerializer
+    Float::class -> FloatSerializer
     Double::class -> DoubleSerializer
     Boolean::class -> BooleanSerializer
     String::class -> StringSerializer
-    else -> error("Cannot infer a serializer for '${T::class.simpleName}'; pass one explicitly (only scalar Int/Long/Double/Boolean/String are inferred).")
+    else -> error("Cannot infer a serializer for '${T::class.simpleName}'; pass one explicitly " +
+                  "(only scalar Int/Long/Float/Double/Boolean/String are inferred).")
   } as Serializer<Any>
   @Suppress("UNCHECKED_CAST")
   return (if (null is T) base.nullable() else base) as Serializer<T>

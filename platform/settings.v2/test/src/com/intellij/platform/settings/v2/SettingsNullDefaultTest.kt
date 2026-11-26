@@ -23,6 +23,10 @@ import org.junit.jupiter.api.assertThrows
 class SettingsNullDefaultTest {
   companion object {
     private val optionalColor = SettingsKey<String?>("test.nd.color")
+    private val optionalCount = SettingsKey<Int?>("test.nd.count")
+    private val optionalSize = SettingsKey<Long?>("test.nd.size")
+    private val optionalRatio = SettingsKey<Double?>("test.nd.ratio")
+    private val optionalFlag = SettingsKey<Boolean?>("test.nd.flag")
     private val shade = SettingsKey("test.nd.shade", default = "red", serializer = StringSerializer.nullable())
     private val paletteCurrent = SettingsKey("test.nd.palette.current", default = "default")
     private val paletteData = SettingsMapKey("test.nd.palette.data", discriminatorKey = paletteCurrent)
@@ -72,6 +76,28 @@ class SettingsNullDefaultTest {
 
     paletteShade[slotContext] = null
     assertEquals(null, paletteShade[slotContext])
+  }
+
+  @Test
+  fun `a key without a default infers the serializer of each nullable scalar type`(): Unit = runBlocking {
+    ExtensionTestUtil.maskExtensions(LayerProvider.EP_NAME, listOf(provider), disposable)
+    val context = SettingsContext.app()
+
+    optionalCount[context] = 7
+    optionalSize[context] = Long.MAX_VALUE
+    optionalRatio[context] = 2.25
+    optionalFlag[context] = true
+
+    assertEquals(listOf(7, Long.MAX_VALUE, 2.25, true),
+                 listOf(optionalCount[context], optionalSize[context], optionalRatio[context], optionalFlag[context]))
+
+    optionalCount[context] = null
+    optionalSize[context] = null
+    optionalRatio[context] = null
+    optionalFlag[context] = null
+
+    assertEquals(listOf(null, null, null, null),
+                 listOf(optionalCount[context], optionalSize[context], optionalRatio[context], optionalFlag[context]))
   }
 
   @Test

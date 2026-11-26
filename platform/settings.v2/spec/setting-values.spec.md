@@ -49,8 +49,25 @@ its own format, so neither the key nor the serializer knows the format.
 
 ### Serializers
 
-- A key with a scalar default of type `Int`, `Long`, `Double`, `Boolean` or `String` infers its serializer.
+- A key with a scalar default of type `Int`, `Long`, `Float`, `Double`, `Boolean` or `String` infers its serializer.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
+- A key with no default infers its serializer from its nullable static type, for the same scalar types.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsNullDefaultTest.kt
+- The float serializer must store a float as the double of its shortest decimal form, so `1.1f` is stored as `1.1`.
+  When that double does not narrow back to the same float, it must store the exact double of the float.
+  See [ADR 00F5FN](../adr/00F5FN-the-api-gives-a-float-serializer-and-a-number-key-reads-a-narrower-stored-number.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- A float key must read back every float that it stored.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- A float key must read a stored double, int or long value as the nearest float.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- A float key must read a stored infinity or NaN as the same float.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- A double key must read a stored int or long value as a double.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- The float serializer composes with `nullable()`, `listOf()` and `mapOf()`.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
 - A key with an enum entry as its default infers the enum serializer, also for an entry with a body.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt
 - The enum serializer must store an entry by its constant name, as a string, with no conversion of the name. Two
@@ -96,6 +113,10 @@ its own format, so neither the key nor the serializer knows the format.
   wrong value of a map, and a wrong value of a nullable serializer must each give `IllegalArgumentException`, so the
   key resolves to its default with a warning.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
+- A stored value that is not a number must make a float key or a double key resolve to its default with a warning.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
+- A finite stored number out of the range of a float must make a float key resolve to its default with a warning.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFloatSerializerTest.kt
 - A stored enum name that no constant has, and a stored value that is not a string, must make an enum key resolve to
   its default with a warning.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsEnumSerializerTest.kt

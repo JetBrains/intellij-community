@@ -49,8 +49,8 @@ import java.util.concurrent.ConcurrentHashMap
  * [defaultFactory] instead of an eager [default]. A factory of a slotted key learns the slot path of the read with
  * [accessFor].
  *
- * **Value type.** Every key has a [serializer]. For the built-in scalars [Int], [Long], [Double], [Boolean], and
- * [String], and for an enum, it is inferred from an eager default and may be omitted. An enum is stored by its
+ * **Value type.** Every key has a [serializer]. For the built-in scalars [Int], [Long], [Float], [Double], [Boolean],
+ * and [String], and for an enum, it is inferred from an eager default and may be omitted. An enum is stored by its
  * constant name (see [enumSerializer]). Any other type must pass one explicitly. This includes a [readonly] key, whose
  * value is never persisted.
  *

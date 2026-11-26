@@ -32,24 +32,28 @@ class SettingsResolutionTest {
     val stringKey = SettingsKey("test.resolve.string", default = "def")
     val longKey = SettingsKey("test.resolve.long", default = 7L)
     val doubleKey = SettingsKey("test.resolve.double", default = 0.5)
+    val floatKey = SettingsKey("test.resolve.float", default = 0.5f)
 
     assertEquals(7, intKey[context], "unset int falls back to its default")
     assertEquals(false, boolKey[context], "unset bool falls back to its default")
     assertEquals("def", stringKey[context], "unset string falls back to its default")
     assertEquals(7L, longKey[context], "unset long falls back to its default")
     assertEquals(0.5, doubleKey[context], "unset double falls back to its default")
+    assertEquals(0.5f, floatKey[context], "unset float falls back to its default")
 
     intKey[context] = 42
     boolKey[context] = true
     stringKey[context] = "hello"
     longKey[context] = Long.MAX_VALUE
     doubleKey[context] = 2.25
+    floatKey[context] = 1.25f
 
     assertEquals(42, intKey[context])
     assertEquals(true, boolKey[context])
     assertEquals("hello", stringKey[context])
     assertEquals(Long.MAX_VALUE, longKey[context])
     assertEquals(2.25, doubleKey[context])
+    assertEquals(1.25f, floatKey[context])
   }
 
   @Test
