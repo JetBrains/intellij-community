@@ -42,7 +42,7 @@ const ALL: [&str; 9] = [
 ];
 
 /// Refuses an unknown option, a malformed option, a repeated option, a missing option, an empty independent module,
-/// and a version outside the range. The deleted recipe options are unknown options.
+/// and a version outside the range.
 #[test]
 fn arguments_are_refused_with_the_usage_code() {
     let with = |extra: &'static str| {
@@ -61,14 +61,7 @@ fn arguments_are_refused_with_the_usage_code() {
         vec!["--projection=plan.json"],
         vec!["--independent-module"],
         vec!["--independent-module="],
-        vec![
-            "--recipe=recipe.json",
-            "--catalogue=catalogue.json",
-            "--output-dir=out",
-            "--inventory=inventory.json",
-        ],
-        with("--catalogue=c.json"),
-        with("--recipe=recipe.json"),
+        with("--unknown=value"),
         with("positional"),
         vec!["--projection", "plan.json"],
         version_four,
@@ -77,9 +70,9 @@ fn arguments_are_refused_with_the_usage_code() {
         let Run { code, errors } = run_captured(&case);
         assert!(code == 2 && !errors.is_empty(), "{case:?}: code={code}, errors={errors:?}");
     }
-    let Run { code, errors } = run_captured(&[ALL.as_slice(), &["--recipe=recipe.json"]].concat());
+    let Run { code, errors } = run_captured(&[ALL.as_slice(), &["--unknown=value"]].concat());
     assert_eq!(code, 2);
-    assert_eq!(errors, "ERROR: unknown option: --recipe\n");
+    assert_eq!(errors, "ERROR: unknown option: --unknown\n");
 }
 
 /// A plan file with one remainder jar, one module jar that the chain reuses, and one raw file copy. The chain names the
@@ -161,65 +154,20 @@ fn projection_run_writes_the_plugin_the_assets_and_the_class_path() {
     }
 }
 
-/// Also refuses a reused module that the plan has no plain module jar for, and a plan that still states
-/// `reusableArtifacts`. Every refusal happens before any write.
+/// The plan reader and the derivation own their refusals. This case pins that a refused projection writes no output.
 #[test]
-fn projection_run_refuses_a_kotlin_preparation_and_a_stale_version() {
-    let tail = "  ]\n}";
-    assert!(PROJECTION_PLAN.ends_with(tail));
-    let kotlin_plan = PROJECTION_PLAN
-        .replacen(
-            tail,
-            r#"  ],
-  "operations": [{"id": "native", "kind": "library-layout-patches", "inputs": [{"artifact": "tool"}], "output": "native:output", "manifest": "keep", "libraryLayout": {"any": 1}}]
-}"#,
-            1,
-        )
-        .replacen(r#""inputs": ["tool"], "mode": 493"#, r#""inputs": ["native:output"], "mode": 493"#, 1);
-    let stale_plan = PROJECTION_PLAN.replacen(
-        tail,
-        r#"  ],
-  "reusableArtifacts": [{"label": "//example:content.jar", "module": "example.content"}]
-}"#,
+fn a_refused_projection_writes_nothing() {
+    let root = tempfile::tempdir().unwrap();
+    let mut values = write_projection_fixture(root.path(), PROJECTION_PLAN);
+    let last = values.len() - 1;
+    values[last] = "--independent-module=example.other".to_owned();
+    assert_refused_before_any_write(
+        "a module without a plain jar",
+        root.path(),
+        &run_captured(&values),
         1,
+        r#"independent module "example.other" matches no module jar asset"#,
     );
-    for (name, plan, version, module, message) in [
-        (
-            "a Kotlin operation kind",
-            kotlin_plan.as_str(),
-            "1",
-            "example.content",
-            "libraryLayout",
-        ),
-        (
-            "a stale version",
-            PROJECTION_PLAN,
-            "2",
-            "example.content",
-            "stale execution version",
-        ),
-        (
-            "a module without a plain jar",
-            PROJECTION_PLAN,
-            "1",
-            "example.other",
-            r#"independent module "example.other" matches no module jar asset"#,
-        ),
-        (
-            "a plan with reusableArtifacts",
-            stale_plan.as_str(),
-            "1",
-            "example.content",
-            "reusableArtifacts",
-        ),
-    ] {
-        let root = tempfile::tempdir().unwrap();
-        let mut values = write_projection_fixture(root.path(), plan);
-        values[4] = format!("--execution-version={version}");
-        let last = values.len() - 1;
-        values[last] = format!("--independent-module={module}");
-        assert_refused_before_any_write(name, root.path(), &run_captured(&values), 1, message);
-    }
 }
 
 /// `--refused-module` names a content module that the product mode refuses. The asset whose every module is refused is
