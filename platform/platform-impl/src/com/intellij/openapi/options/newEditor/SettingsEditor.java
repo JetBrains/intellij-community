@@ -14,6 +14,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -805,6 +806,26 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     sink.set(History.KEY, myHistory);
     sink.set(Settings.KEY, settings);
     sink.set(SearchTextField.KEY, search);
+    Project shownProject = getShownProject();
+    if (shownProject != null) {
+      sink.set(CommonDataKeys.PROJECT, shownProject);
+    }
+  }
+
+  /**
+   * The project whose settings the editor shows, or {@code null} for the tree of one project.
+   * A page of several projects shows {@link FrameProjectConfigurable#getShownProject}. Every other page shows the selected project.
+   * The window still belongs to its own project. Only the actions over the editor get this project.
+   */
+  @Nullable Project getShownProject() {
+    FrameProjectsConfigurableGroup group = myFrameProjectsGroup;
+    if (group == null) {
+      return null;
+    }
+    Project project = filter.context.getCurrentConfigurable() instanceof FrameProjectConfigurable page
+                      ? page.getShownProject()
+                      : group.getProjects().getSelected();
+    return project.isDisposed() ? null : project;
   }
 
   @Override

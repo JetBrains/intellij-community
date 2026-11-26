@@ -8,8 +8,13 @@ import com.intellij.ide.actions.selectRequester
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPoint
@@ -53,6 +58,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.JComponent
@@ -287,6 +293,40 @@ internal class SettingsFrameProjectsTest {
       assertThat(tabs.tabs.map { it.`object` }).containsExactly(guest)
       assertThat(tabs.selectedInfo?.`object`).isSameAs(guest)
       assertThat(projects.selected).isSameAs(owner)
+    }
+  }
+
+  @Test
+  fun `the project of the data context over a project-level page is the project that the page shows`(): Unit = inFrame(
+    projectsWithPage = { listOf(guest) },
+  ) { disposable ->
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val page = projectPage(group)
+      val editor = createEditor(group, page, disposable)
+      inWindowOf(owner, editor)
+      waitFor("the project-level page") { editor.selectedConfigurable === page }
+
+      assertThat(projects.selected).describedAs("The selection stays").isSameAs(owner)
+      assertThat(projectOfDataContext(editor.content)).isSameAs(guest)
+    }
+  }
+
+  @Test
+  fun `the project of the data context over an application-level page is the selected project`(): Unit = inFrame { disposable ->
+    withForcedRespectIsShowingClientProperty {
+      val projects = SettingsFrameProjects.create(owner)!!
+      val group = createGroup(projects, disposable)
+      val appPage = findPages(group, APP_PAGE_ID).single()
+      val editor = createEditor(group, appPage, disposable)
+      inWindowOf(owner, editor)
+      waitFor("the application-level page") { editor.selectedConfigurable === appPage }
+      assertThat(projectOfDataContext(editor.content)).isSameAs(owner)
+
+      projects.select(guest)
+
+      assertThat(projectOfDataContext(editor.content)).isSameAs(guest)
     }
   }
 
@@ -860,6 +900,21 @@ internal class SettingsFrameProjectsTest {
     )
     markAsShowing(editor)
     return editor
+  }
+
+  /** Puts [editor] into a parent that gives [project] as the project of the data context, as the Settings window does. */
+  private fun inWindowOf(project: Project, editor: SettingsEditor) {
+    val window = object : JPanel(BorderLayout()), UiDataProvider {
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[CommonDataKeys.PROJECT] = project
+      }
+    }
+    window.add(editor, BorderLayout.CENTER)
+  }
+
+  private suspend fun projectOfDataContext(component: Component): Project? {
+    val context = Utils.createAsyncDataContext(component)
+    return readAction { context.getData(CommonDataKeys.PROJECT) }
   }
 
   private fun projectPage(group: FrameProjectsConfigurableGroup): FrameProjectConfigurable {

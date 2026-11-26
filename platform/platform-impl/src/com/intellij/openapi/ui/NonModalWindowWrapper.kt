@@ -643,8 +643,15 @@ abstract class NonModalWindowWrapper(
    * project available
    */
   override fun uiDataSnapshot(sink: DataSink) {
-    sink[CommonDataKeys.PROJECT] = project
+    sink[CommonDataKeys.PROJECT] = dataProject
   }
+
+  /**
+   * The project that [uiDataSnapshot] writes as [CommonDataKeys.PROJECT]. The default is [project].
+   * A window that shows the content of another project gives that project. The window still belongs to [project].
+   */
+  protected open val dataProject: Project
+    get() = project
 
   /** Shows the window. If already visible, brings it to front. Un-iconifies a minimised [JFrame]. */
   fun show() {

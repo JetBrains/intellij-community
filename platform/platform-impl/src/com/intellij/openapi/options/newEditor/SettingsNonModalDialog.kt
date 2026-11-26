@@ -272,6 +272,9 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     }
   }
 
+  override val dataProject: Project
+    get() = editor.shownProject ?: project
+
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
     sink.uiDataSnapshot(editor)
