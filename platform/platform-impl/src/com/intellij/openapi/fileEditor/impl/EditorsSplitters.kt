@@ -150,6 +150,7 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.KeyEventPostProcessor
 import java.awt.KeyboardFocusManager
+import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.Window
 import java.awt.datatransfer.DataFlavor
@@ -1009,6 +1010,14 @@ open class EditorsSplitters internal constructor(
   open fun afterFileOpen(file: VirtualFile) {
     cancelEmptyStateComponentCreation()
     updateEmptyStateComponent()
+  }
+
+  /**
+   * Returns the area of the editor windows in the coordinates of [component]. It is this component without its border.
+   */
+  @Internal
+  fun getEditorArea(component: Component): Rectangle {
+    return SwingUtilities.convertRectangle(this, SwingUtilities.calculateInnerArea(this, null), component)
   }
 
   fun getTabsAt(point: RelativePoint): JBTabs? {

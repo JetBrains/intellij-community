@@ -51,7 +51,6 @@ import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.util.concurrent.CopyOnWriteArraySet
@@ -416,8 +415,7 @@ class DockableEditorTabbedContainer internal constructor(
 
     val r = tabs.dropArea
     TabsUtil.updateBoundsWithDropSide(r, currentDropSide)
-    val editorArea = SwingUtilities.convertRectangle(splitters, Rectangle(splitters.size), tabs.component)
-    return createDropAreaShape(r, editorArea, TabsUtil.getDropAreaArc())
+    return createDropAreaShape(r, splitters.getEditorArea(tabs.component), TabsUtil.getDropAreaArc())
   }
 
   override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.windows().joinToString()}"

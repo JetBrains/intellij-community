@@ -493,7 +493,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     val canMoveContentToEditor = editorHintDropArea != null && content != null
 
     dropHintHighlightComponent.bounds = if (canMoveContentToEditor && dropLocation !is DropLocation.Editor) {
-      getGlassPaneBounds(editorHintDropArea)
+      editorHintDropArea.getEditorArea(pane.rootPane.glassPane)
     }
     else {
       Rectangle()
@@ -529,7 +529,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     val bounds = getGlassPaneBounds(target.component)
     dropTargetHighlightComponent.bounds = bounds
     dropTargetHighlightComponent.cornerArea = ComponentUtil.getParentOfType(EditorsSplitters::class.java, target.component)?.let {
-      getGlassPaneBounds(it).apply { translate(-bounds.x, -bounds.y) }
+      it.getEditorArea(pane.rootPane.glassPane).apply { translate(-bounds.x, -bounds.y) }
     }
   }
 
