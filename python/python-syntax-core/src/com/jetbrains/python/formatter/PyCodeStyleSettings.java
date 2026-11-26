@@ -78,6 +78,12 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public boolean NEW_LINE_AFTER_COLON = false;
   public boolean NEW_LINE_AFTER_COLON_MULTI_CLAUSE = true;
+  /**
+   * Puts the body of a class or a function on the line of its colon when the body is only {@code ...},
+   * as Black and Ruff do: {@code def f(): ...}. A comment before the body or on a line after it keeps
+   * the body on its own line. The option takes precedence over {@link #NEW_LINE_AFTER_COLON}.
+   */
+  public boolean ELLIPSIS_BODY_ON_SAME_LINE = false;
 
   public boolean SPACE_AFTER_NUMBER_SIGN = true;
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;

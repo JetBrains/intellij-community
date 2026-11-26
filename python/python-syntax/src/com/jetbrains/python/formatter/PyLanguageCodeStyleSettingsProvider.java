@@ -216,6 +216,8 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.dictionary.literals"));
       consumer
         .showCustomOption(PyCodeStyleSettings.class, "HANG_CLOSING_BRACKETS", PySyntaxBundle.message("formatter.hang.closing.brackets"), null);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ELLIPSIS_BODY_ON_SAME_LINE",
+                                PySyntaxBundle.message("formatter.ellipsis.body.on.same.line"), null);
     }
   }
 
@@ -319,6 +321,9 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
 
     def xyzzy(a1, a2, long_parameter_1, a3, a4, long_parameter_2):
         pass
+
+    def stub():
+        ...
 
     xyzzy(1, 2, 'long_string_constant1', 3, 4, 'long_string_constant2')
 

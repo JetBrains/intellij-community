@@ -1138,6 +1138,9 @@ public class PyBlock implements ASTBlock {
             return getBlankLinesForOption(pySettings.BLANK_LINES_BEFORE_FIRST_METHOD);
           }
         }
+        if (childType1 == PyTokenTypes.COLON && isEllipsisBodyOnSameLine((PyAstStatementList)psi2)) {
+          return Spacing.createSpacing(1, 1, 0, false, 0);
+        }
         if (childType1 == PyTokenTypes.COLON && (needLineBreakInStatement())) {
           return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
         }
@@ -1240,6 +1243,24 @@ public class PyBlock implements ASTBlock {
     return Spacing.createSpacing(0, 0, lineFeeds,
                                  myContext.getSettings().KEEP_LINE_BREAKS,
                                  myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
+  }
+
+  /**
+   * Tells if the statement list is the body of this class or function, the body is only {@code ...},
+   * and {@link PyCodeStyleSettings#ELLIPSIS_BODY_ON_SAME_LINE} puts it on the line of the colon.
+   * A comment before the ellipsis, or on a line after it, is a sibling of the ellipsis in the statement list,
+   * and keeps the body on its own line. A comment on the line of the ellipsis is part of its statement,
+   * and moves with it.
+   */
+  private boolean isEllipsisBodyOnSameLine(@NotNull PyAstStatementList statementList) {
+    if (!myContext.getPySettings().ELLIPSIS_BODY_ON_SAME_LINE) return false;
+    final PsiElement container = myNode.getPsi();
+    if (!(container instanceof PyAstFunction || container instanceof PyAstClass)) return false;
+    final PsiElement onlyChild = statementList.getFirstChild();
+    return onlyChild != null &&
+           onlyChild == statementList.getLastChild() &&
+           onlyChild instanceof PyAstStatement statement &&
+           isEllipsis(statement);
   }
 
   private boolean needLineBreakInStatement() {
