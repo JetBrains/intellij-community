@@ -16,7 +16,6 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -29,13 +28,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class IntroduceFieldWithSetUpInitializationTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class IntroduceFieldWithSetUpInitializationTest {
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -44,67 +50,69 @@ public class IntroduceFieldWithSetUpInitializationTest extends LightJavaCodeInsi
         .addProjectLibrary(model, "JUnit4", IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths());
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData/refactoring/introduceField/");
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
-  }
-
+  @Test
   public void testInSetUp() throws Exception {
     doTest();
   }
 
+  @Test
   public void testInitiallyInSetUp() throws Exception {
     doTest();
   }
 
+  @Test
   public void testPublicBaseClassSetUp() throws Exception {
     doTest();
   }
 
+  @Test
   public void testBeforeExist() throws Exception {
     doTest();
   }
 
+  @Test
   public void testBeforeNotExist() throws Exception {
     doTest();
   }
 
+  @Test
   public void testBeforeNotExist1() throws Exception {
     doTest();
   }
 
+  @Test
   public void testOrderInSetup() throws Exception {
     doTest();
   }
 
+  @Test
   public void testBeforeExistNonAnnotated() throws Exception {
     doTest();
   }
 
   private void doTest() throws Exception {
-    configureByFile("before" + getTestName(false) + ".java");
-    final PsiLocalVariable local =
-      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-    new LocalToFieldHandler(getProject(), false) {
-      @Override
-      protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(final PsiClass aClass,
-                                                                            final PsiLocalVariable local,
-                                                                            final PsiExpression[] occurences,
-                                                                            final boolean isStatic) {
-        return new BaseExpressionToFieldHandler.Settings("i", null, occurences, true, false, false,
-                                                         JavaIntroduceFieldModCommandService.InitializationPlace.IN_SETUP_METHOD,
-                                                         PsiModifier.PRIVATE, local, local.getType(), true, (BaseExpressionToFieldHandler.TargetDestination)null, false,
-                                                         false);
-      }
-    }.convertLocalToField(local, getEditor());
-    checkResultByFile("after" + getTestName(false)+ ".java");
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/introduceField/";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("before" + myFixture.getTestName(false) + ".java");
+    myFixture.runInCommand(() -> {
+      final PsiLocalVariable local =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
+      new LocalToFieldHandler(myFixture.getProject(), false) {
+        @Override
+        protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(final PsiClass aClass,
+                                                                              final PsiLocalVariable local,
+                                                                              final PsiExpression[] occurences,
+                                                                              final boolean isStatic) {
+          return new BaseExpressionToFieldHandler.Settings("i", null, occurences, true, false, false,
+                                                           JavaIntroduceFieldModCommandService.InitializationPlace.IN_SETUP_METHOD,
+                                                           PsiModifier.PRIVATE, local, local.getType(), true, (BaseExpressionToFieldHandler.TargetDestination)null, false,
+                                                           false);
+        }
+      }.convertLocalToField(local, myFixture.getEditor());
+      myFixture.checkResultByFile("after" + myFixture.getTestName(false)+ ".java");
+    });
   }
 }

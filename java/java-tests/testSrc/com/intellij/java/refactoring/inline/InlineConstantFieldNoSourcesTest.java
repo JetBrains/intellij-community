@@ -15,39 +15,49 @@
  */
 package com.intellij.java.refactoring.inline;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.inline.InlineConstantFieldProcessor;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class InlineConstantFieldNoSourcesTest extends LightJavaCodeInsightTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+@TestApplication
+public class InlineConstantFieldNoSourcesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testCompiledConstantNoSource() {
     doTest();
   }
 
   private void doTest() {
-    String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String name = myFixture.getTestName(false);
     @NonNls String fileName = "/refactoring/inlineConstantField/" + name + ".java";
-    configureByFile(fileName);
-    PsiElement element = TargetElementUtil
-      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    final PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
-    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
-    assertTrue(element instanceof PsiField);
-    PsiField field = (PsiField)element.getNavigationElement();
-    new InlineConstantFieldProcessor(field, getProject(), refExpr, true).run();
-    checkResultByFile(fileName + ".after");
+    myFixture.configureByFile(fileName);
+    myFixture.runInCommand(() -> {
+      PsiElement element = TargetElementUtil
+        .findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+      final PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
+      assertInstanceOf(PsiField.class, element);
+      PsiField field = (PsiField)element.getNavigationElement();
+      new InlineConstantFieldProcessor(field, myFixture.getProject(), refExpr, true).run();
+      myFixture.checkResultByFile(fileName + ".after");
+    });
   }
 }

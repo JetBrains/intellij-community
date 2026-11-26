@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -10,81 +9,105 @@ import com.intellij.refactoring.inline.InlineParameterExpressionProcessor;
 import com.intellij.refactoring.inline.InlineParameterHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class InlineParameterTest extends LightJavaCodeInsightTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class InlineParameterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testSameValue() {
     doTest(true);
   }
 
+  @Test
   public void testNullValue() {
     doTest(true);
   }
 
+  @Test
   public void testConstructorCall() {
     doTest(true);
   }
 
+  @Test
   public void testStaticFinalField() {
     doTest(true);
   }
 
+  @Test
   public void testStaticFinalFieldDifferentQualifiers() {
     doTest(true);
   }
 
+  @Test
   public void testRefIdentical() {
      doTest(true);
    }
 
+  @Test
   public void testRefIdenticalNoLocal() {
      doTest(false);
    }
 
+  @Test
   public void testRefLocalConstantInitializer() {
      doTest(false);
   }
 
+  @Test
   public void testRefLocalWithLocal() {
      doTest(false);
   }
 
+  @Test
   public void testRefMethod() {
      doTest(true);
   }
 
+  @Test
   public void testRefMethodOnLocal() {
      doTest(false);
   }
 
+  @Test
   public void testRefFinalLocal() {
      doTest(true);
   }
 
+  @Test
   public void testRefStaticField() {
      doTest(true);
   }
 
+  @Test
   public void testRefFinalLocalInitializedWithMethod() {
     doTest(false);
   }
 
+  @Test
   public void testRefSelfField() {
     doTest(false);
   }
 
+  @Test
   public void testRefStaticMethod() {
     doTest(true);
   }
 
+  @Test
   public void testRefOuterThis() {
     try {
       doTest(false);
@@ -94,42 +117,52 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testInlineLambda() {
     doTest(false);
   }
 
+  @Test
   public void testInlineLambdaWithOuterRef() {
     doTest(false);
   }
 
+  @Test
   public void testRefThis() {
     doTest(false);
   }
 
+  @Test
   public void testRefQualifiedThis() {
     doTest(false);
   }
 
+  @Test
   public void testRefSameNonFinalField() {
     doTest(false);
   }
 
+  @Test
   public void testRefSameNonFinalFieldOtherObject() {
     doTestCannotFindInitializer();
   }
 
+  @Test
   public void testRefSameFinalFieldOtherObject() {
     doTestCannotFindInitializer();
   }
 
+  @Test
   public void testRef2ConstantsWithTheSameValue() {
     doTest(false);
   }
 
+  @Test
   public void testRefConstantAndField() {
     doTestCannotFindInitializer();
   }
 
+  @Test
   public void testRefNewInner() {
     try {
       doTest(false);
@@ -139,14 +172,23 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRightSideAssignment() { doTest(false); }
+  @Test
   public void testRefNewInnerForMethod() { doTest(false); }
+  @Test
   public void testRefNewInnerAvailable() { doTest(false); }
-  public void testLocalVarDeclarationInConstructor() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () ->  doTest(true)); }
+  @Test
+  public void testLocalVarDeclarationInConstructor() {
+  LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get(); IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () ->  doTest(true)); }
+  @Test
   public void testFlexibleConstructorBody() { doTest(true); }
+  @Test
   public void testFromClassInitializer() { doTest(false); }
+  @Test
   public void testPropagatedParams() { doTest(false); }
 
+  @Test
   public void testParameterWithWriteAccess() {
     try {
       doTest(false);
@@ -156,6 +198,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefNewInnerFromMethod() {
     try {
       doTest(false);
@@ -165,18 +208,22 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefNewInnerInHierarchyAvailable() {
     doTest(false);
   }
 
+  @Test
   public void testRefNewTopLevel() {
     doTest(false);
   }
 
+  @Test
   public void testConflictingFieldName() {
     doTest(true);
   }
 
+  @Test
   public void testRefNewLocal() {
     try {
       doTest(false);
@@ -186,6 +233,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefArrayAccess() {
     try {
       doTest(false);
@@ -195,6 +243,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefCallerParameter() {
     try {
       doTest(false);
@@ -205,6 +254,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
   }
 
 
+  @Test
   public void testHandleExceptions() {
     doTest(false);
   }
@@ -218,6 +268,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefNonStatic() {
     try {
       doTest(false);
@@ -227,6 +278,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefNonStaticClass() {
     try {
       doTest(false);
@@ -236,14 +288,17 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
   
+  @Test
   public void testRefNonStaticClassArray() {
     doTest(false);
   }
   
+  @Test
   public void testNoWarning() {
     doTest(false);
   }
 
+  @Test
   public void testRefThisFromStatic() {
     try {
       doTest(false);
@@ -253,6 +308,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testVisibility() {
     try {
       doTest(false);
@@ -262,6 +318,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testWriteAccess() {
     try {
       doTest(false);
@@ -271,6 +328,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRefCallerParameterInCallChain() {
     try {
       doTest(false);
@@ -280,14 +338,17 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testInlineLocalParamDef() {
     doTest(false);
   }
 
+  @Test
   public void testInlineRecursive() {
     doTest(false);
   }
 
+  @Test
   public void testCantInlineRecursive() {
     try {
       doTest(false);
@@ -297,6 +358,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
   
+  @Test
   public void testCantInlineRecursive2() {
     try {
       doTest(false);
@@ -306,6 +368,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testParameterDefWithWriteAccess() {
     try {
       doTest(false);
@@ -315,6 +378,7 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testSameSignatureExistConflict() {
     try {
       doTest(false);
@@ -324,22 +388,29 @@ public class InlineParameterTest extends LightJavaCodeInsightTestCase {
     }
   }
   
+  @Test
   public void testInlineVararg() { doTest(false); }
+  @Test
   public void testVarargs() { doTest(false); }
+  @Test
   public void testArrayInitializer() { doTest(false); }
 
   private void doTest(boolean createLocal) {
-    getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS, createLocal);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS, createLocal);
 
-    @NonNls String fileName = "/refactoring/inlineParameter/" + getTestName(false) + ".java";
-    configureByFile(fileName);
-    performAction();
-    checkResultByFile(null, fileName + ".after", true);
+    @NonNls String fileName = "/refactoring/inlineParameter/" + myFixture.getTestName(false) + ".java";
+    myFixture.configureByFile(fileName);
+    myFixture.runInCommand(() -> {
+      performAction();
+      myFixture.checkResultByFile(fileName + ".after", true);
+    });
   }
 
   private void performAction() {
-    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                                                                 TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    new InlineParameterHandler().inlineElement(getProject(), getEditor(), element);
+    new InlineParameterHandler().inlineElement(myFixture.getProject(), myFixture.getEditor(), element);
   }
 }
