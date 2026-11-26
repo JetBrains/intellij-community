@@ -140,6 +140,9 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
       consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_ARGUMENTS",
                                 PySyntaxBundle.message("formatter.use.continuation.indent"),
                                 getInstance().WRAPPING_METHOD_ARGUMENTS_WRAPPING);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "HUG_SOLE_COLLECTION_ARGUMENT",
+                                PySyntaxBundle.message("formatter.hug.sole.collection.argument"),
+                                getInstance().WRAPPING_METHOD_ARGUMENTS_WRAPPING);
       consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS",
                                 PySyntaxBundle.message("formatter.use.continuation.indent"),
                                 PySyntaxBundle.message("formatter.collections.and.comprehensions"));
@@ -316,6 +319,8 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
         pass
 
     xyzzy(1, 2, 'long_string_constant1', 3, 4, 'long_string_constant2')
+
+    print(['long_string_constant1', 'long_string_constant2', 'long_string_constant3', 'long_string_constant4'])
 
     xyzzy(
         'with',

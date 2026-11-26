@@ -76,6 +76,9 @@ object PyDefaultStyleGuide {
       USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false
       USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = false
 
+      // `print([` ... `])`, as Black --unstable and Ruff --preview write it.
+      HUG_SOLE_COLLECTION_ARGUMENT = true
+
       HANG_CLOSING_BRACKETS = false
       DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_NONE
     }
