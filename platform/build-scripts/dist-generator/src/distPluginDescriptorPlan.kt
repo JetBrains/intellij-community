@@ -246,8 +246,8 @@ internal data class EmbeddedProductDescriptorPlan(
   /** The Product DSL content of the embedded frontend, which the macro composes over the module-set table. */
   @JvmField val content: ProductContentPlan,
   /**
-   * Descriptor file label to resolver load path, in label order, less the conventional rows. The call adds the row of
-   * each additional module, see [productDescriptorRows].
+   * Descriptor file label to resolver load path, in label order, less the conventional rows. The macro takes the row of
+   * each additional module from the record of the module, see [ProductContentPlan.attributes].
    */
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
@@ -277,8 +277,9 @@ internal data class ProductDescriptorPlan(
   /** The entry of the product descriptor in the jar: `META-INF/plugin.xml` or `META-INF/<prefix>Plugin.xml`. */
   @JvmField val descriptorPath: String,
   /**
-   * Descriptor file label to resolver load path, in label order, less the conventional rows. The call adds the row of
-   * each additional module that the product does not refuse, see [productDescriptorRows].
+   * Descriptor file label to resolver load path, in label order, less the conventional rows. The macro takes the row of
+   * each additional module that the product does not refuse from the record of the module, see
+   * [ProductContentPlan.attributes].
    */
   @JvmField val descriptors: Map<String, String>,
   /** Java container label to space-separated resolver load paths, in label order. */
@@ -594,7 +595,7 @@ private fun productContentFacts(spec: ProductModulesContentSpec, outputProvider:
 
 /**
  * [labels] less the conventional row of each of [conventionalModules]. The module-set table states the row of a set
- * member, and the call states the row of an additional module, see [productDescriptorRows].
+ * member, and the record of an additional module states its row, see [ProductContentPlan.attributes].
  */
 private fun statedDescriptorRows(
   labels: Map<String, String>,
@@ -609,24 +610,6 @@ private fun statedDescriptorRows(
       conventionalLabel = index::conventionalDescriptorLabel,
     )
   }
-}
-
-/**
- * The `descriptors` attribute of a product descriptor call: [stated] and the conventional row of each additional module
- * of [content] that [refused] does not name. The module-set table states the rows of the set members.
- */
-internal fun productDescriptorRows(
-  stated: Map<String, String>,
-  content: ProductContentPlan,
-  refused: Collection<String>,
-  index: DistBazelIndex,
-): Map<String, String> {
-  val refusedNames = refused.toHashSet()
-  return withConventionalDescriptorRows(
-    rows = stated,
-    modules = content.contentModules.filterNot { it in refusedNames },
-    conventionalLabel = index::conventionalDescriptorLabel,
-  )
 }
 
 /**

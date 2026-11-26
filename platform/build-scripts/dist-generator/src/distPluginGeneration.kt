@@ -1172,8 +1172,9 @@ private fun renderEmbeddedFrontendHelpers(
 
 /**
  * The `dist_embedded_product_descriptor` call of one class home. [product] is the home, or `null` for the baseline
- * product, which keeps the unsuffixed target name. The macro composes the content over the module-set table and takes the
- * descriptor row of each set member from the table, so the call states the other rows, see [productDescriptorRows].
+ * product, which keeps the unsuffixed target name. The macro composes the content over the module-set table. It takes the
+ * descriptor row of each set member from the table and the row of each additional module from the record of the module.
+ * So the call states the other rows.
  */
 private fun renderEmbeddedProductDescriptorCall(
   support: DistEmbeddedFrontendSupport,
@@ -1182,9 +1183,13 @@ private fun renderEmbeddedProductDescriptorCall(
   index: DistBazelIndex,
 ): String {
   // The attributes in buildifier's alphabetical order, so a regenerate leaves the section unchanged.
-  val attributes = TreeMap(embedded.content.attributes(DIST_MODULE_SETS_SYMBOL))
-  val descriptors = productDescriptorRows(stated = embedded.descriptors, content = embedded.content, refused = emptyList(), index = index)
-  putDescriptorRows(attributes, descriptors)
+  val dependentIsCommunity = checkNotNull(index.isCommunity(support.pluginMainModule)) {
+    "Plugin '${support.pluginMainModule}' has no Bazel package, so it writes no embedded product descriptor call"
+  }
+  val attributes = TreeMap(embedded.content.attributes(DIST_MODULE_SETS_SYMBOL) { module ->
+    productContentModuleLabel(index, module, dependentIsCommunity = dependentIsCommunity, owner = support.pluginMainModule)
+  })
+  putDescriptorRows(attributes, embedded.descriptors)
   if (embedded.libraryDescriptors.isNotEmpty()) {
     attributes.put("library_descriptors", LinkedHashMap(embedded.libraryDescriptors))
   }

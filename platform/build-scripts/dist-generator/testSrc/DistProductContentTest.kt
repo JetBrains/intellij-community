@@ -192,8 +192,17 @@ class DistProductContentTest {
   }
 
   @Test
+  fun `the attributes label each additional module in DSL order`() {
+    val spec = spec(moduleSets = emptyList(), additionalModules = listOf(module("x2"), module("p1", namespace = null), module("x1")))
+    val attributes = productContentPlan(spec, "probe").attributes(DIST_MODULE_SETS_SYMBOL) { "//modules/$it" }
+
+    val contentModules = attributes.getValue("content_modules") as Map<*, *>
+    assertThat(contentModules.entries.map { "${it.key}=${it.value}" }).containsExactly("x2=//modules/x2", "p1=//modules/p1", "x1=//modules/x1")
+  }
+
+  @Test
   fun `the attributes leave out an empty value and name the table`() {
-    val attributes = productContentPlan(spec(moduleSets = listOf(ModuleSetWithOverrides(C))), "probe").attributes(DIST_MODULE_SETS_SYMBOL)
+    val attributes = productContentPlan(spec(moduleSets = listOf(ModuleSetWithOverrides(C))), "probe").attributes(DIST_MODULE_SETS_SYMBOL) { "//$it" }
 
     assertThat(attributes.keys).containsExactly("module_set_table", "module_sets")
     assertThat(formatValue(attributes.getValue("module_set_table"))).isEqualTo("DIST_MODULE_SETS")

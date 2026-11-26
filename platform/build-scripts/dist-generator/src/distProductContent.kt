@@ -43,13 +43,17 @@ internal data class ProductContentPlan(
   /**
    * The macro attributes of this content, keyed by attribute name. A target sorts them with its other attributes, as
    * buildifier does. An empty attribute is left out. [moduleSetTable] is the table the package loads.
+   *
+   * `content_modules` maps each additional module to [contentModuleLabel], its rule label as the package of the call
+   * writes it. The macro takes the descriptor of each module from the record of the module, so the call states no row of
+   * it.
    */
-  fun attributes(moduleSetTable: String): Map<String, Any> {
+  fun attributes(moduleSetTable: String, contentModuleLabel: (String) -> String): Map<String, Any> {
     val result = TreeMap<String, Any>()
     aliases.ifNotEmpty { result.put("aliases", it) }
     contentModuleLoading.ifNotEmpty { result.put("content_module_loading", LinkedHashMap(it)) }
     contentModuleRequiredIfAvailable.ifNotEmpty { result.put("content_module_required_if_available", LinkedHashMap(it)) }
-    contentModules.ifNotEmpty { result.put("content_modules", it.unsorted()) }
+    contentModules.ifNotEmpty { modules -> result.put("content_modules", modules.associateWithTo(LinkedHashMap(), contentModuleLabel)) }
     includes.ifNotEmpty { result.put("includes", LinkedHashMap(it)) }
     loadingOverrides.ifNotEmpty { result.put("loading_overrides", LinkedHashMap(it)) }
     result.put("module_set_table", StarlarkIdentifier(moduleSetTable))
