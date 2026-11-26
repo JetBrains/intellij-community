@@ -1,7 +1,7 @@
 # The Air UI-lane tooling: the `vm` controller, `air-trace` and the guest agent. A cargo workspace that
 # Bazel also builds (`avl.MODULE.bazel`, `avl.bzl`). The crates of BT's workspace, `community/tools/bt`, and
-# `checkout-files`, `dev-launch`, `distpath` and `fscopy` of the distribution tools are path dependencies, and `avl.bzl`
-# maps them to their community targets.
+# `checkout-files`, `distpath` and `fscopy` of the distribution tools are path dependencies, and `avl.bzl` maps them to
+# their community targets.
 [workspace]
 resolver = "3"
 members = [
@@ -23,6 +23,7 @@ members = [
     "crates/avl-trace-tools",
     "crates/avl-vm",
     "crates/avl-wire",
+    "crates/dev-launch",
 ]
 
 [workspace.package]
@@ -159,6 +160,7 @@ avl-testkit = { path = "crates/avl-testkit" }
 avl-trace = { path = "crates/avl-trace" }
 avl-trace-tools = { path = "crates/avl-trace-tools" }
 avl-wire = { path = "crates/avl-wire" }
+dev-launch = { path = "crates/dev-launch" }
 
 # Crates of BT's workspace and of the distribution tools. Their own dependencies come from the `[workspace.dependencies]`
 # of their workspace.
@@ -166,12 +168,13 @@ bt-core = { path = "../bt/crates/bt-core" }
 bt-junit = { path = "../bt/crates/bt-junit" }
 refusal = { path = "../bt/crates/refusal" }
 checkout-files = { path = "../../build/dist-tools/crates/checkout-files" }
-dev-launch = { path = "../../build/dist-tools/crates/dev-launch" }
 distpath = { path = "../../build/dist-tools/crates/distpath" }
 fscopy = { path = "../../build/dist-tools/crates/fscopy" }
 
 # Documents and errors.
 anyhow = "1.0.104"
+indexmap = "2.14.2"
+java-properties = "2.0.0"
 monostate = "1.0.3"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.151", features = ["raw_value"] }

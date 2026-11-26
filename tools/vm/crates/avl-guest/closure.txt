@@ -29,7 +29,6 @@ encoding_rs
 equivalent
 fastrand
 flate2
-foldhash
 form_urlencoded
 fscopy
 gethostname

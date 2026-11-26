@@ -26,7 +26,6 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/checkout-files` | The files of a git checkout, as `git ls-files --cached --others --exclude-standard` lists them, without the `git` executable: the index reader and the walk. BT links it. Its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dist-tools/crates/checkout-files:checkout-files_test` |
 | `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector and the composer: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dist-tools/crates/component:component_test` |
-| `crates/dev-launch` | The `java` command line of a distribution: the distribution properties, the class path, the main class, the custom command, and the text of the argument file. The guest agent of `community/tools/vm` links it, and no Bazel action runs it. It links no other crate of this workspace, and its `Cargo.toml` spells the `[package]` values inline, so a crate of another workspace can link it by path. | `@community//build/dist-tools/crates/dev-launch:dev-launch_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the lexical path functions `clean`, `dir` and `join`. | `@community//build/dist-tools/crates/distpath:distpath_test` |
 | `crates/docs-gate` | The docs gate of a docs site on the declared bun and OpenSpec CLI: the declared runtime, the run with a deadline, and the meaning of the sentinel and the exit code. The Rust tests of the docs sites link it. | `@community//build/dist-tools/crates/docs-gate:docs-gate_test` |
 | `crates/filemeta` | The inventory JSON, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dist-tools/crates/filemeta:filemeta_test` |
@@ -169,7 +168,7 @@ root. A plan author who needs a new shape changes the contract, the record and t
 
 `community/MODULE.bazel` generates the crate hub `@dt` from `Cargo.toml`, `Cargo.lock` and `.cargo/config.toml` of
 this directory. The hub also resolves the triples `aarch64-unknown-linux-musl` and `x86_64-unknown-linux-musl`, where
-no distribution tool runs. The guest agent of `community/tools/vm` links `dev-launch` for both, and the closure checks of
+no distribution tool runs. The guest agent of `community/tools/vm` links `fscopy` for both, and the closure checks of
 `vm` and `air-trace` analyze `distpath` for x86_64. After a change of `Cargo.lock`, update the Bazel
 lockfiles of both roots:
 

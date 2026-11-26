@@ -131,8 +131,6 @@ flate2 = "1.1.10"
 getrandom = "0.4.3"
 httpdate = "1.0.3"
 ignore = "0.4.34"
-indexmap = "2.14.2"
-java-properties = "2.0.0"
 libc = "0.2.189"
 memmap2 = "0.9.11"
 quick-xml = "0.42.0"
@@ -155,7 +153,6 @@ appinfo = { path = "crates/appinfo" }
 checkout-files = { path = "crates/checkout-files" }
 cli = { path = "crates/cli" }
 component = { path = "crates/component" }
-dev-launch = { path = "crates/dev-launch" }
 distpath = { path = "crates/distpath" }
 filemeta = { path = "crates/filemeta" }
 fscopy = { path = "crates/fscopy" }

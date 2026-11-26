@@ -1,7 +1,13 @@
+use std::path::Path;
+
 use serde_json::json;
-use testkit::write_file;
 
 use super::*;
+
+/// Writes `content` to `path`, whose directory exists.
+fn write_file(path: impl AsRef<Path>, content: impl AsRef<[u8]>) {
+    std::fs::write(path, content).unwrap();
+}
 
 /// The macro of `product-info.json` for the IDE home on the host OS.
 fn ide_home_macro() -> &'static str {

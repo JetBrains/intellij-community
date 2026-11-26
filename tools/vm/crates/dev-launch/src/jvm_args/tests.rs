@@ -1,8 +1,11 @@
 use std::path::Path;
 
-use testkit::write_file;
-
 use super::*;
+
+/// Writes `content` to `path`, whose directory exists.
+fn write_file(path: impl AsRef<Path>, content: impl AsRef<[u8]>) {
+    std::fs::write(path, content).unwrap();
+}
 
 /// Writes the files of a distribution below `directory` and reads it with the home `/ws/ide_home`.
 fn read_distribution(directory: &Path, runtime_module_repository: bool) -> anyhow::Result<Distribution> {

@@ -838,6 +838,7 @@ dependencies = [
  "java-properties",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]
