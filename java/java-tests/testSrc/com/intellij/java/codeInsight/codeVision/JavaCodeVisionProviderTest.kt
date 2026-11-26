@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider
 import com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -36,6 +37,32 @@ class JavaCodeVisionProviderTest {
       }
     }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
+
+  @Test
+  fun testRecordComponentUsagesWithTooManyFiles() {
+    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(2, myFixture.testRootDisposable)
+    myFixture.addFileToProject("Usage1.java", """
+          class Usage1 {
+            String getValue(MyRecord record) {
+              return record.value();
+            }
+          }
+        """.trimIndent())
+    myFixture.addFileToProject("Usage2.java", """
+          class Usage2 {
+            String getValue(MyRecord record) {
+              return record.value();
+            }
+          }
+        """.trimIndent())
+
+    doTest("""
+        public record MyRecord(
+          String value,
+          String unused /*<# [no usages] #>*/
+        ) {}
+      """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
+  }
 
   @Test
   fun testClassInheritors(): Unit = doTest("""

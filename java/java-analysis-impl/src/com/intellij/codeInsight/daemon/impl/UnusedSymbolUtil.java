@@ -33,6 +33,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -253,7 +254,11 @@ public final class UnusedSymbolUtil {
       PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, scope, ignoreFile);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
           // try to search for private and package-private members unconditionally - they are unlikely to have millions of usages
-          && (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
+          &&
+          (member.hasModifierProperty(PsiModifier.PUBLIC) ||
+           member.hasModifierProperty(PsiModifier.PROTECTED) ||
+           // Record components have associated public getter functions - Consider them public
+           member instanceof PsiRecordComponent)) {
         log("* "+member.getName()+" too many usages; false");
         return false;
       }
