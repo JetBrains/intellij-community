@@ -75,7 +75,7 @@ cd community && ./bazel.cmd test //build/dist-tools/...
   bytes. The validation spec states them. Run them after a change that can move a composed byte:
 
 ```sh
-./bazel.cmd build //build:idea_air_dist && cat out/bazel-bin/build/idea_air_dist.dist/fingerprint.txt
+./bazel.cmd build //build:idea_air_dist && cat out/bazel-bin/build/idea_air_dist.fingerprint
 ./build/dist.cmd snapshot take //build:idea_air_dist out/dist-snapshots/<name>.json
 ./build/dist.cmd snapshot diff out/dist-snapshots/<baseline>.json out/dist-snapshots/<name>.json
 ```
