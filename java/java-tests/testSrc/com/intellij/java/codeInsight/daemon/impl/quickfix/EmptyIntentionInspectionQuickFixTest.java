@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerOptions;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -12,23 +13,33 @@ import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase {
-  @Override
-  @NonNls
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/emptyIntention";
-  }
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DefUseInspection(), new LocalInspectionTool() {
+@TestApplication
+public class EmptyIntentionInspectionQuickFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(
+    projectFixture, () -> configureLocalInspectionTools(),
+    LightDaemonAnalyzerOptions.DEFAULT.withBasePath("/java/java-tests/testData/codeInsight/daemonCodeAnalyzer/quickFix/emptyIntention"));
+
+  private static List<LocalInspectionTool> configureLocalInspectionTools() {
+    return List.of(new DefUseInspection(), new LocalInspectionTool() {
       @Override
       @Nls
       @NotNull
@@ -61,20 +72,24 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
           }
         };
       }
-    }};
+    });
   }
 
+  @Test
   public void testX() {
-    configureByFile(getBasePath()+"/X.java");
-    List<IntentionAction> emptyActions = ContainerUtil.filter(getAvailableActions(),
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.configureByFile("/X.java");
+    List<IntentionAction> emptyActions = ContainerUtil.filter(daemon.getAvailableActions(),
       action ->
         IntentionActionDelegate.unwrap(action) instanceof EmptyIntentionAction);
-    assertEquals(emptyActions.toString(), 1, emptyActions.size());
+    assertEquals(1, emptyActions.size(), emptyActions.toString());
   }
 
+  @Test
   public void testLowPriority() {
-    configureByFile(getBasePath() + "/LowPriority.java");
-    List<IntentionAction> emptyActions = getAvailableActions();
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.configureByFile("/LowPriority.java");
+    List<IntentionAction> emptyActions = daemon.getAvailableActions();
     int i = 0;
     for(;i < emptyActions.size(); i++) {
       IntentionAction action = IntentionActionDelegate.unwrap(emptyActions.get(i));

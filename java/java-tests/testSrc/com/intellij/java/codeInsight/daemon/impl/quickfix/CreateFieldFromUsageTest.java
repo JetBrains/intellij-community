@@ -2,60 +2,70 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.quickFix.ActionHint;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerOptions;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
+@TestApplication
+public class CreateFieldFromUsageTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(
+    projectFixture, List::of,
+    LightDaemonAnalyzerOptions.DEFAULT.withBasePath("/java/java-tests/testData/codeInsight/daemonCodeAnalyzer/quickFix/createFieldFromUsage"));
 
-  public void testSwitchCaseLabel() { doSingleTest(); }
-  public void testAnonymousClass() { doSingleTest(); }
-  public void testExpectedTypes() { doSingleTest(); }
-  public void testInterface() { doSingleTest(); }
-  public void testInterfaceField() { doSingleTest(); }
-  public void testSuperInterfaceConstant() { doSingleTest(); }
-  public void testMultipleTypes() { doSingleTest(); }
-  public void testMultipleTypes2() { doSingleTest(); }
-  public void testRecord() { doSingleTest(); }
-  public void testExistingField() { doSingleTest(); }
-  public void testParametericMethod() { doSingleTest(); }
-  public void testQualifyInner() { doSingleTest(); }
-  public void testTypeArgsFormatted() { doSingleTest(); }
-  public void testInsideStaticInnerClass() { doSingleTest(); }
-  public void testCreateFromEquals() { doSingleTest(); }
-  public void testCreateFromNestedPolyadic() { doSingleTest(); }
-  public void testCreateFromEqualsToPrimitiveType() { doSingleTest(); }
-  public void testInsideInterface() { doSingleTest(); }
-  public void testReferenceInCall() { doSingleTest(); }
-  public void testReferenceLambdaType() { doSingleTest(); }
-  public void testReferenceNull() { doSingleTest(); }
+  @Test public void testSwitchCaseLabel() { doSingleTest(); }
+  @Test public void testAnonymousClass() { doSingleTest(); }
+  @Test public void testExpectedTypes() { doSingleTest(); }
+  @Test public void testInterface() { doSingleTest(); }
+  @Test public void testInterfaceField() { doSingleTest(); }
+  @Test public void testSuperInterfaceConstant() { doSingleTest(); }
+  @Test public void testMultipleTypes() { doSingleTest(); }
+  @Test public void testMultipleTypes2() { doSingleTest(); }
+  @Test public void testRecord() { doSingleTest(); }
+  @Test public void testExistingField() { doSingleTest(); }
+  @Test public void testParametericMethod() { doSingleTest(); }
+  @Test public void testQualifyInner() { doSingleTest(); }
+  @Test public void testTypeArgsFormatted() { doSingleTest(); }
+  @Test public void testInsideStaticInnerClass() { doSingleTest(); }
+  @Test public void testCreateFromEquals() { doSingleTest(); }
+  @Test public void testCreateFromNestedPolyadic() { doSingleTest(); }
+  @Test public void testCreateFromEqualsToPrimitiveType() { doSingleTest(); }
+  @Test public void testInsideInterface() { doSingleTest(); }
+  @Test public void testReferenceInCall() { doSingleTest(); }
+  @Test public void testReferenceLambdaType() { doSingleTest(); }
+  @Test public void testReferenceNull() { doSingleTest(); }
 
+  @Test
   public void testWithAlignment() {
-    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings =
+      CodeStyle.getSettings(daemonFixture.get().getFixture().getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
     try {
       settings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
@@ -66,40 +76,33 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
     }
   }
 
+  @Test
   public void testSortByRelevance() throws IOException {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Foo.java");
+    Project project = daemonFixture.get().getFixture().getProject();
+    WriteCommandAction.writeCommandAction(project).run(() -> {
+      VirtualFile foo = projectFixture.get().getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Foo.java");
       VfsUtil.saveText(foo, "package foo; public class Foo { public void put(Object key, Object value) {} }");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
     });
-    PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject()));
-    assertNotNull(aClass);
+    PsiClass aClass = ReadAction.computeBlocking(() -> JavaPsiFacade.getInstance(project).findClass("foo.Foo", GlobalSearchScope.allScope(project)));
+    Assertions.assertNotNull(aClass);
     doSingleTest();
   }
 
-  public void testDependantConstant() { doSingleTest(); }
-  public void testDependantConstant2() { doSingleTest(); }
-  public void testMethodReference() { doSingleTest(); }
-  public void testArrayBraces() { doSingleTest(); }
-  public void testInnerGeneric() { doSingleTest(); }
-  public void testInnerGenericArray() { doSingleTest(); }
-  public void testFromUnfinishedAnonymousClass() { doSingleTest(); }
-  public void testCreateFromAnnotationParameterIncorrectCode() { doSingleTest(); }
-  public void testAbstractClassIncorrectCode() { doSingleTest(); }
-  public void testBrokenCode() { doSingleTest(); }
+  @Test public void testDependantConstant() { doSingleTest(); }
+  @Test public void testDependantConstant2() { doSingleTest(); }
+  @Test public void testMethodReference() { doSingleTest(); }
+  @Test public void testArrayBraces() { doSingleTest(); }
+  @Test public void testInnerGeneric() { doSingleTest(); }
+  @Test public void testInnerGenericArray() { doSingleTest(); }
+  @Test public void testFromUnfinishedAnonymousClass() { doSingleTest(); }
+  @Test public void testCreateFromAnnotationParameterIncorrectCode() { doSingleTest(); }
+  @Test public void testAbstractClassIncorrectCode() { doSingleTest(); }
+  @Test public void testBrokenCode() { doSingleTest(); }
 
-  protected void doSingleTest() {
-    doSingleTest(getTestName(false) + ".java");
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createFieldFromUsage";
-  }
-
-  @Override
-  protected ActionHint parseActionHintImpl(@NotNull PsiFile psiFile, @NotNull String contents) {
-    return ActionHint.parse(psiFile, contents, false);
+  private void doSingleTest() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.quickFixFixture(LightQuickFixOptions.DEFAULT.withPrefixActionHintMatch()).doTest(daemon.getFixture().getTestName(false) + ".java");
   }
 
   @TestApplication

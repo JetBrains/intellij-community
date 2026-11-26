@@ -15,28 +15,32 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerOptions;
 import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
-import com.intellij.openapi.application.PluginPathManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaSpellcheckerSuppressionTest extends LightQuickFixTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/suppression";
-  }
+import java.util.List;
 
-  public void testClassName() { doTest(); }
-  public void testStringLiteral() { doTest(); }
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return SpellcheckerInspectionTestCase.getInspectionTools();
-  }
+@TestApplication
+public class JavaSpellcheckerSuppressionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(
+    projectFixture, () -> List.of(SpellcheckerInspectionTestCase.getInspectionTools()),
+    LightDaemonAnalyzerOptions.DEFAULT.withBasePath("/plugins/java-i18n/testData/suppression"));
+
+  @Test public void testClassName() { doTest(); }
+  @Test public void testStringLiteral() { doTest(); }
 
   private void doTest() {
-    doSingleTest(getTestName(false) + ".java");
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    daemon.quickFixFixture().doTest(daemon.getFixture().getTestName(false) + ".java");
   }
 }

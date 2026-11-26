@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -451,6 +453,16 @@ class LightDaemonAnalyzerFixture internal constructor(
   fun invoke(action: IntentionAction) {
     runInEdtAndWait { CodeInsightTestFixtureImpl.invokeIntention(action, fixture.file, fixture.editor) }
   }
+
+  /**
+   * Returns a [LightQuickFixFixture] on [fixture] with the test data path of [fixture] and [options].
+   * Its `doTest(fileName)` is `doSingleTest(fileName)` of [com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase]:
+   * the `before`, `after` and `preview` files are in the test data path.
+   * Use it in a class that has quick fix file tests and other tests.
+   */
+  @JvmOverloads
+  fun quickFixFixture(options: LightQuickFixOptions = LightQuickFixOptions.DEFAULT): LightQuickFixFixture =
+    LightQuickFixFixture(fixture, fixture.testDataPath, options)
 
   fun highlightErrors(): List<HighlightInfo> = doHighlighting(HighlightSeverity.ERROR)
 

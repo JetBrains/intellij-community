@@ -2,8 +2,11 @@
 
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerOptions;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixture;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixOptions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -19,34 +22,45 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
+import java.util.List;
+
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.codeInsight.daemon.quickFix.LightQuickFixFixtureKt.lightQuickFixTestFiles;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class FixAllAnnotatorQuickfixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(
+    projectFixture, List::of,
+    LightDaemonAnalyzerOptions.DEFAULT.withBasePath("/java/java-tests/testData/codeInsight/daemonCodeAnalyzer/quickFix/fixAllAnnotator"));
+
+  @Test
   public void testAnnotator() {
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
     Annotator annotator = new MyAnnotator();
     Language javaLanguage = JavaFileType.INSTANCE.getLanguage();
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, annotator);
-    enableInspectionTool(new HighlightVisitorBasedInspection().setRunAnnotators(true));
+    daemon.getFixture().enableInspections(new HighlightVisitorBasedInspection().setRunAnnotators(true));
     try {
-      //todo: use LightQuickFixParameterizedTestCase to get separate tests for all data files in testData directory.
-      doAllTests(createWrapper());
+      //todo: use lightQuickFixFixture with a parameterized test to get separate tests for all data files in testData directory.
+      LightQuickFixFixture quickFix = daemon.quickFixFixture(LightQuickFixOptions.DEFAULT.withActionAvailableAfterExecution());
+      for (String fileName : lightQuickFixTestFiles(quickFix.getTestDataPath())) {
+        quickFix.doTest(fileName);
+      }
     }
     finally {
       LanguageAnnotators.INSTANCE.removeExplicitExtension(javaLanguage, annotator);
     }
-  }
-
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return true;
-  }
-
-  @Override
-  @NonNls
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/fixAllAnnotator";
   }
 
   public static class MyAnnotator implements Annotator {

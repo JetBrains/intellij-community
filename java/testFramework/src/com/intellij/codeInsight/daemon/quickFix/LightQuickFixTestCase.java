@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -38,6 +39,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * @deprecated For a JUnit 6 test, use {@link LightDaemonAnalyzerFixture#lightDaemonAnalyzerFixture}.
+ * Its members {@link LightDaemonAnalyzerFixture#getAvailableActions()}, {@link LightDaemonAnalyzerFixture#doAction(String)} and
+ * {@link LightDaemonAnalyzerFixture#invoke(IntentionAction)} replace the quick fix helpers of this class.
+ * {@link LightDaemonAnalyzerFixture#quickFixFixture} gives the form of {@code doSingleTest}.
+ * A class that has only quick fix file tests uses {@link LightQuickFixFixtureKt#lightQuickFixFixture}.
+ */
+@Deprecated
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
   protected static final @NonNls String BEFORE_PREFIX = "before";
   protected static final @NonNls String AFTER_PREFIX = "after";
