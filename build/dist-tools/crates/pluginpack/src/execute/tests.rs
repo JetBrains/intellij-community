@@ -1,4 +1,4 @@
-//! The port of `execute_test.go`. The tests that run the packer binary are in `bins/plugin-remainder-packer/tests`.
+//! The tests that run the packer binary are in `bins/plugin-remainder-packer/tests`.
 
 use std::fs;
 use std::path::Path;

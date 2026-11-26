@@ -1,5 +1,3 @@
-//! The port of `pluginclasspath/classpath_test.go`.
-
 #![allow(clippy::cast_possible_truncation, reason = "a fixture writes small lengths into record fields")]
 
 use super::*;

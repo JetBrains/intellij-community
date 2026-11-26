@@ -1,5 +1,3 @@
-//! The port of `kotlin_preparation_test.go` and of the Kotlin half of `TestLayoutTransformExcludesEncoding`.
-//!
 //! The parity tests pack a hand-written recipe and compare the result with the golden under `testdata`. A golden is the
 //! materialization of every fixture by the deleted Kotlin preparer, frozen before the Kotlin materialization stopped.
 //! The goldens are read-only: this packer is the only producer left, so a re-recording would compare it with itself.

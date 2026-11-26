@@ -1,5 +1,5 @@
-//! The encoding part of `pluginpack/contract_test.go`. Only the asset rows have a JSON form to write, and only the rows,
-//! the catalogue and the layout assets have one to read.
+//! The encoding of the contract. Only the asset rows have a JSON form to write, and only the rows, the catalogue and the
+//! layout assets have one to read.
 
 use super::*;
 use crate::json::from_slice;

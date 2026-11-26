@@ -1,5 +1,3 @@
-//! The port of `plan_test.go`.
-
 use std::collections::BTreeMap;
 
 use planfile::contract::{

@@ -1,5 +1,3 @@
-//! The port of `layout_test.go`.
-
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};

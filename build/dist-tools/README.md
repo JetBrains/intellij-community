@@ -134,8 +134,7 @@ cp out/bazel-bin/build/dist-tools/bins/<bin>/<bin>_closure.txt build/dist-tools/
 ## The subset rule
 
 A tool supports only the input that the repository produces. It refuses all other input with an error that names the
-input. So an unused shape of the former tool has no code here, and a shape that no producer writes cannot pass in
-silence.
+input. So a shape that no producer writes has no code here, and it cannot pass in silence.
 
 `crates/planfile/testdata/corpus` holds a copy of the checked-in plan files. The corpus test reads and derives every
 copy, and it requires every accepted source kind and operation kind to occur. The `javaglob` test requires a recorded

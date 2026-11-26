@@ -37,7 +37,7 @@ use jarpack::{FlagFile, MergeSpec};
 /// The name of the producer in the merged build trace.
 const SERVICE_NAME: &str = "content-module-packer";
 
-/// The exit code of every failure. The former packer used the same code.
+/// The exit code of every failure.
 const FAILURE: u8 = 3;
 
 fn main() -> ExitCode {

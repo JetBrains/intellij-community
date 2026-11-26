@@ -1,4 +1,4 @@
-//! The reader part of `pluginpack/contract_test.go`: `serde_json` refuses what the former reader refused.
+//! The reader of the contract documents: `serde_json` refuses every shape that no producer writes.
 
 use serde::Deserialize;
 

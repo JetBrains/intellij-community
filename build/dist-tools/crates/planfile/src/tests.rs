@@ -1,5 +1,5 @@
-//! The port of `planfile_test.go`. The `mustDerive` of the former tool also planned the derived recipe. That check
-//! needs the `pluginpack` crate, so its tests hold it.
+//! The tests of the plan file reader and the derivation. The plan check of a derived recipe needs the `pluginpack`
+//! crate, so its tests hold it.
 
 mod corpus;
 

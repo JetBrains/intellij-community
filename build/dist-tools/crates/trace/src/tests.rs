@@ -1,6 +1,6 @@
 //! The expectations are whole documents, written by hand. A decoder would accept any field name and any nesting. The
 //! reader of a merged build trace uses these bytes as the schema, and the field order of the Kotlin exporter is part
-//! of it. Each expectation came from the former test `internal/span/span_test.go`, except the `time` tag.
+//! of it.
 
 use std::collections::HashSet;
 use std::fs;

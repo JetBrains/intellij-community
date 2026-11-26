@@ -28,8 +28,9 @@ pub fn validate_path(name: &str) -> Result<()> {
 
 /// Refuses a path or a link target that is not ASCII or that holds `<`, `>` or `&`.
 ///
-/// No payload name in the repository has such a character. For all other text, `serde_json` writes the bytes that the
-/// former writer wrote, and ASCII case folding gives the [`path_identity`] that the former tool gave.
+/// No payload name in the repository has such a character. A writer of all other text escapes it as `serde_json`
+/// does: the quote, the backslash and the control characters get an escape, and every other character stays as it is.
+/// ASCII case folding gives its [`path_identity`].
 pub fn check_supported_text(text: &str) -> Result<()> {
     if let Some(character) = text
         .chars()

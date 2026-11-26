@@ -1,5 +1,3 @@
-//! The port of `plugin-remainder-packer/main_test.go`.
-
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io::Write;

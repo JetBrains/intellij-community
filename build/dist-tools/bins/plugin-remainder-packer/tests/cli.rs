@@ -1,7 +1,5 @@
-//! The tests of the Go `pluginpack_test` target that ran the packer binary. They are
-//! `TestRawTreeIsAbsentUntilGoExecution`, `TestBinaryOutputAliasesPreserveContractFiles`, and the projection half of
-//! `TestGoPlanDerivationMatchesKotlinPreparer`. The fourth is `TestRelativeDirectoryRootsResolveThroughWorkingDirectoryLinks`.
-//! The Go test changed the working directory of its process. The port starts the binary in that directory instead.
+//! The tests that run the packer binary as a process. A test that needs another working directory starts the binary
+//! in that directory.
 //!
 //! The tests read the path of the packer binary from `CARGO_BIN_EXE_plugin-remainder-packer` at run time. Where the
 //! variable is absent, each test skips with a message.

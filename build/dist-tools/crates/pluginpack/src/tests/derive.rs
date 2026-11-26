@@ -1,5 +1,5 @@
-//! The port of `kotlin_derivation_test.go`, and the plan check of the `mustDerive` of the former tool in
-//! `planfile_test.go`. The binary half of the derivation test is in `bins/plugin-remainder-packer/tests`.
+//! The derivation tests against the Kotlin goldens, and the plan check of each derived recipe. The binary half of the
+//! derivation test is in `bins/plugin-remainder-packer/tests`.
 
 use planfile::contract::{Artifact, Catalogue, Library, Reference, TREE_VERSION, VERSION};
 use testkit::plan_text;

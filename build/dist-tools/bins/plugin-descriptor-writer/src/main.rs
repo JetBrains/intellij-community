@@ -17,7 +17,7 @@
 //!
 //! ### The subset
 //!
-//! The port covers what the four descriptor rules state and what the declared descriptors hold. It refuses the rest
+//! The writer covers what the four descriptor rules state and what the declared descriptors hold. It refuses the rest
 //! with an error that names the input. The request is one `--flagfile=<file>` argument, because every rule passes
 //! its options that way. An option that no rule states is unknown here, and so is an option that the rules have but
 //! no target sets. The reader of [`descriptorxml`], in the `appinfo` crate, lists the XML constructs that it refuses. A refusal turns a new
@@ -230,7 +230,7 @@ fn reserialize(content: &str) -> Result<String> {
     Ok(descriptorxml::write(&descriptorxml::read(content)?))
 }
 
-/// The port of `applyPluginDescriptorPatch` (`PluginXmlPatcher.kt`), the body that the assembly runs. The plan drives it
+/// The counterpart of `applyPluginDescriptorPatch` (`PluginXmlPatcher.kt`), the body that the assembly runs. The plan drives it
 /// instead of the product layout.
 fn patch(parsed: &PluginRequest) -> Result<String> {
     let build_number = read_text(&parsed.build_number_file)?.trim().to_owned();

@@ -107,8 +107,7 @@ module has no family check. `NativeTree::file_mode` gives the mode of each tree 
 inventory.
 
 The merge creates each directory below the tree root with the mode 0755 under any umask. The packer creates the root and
-the parent of the jar with the same mode. The former tool gave the same mode under the umask 022 or 002, but 0700 under
-the umask 077. A directory that exists keeps its mode. The merge links no `filemeta`, because that crate would put the
+the parent of the jar with the same mode. A directory that exists keeps its mode. The merge links no `filemeta`, because that crate would put the
 inventory crates into each tool that reads a jar.
 
 ## Low level
@@ -128,11 +127,10 @@ names the refused input. The merge adds the path of a source or of the jar as co
 `<context>: <error>`.
 
 An I/O error has the path as its context and reads `<path>: <io::Error>`, for example `x.jar: No such file or directory
-(os error 2)`. The former text was `open x.jar: no such file or directory`. No gate reads the text.
+(os error 2)`. No gate reads the text.
 `downcast_ref::<io::Error>()` gives the `io::ErrorKind`.
 
 A `Writer` does not know the path of its output, so its I/O error has no path. The merge adds the jar path to an I/O
-error of the writer, for example `intellij.example.jar: No space left on device (os error 28)`. The former text was
-`write intellij.example.jar: no space left on device`. A refusal of the writer names its entry or its limit, and the
+error of the writer, for example `intellij.example.jar: No space left on device (os error 28)`. A refusal of the writer names its entry or its limit, and the
 merge keeps it as it is. Another caller of `Writer` adds the path itself. A tree directory that the merge cannot
 create gives `<directory>: <io::Error>`.

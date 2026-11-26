@@ -1,7 +1,5 @@
 //! The fixtures that the tests of the modules share, and the tests that cross the modules. The tests of a module are in
-//! `<module>/tests.rs`. The tests port the tests of the former tool in `internal/pluginpack`, and each test module
-//! names its former file. The doc comment of the nearest test names a former case without a port, with the reason.
-//! `corpus` and the tests of `gzip_resources` have no former original.
+//! `<module>/tests.rs`.
 
 #![allow(
     clippy::cast_possible_truncation,
