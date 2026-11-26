@@ -3959,6 +3959,11 @@ private fun renderContentSets(
   val macrosBzlPath = half.macrosBzl.removePrefix("//").replace(':', '/')
   append("# less. `").append(macrosBzlPath).append("` loads this file, not a module extension, so nothing here is\n")
   append("# fail-open and the file does not have to keep its own generator buildable.\n")
+  append("#\n")
+  append("# `plugin_components` expands the compact tables below into the map at load time. A table states the component\n")
+  append("# of a plugin once, and a product names only the main modules of each tier.\n")
+  val communityBuildPackage = if (half.writesCommunityPackages) "//build" else "${COMMUNITY_REPOSITORY_PREFIX}build"
+  append("load(\"").append(communityBuildPackage).append(":dist_plugin_components.bzl\", \"plugin_components\")\n")
   append("\n")
   append(pluginExecutions.components)
   val testPlugins = renderTestPlugins(pluginExecutions.testPlugins)

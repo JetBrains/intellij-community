@@ -150,22 +150,96 @@ class DistOwnershipTest {
     val rendered = renderPluginComponents(components, planLabel = { it }, communityProducts = setOf("Idea")) { emptyList() }
     assertThat(rendered).isEqualTo(
       """
-      DIST_PLUGIN_COMPONENTS = {
+      # The component of each plugin in most products, keyed by main module.
+      _LABELS = {
+          "intellij.devkit": "//plugins/devkit:c",
+          "intellij.java.plugin": "//plugins/java:c",
+      }
+
+      # The platform stem of each platform-specific plugin in most products, keyed by main module.
+      _PLATFORM_STEMS = {
+      }
+
+      # The main modules of each tier, by product key. The bundled tier is in composition order.
+      _PRODUCTS = {
           "Idea": {
-              "additional": {
-                  "intellij.devkit": "//plugins/devkit:c",
-              },
+              "additional": [
+                  "intellij.devkit",
+              ],
           },
           "idea": {
-              "bundled": {
-                  "intellij.java.plugin": "//plugins/java:c",
-              },
-              "additional": {
-              },
+              "bundled": [
+                  "intellij.java.plugin",
+              ],
+              "additional": [
+              ],
           },
       }
 
+      DIST_PLUGIN_COMPONENTS = plugin_components(
+          labels = _LABELS,
+          platform_stems = _PLATFORM_STEMS,
+          products = _PRODUCTS,
+      )
+
       """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `the component map states the component of a plugin once and each component that differs in one product`() {
+    fun stemLabels(stem: String) = HOST_PLATFORMS.associateWith { "${stem}_${it}_component" }
+    val windows = mapOf("windows_aarch64" to "//w:w_windows_aarch64_component", "windows_x64" to "//w:w_windows_x64_component")
+    val components = mapOf(
+      "a" to mapOf(
+        DistPluginTier.BUNDLED to listOf(GeneratedPluginComponent("p", labels = stemLabels("//p:p")), GeneratedPluginComponent("j", label = "//j:c")),
+        DistPluginTier.ADDITIONAL to listOf(GeneratedPluginComponent("w", labels = windows)),
+      ),
+      "b" to mapOf(
+        DistPluginTier.BUNDLED to listOf(GeneratedPluginComponent("j", label = "//j:c"), GeneratedPluginComponent("p", label = "//p:p.B_component")),
+        DistPluginTier.ADDITIONAL to emptyList(),
+      ),
+      "c" to mapOf(
+        DistPluginTier.BUNDLED to listOf(GeneratedPluginComponent("p", labels = stemLabels("//p:p")), GeneratedPluginComponent("j", labels = stemLabels("//j:j.C"))),
+        DistPluginTier.ADDITIONAL to emptyList(),
+      ),
+    )
+    val rendered = renderPluginComponents(components, planLabel = { it }, communityProducts = emptySet()) { emptyList() }
+
+    assertThat(rendered).contains(
+      """
+      _LABELS = {
+          "j": "//j:c",
+          "w": {
+              "windows_aarch64": "//w:w_windows_aarch64_component",
+              "windows_x64": "//w:w_windows_x64_component",
+          },
+      }
+
+      # The platform stem of each platform-specific plugin in most products, keyed by main module.
+      _PLATFORM_STEMS = {
+          "p": "//p:p",
+      }
+      """.trimIndent(),
+      """
+      _PRODUCT_LABELS = {
+          "b": {
+              "p": "//p:p.B_component",
+          },
+      }
+      """.trimIndent(),
+      """
+      _PRODUCT_PLATFORM_STEMS = {
+          "c": {
+              "j": "//j:j.C",
+          },
+      }
+      """.trimIndent(),
+      """
+          product_labels = _PRODUCT_LABELS,
+          product_platform_stems = _PRODUCT_PLATFORM_STEMS,
+      )
+      """.trimIndent(),
     )
   }
 

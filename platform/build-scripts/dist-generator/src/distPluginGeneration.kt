@@ -1264,6 +1264,11 @@ private fun checkComponentMembership(products: Map<String, Map<DistPluginTier, L
  *
  * A product of [communityProducts] states only its additional tier. Its distribution composes the bundled tier of the
  * community half, see [distCommunityProducts].
+ *
+ * The text states the map in the compact tables of `plugin_components` in `dist_plugin_components.bzl`, which expands
+ * them at load time. The component of a plugin in most products goes into `_LABELS` or `_PLATFORM_STEMS` once, see
+ * [ComponentForm]. A product lists the main modules of each tier in order. The override tables hold each component
+ * that differs from the one of the plugin. The caller writes the `load` statement.
  */
 internal fun renderPluginComponents(
   products: Map<String, Map<DistPluginTier, List<GeneratedPluginComponent>>>,
@@ -1271,35 +1276,135 @@ internal fun renderPluginComponents(
   communityProducts: Set<String>,
   compositionOrder: (String) -> List<String>,
 ): String = buildString {
-  append("DIST_PLUGIN_COMPONENTS = {\n")
+  val tiersByProduct = LinkedHashMap<String, Map<DistPluginTier, List<Pair<String, ComponentForm>>>>()
+  val formCounts = LinkedHashMap<String, LinkedHashMap<ComponentForm, Int>>()
   for ((product, tiers) in products) {
-    append("    \"").append(product).append("\": {\n")
+    val stated = LinkedHashMap<DistPluginTier, List<Pair<String, ComponentForm>>>()
     for (tier in DIST_COMPONENT_TIERS) {
       if (product in communityProducts && tier == DistPluginTier.BUNDLED) {
         continue
       }
       val components = tiers.getValue(tier)
       val ordered = if (tier == DistPluginTier.BUNDLED) composedBundledComponents(product, compositionOrder(product), components) else components
-      append("        \"").append(tier.key).append("\": {\n")
-      for (component in ordered) {
-        append("            \"").append(component.mainModule).append("\": ")
-        val label = component.label
-        if (label != null) {
-          append("\"").append(planLabel(label)).append("\",\n")
-        }
-        else {
-          append("{\n")
-          for ((platform, platformLabel) in component.labels.toSortedMap()) {
-            append("                \"").append(platform).append("\": \"").append(planLabel(platformLabel)).append("\",\n")
-          }
-          append("            },\n")
-        }
+      stated.put(tier, ordered.map { component ->
+        val form = componentForm(component, planLabel)
+        formCounts.computeIfAbsent(component.mainModule) { LinkedHashMap() }.merge(form, 1, Int::plus)
+        component.mainModule to form
+      })
+    }
+    tiersByProduct.put(product, stated)
+  }
+  // The form of most products. The first form wins a tie, so the choice follows the product order.
+  val shared = formCounts.mapValuesTo(TreeMap()) { (_, counts) -> counts.entries.maxBy { it.value }.key }
+  val productLabels = LinkedHashMap<String, List<Pair<String, ComponentForm>>>()
+  val productPlatformStems = LinkedHashMap<String, List<Pair<String, ComponentForm>>>()
+  for ((product, tiers) in tiersByProduct) {
+    val differing = tiers.values.flatten().filter { (mainModule, form) -> shared.getValue(mainModule) != form }
+    differing.filter { it.second !is ComponentForm.PlatformStem }.takeIf { it.isNotEmpty() }?.let { productLabels.put(product, it) }
+    differing.filter { it.second is ComponentForm.PlatformStem }.takeIf { it.isNotEmpty() }?.let { productPlatformStems.put(product, it) }
+  }
+
+  append("# The component of each plugin in most products, keyed by main module.\n")
+  append("_LABELS = {\n")
+  for ((mainModule, form) in shared) {
+    if (form !is ComponentForm.PlatformStem) {
+      appendComponent(mainModule, form, indent = "    ")
+    }
+  }
+  append("}\n\n")
+  append("# The platform stem of each platform-specific plugin in most products, keyed by main module.\n")
+  append("_PLATFORM_STEMS = {\n")
+  for ((mainModule, form) in shared) {
+    if (form is ComponentForm.PlatformStem) {
+      appendComponent(mainModule, form, indent = "    ")
+    }
+  }
+  append("}\n\n")
+  append("# The main modules of each tier, by product key. The bundled tier is in composition order.\n")
+  append("_PRODUCTS = {\n")
+  for ((product, tiers) in tiersByProduct) {
+    append("    \"").append(product).append("\": {\n")
+    for ((tier, components) in tiers) {
+      append("        \"").append(tier.key).append("\": [\n")
+      for ((mainModule, _) in components) {
+        append("            \"").append(mainModule).append("\",\n")
       }
-      append("        },\n")
+      append("        ],\n")
     }
     append("    },\n")
   }
-  append("}\n")
+  append("}\n\n")
+  if (productLabels.isNotEmpty()) {
+    append("# The component of a plugin that differs in one product from `_LABELS` and `_PLATFORM_STEMS`.\n")
+    appendProductComponents("_PRODUCT_LABELS", productLabels)
+  }
+  if (productPlatformStems.isNotEmpty()) {
+    append("# The platform stem of a plugin that differs in one product from `_LABELS` and `_PLATFORM_STEMS`.\n")
+    appendProductComponents("_PRODUCT_PLATFORM_STEMS", productPlatformStems)
+  }
+  append("DIST_PLUGIN_COMPONENTS = plugin_components(\n")
+  append("    labels = _LABELS,\n")
+  append("    platform_stems = _PLATFORM_STEMS,\n")
+  append("    products = _PRODUCTS,\n")
+  if (productLabels.isNotEmpty()) {
+    append("    product_labels = _PRODUCT_LABELS,\n")
+  }
+  if (productPlatformStems.isNotEmpty()) {
+    append("    product_platform_stems = _PRODUCT_PLATFORM_STEMS,\n")
+  }
+  append(")\n")
+}
+
+/**
+ * The spelled value of one component in the tables of `plugin_components`. A [PlatformStem] stands for the label
+ * `<stem>_<platform>_component` of each [HOST_PLATFORMS] entry, which most platform-specific plugins have.
+ */
+private sealed interface ComponentForm {
+  data class Label(@JvmField val label: String) : ComponentForm
+
+  data class PlatformStem(@JvmField val stem: String) : ComponentForm
+
+  data class PlatformLabels(@JvmField val labels: Map<String, String>) : ComponentForm
+}
+
+private fun componentForm(component: GeneratedPluginComponent, planLabel: (String) -> String): ComponentForm {
+  component.label?.let { return ComponentForm.Label(planLabel(it)) }
+  val labels = component.labels.entries.associateTo(TreeMap()) { (platform, label) -> platform to planLabel(label) }
+  if (labels.keys == HOST_PLATFORMS.toSet()) {
+    val (firstPlatform, firstLabel) = labels.firstEntry()
+    val stem = firstLabel.removeSuffix("_${firstPlatform}_component")
+    if (stem != firstLabel && labels.all { (platform, label) -> label == "${stem}_${platform}_component" }) {
+      return ComponentForm.PlatformStem(stem)
+    }
+  }
+  return ComponentForm.PlatformLabels(labels)
+}
+
+private fun StringBuilder.appendComponent(mainModule: String, form: ComponentForm, indent: String) {
+  append(indent).append("\"").append(mainModule).append("\": ")
+  when (form) {
+    is ComponentForm.Label -> append("\"").append(form.label).append("\",\n")
+    is ComponentForm.PlatformStem -> append("\"").append(form.stem).append("\",\n")
+    is ComponentForm.PlatformLabels -> {
+      append("{\n")
+      for ((platform, label) in form.labels) {
+        append(indent).append("    \"").append(platform).append("\": \"").append(label).append("\",\n")
+      }
+      append(indent).append("},\n")
+    }
+  }
+}
+
+private fun StringBuilder.appendProductComponents(name: String, components: Map<String, List<Pair<String, ComponentForm>>>) {
+  append(name).append(" = {\n")
+  for ((product, differing) in components) {
+    append("    \"").append(product).append("\": {\n")
+    for ((mainModule, form) in differing) {
+      appendComponent(mainModule, form, indent = "        ")
+    }
+    append("    },\n")
+  }
+  append("}\n\n")
 }
 
 /**
