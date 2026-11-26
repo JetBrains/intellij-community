@@ -52,7 +52,7 @@ impl Prepared {
                 "pluginDirectory": "plugins/demo",
                 "remainder": {"directory": "payload/remainder", "metadata": "metadata/remainder.json"},
                 "assets": "metadata/assets.json",
-                "classpath": "metadata/plugin-classpath.txt",
+                "descriptor": "metadata/plugin.xml",
                 "independent": [{
                     "artifact": "shared",
                     "source": "payload/shared.jar",
@@ -74,10 +74,7 @@ impl Prepared {
             ],
         };
         write_inventory("metadata/shared.json", &[file_entry("shared.jar", 12, 14, 0o600)]);
-        write_file(
-            "metadata/plugin-classpath.txt",
-            class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar"]),
-        );
+        write_file("metadata/plugin.xml", "<idea-plugin/>\n");
         fixture.write();
         fixture
     }
@@ -109,8 +106,8 @@ impl Prepared {
         write_raw_inventory(self.spec["remainder"]["metadata"].as_str().unwrap(), &self.remainder);
     }
 
-    fn classpath(&self) -> String {
-        self.spec["classpath"].as_str().unwrap().to_owned()
+    fn descriptor(&self) -> String {
+        self.spec["descriptor"].as_str().unwrap().to_owned()
     }
 }
 
@@ -162,7 +159,7 @@ fn prepared_component_expands_owned_trees_without_payloads() {
         !std::fs::read_to_string("component.json").unwrap().contains("symlinkSource"),
         "the tree links keep the payload provenance"
     );
-    assert_class_path_part(&std::fs::read(fixture.classpath()).unwrap());
+    assert_class_path_part(&class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar"]));
     assert!(!exists("payload"), "the collector read or wrote the payload");
 }
 
@@ -342,25 +339,9 @@ fn prepared_component_class_path_uses_the_original_participation() {
         asset("lib/custom.jar", "remainder"),
     ]);
     fixture.write();
-    let valid = class_path_fixture("demo", &["lib/demo.jar", "lib/custom.jar", "lib/member.jar"]);
-    let invalid: [Vec<u8>; 8] = [
-        class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar", "lib/foo.jar"]),
-        class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar", "lib/nested/shared.jar"]),
-        class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar", "lib/member.jar"]),
-        class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar"]),
-        class_path_fixture("other", &["lib/demo.jar", "lib/custom.jar", "lib/member.jar"]),
-        [valid.as_slice(), &[0]].concat(),
-        valid[..valid.len() - 1].to_vec(),
-        vec![0, 3, 0, 4, b'd', b'e', b'm', b'o', 0xff, 0xff, 0xff, 0xff],
-    ];
-    for record in invalid {
-        write_file(fixture.classpath(), &record);
-        run_collector(&plugin_component_args()).assert_error("classpath");
-        assert_no_outputs();
-    }
-    write_file(fixture.classpath(), &valid);
+    // A jar directly under `lib/` joins the record unless its row states `classPath: false`. A nested jar never does.
     run_collector(&plugin_component_args()).assert_success();
-    assert_class_path_part(&valid);
+    assert_class_path_part(&class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar", "lib/custom.jar"]));
 }
 
 /// The file metadata supports ASCII names only, so a plugin directory with another character is refused. The Go
@@ -417,7 +398,7 @@ fn prepared_component_uses_only_metadata() {
     for field in ["source", "mode", "executable"] {
         assert!(link.get(field).is_none(), "{link}");
     }
-    assert_class_path_part(&std::fs::read(fixture.classpath()).unwrap());
+    assert_class_path_part(&class_path_fixture("demo", &["lib/demo.jar", "lib/member.jar"]));
     let spans = read_spans("component.spans.json");
     assert_eq!(
         spans.iter().map(span_name).collect::<Vec<_>>(),
@@ -579,7 +560,7 @@ fn prepared_component_refuses_a_stale_ownership() {
         ),
         (
             "metadata in payload",
-            |fixture| fixture.spec["classpath"] = json!("payload/remainder/classpath"),
+            |fixture| fixture.spec["descriptor"] = json!("payload/remainder/plugin.xml"),
             "overlaps payload",
         ),
         (
@@ -637,8 +618,8 @@ fn prepared_component_protects_the_inputs_and_the_payload_from_the_outputs() {
         ("--trace-file", "payload/shared.jar"),
         ("--trace-file", "payload"),
         ("--trace-file", "component.plugin-classpath-part"),
-        ("--plugin-classpath-part", "metadata/plugin-classpath.txt"),
-        ("--plugin-classpath-part", "metadata/./plugin-classpath.txt"),
+        ("--plugin-classpath-part", "metadata/plugin.xml"),
+        ("--plugin-classpath-part", "metadata/./plugin.xml"),
         ("--component-manifest", "metadata/remainder.json"),
     ] {
         let _directory = WorkingDirectory::enter();
@@ -646,7 +627,7 @@ fn prepared_component_protects_the_inputs_and_the_payload_from_the_outputs() {
         let inputs = [
             fixture.spec["remainder"]["metadata"].as_str().unwrap().to_owned(),
             "metadata/shared.json".to_owned(),
-            fixture.classpath(),
+            fixture.descriptor(),
         ];
         let before: Vec<Vec<u8>> = inputs.iter().map(|input| std::fs::read(input).unwrap()).collect();
         let mut args = plugin_component_args();
@@ -844,7 +825,7 @@ fn packed_component_refuses_stale_inputs() {
         ),
         (
             "mixed shape",
-            |spec| spec["classpath"] = json!("metadata/plugin-classpath.txt"),
+            |spec| spec["assets"] = json!("metadata/assets.json"),
             "names only its descriptor, jars and files",
         ),
         (
@@ -983,7 +964,6 @@ fn prepared_component_drops_the_reused_jars_of_refused_modules() {
     let mut fixture = Prepared::new();
     fixture.spec["refusedModules"] = json!(["shared"]);
     fixture.assets.retain(|asset| asset["producer"] != "independent");
-    write_file("metadata/plugin-classpath.txt", class_path_fixture("demo", &["lib/demo.jar"]));
     fixture.write();
     run_collector(&plugin_component_args()).assert_success();
     let entries = manifest_entries("component.json");
@@ -1023,9 +1003,9 @@ fn a_spec_takes_only_the_keys_of_its_shape() {
         "component-spec.json",
         &json!({"version": 1, "pluginDirectory": "plugins/demo", "descriptor": "metadata/plugin.xml",
                 "remainder": {"directory": "payload/remainder", "metadata": "metadata/remainder.json"},
-                "assets": "metadata/assets.json", "classpath": "metadata/plugin-classpath.txt", "independent": []}),
+                "assets": "metadata/assets.json", "files": [], "independent": []}),
     );
-    run_collector(&plugin_component_args()).assert_error("names no copied files and no descriptor");
+    run_collector(&plugin_component_args()).assert_error("names no copied files");
     let mut spec = packed_spec(false);
     spec["independent"] = json!([]);
     write_json("component-spec.json", &spec);

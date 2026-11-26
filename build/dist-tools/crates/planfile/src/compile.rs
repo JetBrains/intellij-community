@@ -1,11 +1,10 @@
 //! The compilation of a plan file into the execution contract of one chain. The contract holds the recipe, the asset
-//! rows, the plugin classpath record and the remainder catalogue.
+//! rows and the remainder catalogue.
 
 use std::collections::{HashMap, HashSet};
 
 use anyhow::{Context as _, Result, bail};
 
-use crate::classpath;
 use crate::contract::{
     self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAssets, Library, Manifest, Recipe, Reference, Source, TREE_VERSION,
     VERSION,
@@ -25,12 +24,10 @@ const NATIVE_TREE_INPUT_PREFIX: &str = "native-tree:";
 pub struct Derivation {
     pub recipe: Recipe,
     pub assets: Vec<contract::Asset>,
-    pub class_path: Vec<u8>,
     pub catalogue: Catalogue,
 }
 
 /// Compiles the plan file for the packer. `catalogue` is the Starlark input catalogue of the chain.
-/// `plugin_directory` is `plugins/<name>`, and `descriptor` is the classpath descriptor in its final byte form.
 /// `execution_version` is the version that the chain declares. It must equal the version of the file and of its assets.
 ///
 /// `independent_modules` names the modules whose jar the chain reuses from a `content_module_jar` target. An asset in
@@ -38,23 +35,14 @@ pub struct Derivation {
 /// whole recipe against the target before it names the module.
 ///
 /// `refused_modules` names the content modules that the product mode of the chain refuses. An asset whose every module
-/// is refused is omitted, see [`omitted_assets`]: the packer does not write it, and no asset row, classpath jar or
-/// operation names it. The catalogue of the derivation drops the inputs that only an omitted asset reads.
+/// is refused is omitted, see [`omitted_assets`]: the packer does not write it, and no asset row or operation names it. The catalogue of the derivation drops the inputs that only an omitted asset reads.
 pub fn derive(
     file: &PlanFile,
     catalogue: &Catalogue,
-    plugin_directory: &str,
-    descriptor: &[u8],
     execution_version: u32,
     independent_modules: &[String],
     refused_modules: &[String],
 ) -> Result<Derivation> {
-    let Some(plugin_dir_name) = plugin_directory
-        .strip_prefix("plugins/")
-        .filter(|name| !matches!(*name, "" | "." | "..") && !name.contains(['/', '\\']))
-    else {
-        bail!("the plugin directory {plugin_directory:?} is not plugins/<name>");
-    };
     let version = execution_version_of(&file.assets);
     if file.version != version || execution_version != version {
         bail!(
@@ -72,7 +60,6 @@ pub fn derive(
     compiler.resolve_operation_inputs().map_err(plugin_context)?;
     let assets = compiler.asset_rows();
     let operations = compiler.operations().map_err(plugin_context)?;
-    let class_path = classpath::record(plugin_dir_name, descriptor, &compiler.class_path_jars())?;
     Ok(Derivation {
         recipe: Recipe {
             version,
@@ -81,7 +68,6 @@ pub fn derive(
             operations,
         },
         assets,
-        class_path,
         catalogue: Catalogue {
             version: catalogue.version,
             artifacts: compiler.executed_artifacts(catalogue),
@@ -92,8 +78,8 @@ pub fn derive(
 
 /// The plan file without the assets of `excluded`, by their destinations, and without the operations that only they
 /// consume, with the catalogue of its remaining inputs. The neutral part of a split remainder derives this plan for
-/// [`descriptor_assets`], so its catalogue needs no descriptor. The asset rows and the classpath record of such a plan are
-/// not the ones of the plugin.
+/// [`descriptor_assets`], so its catalogue needs no descriptor. The asset rows of such a plan are not the ones of the
+/// plugin.
 pub fn without_assets(file: &PlanFile, catalogue: &Catalogue, excluded: &[String]) -> Result<(PlanFile, Catalogue)> {
     for destination in excluded {
         if !file.assets.iter().any(|asset| asset.destination == *destination) {
@@ -696,24 +682,6 @@ impl<'a> Compiler<'a> {
                     ..row
                 }
             })
-            .collect()
-    }
-
-    /// The classpath jars directly under `lib/`, in plan order.
-    fn class_path_jars(&self) -> Vec<&'a str> {
-        self.assets
-            .iter()
-            .filter(|planned| !planned.omitted)
-            .map(|planned| planned.asset)
-            .filter(|asset| {
-                let destination = asset.destination.as_str();
-                asset.class_path
-                    && asset.kind == AssetKind::File
-                    && destination.starts_with("lib/")
-                    && destination.matches('/').count() == 1
-                    && destination.ends_with(".jar")
-            })
-            .map(|asset| asset.destination.as_str())
             .collect()
     }
 

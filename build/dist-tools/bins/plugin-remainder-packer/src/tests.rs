@@ -24,21 +24,18 @@ fn assert_refused_before_any_write(name: &str, root: &Path, run: &Run, code: u8,
         run.code == code && run.errors.contains(message),
         "{name}: expected the code {code} and {message:?}, got {run:?}"
     );
-    for file in ["payload", "inventory.json", "assets.json", "plugin-classpath.txt"] {
+    for file in ["payload", "inventory.json", "assets.json"] {
         assert!(fs::symlink_metadata(root.join(file)).is_err(), "{name}: a failed run wrote {file}");
     }
 }
 
-const ALL: [&str; 9] = [
+const ALL: [&str; 6] = [
     "--projection=plan.json",
     "--input-catalogue=catalogue.json",
-    "--classpath-descriptor=descriptor.xml",
-    "--plugin-directory=plugins/x",
     "--execution-version=1",
     "--output-dir=out",
     "--inventory=inventory.json",
     "--assets=assets.json",
-    "--classpath=classpath.txt",
 ];
 
 /// Refuses an unknown option, a malformed option, a repeated option, a missing option, an empty independent module,
@@ -51,7 +48,7 @@ fn arguments_are_refused_with_the_usage_code() {
         values
     };
     let mut version_four = ALL.to_vec();
-    version_four[4] = "--execution-version=4";
+    version_four[2] = "--execution-version=4";
     let cases: Vec<Vec<&str>> = vec![
         vec![],
         vec!["--unknown=value"],
@@ -105,18 +102,14 @@ fn write_projection_fixture(root: &Path, plan: &str) -> Vec<String> {
     fs::write(root.join("tool"), b"tool").unwrap();
     fs::write(root.join("plan.json"), plan).unwrap();
     fs::write(root.join("catalogue.json"), serde_json::to_vec(&catalogue).unwrap()).unwrap();
-    fs::write(root.join("descriptor.xml"), b"<idea-plugin/>").unwrap();
     let path = |name: &str| root.join(name).display().to_string();
     vec![
         format!("--projection={}", path("plan.json")),
         format!("--input-catalogue={}", path("catalogue.json")),
-        format!("--classpath-descriptor={}", path("descriptor.xml")),
-        "--plugin-directory=plugins/example".to_owned(),
         "--execution-version=1".to_owned(),
         format!("--output-dir={}", path("payload")),
         format!("--inventory={}", path("inventory.json")),
         format!("--assets={}", path("assets.json")),
-        format!("--classpath={}", path("plugin-classpath.txt")),
         "--independent-module=example.content".to_owned(),
     ]
 }
@@ -126,7 +119,7 @@ fn mode_of(path: &Path) -> u32 {
 }
 
 #[test]
-fn projection_run_writes_the_plugin_the_assets_and_the_class_path() {
+fn projection_run_writes_the_plugin_and_the_assets() {
     let root = tempfile::tempdir().unwrap();
     let values = write_projection_fixture(root.path(), PROJECTION_PLAN);
     assert_projected(&run_captured(&values));
@@ -145,13 +138,8 @@ fn projection_run_writes_the_plugin_the_assets_and_the_class_path() {
             r#"{"destination":"bin/tool","producer":"remainder","classPath":false}]"#,
         )
     );
-    let classpath = fs::read(root.path().join("plugin-classpath.txt")).unwrap();
-    let expected = planfile::classpath::record("example", b"<idea-plugin/>", &["lib/example.jar"]).unwrap();
-    assert_eq!(classpath, expected);
     #[cfg(unix)]
-    for name in ["assets.json", "plugin-classpath.txt"] {
-        assert_eq!(mode_of(&root.path().join(name)), 0o644, "{name}");
-    }
+    assert_eq!(mode_of(&root.path().join("assets.json")), 0o644);
 }
 
 /// The plan reader and the derivation own their refusals. This case pins that a refused projection writes no output.
@@ -171,7 +159,7 @@ fn a_refused_projection_writes_nothing() {
 }
 
 /// `--refused-module` names a content module that the product mode refuses. The asset whose every module is refused is
-/// omitted: the packer writes no file for it and states no row and no classpath jar. A reused jar of a refused module
+/// omitted: the packer writes no file for it and states no row. A reused jar of a refused module
 /// leaves the rows too. A refused module that no asset merges is a stale declaration and fails before any write.
 #[test]
 fn projection_run_omits_the_assets_of_a_refused_module() {
@@ -187,9 +175,6 @@ fn projection_run_omits_the_assets_of_a_refused_module() {
     assert_eq!(mode_of(&root.path().join("payload/bin/tool")), 0o755);
     let assets = fs::read_to_string(root.path().join("assets.json")).unwrap();
     assert_eq!(assets, r#"[{"destination":"bin/tool","producer":"remainder","classPath":false}]"#);
-    let classpath = fs::read(root.path().join("plugin-classpath.txt")).unwrap();
-    let expected = planfile::classpath::record::<&str>("example", b"<idea-plugin/>", &[]).unwrap();
-    assert_eq!(classpath, expected);
 
     for (name, extra, code, message) in [
         (
@@ -290,26 +275,22 @@ fn write_descriptor_fixture(root: &Path) -> Vec<String> {
     values
 }
 
-/// The descriptor part of `root`: the fixture without the rows options of one action, and with the rows of the default
-/// mode at `assets.json` and `plugin-classpath.txt`.
+/// The descriptor part of `root`: the fixture without the rows option of one action, and with the rows of the default
+/// mode at `assets.json`.
 fn descriptor_part_values(root: &Path) -> Vec<String> {
     let mut values = write_descriptor_fixture(root);
-    values.retain(|value| !value.starts_with("--assets=") && !value.starts_with("--classpath="));
+    values.retain(|value| !value.starts_with("--assets="));
     values.extend([
         "--part=descriptor".to_owned(),
         "--descriptor-asset=lib/example.jar".to_owned(),
-        format!(
-            "--rows=:{}:{}",
-            root.join("assets.json").display(),
-            root.join("plugin-classpath.txt").display()
-        ),
+        format!("--rows=:{}", root.join("assets.json").display()),
     ]);
     values
 }
 
 /// The two parts of a split remainder write together the bytes that one action writes. The neutral part packs every
-/// asset that reads no descriptor from a catalogue without the descriptor, and it writes no rows and no record. The
-/// descriptor part packs only the main jar, and it writes the rows and the record of the whole plugin.
+/// asset that reads no descriptor from a catalogue without the descriptor, and it writes no rows. The descriptor part
+/// packs only the main jar, and it writes the rows of the whole plugin.
 #[test]
 fn the_two_parts_write_the_assets_of_one_action() {
     let whole = tempfile::tempdir().unwrap();
@@ -322,9 +303,7 @@ fn the_two_parts_write_the_assets_of_one_action() {
         {"id": "tool", "kind": "file", "root": neutral.path().join("tool")},
     ]});
     fs::write(neutral.path().join("catalogue.json"), serde_json::to_vec(&catalogue).unwrap()).unwrap();
-    values.retain(|value| {
-        !value.starts_with("--classpath-descriptor=") && !value.starts_with("--assets=") && !value.starts_with("--classpath=")
-    });
+    values.retain(|value| !value.starts_with("--assets="));
     values.extend(["--part=neutral".to_owned(), "--descriptor-asset=lib/example.jar".to_owned()]);
     assert_projected(&run_captured(&values));
     assert!(
@@ -346,7 +325,7 @@ fn the_two_parts_write_the_assets_of_one_action() {
         fs::symlink_metadata(descriptor.path().join("payload/bin/tool")).is_err(),
         "the descriptor part packed the tool"
     );
-    for file in ["payload/lib/example.jar", "assets.json", "plugin-classpath.txt"] {
+    for file in ["payload/lib/example.jar", "assets.json"] {
         assert_eq!(
             fs::read(descriptor.path().join(file)).unwrap(),
             fs::read(whole.path().join(file)).unwrap(),
@@ -355,8 +334,8 @@ fn the_two_parts_write_the_assets_of_one_action() {
     }
 }
 
-/// The descriptor part writes the rows and the record of each mode that `--rows` names. Each pair equals the pair of one
-/// action that packs every asset with the refusals of that mode. The packed main jar is the same for every mode.
+/// The descriptor part writes the rows of each mode that `--rows` names. The rows of a mode equal the rows of one action
+/// that packs every asset with the refusals of that mode. The packed main jar is the same for every mode.
 #[test]
 fn the_descriptor_part_writes_the_rows_of_each_mode() {
     let refusing = tempfile::tempdir().unwrap();
@@ -370,19 +349,13 @@ fn the_descriptor_part_writes_the_rows_of_each_mode() {
     let root = descriptor.path();
     let mut values = descriptor_part_values(root);
     values.extend([
-        format!(
-            "--rows=frontend:{}:{}",
-            root.join("frontend-assets.json").display(),
-            root.join("frontend-classpath.txt").display()
-        ),
+        format!("--rows=frontend:{}", root.join("frontend-assets.json").display()),
         "--mode-refused-module=frontend:example.content".to_owned(),
     ]);
     assert_projected(&run_captured(&values));
     for (part, one_action) in [
         ("assets.json", whole.path().join("assets.json")),
-        ("plugin-classpath.txt", whole.path().join("plugin-classpath.txt")),
         ("frontend-assets.json", refusing.path().join("assets.json")),
-        ("frontend-classpath.txt", refusing.path().join("plugin-classpath.txt")),
         ("payload/lib/example.jar", refusing.path().join("payload/lib/example.jar")),
     ] {
         assert_eq!(fs::read(root.join(part)).unwrap(), fs::read(&one_action).unwrap(), "{part}");
@@ -404,18 +377,8 @@ fn the_rows_of_the_descriptor_part_are_checked() {
             2,
             "the descriptor part takes the refusals of each mode as --mode-refused-module",
         ),
-        (
-            "a malformed row",
-            &["--rows=frontend:assets.json"][..],
-            2,
-            "--rows is <mode>:<assets>:<classpath>",
-        ),
-        (
-            "a mode named twice",
-            &["--rows=:a.json:c.txt"][..],
-            2,
-            "--rows names the mode \"\" twice",
-        ),
+        ("a malformed row", &["--rows=frontend"][..], 2, "--rows is <mode>:<assets>"),
+        ("a mode named twice", &["--rows=:a.json"][..], 2, "--rows names the mode \"\" twice"),
         (
             "a refusal of a mode without a row",
             &["--mode-refused-module=frontend:example.content"][..],
@@ -425,7 +388,7 @@ fn the_rows_of_the_descriptor_part_are_checked() {
         ("the rows of one action", &["--assets=a.json"][..], 2, "unknown option: --assets"),
         (
             "a mode that omits the main jar",
-            &["--rows=frontend:f.json:f.txt", "--mode-refused-module=frontend:example.main"][..],
+            &["--rows=frontend:f.json", "--mode-refused-module=frontend:example.main"][..],
             1,
             "the mode \"frontend\" omits the descriptor asset \"lib/example.jar\"",
         ),
@@ -437,7 +400,7 @@ fn the_rows_of_the_descriptor_part_are_checked() {
     }
     let root = tempfile::tempdir().unwrap();
     let mut values = write_descriptor_fixture(root.path());
-    values.push("--rows=:a.json:c.txt".to_owned());
+    values.push("--rows=:a.json".to_owned());
     assert_refused_before_any_write(
         "rows without a part",
         root.path(),
@@ -447,14 +410,13 @@ fn the_rows_of_the_descriptor_part_are_checked() {
     );
 }
 
-/// A part needs the descriptor assets of the plan file, and the neutral part takes no option of the rows, the record or
-/// the mode.
+/// A part needs the descriptor assets of the plan file, and the neutral part takes no option of the rows or the mode.
 #[test]
 fn a_part_is_refused_with_other_descriptor_assets_or_options() {
     for (name, extra, code, message) in [
         (
             "another descriptor asset",
-            &["--part=descriptor", "--descriptor-asset=bin/tool", "--rows=:a.json:c.txt"][..],
+            &["--part=descriptor", "--descriptor-asset=bin/tool", "--rows=:a.json"][..],
             1,
             r#"the rule states the descriptor assets ["bin/tool"], and the plan file has ["lib/example.jar"]"#,
         ),
@@ -495,15 +457,9 @@ fn a_part_is_refused_with_other_descriptor_assets_or_options() {
     ] {
         let root = tempfile::tempdir().unwrap();
         let mut values = write_descriptor_fixture(root.path());
-        // A part writes no rows of one action, and the neutral part reads no descriptor.
-        let neutral = extra.contains(&"--part=neutral");
-        if neutral || extra.contains(&"--part=descriptor") {
-            values.retain(|value| {
-                let dropped = value.starts_with("--assets=")
-                    || value.starts_with("--classpath=")
-                    || (neutral && value.starts_with("--classpath-descriptor="));
-                !dropped
-            });
+        // A part writes no rows of one action.
+        if extra.contains(&"--part=neutral") || extra.contains(&"--part=descriptor") {
+            values.retain(|value| !value.starts_with("--assets="));
         }
         values.extend(extra.iter().map(|value| (*value).to_owned()));
         assert_refused_before_any_write(name, root.path(), &run_captured(&values), code, message);

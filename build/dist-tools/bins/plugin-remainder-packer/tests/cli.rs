@@ -66,9 +66,8 @@ fn jar(entries: &[(&str, &str)]) -> Vec<u8> {
     writer.finish().unwrap().into_inner()
 }
 
-/// Writes the plan file, the input catalogue and the classpath descriptor of one plugin under `contracts`. The plan
-/// copies `source` as the tree `resources`, or as the file `lib/raw.jar`. The result is the argument list of the packer
-/// without its four outputs.
+/// Writes the plan file and the input catalogue of one plugin under `contracts`. The plan copies `source` as the tree
+/// `resources`, or as the file `lib/raw.jar`. The result is the argument list of the packer without its three outputs.
 fn projection_contracts(contracts: &Path, tree: bool, source: &Path) -> Vec<String> {
     let (version, kind, asset) = if tree {
         (
@@ -83,12 +82,9 @@ fn projection_contracts(contracts: &Path, tree: bool, source: &Path) -> Vec<Stri
     let catalogue = serde_json::json!({"version": 1, "artifacts": [{"id": "raw", "kind": kind, "root": source}]});
     write_file(contracts.join("plan.json"), plan.as_bytes());
     write_file(contracts.join("catalogue.json"), serde_json::to_vec(&catalogue).unwrap());
-    write_file(contracts.join("descriptor.xml"), b"<idea-plugin><id>test.plugin</id></idea-plugin>");
     vec![
         format!("--projection={}", contracts.join("plan.json").display()),
         format!("--input-catalogue={}", contracts.join("catalogue.json").display()),
-        format!("--classpath-descriptor={}", contracts.join("descriptor.xml").display()),
-        "--plugin-directory=plugins/test".to_owned(),
         format!("--execution-version={version}"),
     ]
 }
@@ -98,7 +94,6 @@ fn outputs(output: &str, inventory: &str, root: &Path) -> Vec<String> {
         format!("--output-dir={output}"),
         format!("--inventory={inventory}"),
         format!("--assets={}", root.join("assets.json").display()),
-        format!("--classpath={}", root.join("plugin-classpath.txt").display()),
     ]
 }
 
@@ -113,7 +108,7 @@ fn raw_tree_is_absent_until_execution() {
     arguments.extend(outputs("plugin", "inventory.json", root.path()));
     let output = run(&packer, &arguments, root.path());
     assert!(!output.status.success(), "the packer accepted the missing raw tree");
-    for name in ["plugin", "inventory.json", "assets.json", "plugin-classpath.txt"] {
+    for name in ["plugin", "inventory.json", "assets.json"] {
         assert!(
             !exists(&root.path().join(name)),
             "the packer wrote {name} before the raw tree validation"
@@ -145,7 +140,7 @@ fn binary_output_aliases_preserve_contract_files() {
     let Some(packer) = packer() else { return };
     for tree in [false, true] {
         for (name, alias_name) in [("Contracts", "contracts"), ("Caf\u{e9}", "Cafe\u{301}")] {
-            for document in ["plan.json", "catalogue.json", "descriptor.xml"] {
+            for document in ["plan.json", "catalogue.json"] {
                 for destination in ["payload", "inventory"] {
                     let root = tempfile::tempdir().unwrap();
                     let mut source = root.path().join("source");
@@ -244,7 +239,7 @@ fn relative_directory_roots_resolve_through_working_directory_links() {
     assert_eq!(fs::read(output.join("resources/input.txt")).unwrap(), b"relative input");
 }
 
-/// The payload, the inventory, the asset rows and the classpath of a tree copy and of a file copy do not depend on the
+/// The payload, the inventory and the asset rows of a tree copy and of a file copy do not depend on the
 /// umask or on the mode of an input. A child run packs under each umask, once with inputs of mode 0555, as Bazel stages
 /// them, and once with files of mode 0644.
 #[cfg(unix)]
@@ -281,7 +276,7 @@ fn the_output_does_not_depend_on_the_umask_or_the_input_modes() {
             arguments.extend(outputs("plugin", "inventory.json", root.path()));
             let result = run(&packer, &arguments, root.path());
             assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
-            for name in ["inventory.json", "assets.json", "plugin-classpath.txt"] {
+            for name in ["inventory.json", "assets.json"] {
                 output.extend(fs::read(root.path().join(name)).unwrap());
             }
             output.extend(snapshot(&root.path().join("plugin")).join("\n").into_bytes());

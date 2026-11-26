@@ -23,7 +23,6 @@ fn component_record_matches_the_java_format() {
     ];
     let actual = component_record("plugins/demo", b"<idea-plugin/>\n", &files).unwrap();
     assert_eq!(actual, class_path_fixture("demo", &["lib/demo.jar", "lib/util.jar"]));
-    validate_component_record(&actual, "plugins/demo", &files).unwrap();
 }
 
 #[test]
@@ -38,10 +37,8 @@ fn component_record_keeps_the_descriptor_bytes_and_refuses_a_name_that_is_not_as
     expected.extend_from_slice(&[0, 12]);
     expected.extend_from_slice(b"lib/demo.jar");
     assert_eq!(actual, expected);
-    validate_component_record(&actual, "plugins/demo", &files).unwrap();
     let files = [class_path_file("plugins/démo/lib/😀.jar", true)];
     require_error(component_record("plugins/démo", descriptor, &files), "is not ASCII");
-    require_error(validate_component_record(&actual, "plugins/démo", &files), "is not ASCII");
 }
 
 #[test]
@@ -49,29 +46,4 @@ fn component_record_without_class_path_jars() {
     let files = [class_path_file("plugins/demo/lib/modules/demo.split.jar", false)];
     let actual = component_record("plugins/demo", b"<idea-plugin/>\n", &files).unwrap();
     assert_eq!(actual, class_path_fixture("demo", &[]));
-}
-
-#[test]
-fn validate_component_record_rejects_a_changed_record() {
-    let files = [
-        class_path_file("plugins/demo/lib/demo.jar", true),
-        class_path_file("plugins/demo/lib/util.jar", true),
-    ];
-    let valid = class_path_fixture("demo", &["lib/demo.jar", "lib/util.jar"]);
-    validate_component_record(&valid, "plugins/demo", &files).unwrap();
-    for (record, message) in [
-        (class_path_fixture("demo", &["lib/demo.jar"]), "count does not match"),
-        (
-            class_path_fixture("other", &["lib/demo.jar", "lib/util.jar"]),
-            "names the wrong directory",
-        ),
-        (class_path_fixture("demo", &["lib/demo.jar", "lib/demo.jar"]), "repeated asset"),
-        (class_path_fixture("demo", &["lib/demo.jar", "lib/other.jar"]), "undeclared"),
-        ([valid.as_slice(), &[0]].concat(), "trailing data"),
-        (valid[..valid.len() - 1].to_vec(), "undeclared"),
-        (valid[..8].to_vec(), "invalid descriptor size"),
-        (Vec::new(), "count does not match"),
-    ] {
-        require_error(validate_component_record(&record, "plugins/demo", &files), message);
-    }
 }

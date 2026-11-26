@@ -1,7 +1,8 @@
 //! The plan file of one complex plugin, and the execution contract that the plugin remainder packer derives from it.
 //!
 //! The crate root decodes a plan file (`<main module>[.<class>][.<platform>].dev-plan.json`) and compiles it into the
-//! recipe, the asset rows and the plugin classpath record of the chain. A plan file carries no signature, so the crate
+//! recipe and the asset rows of the chain. The collector writes the plugin classpath record from the rows with
+//! [`classpath::record`]. A plan file carries no signature, so the crate
 //! computes none. The generator writes every plan file, and `plugin-model-tool --check` regenerates each text and
 //! compares it.
 //!

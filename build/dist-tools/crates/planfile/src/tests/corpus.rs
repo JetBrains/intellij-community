@@ -155,16 +155,8 @@ fn every_checked_in_plan_file_reads_and_derives() {
     let mut layout_libraries = 0;
     for path in &paths {
         let file = read(path).unwrap_or_else(|error| panic!("{error:#}"));
-        derive(
-            &file,
-            &catalogue(&file, &libraries),
-            "plugins/corpus",
-            b"<idea-plugin/>",
-            file.version,
-            &independent_modules(&file),
-            &[],
-        )
-        .unwrap_or_else(|error| panic!("{}: {error:#}", path.display()));
+        derive(&file, &catalogue(&file, &libraries), file.version, &independent_modules(&file), &[])
+            .unwrap_or_else(|error| panic!("{}: {error:#}", path.display()));
         source_kinds.extend(
             (file.assets.iter())
                 .filter_map(|asset| asset.recipe.as_ref())

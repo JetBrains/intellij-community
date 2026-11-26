@@ -30,7 +30,7 @@ def _remainder_info_init(**_kwargs):
     fail("DevPluginRemainderInfo must come from dev_plugin_remainder_from_plan")
 
 DevPluginRemainderInfo, _new_remainder_info = provider(
-    doc = """One packed plugin remainder with its inventory, the asset table and the classpath record.
+    doc = """One packed plugin remainder with its inventory and the asset table.
 
     `dev_plugin_remainder_from_plan` writes all of them in the packing action.""",
     fields = {
@@ -42,7 +42,7 @@ DevPluginRemainderInfo, _new_remainder_info = provider(
         "executables": "The destinations of `outputs` that the packer writes with the executable bit.",
         "metadata": "File containing the remainder file inventory and hashes.",
         "assets": "File containing the complete ordered asset table.",
-        "classpath": "File containing the plugin classpath record.",
+        "classpath_descriptor": "The classpath descriptor. The collector embeds it in the plugin classpath record.",
         "independent_artifacts": "Independent artifact references, excluded from the packing action.",
         "refused_modules": "The content modules the product's mode refuses. No jar of them is placed, see `--refused-module`.",
         "descriptor": "The `DistPluginDescriptorInfo` of the chain. The component checks its stamp class against it.",
@@ -72,8 +72,8 @@ DevPluginDescriptorRemainderInfo = provider(
         "outputs": "Dictionary from a destination below the plugin directory to its declared `File`.",
         "executables": "The destinations of `outputs` that the packer writes with the executable bit.",
         "metadata": "File containing the inventory of the part.",
-        "rows": """Dictionary from a mode to `struct(assets, classpath)`: the asset table and the classpath record of the
-        whole plugin under that mode. The empty text is the default mode.""",
+        "rows": """Dictionary from a mode to `struct(assets)`: the asset table of the whole plugin under that mode. The
+        empty text is the default mode.""",
     },
 )
 
@@ -677,7 +677,7 @@ def _catalogue_binding(ctx, artifact_catalogue, reused_jars):
                 fail("catalogue artifact %s overlaps independent artifact %s" % (identifier, independent.path))
     return binding
 
-def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets, classpath, independent_artifacts, content, refused_modules, descriptor, neutral = None):
+def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets, classpath_descriptor, independent_artifacts, content, refused_modules, descriptor, neutral = None):
     """The providers of a packed remainder. The component reads this one contract."""
     files = packed.outputs.values()
     return [
@@ -694,7 +694,7 @@ def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets
             executables = packed.executables,
             metadata = metadata,
             assets = assets,
-            classpath = classpath,
+            classpath_descriptor = classpath_descriptor,
             independent_artifacts = independent_artifacts,
             refused_modules = refused_modules,
             descriptor = descriptor,
@@ -704,7 +704,6 @@ def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets
             file_metadata = depset([metadata] + ([neutral.metadata] if neutral else [])),
             dist_plugin_remainder = depset(files),
             dist_plugin_assets = depset([assets]),
-            dist_plugin_classpath = depset([classpath]),
             dist_plugin_independent_artifacts = independent_artifacts,
         ),
     ]
@@ -773,31 +772,28 @@ _PACKER = attr.label(
     cfg = "exec",
 )
 
-def _remainder_packer_arguments(ctx, projection, catalogue, classpath_descriptor, execution_version, root, metadata, reused_jars):
+def _remainder_packer_arguments(ctx, projection, catalogue, execution_version, root, metadata, reused_jars):
     """The arguments that every action of the packer takes except a neutral part, for a chain or its descriptor part."""
     arguments = ctx.actions.args()
     arguments.add(projection, format = "--projection=%s")
     arguments.add(catalogue, format = "--input-catalogue=%s")
-    arguments.add(classpath_descriptor, format = "--classpath-descriptor=%s")
-    arguments.add(ctx.attr.plugin_directory, format = "--plugin-directory=%s")
     arguments.add(execution_version, format = "--execution-version=%s")
     arguments.add(root, format = "--output-dir=%s")
     arguments.add(metadata, format = "--inventory=%s")
     arguments.add_all(reused_jars.keys(), format_each = "--independent-module=%s")
     return arguments
 
-def _pack_whole_remainder(ctx, projection, binding, classpath_descriptor, execution_version, packed, metadata, assets, classpath, reused_jars, refused_modules, inputs):
-    """Packs every asset of an unsplit chain in one action, with its rows and its record."""
-    arguments = _remainder_packer_arguments(ctx, projection, binding.catalogue, classpath_descriptor, execution_version, packed.root, metadata, reused_jars)
+def _pack_whole_remainder(ctx, projection, binding, execution_version, packed, metadata, assets, reused_jars, refused_modules, inputs):
+    """Packs every asset of an unsplit chain in one action, with its rows."""
+    arguments = _remainder_packer_arguments(ctx, projection, binding.catalogue, execution_version, packed.root, metadata, reused_jars)
     arguments.add(assets, format = "--assets=%s")
-    arguments.add(classpath, format = "--classpath=%s")
     arguments.add_all(refused_modules, format_each = "--refused-module=%s")
     ctx.actions.run(
         mnemonic = "PackDevPluginRemainder",
         executable = ctx.executable._packer,
         tools = dist_tool_inputs(ctx.attr._packer),
         inputs = inputs,
-        outputs = packed.outputs.values() + [metadata, assets, classpath],
+        outputs = packed.outputs.values() + [metadata, assets],
         arguments = [arguments],
         progress_message = "Packing plugin remainder %{label} from its plan file",
     )
@@ -830,7 +826,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         module_jars = depset(reused_member_jars, transitive = [catalogue_content.module_jars]),
         library_jars = depset(reused_library_jars, transitive = [catalogue_content.library_jars]),
     )
-    inputs = depset([projection, binding.catalogue, classpath_descriptor], transitive = [depset(binding.artifacts.values())])
+    inputs = depset([projection, binding.catalogue], transitive = [depset(binding.artifacts.values())])
     for source in inputs.to_list():
         for artifact in independent_artifacts.to_list():
             if _overlapping_artifacts(source, artifact):
@@ -838,7 +834,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
 
     # A split remainder packs nothing here. The neutral part packed every asset that reads no descriptor, its refused
     # files too, so the chain names those and places them not. The descriptor part packed the other assets in the class
-    # of the leaf, and wrote the rows and the record of each mode that its class serves.
+    # of the leaf, and wrote the rows of each mode that its class serves.
     neutral = ctx.attr.neutral_remainder[DevPluginNeutralRemainderInfo] if ctx.attr.neutral_remainder else None
     if neutral:
         if not ctx.attr.descriptor_remainder:
@@ -872,14 +868,12 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         neutral_part = struct(root = neutral.root, metadata = neutral.metadata, omitted = omitted)
         metadata = descriptor_part.metadata
         assets = rows.assets
-        classpath = rows.classpath
     else:
         metadata = ctx.actions.declare_file(ctx.label.name + ".file-metadata.json")
         placed = _declare_remainder_outputs(ctx, metadata, refused_modules)
         neutral_part = None
         assets = ctx.actions.declare_file(ctx.label.name + ".assets.json")
-        classpath = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath.txt")
-        _pack_whole_remainder(ctx, projection, binding, classpath_descriptor, execution_version, placed, metadata, assets, classpath, reused_jars, refused_modules, inputs)
+        _pack_whole_remainder(ctx, projection, binding, execution_version, placed, metadata, assets, reused_jars, refused_modules, inputs)
 
     # The layout part of the plugin, derived from the same plan file. Built only when a runtime module repository asks for
     # it, and apart from the packing action, so that it reads no packed byte.
@@ -912,7 +906,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         arguments = [layout_arguments],
         progress_message = "Deriving the runtime layout part of %{label} from its plan file",
     )
-    return _remainder_providers(ctx, ctx.attr.graph, execution_version, placed, metadata, assets, classpath, independent_artifacts, content, refused_modules, descriptor_target[DistPluginDescriptorInfo], neutral_part) + [
+    return _remainder_providers(ctx, ctx.attr.graph, execution_version, placed, metadata, assets, classpath_descriptor, independent_artifacts, content, refused_modules, descriptor_target[DistPluginDescriptorInfo], neutral_part) + [
         DistRuntimeLayoutInfo(
             part = runtime_layout,
             descriptor = classpath_descriptor,
@@ -925,8 +919,9 @@ dev_plugin_remainder_from_plan = rule(
     doc = """Packs the remainder of one complex plugin in one action, or binds the two parts of a split remainder.
 
 The packer reads the plan file and the input catalogue in its `--projection` mode. It derives the recipe, runs the
-operations, packs the remainder, and writes the asset table and the plugin classpath record. No recipe and no
-prepared directory exist as a file.
+operations, packs the remainder, and writes the asset table. The collector of the component writes the plugin
+classpath record from the asset table and the classpath descriptor. No recipe and no prepared directory exist as a
+file.
 
 The generator states the destination of each asset that the packer writes. So the rule declares one output per file
 asset and one directory per outermost tree asset, and a home links each output at analysis.""",
@@ -935,7 +930,7 @@ asset and one directory per outermost tree asset, and a home links each output a
         "descriptor": attr.label(
             mandatory = True,
             providers = [DistPluginDescriptorInfo],
-            doc = """The produced descriptor target. The action reads its classpath descriptor. The primary descriptor reaches the action
+            doc = """The produced descriptor target. The component reads its classpath descriptor. The primary descriptor reaches the action
 as a catalogue artifact. The product reaches it through the configuration the consumer of the component sets.""",
         ),
         "plugin_directory": attr.string(mandatory = True),
@@ -969,8 +964,8 @@ packs the file assets that read the descriptor.""",
         ),
         "descriptor_remainder": attr.label(
             providers = [DevPluginDescriptorRemainderInfo],
-            doc = """The descriptor part of a split remainder, in the class of the leaf. The chain takes the asset rows and the
-classpath record of its own mode from it.""",
+            doc = """The descriptor part of a split remainder, in the class of the leaf. The chain takes the asset rows of its
+own mode from it.""",
         ),
         "_packer": _PACKER,
         "_runtime_layout": attr.label(
@@ -1003,7 +998,6 @@ def _dev_plugin_neutral_remainder_impl(ctx):
     arguments.add("--part=neutral")
     arguments.add(graph.projection, format = "--projection=%s")
     arguments.add(binding.catalogue, format = "--input-catalogue=%s")
-    arguments.add(ctx.attr.plugin_directory, format = "--plugin-directory=%s")
     arguments.add(graph.execution_version, format = "--execution-version=%s")
     arguments.add(packed.root, format = "--output-dir=%s")
     arguments.add(metadata, format = "--inventory=%s")
@@ -1034,7 +1028,7 @@ dev_plugin_neutral_remainder = rule(
 
 Only the jar of the main module reads the descriptor, so the other assets have equal bytes in every stamp class. This
 rule packs them once. `dev_plugin_remainder_from_plan` packs the descriptor assets in the stamp class of the chain and
-writes the asset rows and the classpath record. The packer refuses `descriptor_files` that differ from the plan file.
+writes the asset rows. The packer refuses `descriptor_files` that differ from the plan file.
 The part packs a file that a mode refuses too, and the chain places it not.""",
     cfg = dist_neutral_product_transition,
     attrs = {
@@ -1044,7 +1038,6 @@ The part packs a file that a mode refuses too, and the chain places it not.""",
             providers = [DevPluginArtifactCatalogueInfo],
             doc = "The catalogue without the descriptor. The action reads every artifact of it.",
         ),
-        "plugin_directory": attr.string(mandatory = True),
         "descriptor_files": attr.string_list(mandatory = True, doc = "The file assets that read the descriptor."),
         "remainder_files": attr.string_list_dict(doc = "As `dev_plugin_remainder_from_plan.remainder_files`."),
         "remainder_trees": attr.string_list(doc = "As `dev_plugin_remainder_from_plan.remainder_trees`."),
@@ -1096,31 +1089,29 @@ def _dev_plugin_descriptor_remainder_impl(ctx):
     graph = ctx.attr.graph[DevPluginGraphInfo]
     reused_jars = _reused_jars(ctx)
     binding = _catalogue_binding(ctx, ctx.attr.artifact_catalogue, reused_jars)
-    classpath_descriptor = _descriptor_classpath_file(descriptor_target)
-    inputs = depset([graph.projection, binding.catalogue, classpath_descriptor], transitive = [depset(binding.artifacts.values())])
+    inputs = depset([graph.projection, binding.catalogue], transitive = [depset(binding.artifacts.values())])
     for source in inputs.to_list():
         for artifact in reused_jars.values():
             if _overlapping_artifacts(source, artifact):
                 fail("remainder input %s overlaps independent artifact %s" % (source.path, artifact.path))
     metadata = ctx.actions.declare_file(ctx.label.name + ".file-metadata.json")
     packed = _declare_remainder_outputs(ctx, metadata, [], files = ctx.attr.descriptor_files, trees = False)
-    arguments = _remainder_packer_arguments(ctx, graph.projection, binding.catalogue, classpath_descriptor, graph.execution_version, packed.root, metadata, reused_jars)
+    arguments = _remainder_packer_arguments(ctx, graph.projection, binding.catalogue, graph.execution_version, packed.root, metadata, reused_jars)
     arguments.add("--part=descriptor")
     arguments.add_all(ctx.attr.descriptor_files, format_each = "--descriptor-asset=%s")
     rows = {}
     for mode in sorted(modes.keys()):
         stem = ctx.label.name + ("." + mode if mode else "")
         assets = ctx.actions.declare_file(stem + ".assets.json")
-        classpath = ctx.actions.declare_file(stem + ".plugin-classpath.txt")
-        rows[mode] = struct(assets = assets, classpath = classpath)
-        arguments.add("--rows=%s:%s:%s" % (mode, assets.path, classpath.path))
+        rows[mode] = struct(assets = assets)
+        arguments.add("--rows=%s:%s" % (mode, assets.path))
         arguments.add_all(modes[mode], format_each = "--mode-refused-module=" + mode + ":%s")
     ctx.actions.run(
         mnemonic = "PackDevPluginRemainder",
         executable = ctx.executable._packer,
         tools = dist_tool_inputs(ctx.attr._packer),
         inputs = inputs,
-        outputs = packed.outputs.values() + [metadata] + [file for row in rows.values() for file in [row.assets, row.classpath]],
+        outputs = packed.outputs.values() + [metadata] + [row.assets for row in rows.values()],
         arguments = [arguments],
         progress_message = "Packing the descriptor part of the plugin remainder %{label} from its plan file",
     )
@@ -1140,8 +1131,8 @@ dev_plugin_descriptor_remainder = rule(
     doc = """Packs the assets of one complex plugin that read the descriptor, in the stamp class of the descriptor leaf.
 
 The incoming transition keeps the mode only when the leaf reads it. A leaf that embeds every content module reads no
-mode, so the main jar packs once for a monolith and a frontend product. The action writes the asset rows and the
-classpath record of each mode whose chain reaches this configuration, and the chain takes the pair of its own mode.
+mode, so the main jar packs once for a monolith and a frontend product. The action writes the asset rows of each mode
+whose chain reaches this configuration, and the chain takes the rows of its own mode.
 `_dev_plugin_descriptor_jars` of `dev_plugin.bzl` is the same rule for a simple plugin.""",
     cfg = dist_stamp_class_transition,
     attrs = {
@@ -1152,7 +1143,6 @@ classpath record of each mode whose chain reaches this configuration, and the ch
             providers = [DevPluginArtifactCatalogueInfo],
             doc = "The catalogue of the chain. The action reads every artifact of it.",
         ),
-        "plugin_directory": attr.string(mandatory = True),
         "descriptor_files": attr.string_list(mandatory = True, doc = "The file assets that read the descriptor."),
         "remainder_files": attr.string_list_dict(doc = "As `dev_plugin_remainder_from_plan.remainder_files`."),
         "remainder_trees": attr.string_list(doc = "As `dev_plugin_remainder_from_plan.remainder_trees`."),
@@ -1213,7 +1203,7 @@ def _dev_plugin_component_impl(ctx):
     reused = {}
     independent = []
     payload = list(remainder.outputs.values())
-    inputs = [remainder.metadata, remainder.assets, remainder.classpath] + ([remainder.neutral.metadata] if remainder.neutral else [])
+    inputs = [remainder.metadata, remainder.assets, remainder.classpath_descriptor] + ([remainder.neutral.metadata] if remainder.neutral else [])
     for key in ctx.attr.independent_destinations:
         _check_asset_destination(ctx.label, ctx.attr.independent_destinations[key], "independent")
     identifiers = {}
@@ -1277,7 +1267,7 @@ def _dev_plugin_component_impl(ctx):
         "pluginDirectory": ctx.attr.plugin_directory,
         "remainder": {"directory": remainder.root, "metadata": remainder.metadata.path},
         "assets": remainder.assets.path,
-        "classpath": remainder.classpath.path,
+        "descriptor": remainder.classpath_descriptor.path,
         "independent": independent,
     }
     if remainder.neutral:
@@ -1344,7 +1334,7 @@ def _dev_plugin_component_impl(ctx):
             dist_plugin_outputs = depset([manifest, classpath], transitive = [payload]),
             dist_plugin_assets = depset([remainder.assets]),
             dist_plugin_classpath = depset([classpath]),
-            file_metadata = depset([remainder.metadata] + [file for file in inputs if file not in [remainder.metadata, remainder.assets, remainder.classpath]]),
+            file_metadata = depset([remainder.metadata] + [file for file in inputs if file not in [remainder.metadata, remainder.assets, remainder.classpath_descriptor]]),
             trace_spans = depset(spans),
         ),
     ] + ([placement] if placement else [])
@@ -1729,7 +1719,6 @@ def dist_complex_plugin_variant(
             name = neutral_remainder,
             graph = ":" + graph,
             artifact_catalogue = ":" + name + "_neutral_catalogue",
-            plugin_directory = plugin_directory,
             descriptor_files = descriptor_files,
             remainder_files = remainder_files,
             remainder_trees = remainder_trees,
@@ -1742,7 +1731,6 @@ def dist_complex_plugin_variant(
             graph = ":" + graph,
             descriptor = descriptor,
             artifact_catalogue = ":" + catalogue,
-            plugin_directory = plugin_directory,
             descriptor_files = descriptor_files,
             remainder_files = remainder_files,
             remainder_trees = remainder_trees,

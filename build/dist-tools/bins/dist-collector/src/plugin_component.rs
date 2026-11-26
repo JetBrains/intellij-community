@@ -1,9 +1,9 @@
 //! The plugin component spec in its two shapes, and the files and the classpath record of each shape.
 //!
-//! `dev_plugin_component` (`dev_plugin_remainder.bzl`) writes the prepared shape: a remainder, its asset table and a
-//! ready classpath record. `_dev_plugin` (`dev_plugin.bzl`) writes the packed shape: the final descriptor, the jars
-//! that Bazel packed and the files that the plugin copies. A top-level `jars` key selects the packed shape, and then
-//! the collector writes the classpath record itself.
+//! `dev_plugin_component` (`dev_plugin_remainder.bzl`) writes the prepared shape: a remainder, its asset table and the
+//! classpath descriptor. `_dev_plugin` (`dev_plugin.bzl`) writes the packed shape: the final descriptor, the jars that
+//! Bazel packed and the files that the plugin copies. A top-level `jars` key selects the packed shape. The collector
+//! writes the classpath record of both shapes.
 //!
 //! A copied file of the packed shape can be a tree: one directory artifact that the collector walks when it runs. Each
 //! directory of a tree has the mode 0755.
@@ -40,7 +40,6 @@ struct SpecFile {
     remainder: Option<Remainder>,
     descriptor_remainder: Option<Remainder>,
     assets: Option<String>,
-    classpath: Option<String>,
     independent: Option<Vec<Independent>>,
     refused_modules: Option<Vec<String>>,
     descriptor: Option<String>,
@@ -167,7 +166,8 @@ pub(crate) struct PreparedSpec {
     /// The part of a split remainder that holds the assets which read the descriptor.
     pub(crate) descriptor_remainder: Option<Remainder>,
     pub(crate) assets: String,
-    pub(crate) classpath: String,
+    /// The classpath descriptor that the record embeds.
+    pub(crate) descriptor: String,
     pub(crate) independent: Vec<Independent>,
     pub(crate) executables: Executables,
 }
@@ -211,9 +211,12 @@ impl PluginComponentSpec {
             _ => bail!("unsupported plugin component version: {}", spec.version),
         };
         validate_plugin_directory(&spec.plugin_directory)?;
-        if spec.files.is_some() || spec.descriptor.is_some() {
-            bail!("a prepared plugin component names no copied files and no descriptor");
+        if spec.files.is_some() {
+            bail!("a prepared plugin component names no copied files");
         }
+        let Some(descriptor) = spec.descriptor else {
+            bail!("a prepared plugin component names its classpath descriptor");
+        };
         let refused = refused_modules(spec.refused_modules.unwrap_or_default())?;
         let mut independent = spec.independent.unwrap_or_default();
         independent.retain(|artifact| !refused.contains(artifact.artifact.as_str()));
@@ -223,11 +226,11 @@ impl PluginComponentSpec {
             remainder: spec.remainder.unwrap_or_default(),
             descriptor_remainder: spec.descriptor_remainder,
             assets: spec.assets.unwrap_or_default(),
-            classpath: spec.classpath.unwrap_or_default(),
+            descriptor,
             independent,
             executables: Executables::compile(spec.executables.unwrap_or_default())?,
         };
-        let mut metadata = vec![file, &spec.assets, &spec.classpath, &spec.remainder.metadata];
+        let mut metadata = vec![file, &spec.assets, &spec.descriptor, &spec.remainder.metadata];
         let mut payload = vec![spec.remainder.directory.as_str()];
         if let Some(part) = &spec.descriptor_remainder {
             if !part.omitted.is_empty() {
@@ -266,7 +269,6 @@ impl PluginComponentSpec {
         if spec.remainder.is_some()
             || spec.descriptor_remainder.is_some()
             || spec.assets.is_some()
-            || spec.classpath.is_some()
             || spec.independent.is_some()
             || spec.refused_modules.is_some()
         {
@@ -299,8 +301,8 @@ impl PluginComponentSpec {
         Ok(Self::Packed(spec))
     }
 
-    /// The files of the component and the classpath record of the plugin. The prepared shape ships the record, which
-    /// the collector checks against the files. The packed shape has the collector write the record.
+    /// The files of the component and the classpath record of the plugin. The collector writes the record of both
+    /// shapes from the files and the classpath descriptor.
     pub(crate) fn collect(&self, parent: &trace::Span) -> anyhow::Result<(Vec<SourcedFile>, Vec<u8>)> {
         match self {
             Self::Prepared(spec) => {
@@ -309,8 +311,8 @@ impl PluginComponentSpec {
                     spec.executables.apply(&spec.plugin_directory, &mut files)?;
                     Ok(files)
                 })?;
-                let classpath = std::fs::read(&spec.classpath).with_context(|| format!("read {}", spec.classpath))?;
-                crate::plugin_classpath::validate_component_record(&classpath, &spec.plugin_directory, &files)?;
+                let descriptor = std::fs::read(&spec.descriptor).with_context(|| format!("read {}", spec.descriptor))?;
+                let classpath = crate::plugin_classpath::component_record(&spec.plugin_directory, &descriptor, &files)?;
                 Ok((files, classpath))
             }
             Self::Packed(spec) => {

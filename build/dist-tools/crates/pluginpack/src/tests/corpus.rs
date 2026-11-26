@@ -140,16 +140,8 @@ fn every_checked_in_plan_file_plans() {
             .filter(|asset| asset.kind == AssetKind::File && is_independent(asset))
             .map(|asset| asset.inputs[0].clone())
             .collect();
-        let derivation = derive(
-            &file,
-            &catalogue(&file, &libraries),
-            "plugins/corpus",
-            b"<idea-plugin/>",
-            file.version,
-            &independent_modules,
-            &[],
-        )
-        .unwrap_or_else(|error| panic!("{}: derive: {error}", path.display()));
+        let derivation = derive(&file, &catalogue(&file, &libraries), file.version, &independent_modules, &[])
+            .unwrap_or_else(|error| panic!("{}: derive: {error}", path.display()));
         validate_assets(file.version, &derivation.assets, true)
             .unwrap_or_else(|error| panic!("{}: validate_assets: {error}", path.display()));
         plan(&derivation.recipe, &derivation.catalogue).unwrap_or_else(|error| panic!("{}: plan: {error:#}", path.display()));
