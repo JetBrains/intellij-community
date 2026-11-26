@@ -39,7 +39,8 @@ class PMarkerRelocationRoot private constructor(
   @Volatile
   private var rebuilt: PMarkerDirectRoot? = null
 
-  override fun advanceResolution(previousIdentity: Any, resolution: Long): Long = update.advance(previousIdentity, resolution)
+  override fun advanceResolution(handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long =
+    update.advance(previousIdentity, resolution)
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean =
     positions.getUnchecked(handle.id) != null || base.isValid(handle)

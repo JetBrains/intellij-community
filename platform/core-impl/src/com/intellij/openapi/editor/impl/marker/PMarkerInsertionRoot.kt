@@ -38,8 +38,8 @@ class PMarkerInsertionRoot internal constructor(
   @Volatile
   private var rebuilt: PMarkerDirectRoot? = null
 
-  override fun advanceResolution(previousIdentity: Any, resolution: Long): Long =
-    update?.advance(previousIdentity, resolution) ?: base.advanceResolution(previousIdentity, resolution)
+  override fun advanceResolution(handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long =
+    update?.advance(previousIdentity, resolution) ?: base.advanceResolution(handle, previousIdentity, resolution)
 
   override fun resolve(handle: SnapshotMarkerReference<*>): Long {
     val range = base.resolve(handle)

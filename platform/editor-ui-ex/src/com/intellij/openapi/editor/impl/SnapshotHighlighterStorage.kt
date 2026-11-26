@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.MarkupIterator
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
+import com.intellij.openapi.editor.impl.marker.PMarkerDirectRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
@@ -140,6 +141,7 @@ internal class SnapshotHighlighterStorage(
     val snapshot = currentSnapshot()
     val roots = rootStore.root(snapshot) as? CompoundPMarkerRoot ?: return MarkupIterator.emptyIterator()
     val exact = markupIterator(roots.exactRangeRoot, startOffset, endOffset, tastePreference)
+    if (roots.linesInRangeRoot.isEmpty()) return exact
     val lineRange = MarkupModelImpl.roundToLineBoundaries(document, startOffset, endOffset)
     val lines = markupIterator(roots.linesInRangeRoot, lineRange.startOffset, lineRange.endOffset, tastePreference)
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
@@ -261,11 +263,10 @@ internal class SnapshotHighlighterStorage(
     endOffset: Int,
     tastePreference: Byte,
   ): MarkupIterator<RangeHighlighterEx> {
-    val entries = root.overlappingIterator(startOffset, endOffset, tastePreference.toInt())
-    val first = nextSnapshotHighlighter(entries) ?: return MarkupIterator.emptyIterator()
-    iteratorDepth.get()[0]++
-    return object : MarkupIterator<RangeHighlighterEx> {
-      private var nextHighlighter: RangeHighlighterEx? = first
+    if (root is PMarkerDirectRoot && root.isEmpty() && startOffset in 0..endOffset) return MarkupIterator.emptyIterator()
+    val iterator = object : PMarkerDirectRoot.OverlappingEntryTraversal(root, startOffset, endOffset, tastePreference.toInt()),
+                            MarkupIterator<RangeHighlighterEx> {
+      private var nextHighlighter: RangeHighlighterEx? = null
       private var disposed = false
 
       override fun dispose() {
@@ -280,8 +281,12 @@ internal class SnapshotHighlighterStorage(
       }
 
       override fun hasNext(): Boolean {
-        if (nextHighlighter == null) nextHighlighter = nextSnapshotHighlighter(entries)
-        return nextHighlighter != null
+        while (nextHighlighter == null) {
+          val entry = nextEntry() ?: return false
+          val marker = entry.marker
+          if (marker is SnapshotRangeHighlighterImpl && marker.isValid) nextHighlighter = marker
+        }
+        return true
       }
 
       override fun next(): RangeHighlighterEx {
@@ -290,14 +295,9 @@ internal class SnapshotHighlighterStorage(
         return result
       }
     }
-  }
-
-  private fun nextSnapshotHighlighter(entries: Iterator<PMarkerRoot.MarkerEntry>): SnapshotRangeHighlighterImpl? {
-    while (entries.hasNext()) {
-      val marker = entries.next().marker
-      if (marker is SnapshotRangeHighlighterImpl && marker.isValid) return marker
-    }
-    return null
+    if (!iterator.hasNext()) return MarkupIterator.emptyIterator()
+    iteratorDepth.get()[0]++
+    return iterator
   }
 
   companion object {

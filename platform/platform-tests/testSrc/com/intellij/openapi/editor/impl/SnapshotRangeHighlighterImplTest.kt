@@ -119,6 +119,43 @@ class SnapshotRangeHighlighterImplTest {
   }
 
   @Test
+  fun `cached highlighter offsets advance in the owning tree`() {
+    val document = DocumentImpl("abcd\nefgh\nijkl", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val exact = model.addRangeHighlighter(1, 3, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
+      val line = model.addRangeHighlighter(6, 8, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
+      val reference = exact.currentRootReference()
+      val original = reference.get()
+      val exactRange = original.resolve(exact.markerHandle)
+      val lineRange = original.resolve(line.markerHandle)
+
+      val withoutLine = original.remove(line.markerHandle)
+      Assertions.assertThat(withoutLine.advanceResolution(exact.markerHandle, original.resolutionCacheIdentity, exactRange))
+        .isEqualTo(exactRange)
+      Assertions.assertThat(withoutLine.advanceResolution(line.markerHandle, original.resolutionCacheIdentity, lineRange))
+        .isEqualTo(PMarkerResolution.UNRESOLVED)
+
+      document.insertString(0, "xx")
+      val shifted = exact.currentRootReference().get()
+      Assertions.assertThat(shifted.advanceResolution(exact.markerHandle, original.resolutionCacheIdentity, exactRange))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(3, 5))
+      Assertions.assertThat(shifted.advanceResolution(line.markerHandle, original.resolutionCacheIdentity, lineRange))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(8, 10))
+
+      document.insertString(4, "x")
+      val overlapped = exact.currentRootReference().get()
+      Assertions.assertThat(overlapped.advanceResolution(exact.markerHandle, original.resolutionCacheIdentity, exactRange))
+        .isEqualTo(PMarkerResolution.UNRESOLVED)
+      Assertions.assertThat(overlapped.advanceResolution(line.markerHandle, original.resolutionCacheIdentity, lineRange))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(9, 11))
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
   fun `compound batches preserve both highlighter trees`() {
     val document = DocumentImpl("one\ntwo", true)
     val model = MarkupModelImpl(document)
@@ -628,13 +665,14 @@ class SnapshotRangeHighlighterImplTest {
   }
 
   @Test
-  fun `overlapping iterator reads snapshot root lazily`() {
-    val document = DocumentImpl("abcd", true)
+  fun `overlapping iterator consumes snapshot entries lazily`() {
+    val document = DocumentImpl("abcde", true)
     val model = MarkupModelImpl(document)
     try {
-      val highlighters = (0 until 3).map { index ->
+      val highlighters = (1..3).map { index ->
         model.addRangeHighlighter(index, index + 1, 1, null, HighlighterTargetArea.EXACT_RANGE)
       }
+      document.insertString(0, "x")
       val rootReference = (highlighters.first() as SnapshotRangeMarkerImpl).currentRootReference()
       val compoundRoot = rootReference.get() as CompoundPMarkerRoot
       val exactRangeRoot = compoundRoot.exactRangeRoot
@@ -656,11 +694,17 @@ class SnapshotRangeHighlighterImplTest {
 
       model.overlappingIterator(0, document.textLength).use { iterator ->
         Assertions.assertThat(readEntryCount).isEqualTo(1)
-        Assertions.assertThat(iterator.next()).isSameAs(highlighters[0])
+        val first = iterator.next()
+        Assertions.assertThat(first).isSameAs(highlighters[0])
+        Assertions.assertThat(first.startOffset).isEqualTo(2)
+        Assertions.assertThat(first.endOffset).isEqualTo(3)
         Assertions.assertThat(readEntryCount).isEqualTo(1)
         Assertions.assertThat(iterator.hasNext()).isTrue()
         Assertions.assertThat(readEntryCount).isEqualTo(2)
-        Assertions.assertThat(iterator.next()).isSameAs(highlighters[1])
+        val second = iterator.next()
+        Assertions.assertThat(second).isSameAs(highlighters[1])
+        Assertions.assertThat(second.startOffset).isEqualTo(3)
+        Assertions.assertThat(second.endOffset).isEqualTo(4)
       }
     }
     finally {
@@ -680,6 +724,10 @@ class SnapshotRangeHighlighterImplTest {
       }
       model.addRangeHighlighter(3, 4, 1, null, targetArea).dispose()
       document.insertString(0, "x")
+
+      model.overlappingIterator(0, document.textLength).use { iterator ->
+        Assertions.assertThat(iterator.asSequence().map { it.startOffset }.toList()).containsExactly(2, 2, 7, 7, 12, 12)
+      }
 
       for ((start, end) in listOf(-10 to -1, -10 to 100, 0 to 0, 2 to 2, 3 to 3, 5 to 5, 7 to 7, 10 to 1, 100 to 100)) {
         val expected = model.overlappingIterator(start, end).use { it.asSequence().toList() }

@@ -126,7 +126,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     val cached = cachedResolution
     if (cached != null) {
       if (cached.identity === root.resolutionCacheIdentity) return PMarkerResolution.isValid(cached.resolution)
-      val advanced = root.advanceResolution(cached.identity, cached.resolution)
+      val advanced = root.advanceResolution(markerHandle, cached.identity, cached.resolution)
       if (advanced != PMarkerResolution.UNRESOLVED) {
         cacheResolution(root, advanced)
         return PMarkerResolution.isValid(advanced)
@@ -246,7 +246,7 @@ open class SnapshotRangeMarkerImpl private constructor(
       return cached.resolution
     }
     val advanced = if (cached != null && !isDisposed()) {
-      root.advanceResolution(cached.identity, cached.resolution)
+      root.advanceResolution(markerHandle, cached.identity, cached.resolution)
     }
     else {
       PMarkerResolution.UNRESOLVED

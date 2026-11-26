@@ -21,8 +21,13 @@ interface PMarkerRoot {
   /** Identifies roots with the same marker offsets and validity. This token must not retain a root. */
   val resolutionCacheIdentity: Any
 
-  /** Advances cached offsets across an edit, or requests a full resolution. */
-  fun advanceResolution(previousIdentity: Any, resolution: Long): Long = PMarkerResolution.UNRESOLVED
+  /**
+   * Advances the cached [resolution] of [handle] to this root.
+   * Returns [PMarkerResolution.UNRESOLVED] when the caller must resolve the marker in this root.
+   *
+   * @param previousIdentity the cache token of the root that supplied [resolution].
+   */
+  fun advanceResolution(handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long = PMarkerResolution.UNRESOLVED
 
   /** Replaces the offsets of existing valid markers and discards stale cached offsets. */
   fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot

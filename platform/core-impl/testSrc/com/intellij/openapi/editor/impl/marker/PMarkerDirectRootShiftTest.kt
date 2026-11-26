@@ -100,7 +100,8 @@ internal class PMarkerDirectRootShiftTest {
       assertTrue(notifications.isEmpty())
       if (edited !== root) {
         for (entry in entries) {
-          assertEquals(edited.resolve(entry.handle), edited.advanceResolution(root.resolutionCacheIdentity, root.resolve(entry.handle)))
+          assertEquals(edited.resolve(entry.handle),
+                       edited.advanceResolution(entry.handle, root.resolutionCacheIdentity, root.resolve(entry.handle)))
         }
       }
     }
@@ -239,15 +240,15 @@ internal class PMarkerDirectRootShiftTest {
     for (entry in listOf(entries.first(), entries.last())) {
       val expected = TextRangeScalarUtil.shift(entry.range(), 1)
       assertEquals(expected, latest.resolve(entry.handle))
-      assertEquals(expected, latest.advanceResolution(original.resolutionCacheIdentity, original.resolve(entry.handle)))
+      assertEquals(expected, latest.advanceResolution(entry.handle, original.resolutionCacheIdentity, original.resolve(entry.handle)))
       assertEquals(entry.range(), original.resolve(entry.handle))
     }
     assertEquals(PMarkerResolution.ABSENT, latest.resolve(entries[3].handle))
     assertEquals(PMarkerResolution.UNRESOLVED,
-                 latest.advanceResolution(original.resolutionCacheIdentity, entries[3].range()))
+                 latest.advanceResolution(entries[3].handle, original.resolutionCacheIdentity, entries[3].range()))
     val branch = apply(original, DocumentPatch.simple(0, 0, "x", 1, false))
     assertEquals(PMarkerResolution.UNRESOLVED,
-                 latest.advanceResolution(branch.resolutionCacheIdentity, branch.resolve(entries.first().handle)))
+                 latest.advanceResolution(entries.first().handle, branch.resolutionCacheIdentity, branch.resolve(entries.first().handle)))
   }
 
   @Test
@@ -262,8 +263,9 @@ internal class PMarkerDirectRootShiftTest {
 
     val entry = entries.first()
     assertEquals(TextRangeScalarUtil.shift(entry.range(), 64), current.resolve(entry.handle))
-    assertEquals(PMarkerResolution.UNRESOLVED, current.advanceResolution(original.resolutionCacheIdentity, entry.range()))
-    assertEquals(current.resolve(entry.handle), current.advanceResolution(previous.resolutionCacheIdentity, previous.resolve(entry.handle)))
+    assertEquals(PMarkerResolution.UNRESOLVED, current.advanceResolution(entry.handle, original.resolutionCacheIdentity, entry.range()))
+    assertEquals(current.resolve(entry.handle),
+                 current.advanceResolution(entry.handle, previous.resolutionCacheIdentity, previous.resolve(entry.handle)))
     assertEquals(entry.range(), original.resolve(entry.handle))
   }
 

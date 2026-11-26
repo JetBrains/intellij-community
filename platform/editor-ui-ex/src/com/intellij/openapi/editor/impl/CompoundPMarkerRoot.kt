@@ -15,13 +15,37 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 
-/** Combines the exact-range and line-range highlighter roots in one marker root. */
+/**
+ * Combines the exact-range and line-range highlighter roots in one marker root.
+ *
+ * @property resolutionIdentity the compound cache token for the offsets and validity in both trees.
+ */
 @ApiStatus.Internal
 open class CompoundPMarkerRoot private constructor(
   val exactRangeRoot: PMarkerRoot,
   val linesInRangeRoot: PMarkerRoot,
-  override val resolutionCacheIdentity: Any = Any(),
+  private val resolutionIdentity: ResolutionIdentity = ResolutionIdentity(
+    exactRangeRoot.resolutionCacheIdentity,
+    linesInRangeRoot.resolutionCacheIdentity,
+  ),
 ) : PMarkerRoot {
+  override val resolutionCacheIdentity: Any
+    get() = resolutionIdentity
+
+  /** Advances offsets using the previous token for the target area's tree. */
+  override fun advanceResolution(handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long {
+    val previous = previousIdentity as? ResolutionIdentity ?: return PMarkerResolution.UNRESOLVED
+    return when (targetArea(handle)) {
+      HighlighterTargetArea.EXACT_RANGE -> advanceChildResolution(exactRangeRoot, handle, previous.exactRange, resolution)
+      HighlighterTargetArea.LINES_IN_RANGE -> advanceChildResolution(linesInRangeRoot, handle, previous.linesInRange, resolution)
+      null -> PMarkerResolution.UNRESOLVED
+    }
+  }
+
+  /** Reuses [resolution] when the child token matches. Delegates to [root] when its token changes. */
+  private fun advanceChildResolution(root: PMarkerRoot, handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long =
+    if (previousIdentity === root.resolutionCacheIdentity) resolution else root.advanceResolution(handle, previousIdentity, resolution)
+
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot {
     return withRoots(exactRangeRoot.restoreEntries(entries.filter { exactRangeRoot.isValid(it.handle) }),
                      linesInRangeRoot.restoreEntries(entries.filter { linesInRangeRoot.isValid(it.handle) }))
@@ -162,15 +186,19 @@ open class CompoundPMarkerRoot private constructor(
   @TestOnly
   fun withExactRangeRoot(root: PMarkerRoot): CompoundPMarkerRoot = withRoots(root, linesInRangeRoot)
 
+  /** Returns the target area, or null when [handle] supplies no snapshot highlighter. */
+  private fun targetArea(handle: SnapshotMarkerReference<*>): HighlighterTargetArea? =
+    (handle.get() as? SnapshotRangeHighlighterImpl)?.getTargetArea()
+
   private fun rootFor(handle: SnapshotMarkerReference<*>): PMarkerRoot? =
-    when ((handle.get() as? SnapshotRangeHighlighterImpl)?.getTargetArea()) {
+    when (targetArea(handle)) {
       HighlighterTargetArea.EXACT_RANGE -> exactRangeRoot
       HighlighterTargetArea.LINES_IN_RANGE -> linesInRangeRoot
       null -> null
     }
 
   private inline fun updateMarker(handle: SnapshotMarkerReference<*>, update: (PMarkerRoot) -> PMarkerRoot): CompoundPMarkerRoot {
-    when ((handle.get() as? SnapshotRangeHighlighterImpl)?.getTargetArea()) {
+    when (targetArea(handle)) {
       HighlighterTargetArea.EXACT_RANGE -> return withRoots(update(exactRangeRoot), linesInRangeRoot)
       HighlighterTargetArea.LINES_IN_RANGE -> return withRoots(exactRangeRoot, update(linesInRangeRoot))
       null -> Unit
@@ -180,19 +208,30 @@ open class CompoundPMarkerRoot private constructor(
     return withRoots(exactRangeRoot, update(linesInRangeRoot))
   }
 
+  /** Shares the compound cache token while both child tokens stay the same. */
   private fun withRoots(exactRangeRoot: PMarkerRoot, linesInRangeRoot: PMarkerRoot): CompoundPMarkerRoot {
     return if (exactRangeRoot === this.exactRangeRoot && linesInRangeRoot === this.linesInRangeRoot) {
       this
     }
     else {
-      val identity = if (exactRangeRoot.resolutionCacheIdentity === this.exactRangeRoot.resolutionCacheIdentity &&
-                         linesInRangeRoot.resolutionCacheIdentity === this.linesInRangeRoot.resolutionCacheIdentity) {
-        resolutionCacheIdentity
+      val exactIdentity = exactRangeRoot.resolutionCacheIdentity
+      val linesIdentity = linesInRangeRoot.resolutionCacheIdentity
+      val identity = if (exactIdentity === resolutionIdentity.exactRange && linesIdentity === resolutionIdentity.linesInRange) {
+        resolutionIdentity
       }
-      else Any()
+      else ResolutionIdentity(exactIdentity, linesIdentity)
       CompoundPMarkerRoot(exactRangeRoot, linesInRangeRoot, identity)
     }
   }
+
+  /**
+   * Stores the tokens of both child roots.
+   * A cached resolution can retain this identity after the roots are collected.
+   *
+   * @property exactRange the cache token of the exact-range tree.
+   * @property linesInRange the cache token of the line-range tree.
+   */
+  private class ResolutionIdentity(val exactRange: Any, val linesInRange: Any)
 
   private class MergedMarkerIterator(
     private val firstIterator: Iterator<MarkerEntry>,

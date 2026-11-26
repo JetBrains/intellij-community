@@ -11,8 +11,8 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.ArrayDeque
 import java.util.IdentityHashMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.Consumer
@@ -41,7 +41,7 @@ class PMarkerDirectRoot private constructor(
   @Volatile private var cachedResolutions: ResolutionCache? = null,
   private val resolutionUpdate: PMarkerResolutionUpdate? = null,
 ) : PMarkerRoot {
-  override fun advanceResolution(previousIdentity: Any, resolution: Long): Long =
+  override fun advanceResolution(handle: SnapshotMarkerReference<*>, previousIdentity: Any, resolution: Long): Long =
     resolutionUpdate?.advance(previousIdentity, resolution) ?: PMarkerResolution.UNRESOLVED
 
   override fun isEmpty(): Boolean = root == null
@@ -504,50 +504,97 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
-  /**
-   * Traverses subtrees that can match the range and flavor flags.
-   * Returned entries include all accumulated lazy shifts.
-   */
   override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {
-    require(startOffset in 0..endOffset) { "The query range is invalid" }
-    val flags = tastePreference and 0xFF
-    return object : Iterator<MarkerEntry> {
-      private val stack = ArrayDeque<Frame>()
-      private var next: MarkerEntry? = null
+    if (root == null) {
+      require(startOffset in 0..endOffset) { "The query range is invalid" }
+      return emptyList<MarkerEntry>().iterator()
+    }
+    return OverlappingIterator(this, startOffset, endOffset, tastePreference)
+  }
 
-      init {
-        pushLeft(root, 0)
-      }
+  private class OverlappingIterator(
+    root: PMarkerDirectRoot,
+    startOffset: Int,
+    endOffset: Int,
+    tastePreference: Int,
+  ) : OverlappingEntryTraversal(root, startOffset, endOffset, tastePreference), Iterator<MarkerEntry> {
+    override fun hasNext(): Boolean = hasNextEntry()
 
-      override fun hasNext(): Boolean {
-        while (next == null && stack.isNotEmpty()) {
-          val (node, delta) = stack.removeLast()
-          pushLeft(node.right, delta + node.lazyDelta)
-          if (node.entry.nodeEnd + delta >= startOffset && matches(node.entry.flavorFlags, flags)) {
-            next = node.entry.shifted(delta)
-          }
+    override fun next(): MarkerEntry = nextEntry() ?: throw NoSuchElementException()
+  }
+
+  /** Traverses a direct root in place and delegates to the root's iterator for other root types. */
+  @ApiStatus.Internal
+  abstract class OverlappingEntryTraversal protected constructor(
+    root: PMarkerRoot,
+    private val startOffset: Int,
+    private val endOffset: Int,
+    tastePreference: Int,
+  ) {
+    private val directRoot = root as? PMarkerDirectRoot
+    private val entries = if (directRoot == null) root.overlappingIterator(startOffset, endOffset, tastePreference) else null
+    private val flags = tastePreference and 0xFF
+
+    /** Pending nodes. [shifts] stores the ancestor shift at each index. */
+    private val nodes: Array<PMarkerNode?>
+    private val shifts: IntArray
+    private var stackSize = 0
+    private var nextEntry: MarkerEntry? = null
+    private var nextShift = 0
+
+    init {
+      if (directRoot != null) require(startOffset in 0..endOffset) { "The query range is invalid" }
+      val tree = directRoot?.root
+      nodes = if (tree == null) EMPTY_NODES else arrayOfNulls(tree.height)
+      shifts = if (tree == null) EMPTY_SHIFTS else IntArray(tree.height)
+      pushLeft(tree, 0)
+    }
+
+    /** Tests for a matching entry without consuming it. */
+    protected fun hasNextEntry(): Boolean {
+      if (entries != null) return entries.hasNext()
+      while (nextEntry == null && stackSize > 0) {
+        val top = --stackSize
+        val node = nodes[top]!!
+        val delta = shifts[top]
+        nodes[top] = null
+        pushLeft(node.right, delta + node.lazyDelta)
+        if (node.entry.nodeEnd + delta >= startOffset && matches(node.entry.flavorFlags, flags)) {
+          nextEntry = node.entry
+          nextShift = delta
         }
-        return next != null
       }
+      return nextEntry != null
+    }
 
-      override fun next(): MarkerEntry {
-        if (!hasNext()) throw NoSuchElementException()
-        val result = next!!
-        next = null
-        cacheResolution(result, 0)
-        return result
-      }
+    /** Consumes the next entry with its document offsets, or returns null at the end. */
+    protected fun nextEntry(): MarkerEntry? {
+      if (entries != null) return if (entries.hasNext()) entries.next() else null
+      if (!hasNextEntry()) return null
+      val entry = nextEntry!!
+      nextEntry = null
+      checkNotNull(directRoot).cacheResolution(entry, nextShift)
+      return entry.shifted(nextShift)
+    }
 
-      private fun pushLeft(initial: PMarkerNode?, initialDelta: Int) {
-        var node = initial
-        var delta = initialDelta
-        while (node != null) {
-          if (node.maximumEnd + delta < startOffset || !matches(node.subtreeFlavorFlags, flags)) return
-          if (node.entry.nodeStart + delta <= endOffset) stack.addLast(Frame(node, delta))
-          delta += node.lazyDelta
-          node = node.left
+    private fun pushLeft(initial: PMarkerNode?, initialDelta: Int) {
+      var node = initial
+      var delta = initialDelta
+      while (node != null) {
+        if (node.maximumEnd + delta < startOffset || !matches(node.subtreeFlavorFlags, flags)) return
+        if (node.entry.nodeStart + delta <= endOffset) {
+          nodes[stackSize] = node
+          shifts[stackSize] = delta
+          stackSize++
         }
+        delta += node.lazyDelta
+        node = node.left
       }
+    }
+
+    private companion object {
+      val EMPTY_NODES = emptyArray<PMarkerNode?>()
+      val EMPTY_SHIFTS = IntArray(0)
     }
   }
 
@@ -611,9 +658,6 @@ class PMarkerDirectRoot private constructor(
       ObjectUtilsRt.reachabilityFence(this)
     }
   }
-
-  /** Keeps a traversal node and the total lazy shift from its ancestors. */
-  private data class Frame(val node: PMarkerNode, val delta: Int)
 
   /** Stores the first resolution directly and allocates a map for other marker IDs. Metadata changes share this cache. */
   private class ResolutionCache(
