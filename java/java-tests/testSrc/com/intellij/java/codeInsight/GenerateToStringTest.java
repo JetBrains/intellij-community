@@ -20,34 +20,52 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.java.generate.GenerateToStringWorker;
 import org.jetbrains.java.generate.config.ReplacePolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-public class GenerateToStringTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class GenerateToStringTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testAnnotationOnMethod() {
     doTest(new TemplateResource("a.java", "@NotNull() public String toString() {return null;}", false));
   }
 
+  @Test
   public void testJavadocOnMethod() {
     doTest(new TemplateResource("a.java", "/** my comment*/ public String toString() {return null;}", false));
   }
 
   private void doTest(final TemplateResource templateResource) {
-    configureByFile("/codeInsight/generateToString/before" + getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("/codeInsight/generateToString/before" + myFixture.getTestName(false) + ".java");
 
-    final Editor editor = getEditor();
-    final PsiElement elementAt = getFile().findElementAt(editor.getCaretModel().getOffset());
-    final PsiClass clazz = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
-    assertNotNull(clazz);
-    WriteAction.run(() -> {
-      final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, false);
-      worker.execute(Collections.emptyList(), templateResource, ReplacePolicy.getInstance());
+    myFixture.runInCommand(() -> {
+      final Editor editor = myFixture.getEditor();
+      final PsiElement elementAt = myFixture.getFile().findElementAt(editor.getCaretModel().getOffset());
+      final PsiClass clazz = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
+      assertNotNull(clazz);
+      WriteAction.run(() -> {
+        final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, false);
+        worker.execute(Collections.emptyList(), templateResource, ReplacePolicy.getInstance());
+      });
+      myFixture.checkResultByFile("/codeInsight/generateToString/after" + myFixture.getTestName(false) + ".java");
     });
-    checkResultByFile("/codeInsight/generateToString/after" + getTestName(false) + ".java");
   }
 }

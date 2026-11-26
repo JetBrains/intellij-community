@@ -16,19 +16,40 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.generation.actions.GenerateCreateUIAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author anna
  */
-public class GenerateCreateUITest extends LightJavaCodeInsightTestCase {
+@TestApplication
+public class GenerateCreateUITest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testSOE() {
-    configureByFile("/codeInsight/generate/generateCreateUI/beforeSOE.java");
-    final PsiClass targetClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiClass.class);
-    assertNotNull(targetClass);
-    assertFalse(new GenerateCreateUIAction().isValidForClass(targetClass));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("/codeInsight/generate/generateCreateUI/beforeSOE.java");
+    ReadAction.runBlocking(() -> {
+      final PsiClass targetClass =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiClass.class);
+      assertNotNull(targetClass);
+      assertFalse(new GenerateCreateUIAction().isValidForClass(targetClass));
+    });
   }
   
 }

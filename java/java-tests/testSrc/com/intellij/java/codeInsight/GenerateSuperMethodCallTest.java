@@ -15,57 +15,69 @@
  */
 package com.intellij.java.codeInsight;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class GenerateSuperMethodCallTest extends LightJavaCodeInsightTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class GenerateSuperMethodCallTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testImplement() { doTest(); }
+  @Test
   public void testOverride() { doTest(); }
+  @Test
   public void testOverrideInNestedBlock() { doTest(); }
+  @Test
   public void testDefaultMethod() { doTest(); }
 
-
   private void doTest() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/generateSuperMethodCall/before" +
-                    name +
-                    ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String name = myFixture.getTestName(false);
+    myFixture.configureByFile("/codeInsight/generateSuperMethodCall/before" +
+                              name +
+                              ".java");
     String after = "/codeInsight/generateSuperMethodCall/after" + name + ".java";
-    boolean mustBeAvailable = new File(getTestDataPath() + after).exists();
-    boolean isValid = new GenerateSuperMethodCallAction() {
-      @Override
-      protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile psiFile) {
-        return super.isValidForFile(project, editor, psiFile);
-      }
-    }.isValidForFile(getProject(), getEditor(), getFile());
-    assertEquals(mustBeAvailable, isValid);
-    if (mustBeAvailable) {
-      CodeInsightActionHandler handler = new GenerateSuperMethodCallAction() {
-        @NotNull
+    boolean mustBeAvailable = new File(myFixture.getTestDataPath() + after).exists();
+    myFixture.runInCommand(() -> {
+      boolean isValid = new GenerateSuperMethodCallAction() {
         @Override
-        protected CodeInsightActionHandler getHandler() {
-          return super.getHandler();
+        protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile psiFile) {
+          return super.isValidForFile(project, editor, psiFile);
         }
-      }.getHandler();
-      ApplicationManager.getApplication().runWriteAction(() -> handler.invoke(getProject(), getEditor(), getFile()));
+      }.isValidForFile(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      assertEquals(mustBeAvailable, isValid);
+      if (mustBeAvailable) {
+        CodeInsightActionHandler handler = new GenerateSuperMethodCallAction() {
+          @NotNull
+          @Override
+          protected CodeInsightActionHandler getHandler() {
+            return super.getHandler();
+          }
+        }.getHandler();
+        ApplicationManager.getApplication().runWriteAction(() -> handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
 
-
-      checkResultByFile(after);
-    }
+        myFixture.checkResultByFile(after);
+      }
+    });
   }
 }

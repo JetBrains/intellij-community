@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
 import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeArgumentsProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
@@ -38,41 +40,58 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaIndexingModeCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.List;
+
+import static com.intellij.java.codeInsight.ParameterInfoFixtureKt.parameterInfoFixture;
 import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ParameterInfoTest extends AbstractParameterInfoTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/parameterInfo/";
-  }
+@TestApplication
+public class ParameterInfoTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<ParameterInfoFixture> parameterInfo =
+    parameterInfoFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/parameterInfo/");
+  private ParameterInfoFixture info;
+  private JavaCodeInsightTestFixture myFixture;
 
-  public void testPrivateMethodOfEnclosingClass() { doTest(); }
-  public void testNotAccessible() { doTest(); }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testPrivateMethodOfEnclosingClass(IndexingMode mode) { runInMode(mode, () -> doTest()); }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testNotAccessible(IndexingMode mode) { runInMode(mode, () -> doTest()); }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(info.getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
     PsiExpressionList list = handler.findElementForParameterInfo(context);
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
@@ -80,135 +99,183 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertTrue(itemsToShow.length > 0);
   }
 
-  public void testParameterInfoDoesNotShowInternalJetBrainsAnnotations() {
-    myFixture.configureByText("x.java", "class X { void f(@org.intellij.lang.annotations.Flow int i) { f(<caret>0); }}");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testParameterInfoDoesNotShowInternalJetBrainsAnnotations(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText("x.java", "class X { void f(@org.intellij.lang.annotations.Flow int i) { f(<caret>0); }}");
 
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-    PsiMethod method = PsiTreeUtil.getParentOfType(getFile().findElementAt(context.getOffset()), PsiMethod.class);
-    assertNotNull(method);
-    MockParameterInfoUIContext<PsiMethod> uiContext = new MockParameterInfoUIContext<>(method);
-    String list = MethodParameterInfoHandler.updateMethodPresentation(method, PsiSubstitutor.EMPTY, uiContext);
-    assertEquals("int i", list);
-    PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(method.getParameterList().getParameters()[0], false, null);
-    assertEquals(1, annotations.length);
+      CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
+      PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(context.getOffset()), PsiMethod.class);
+      assertNotNull(method);
+      MockParameterInfoUIContext<PsiMethod> uiContext = new MockParameterInfoUIContext<>(method);
+      String list = MethodParameterInfoHandler.updateMethodPresentation(method, PsiSubstitutor.EMPTY, uiContext);
+      assertEquals("int i", list);
+      PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(method.getParameterList().getParameters()[0], false, null);
+      assertEquals(1, annotations.length);
+    });
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void testWhenInferenceIsBoundedByEqualsBound() {
-    myFixture.configureByText("x.java",
-                              """
-                                import java.util.function.Function;
-                                import java.util.function.Supplier;
-                                class X {
-                                    public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}
-                                    public void bar(Function<String, Integer> right) {
-                                        foo(<caret>() -> 1, right);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testWhenInferenceIsBoundedByEqualsBound(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText("x.java",
+                                """
+                                  import java.util.function.Function;
+                                  import java.util.function.Supplier;
+                                  class X {
+                                      public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}
+                                      public void bar(Function<String, Integer> right) {
+                                          foo(<caret>() -> 1, right);
+                                      }
+                                  }
+                                  """);
+
+      assertEquals("<b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right", myFixture.getParameterInfoAtCaret());
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testSelectionWithGenerics(IndexingMode mode) {
+    runInMode(mode, () -> {
+      doTest2CandidatesWithPreselection();
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadWithVarargs(IndexingMode mode) {
+    runInMode(mode, () -> {
+      doTest2CandidatesWithPreselection();
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadWithVarargsMultipleArgs(IndexingMode mode) {
+    runInMode(mode, () -> {
+      doTest2CandidatesWithPreselection();
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadWithVarargsSingleArg(IndexingMode mode) {
+    runInMode(mode, () -> {
+      doTest2CandidatesWithPreselection();
+    });
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadWithOneIncompatibleVarargs(IndexingMode mode) {
+    runInMode(mode, () -> {
+      assertNotNull(doTest2CandidatesWithPreselection().getHighlightedParameter());
+    });
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadWithErrorOnTheTopLevel(IndexingMode mode) {
+    runInMode(mode, () -> {
+      doTest2CandidatesWithPreselection();
+      PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      PsiCall call = LambdaUtil.treeWalkUp(elementAtCaret);
+      assertNotNull(call);
+      //cache the type of first argument: if type is calculated by cached session of first (wrong) overload, then applicability check would fail
+      //applicability check itself takes into account only child constraints and thus won't see cached elements on top level, thus explicit type calculation
+      PsiType type = call.getArgumentList().getExpressions()[1].getType();
+      assertNotNull(type);
+      JavaResolveResult result = call.resolveMethodGenerics();
+      assertInstanceOf(MethodCandidateInfo.class, result);
+      assertTrue(((MethodCandidateInfo)result).isApplicable());
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadWithVarargsArray(IndexingMode mode) {
+    runInMode(mode, () -> {
+      doTest2CandidatesWithPreselection();
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testSuperConstructorCalls(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText("x.java",
+                                """
+                                  class A {
+                                         public A(String s, int... p) {}
+                                     }
+                                     class B extends A {
+                                         public B() {
+                                             super(<caret>"a", 1);
+                                         }
+                                     }""");
+      assertEquals("<b>String s</b>, int... p", myFixture.getParameterInfoAtCaret());
+    });
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testCompletionPolicyWithLowerBounds(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText("x.java",
+                                """
+                                  class B {
+                                    static <T> T[] foo(T[] args, int l) {
+                                      return null;
                                     }
-                                }
-                                """);
-
-    assertEquals("<b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right", myFixture.getParameterInfoAtCaret());
-  }
-
-  public void testSelectionWithGenerics() {
-    doTest2CandidatesWithPreselection();
-  }
-
-  public void testOverloadWithVarargs() {
-    doTest2CandidatesWithPreselection();
-  }
-
-  public void testOverloadWithVarargsMultipleArgs() {
-    doTest2CandidatesWithPreselection();
-  }
-
-  public void testOverloadWithVarargsSingleArg() {
-    doTest2CandidatesWithPreselection();
+                                    void f(String[] args) {
+                                      String[] a = foo(args, args.len<caret>gth);
+                                    }
+                                  }""");
+      assertEquals("String[] args, <b>int l</b>", myFixture.getParameterInfoAtCaret());
+    });
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void testOverloadWithOneIncompatibleVarargs() {
-    assertNotNull(doTest2CandidatesWithPreselection().getHighlightedParameter());
-  }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testPreselectionOfCandidatesInNestedMethod(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByFile(info.getTestName(false) + ".java");
 
-  @NeedsIndex.ForStandardLibrary
-  public void testOverloadWithErrorOnTheTopLevel() {
-    doTest2CandidatesWithPreselection();
-    PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    PsiCall call = LambdaUtil.treeWalkUp(elementAtCaret);
-    assertNotNull(call);
-    //cache the type of first argument: if type is calculated by cached session of first (wrong) overload, then applicability check would fail
-    //applicability check itself takes into account only child constraints and thus won't see cached elements on top level, thus explicit type calculation
-    PsiType type = call.getArgumentList().getExpressions()[1].getType();
-    assertNotNull(type);
-    JavaResolveResult result = call.resolveMethodGenerics();
-    assertTrue(result instanceof MethodCandidateInfo);
-    assertTrue(((MethodCandidateInfo)result).isApplicable());
-  }
-
-  public void testOverloadWithVarargsArray() {
-    doTest2CandidatesWithPreselection();
-  }
-
-  public void testSuperConstructorCalls() {
-    myFixture.configureByText("x.java",
-                              """
-                                class A {
-                                       public A(String s, int... p) {}
-                                   }
-                                   class B extends A {
-                                       public B() {
-                                           super(<caret>"a", 1);
-                                       }
-                                   }""");
-    assertEquals("<b>String s</b>, int... p", myFixture.getParameterInfoAtCaret());
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  public void testCompletionPolicyWithLowerBounds() {
-    myFixture.configureByText("x.java",
-                              """
-                                class B {
-                                  static <T> T[] foo(T[] args, int l) {
-                                    return null;
-                                  }
-                                  void f(String[] args) {
-                                    String[] a = foo(args, args.len<caret>gth);
-                                  }
-                                }""");
-    assertEquals("String[] args, <b>int l</b>", myFixture.getParameterInfoAtCaret());
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  public void testPreselectionOfCandidatesInNestedMethod() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-    PsiExpressionList list = handler.findElementForParameterInfo(context);
-    assertNotNull(list);
-    Object[] itemsToShow = context.getItemsToShow();
-    assertNotNull(itemsToShow);
-    assertEquals(3, itemsToShow.length);
-    ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
-    MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
-    assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) ||
-                updateParameterInfoContext.isUIComponentEnabled(1) ||
-                updateParameterInfoContext.isUIComponentEnabled(2));
+      MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+      CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
+      PsiExpressionList list = handler.findElementForParameterInfo(context);
+      assertNotNull(list);
+      Object[] itemsToShow = context.getItemsToShow();
+      assertNotNull(itemsToShow);
+      assertEquals(3, itemsToShow.length);
+      ParameterInfoComponent.createContext(itemsToShow, myFixture.getEditor(), handler, -1);
+      MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
+      assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) ||
+                  updateParameterInfoContext.isUIComponentEnabled(1) ||
+                  updateParameterInfoContext.isUIComponentEnabled(2));
+    });
   }
 
   private MockUpdateParameterInfoContext doTest2CandidatesWithPreselection() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(info.getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
     PsiExpressionList list = handler.findElementForParameterInfo(context);
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(2, itemsToShow.length);
     MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]);
-    ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
+    ParameterInfoComponent.createContext(itemsToShow, myFixture.getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
     return updateParameterInfoContext;
@@ -218,48 +285,64 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   private MockUpdateParameterInfoContext updateParameterInfo(MethodParameterInfoHandler handler,
                                                              PsiExpressionList list,
                                                              Object[] itemsToShow) {
-    MockUpdateParameterInfoContext updateParameterInfoContext = new MockUpdateParameterInfoContext(getEditor(), getFile(), itemsToShow);
+    MockUpdateParameterInfoContext updateParameterInfoContext = new MockUpdateParameterInfoContext(myFixture.getEditor(), myFixture.getFile(), itemsToShow);
     updateParameterInfoContext.setParameterOwner(list);
     handler.updateParameterInfo(list, updateParameterInfoContext);
     return updateParameterInfoContext;
   }
 
-  public void testStopAtAccessibleStaticCorrectCandidate() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testStopAtAccessibleStaticCorrectCandidate(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByFile(info.getTestName(false) + ".java");
 
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-    PsiExpressionList list = handler.findElementForParameterInfo(context);
-    assertNotNull(list);
-    Object[] itemsToShow = context.getItemsToShow();
-    assertNotNull(itemsToShow);
-    assertEquals(1, itemsToShow.length);
-    assertEquals(0, MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]).getParameterList().getParametersCount());
+      MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+      CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
+      PsiExpressionList list = handler.findElementForParameterInfo(context);
+      assertNotNull(list);
+      Object[] itemsToShow = context.getItemsToShow();
+      assertNotNull(itemsToShow);
+      assertEquals(1, itemsToShow.length);
+      assertEquals(0, MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]).getParameterList().getParametersCount());
+    });
   }
 
-  public void testAfterGenericsInsideCall() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testAfterGenericsInsideCall(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByFile(info.getTestName(false) + ".java");
 
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-    PsiExpressionList list = handler.findElementForParameterInfo(context);
-    assertNotNull(list);
-    Object[] itemsToShow = context.getItemsToShow();
-    assertNotNull(itemsToShow);
-    assertEquals(2, itemsToShow.length);
-    ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, 1);
-    parameterContext.setUIComponentEnabled(true);
-    String presentation = MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[0]);
-    assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", removeCurrentParameterColor(presentation));
+      MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+      CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
+      PsiExpressionList list = handler.findElementForParameterInfo(context);
+      assertNotNull(list);
+      Object[] itemsToShow = context.getItemsToShow();
+      assertNotNull(itemsToShow);
+      assertEquals(2, itemsToShow.length);
+      ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myFixture.getEditor(), handler, 1);
+      parameterContext.setUIComponentEnabled(true);
+      String presentation = MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[0]);
+      assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", removeCurrentParameterColor(presentation));
+    });
   }
 
-  public void testNoParams() { doTestPresentation("<html>&lt;no parameters&gt;</html>", -1); }
-  public void testGenericsInsideCall() { doTestPresentation("<html>List&lt;String&gt; param</html>", -1); }
-  public void testGenericsOutsideCall() { doTestPresentation("<html>List&lt;String&gt; param</html>", -1); }
-  public void testIgnoreVarargs() { doTestPresentation("<html>Class&lt;T&gt; a, <b>Class&lt;? extends CharSequence&gt;... stopAt</b></html>", 1); }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testNoParams(IndexingMode mode) { runInMode(mode, () -> doTestPresentation("<html>&lt;no parameters&gt;</html>", -1)); }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testGenericsInsideCall(IndexingMode mode) { runInMode(mode, () -> doTestPresentation("<html>List&lt;String&gt; param</html>", -1)); }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testGenericsOutsideCall(IndexingMode mode) { runInMode(mode, () -> doTestPresentation("<html>List&lt;String&gt; param</html>", -1)); }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testIgnoreVarargs(IndexingMode mode) { runInMode(mode, () -> doTestPresentation("<html>Class&lt;T&gt; a, <b>Class&lt;? extends CharSequence&gt;... stopAt</b></html>", 1)); }
 
   private void doTestPresentation(String expectedString, int parameterIndex) {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(info.getTestName(false) + ".java");
     String presentation = parameterPresentation(parameterIndex);
     assertEquals(expectedString, removeCurrentParameterColor(presentation));
   }
@@ -275,14 +358,14 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
-    ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, parameterIndex);
+    ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myFixture.getEditor(), handler, parameterIndex);
     return MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[lineIndex]);
   }
 
   private CreateParameterInfoContext createContext() {
-    int caretOffset = getEditor().getCaretModel().getOffset();
-    PsiExpressionList argList = PsiTreeUtil.findElementOfClassAtOffset(getFile(), caretOffset, PsiExpressionList.class, false);
-    return new MockCreateParameterInfoContext(getEditor(), getFile()) {
+    int caretOffset = myFixture.getEditor().getCaretModel().getOffset();
+    PsiExpressionList argList = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), caretOffset, PsiExpressionList.class, false);
+    return new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile()) {
       @Override
       public int getParameterListStart() {
         return argList == null ? caretOffset : argList.getTextRange().getStartOffset();
@@ -290,139 +373,180 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     };
   }
 
-  public void testAnnotationWithGenerics() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    String text = annoParameterPresentation();
-    assertEquals("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>", removeCurrentParameterColor(text));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testAnnotationWithGenerics(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByFile(info.getTestName(false) + ".java");
+      String text = annoParameterPresentation();
+      assertEquals("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>", removeCurrentParameterColor(text));
+    });
   }
 
   private String annoParameterPresentation() {
     AnnotationParameterInfoHandler handler = new AnnotationParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
     PsiAnnotationParameterList list = handler.findElementForParameterInfo(context);
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(1, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof PsiAnnotationMethod);
+    assertInstanceOf(PsiAnnotationMethod.class, itemsToShow[0]);
     PsiAnnotationMethod method = (PsiAnnotationMethod)itemsToShow[0];
-    ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
+    ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myFixture.getEditor(), handler, -1);
     return AnnotationParameterInfoHandler.updateUIText(method, parameterContext);
   }
 
-  public void testParameterAnnotation() {
-    myFixture.addClass("import java.lang.annotation.*;\n@Documented @Target({ElementType.PARAMETER}) @interface TA { }");
-    myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testParameterAnnotation(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.addClass("import java.lang.annotation.*;\n@Documented @Target({ElementType.PARAMETER}) @interface TA { }");
+      myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
+      assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
+    });
   }
 
-  public void testParameterUndocumentedAnnotation() {
-    myFixture.addClass("import java.lang.annotation.*;\n@Target({ElementType.PARAMETER}) @interface TA { }");
-    myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals("<html>String s</html>", parameterPresentation(-1));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testParameterUndocumentedAnnotation(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.addClass("import java.lang.annotation.*;\n@Target({ElementType.PARAMETER}) @interface TA { }");
+      myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
+      assertEquals("<html>String s</html>", parameterPresentation(-1));
+    });
   }
 
-  public void testParameterTypeAnnotation() {
-    myFixture.addClass("import java.lang.annotation.*;\n@Documented @Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
-    myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  public void testInferredParametersInNestedCallsNoOverloads() {
-    myFixture.configureByText("a.java", """
-      import java.util.function.Consumer;
-      class A {
-              interface Context<T> {
-              }
-              static <A> Context<A> withProvider(Consumer<A> consumer) {
-                  return null;
-              }
-              static <T> Context<T> withContext(Class<T> clazz, Context<T> context) {
-                  return null;
-              }
-              public static void testInference() {
-                  withContext(String.class, withProvider(<caret>));
-              }
-      }""");
-    assertEquals("<html>Consumer&lt;String&gt; consumer</html>", parameterPresentation(-1));
-  }
-
-  public void testParameterUndocumentedTypeAnnotation() {
-    myFixture.addClass("import java.lang.annotation.*;\n@Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
-    myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
-  }
-
-  public void testHighlightMethodJustChosenInCompletion() {
-    myFixture.configureByText("a.java", "class Foo {" +
-                                        "{ bar<caret> }" +
-                                        "void bar(boolean a);" +
-                                        "void bar(String a);" +
-                                        "void bar(int a);" +
-                                        "void bar2(int a);" +
-                                        "}");
-    LookupElement[] elements = myFixture.completeBasic();
-    assertEquals("(String a)", LookupElementPresentation.renderElement(elements[1]).getTailText());
-    myFixture.getLookup().setCurrentItem(elements[1]);
-    myFixture.type('\n');
-
-    assertEquals("<html>boolean a</html>", parameterPresentation(0, -1));
-    assertEquals("<html>String a</html>", parameterPresentation(1, -1));
-    assertEquals("<html>int a</html>", parameterPresentation(2, -1));
-
-    checkHighlighted(1);
-  }
-
-  public void testHighlightConstructorJustChosenInCompletion() {
-    Registry.get("java.completion.show.constructors").setValue(true);
-    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
-
-    myFixture.addClass("class Bar {" +
-                       "Bar(boolean a);" +
-                       "Bar(String a);" +
-                       "Bar(int a);" +
-                       "} " +
-                       "class Bar2 {}");
-    myFixture.configureByText("a.java", "class Foo {{ new Bar<caret> }}");
-    LookupElement[] elements = myFixture.completeBasic();
-    assertEquals("(boolean a) default package", LookupElementPresentation.renderElement(elements[2]).getTailText());
-    myFixture.getLookup().setCurrentItem(elements[2]);
-    myFixture.type('\n');
-    myFixture.checkResult("class Foo {{ new Bar(<caret>) }}");
-
-    assertEquals("<html>boolean a</html>", parameterPresentation(0, -1));
-    assertEquals("<html>String a</html>", parameterPresentation(1, -1));
-    assertEquals("<html>int a</html>", parameterPresentation(2, -1));
-
-    checkHighlighted(0);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testParameterTypeAnnotation(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.addClass("import java.lang.annotation.*;\n@Documented @Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
+      myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
+      assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
+    });
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void testNoStrikeoutForSingleDeprecatedMethod() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.runFinalizersOnExit(true<caret>); } }");
-    assertEquals("<html>boolean b</html>", parameterPresentation(-1));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testInferredParametersInNestedCallsNoOverloads(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText("a.java", """
+        import java.util.function.Consumer;
+        class A {
+                interface Context<T> {
+                }
+                static <A> Context<A> withProvider(Consumer<A> consumer) {
+                    return null;
+                }
+                static <T> Context<T> withContext(Class<T> clazz, Context<T> context) {
+                    return null;
+                }
+                public static void testInference() {
+                    withContext(String.class, withProvider(<caret>));
+                }
+        }""");
+      assertEquals("<html>Consumer&lt;String&gt; consumer</html>", parameterPresentation(-1));
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testParameterUndocumentedTypeAnnotation(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.addClass("import java.lang.annotation.*;\n@Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
+      myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
+      assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testHighlightMethodJustChosenInCompletion(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText("a.java", "class Foo {" +
+                                          "{ bar<caret> }" +
+                                          "void bar(boolean a);" +
+                                          "void bar(String a);" +
+                                          "void bar(int a);" +
+                                          "void bar2(int a);" +
+                                          "}");
+      LookupElement[] elements = myFixture.completeBasic();
+      assertEquals("(String a)", LookupElementPresentation.renderElement(elements[1]).getTailText());
+      myFixture.getLookup().setCurrentItem(elements[1]);
+      myFixture.type('\n');
+
+      assertEquals("<html>boolean a</html>", parameterPresentation(0, -1));
+      assertEquals("<html>String a</html>", parameterPresentation(1, -1));
+      assertEquals("<html>int a</html>", parameterPresentation(2, -1));
+
+      checkHighlighted(1);
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testHighlightConstructorJustChosenInCompletion(IndexingMode mode) {
+    runInMode(mode, () -> {
+      Registry.get("java.completion.show.constructors").setValue(true);
+      Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
+
+      myFixture.addClass("class Bar {" +
+                         "Bar(boolean a);" +
+                         "Bar(String a);" +
+                         "Bar(int a);" +
+                         "} " +
+                         "class Bar2 {}");
+      myFixture.configureByText("a.java", "class Foo {{ new Bar<caret> }}");
+      LookupElement[] elements = myFixture.completeBasic();
+      assertEquals("(boolean a) default package", LookupElementPresentation.renderElement(elements[2]).getTailText());
+      myFixture.getLookup().setCurrentItem(elements[2]);
+      myFixture.type('\n');
+      myFixture.checkResult("class Foo {{ new Bar(<caret>) }}");
+
+      assertEquals("<html>boolean a</html>", parameterPresentation(0, -1));
+      assertEquals("<html>String a</html>", parameterPresentation(1, -1));
+      assertEquals("<html>int a</html>", parameterPresentation(2, -1));
+
+      checkHighlighted(0);
+    });
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void testInferredWithVarargs() {
-    @Language("JAVA")
-    String text =
-      "import java.util.*;" +
-      "class C { " +
-      "  static <T> boolean addAll(Collection<? super T> c, T... elements) {" +
-      "    return false;" +
-      "  }" +
-      "  static void m(Object objects[], List<Object> list) { " +
-      "    addAll(/*caret*/list, objects);" +
-      "  } " +
-      "}";
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testNoStrikeoutForSingleDeprecatedMethod(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.runFinalizersOnExit(true<caret>); } }");
+      assertEquals("<html>boolean b</html>", parameterPresentation(-1));
+    });
+  }
 
-    myFixture.configureByText(JavaFileType.INSTANCE, text.replace("/*caret*/", "<caret>"));
-    if (!DumbService.isDumb(myFixture.getProject()) || Registry.is("ide.dumb.mode.check.awareness")) {
-      assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
-    }
-    assertEquals("<html>Collection&lt;? super Object&gt; c, Object... elements</html>", parameterPresentation(-1));
+  @NeedsIndex.ForStandardLibrary
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testInferredWithVarargs(IndexingMode mode) {
+    runInMode(mode, () -> {
+      @Language("JAVA")
+      String text =
+        "import java.util.*;" +
+        "class C { " +
+        "  static <T> boolean addAll(Collection<? super T> c, T... elements) {" +
+        "    return false;" +
+        "  }" +
+        "  static void m(Object objects[], List<Object> list) { " +
+        "    addAll(/*caret*/list, objects);" +
+        "  } " +
+        "}";
+
+      myFixture.configureByText(JavaFileType.INSTANCE, text.replace("/*caret*/", "<caret>"));
+      if (!DumbService.isDumb(myFixture.getProject()) || Registry.is("ide.dumb.mode.check.awareness")) {
+        List<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
+          assertTrue(errors.isEmpty(), errors::toString);
+      }
+      assertEquals("<html>Collection&lt;? super Object&gt; c, Object... elements</html>", parameterPresentation(-1));
+    });
   }
 
   private void checkHighlighted(int lineIndex) {
@@ -434,238 +558,292 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void testTypeInvalidationByCompletion() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-    PsiExpressionList argList = handler.findElementForParameterInfo(context);
-    assertNotNull(argList);
-    Object[] items = context.getItemsToShow();
-    assertSize(2, items);
-    updateParameterInfo(handler, argList, items);
-
-    myFixture.completeBasic();
-    myFixture.type('\n');
-
-    assertTrue(argList.isValid());
-    // items now contain references to invalid PSI
-    updateParameterInfo(handler, argList, items);
-    assertSize(2, context.getItemsToShow());
-
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
-  }
-
-  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() {
-    configureJava("""
-                    class A {
-                        void foo() {}
-                        void foo(int a, int b, int c) {}
-                        {
-                            foo(<caret>)
-                        }
-                    }""");
-    showParameterInfo();
-    checkHintContents("""
-                        [<html>&lt;no parameters&gt;</html>]
-                        -
-                        <html><b>int a</b>, int b, int c</html>""");
-    type("1, ");
-    waitForAllAsyncStuff();
-    checkHintContents("""
-                        <html><font color=a8a8a8>&lt;no parameters&gt;</font></html>
-                        -
-                        <html>int a, <b>int b</b>, int c</html>""");
-  }
-
-  private String removeAnnotationsIfDumb(String s) {
-    return DumbService.isDumb(getProject()) ? s.replaceAll("\\s*@\\p{Alnum}* ", "") : s;
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  public void testOverloadIsChangedAfterCompletion() {
-    configureJava("class C { void m() { System.out.pr<caret> } }");
-    complete("print(int i)");
-    type("'a");
-    checkResult("class C { void m() { System.out.print('a<caret>'); } }");
-    showParameterInfo();
-    checkHintContents(removeAnnotationsIfDumb(
-      """
-        <html><b>boolean b</b></html>
-        -
-        [<html><b>char c</b></html>]
-        -
-        <html><b>int i</b></html>
-        -
-        <html><b>long l</b></html>
-        -
-        <html><b>float v</b></html>
-        -
-        <html><b>double v</b></html>
-        -
-        <html><b>char @NotNull [] chars</b></html>
-        -
-        <html><b>@Nullable String s</b></html>
-        -
-        <html><b>@Nullable Object o</b></html>"""
-    ));
-  }
-
-  @NeedsIndex.ForStandardLibrary
-  public void testParameterInfoIsAvailableAtMethodName() {
-    configureJava("class C { void m() { System.ex<caret>it(0); } }");
-    showParameterInfo();
-    checkHintContents("<html>int i</html>");
-  }
-
-  public void testVarargWithArrayArgument() {
-    configureJava("""
-                    class C {
-                      void some(int a) {}
-                      void some(String... b) {}
-                      void m(String[] c) {
-                        some(c<caret>);
-                      }
-                    }""");
-    showParameterInfo();
-    checkHintContents("""
-                        <html><b>int a</b></html>
-                        -
-                        [<html><b>String... b</b></html>]""");
-  }
-
-  public void testDoNotShowUnrelatedInfoOnTyping() {
-    configureJava("class C { void m(String a, String b) { String s = <caret>a + b).trim(); } }");
-    type('(');
-    waitForAllAsyncStuff();
-    checkHintContents(null);
-  }
-
-  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
-  public void testInferredAnnotation() {
-    DataFlowInspectionFixture.setupTypeUseAnnotations("tu", myFixture);
-    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    String defaultNotNull = nnnManager.getDefaultNotNull();
-    nnnManager.setDefaultNotNull("tu.NotNull");
-    try {
-      configureJava("""
-                      class X {
-                          public static void main(String[] args) {
-                              System.out.println(getSomething(<caret>));
-                          }
-                                          
-                          public static String getSomething(Something l) {
-                              return l.toString();
-                          }
-                      }
-                      """);
-      showParameterInfo();
-      checkHintContents("<html><b>@NotNull Something l</b></html>");
-    }
-    finally {
-      nnnManager.setDefaultNotNull(defaultNotNull);
-    }
-  }
-
-  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
-  public void testQualifierTypeUse() {
-    configureJava("""
-                    import java.lang.annotation.*;
-                    import java.util.Map;
-                    class X {
-                        void foo(@NotNull Map.Entry p, @NotNull Map m, Map.Entry p1, Map.@NotNull Entry p2) {
-                    
-                            foo(<caret>);
-                        }
-                    }
-                    
-                    @Documented
-                    @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
-                    @interface NotNull {}
-                    """);
-    showParameterInfo();
-    checkHintContents("<html><b>@NotNull Map.Entry p</b>, @NotNull Map m, Entry p1, @NotNull Entry p2</html>");
-  }
-
-  public void testCustomHandlerHighlighterWithEscaping() {
-    myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
-
-    class CustomHandler implements ParameterInfoHandler<PsiElement, Object>, DumbAware {
-
-      @NotNull
-      @Override
-      public PsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
-        context.setItemsToShow(new Object[]{this});
-        return context.getFile();
-      }
-
-      @Override
-      public void showParameterInfo(@NotNull PsiElement element, @NotNull CreateParameterInfoContext context) {
-        context.showHint(context.getFile(), context.getOffset(), this);
-      }
-
-      @NotNull
-      @Override
-      public PsiElement findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
-        return context.getFile();
-      }
-
-      @Override
-      public void updateParameterInfo(@NotNull PsiElement o, @NotNull UpdateParameterInfoContext context) {}
-
-      @Override
-      public void updateUI(Object p, @NotNull ParameterInfoUIContext context) {
-        context.setupUIComponentPresentation("<ABC>, DEF", 7, 10, true, true, false, context.getDefaultParameterColor());
-      }
-    }
-
-    LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new CustomHandler(), getTestRootDisposable());
-    showParameterInfo();
-    checkHintContents("<html><strike>&lt;ABC&gt;, <b>DEF</b></strike></html>");
-  }
-
-  @NeedsIndex.SmartMode(reason = "Just to test with smart mode")
-  public void testConstructorCallInsideLambda() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, ()->{
-      configureJava(
-        """
-          public class ModuleLauncher {
-              interface Func {
-                  void invoke();
-              }
-          
-              static void foo(Func f) {
-                  f.invoke();
-              }
-          
-              record Test(int x, int y) {
-              }
-          
-              static void main() {
-                  foo(() -> {
-                      new Test(1,<caret>);
-                  });
-              }
-          }""");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testTypeInvalidationByCompletion(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByFile(info.getTestName(false) + ".java");
 
       MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-      CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-      PsiExpressionList list = handler.findElementForParameterInfo(context);
-      assertEquals("(1,)", list.getText());
+      CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
+      PsiExpressionList argList = handler.findElementForParameterInfo(context);
+      assertNotNull(argList);
+      Object[] items = context.getItemsToShow();
+      assertEquals(2, items.length);
+      updateParameterInfo(handler, argList, items);
+
+      myFixture.completeBasic();
+      myFixture.type('\n');
+
+      assertTrue(argList.isValid());
+      // items now contain references to invalid PSI
+      updateParameterInfo(handler, argList, items);
+      assertEquals(2, context.getItemsToShow().length);
+
+      myFixture.checkResultByFile(info.getTestName(false) + "_after.java");
     });
   }
 
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    if (getIndexingMode() != IndexingMode.SMART) {
-      CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
-      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
-        super.runTestRunnable(testRunnable);
-        return null;
-      });
-    } else {
-      super.runTestRunnable(testRunnable);
-    }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, """
+                      class A {
+                          void foo() {}
+                          void foo(int a, int b, int c) {}
+                          {
+                              foo(<caret>)
+                          }
+                      }""");
+      info.showParameterInfo();
+      info.checkHintContents("""
+                          [<html>&lt;no parameters&gt;</html>]
+                          -
+                          <html><b>int a</b>, int b, int c</html>""");
+      info.type("1, ");
+      info.waitForAllAsyncStuff();
+      info.checkHintContents("""
+                          <html><font color=a8a8a8>&lt;no parameters&gt;</font></html>
+                          -
+                          <html>int a, <b>int b</b>, int c</html>""");
+    });
   }
 
+  private String removeAnnotationsIfDumb(String s) {
+    return DumbService.isDumb(myFixture.getProject()) ? s.replaceAll("\\s*@\\p{Alnum}* ", "") : s;
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testOverloadIsChangedAfterCompletion(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.out.pr<caret> } }");
+      info.complete("print(int i)");
+      info.type("'a");
+      info.checkResult("class C { void m() { System.out.print('a<caret>'); } }");
+      info.showParameterInfo();
+      info.checkHintContents(removeAnnotationsIfDumb(
+        """
+          <html><b>boolean b</b></html>
+          -
+          [<html><b>char c</b></html>]
+          -
+          <html><b>int i</b></html>
+          -
+          <html><b>long l</b></html>
+          -
+          <html><b>float v</b></html>
+          -
+          <html><b>double v</b></html>
+          -
+          <html><b>char @NotNull [] chars</b></html>
+          -
+          <html><b>@Nullable String s</b></html>
+          -
+          <html><b>@Nullable Object o</b></html>"""
+      ));
+    });
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testParameterInfoIsAvailableAtMethodName(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.ex<caret>it(0); } }");
+      info.showParameterInfo();
+      info.checkHintContents("<html>int i</html>");
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testVarargWithArrayArgument(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, """
+                      class C {
+                        void some(int a) {}
+                        void some(String... b) {}
+                        void m(String[] c) {
+                          some(c<caret>);
+                        }
+                      }""");
+      info.showParameterInfo();
+      info.checkHintContents("""
+                          <html><b>int a</b></html>
+                          -
+                          [<html><b>String... b</b></html>]""");
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testDoNotShowUnrelatedInfoOnTyping(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m(String a, String b) { String s = <caret>a + b).trim(); } }");
+      info.type('(');
+      info.waitForAllAsyncStuff();
+      info.checkHintContents(null);
+    });
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testInferredAnnotation(IndexingMode mode) {
+    runInMode(mode, () -> {
+      DataFlowInspectionFixture.setupTypeUseAnnotations("tu", myFixture);
+      NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(myFixture.getProject());
+      String defaultNotNull = nnnManager.getDefaultNotNull();
+      nnnManager.setDefaultNotNull("tu.NotNull");
+      try {
+        myFixture.configureByText(JavaFileType.INSTANCE, """
+                        class X {
+                            public static void main(String[] args) {
+                                System.out.println(getSomething(<caret>));
+                            }
+                                          
+                            public static String getSomething(Something l) {
+                                return l.toString();
+                            }
+                        }
+                        """);
+        info.showParameterInfo();
+        info.checkHintContents("<html><b>@NotNull Something l</b></html>");
+      }
+      finally {
+        nnnManager.setDefaultNotNull(defaultNotNull);
+      }
+    });
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testQualifierTypeUse(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(JavaFileType.INSTANCE, """
+                      import java.lang.annotation.*;
+                      import java.util.Map;
+                      class X {
+                          void foo(@NotNull Map.Entry p, @NotNull Map m, Map.Entry p1, Map.@NotNull Entry p2) {
+                    
+                              foo(<caret>);
+                          }
+                      }
+                    
+                      @Documented
+                      @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+                      @interface NotNull {}
+                      """);
+      info.showParameterInfo();
+      info.checkHintContents("<html><b>@NotNull Map.Entry p</b>, @NotNull Map m, Entry p1, @NotNull Entry p2</html>");
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testCustomHandlerHighlighterWithEscaping(IndexingMode mode) {
+    runInMode(mode, () -> {
+      myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
+
+      class CustomHandler implements ParameterInfoHandler<PsiElement, Object>, DumbAware {
+
+        @NotNull
+        @Override
+        public PsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+          context.setItemsToShow(new Object[]{this});
+          return context.getFile();
+        }
+
+        @Override
+        public void showParameterInfo(@NotNull PsiElement element, @NotNull CreateParameterInfoContext context) {
+          context.showHint(context.getFile(), context.getOffset(), this);
+        }
+
+        @NotNull
+        @Override
+        public PsiElement findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+          return context.getFile();
+        }
+
+        @Override
+        public void updateParameterInfo(@NotNull PsiElement o, @NotNull UpdateParameterInfoContext context) {}
+
+        @Override
+        public void updateUI(Object p, @NotNull ParameterInfoUIContext context) {
+          context.setupUIComponentPresentation("<ABC>, DEF", 7, 10, true, true, false, context.getDefaultParameterColor());
+        }
+      }
+
+      LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new CustomHandler(), myFixture.getTestRootDisposable());
+      info.showParameterInfo();
+      info.checkHintContents("<html><strike>&lt;ABC&gt;, <b>DEF</b></strike></html>");
+    });
+  }
+
+  @NeedsIndex.SmartMode(reason = "Just to test with smart mode")
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testConstructorCallInsideLambda(IndexingMode mode) {
+    runInMode(mode, () -> {
+      IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, ()->{
+        myFixture.configureByText(JavaFileType.INSTANCE, 
+          """
+            public class ModuleLauncher {
+                interface Func {
+                    void invoke();
+                }
+          
+                static void foo(Func f) {
+                    f.invoke();
+                }
+          
+                record Test(int x, int y) {
+                }
+          
+                static void main() {
+                    foo(() -> {
+                        new Test(1,<caret>);
+                    });
+                }
+            }""");
+
+        MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+        CreateParameterInfoContext context = new MockCreateParameterInfoContext(myFixture.getEditor(), myFixture.getFile());
+        PsiExpressionList list = handler.findElementForParameterInfo(context);
+        assertEquals("(1,)", list.getText());
+      });
+    });
+  }
+
+  /**
+   * Runs {@code test} on the EDT in {@code mode}, as the JUnit 3 suite of the indexing modes did.
+   * In a dumb mode, the highlighting does not wait for the smart mode, and the index access in {@code test} ignores the dumb mode.
+   */
+  private void runInMode(IndexingMode mode, Runnable test) {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      info = parameterInfo.get();
+      LightJavaCodeInsightTestFixture fixture = info.getFixture();
+      myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(fixture, mode);
+      IndexingMode.ShutdownToken token = mode.setUpTest(fixture.getProject(), fixture.getTestRootDisposable());
+      try {
+        if (mode != IndexingMode.SMART) {
+          CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, fixture.getTestRootDisposable());
+          FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+            test.run();
+            return null;
+          });
+        }
+        else {
+          test.run();
+        }
+      }
+      finally {
+        mode.tearDownTest(fixture.getProject(), token);
+      }
+    });
+  }
 }

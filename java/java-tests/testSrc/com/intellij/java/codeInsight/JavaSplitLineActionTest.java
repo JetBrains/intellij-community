@@ -1,32 +1,42 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaSplitLineActionTest extends LightPlatformCodeInsightTestCase {
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class JavaSplitLineActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testMethodCall() {
     String path = "/codeInsight/splitLineAction/";
 
-    configureByFile(path + "methodCall_before.java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(path + "methodCall_before.java");
     performAction();
-    checkResultByFile(path + "methodCall_after.java");
+    myFixture.checkResultByFile(path + "methodCall_after.java");
   }
 
   private void performAction() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SPLIT);
 
-    actionHandler.execute(getEditor(), null, DataManager.getInstance().getDataContext());
+    myFixture.runInCommand(() -> actionHandler.execute(myFixture.getEditor(), null, DataManager.getInstance().getDataContext()));
   }
 }
