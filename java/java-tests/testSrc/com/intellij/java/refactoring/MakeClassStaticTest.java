@@ -15,7 +15,6 @@
  */
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -25,40 +24,62 @@ import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-public class MakeClassStaticTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class MakeClassStaticTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
   private static final String TEST_ROOT = "/refactoring/makeClassStatic/";
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
+  @Test
   public void testSimple1() { perform(); }
 
+  @Test
   public void testSimpleFields() { performWithFields(); }
 
+  @Test
   public void testFieldInitializerMovedToTheConstructor() { performWithFields(); }
 
+  @Test
   public void testQualifiedThis() { perform(); }
 
+  @Test
   public void testIDEADEV3247() { perform(); }
 
+  @Test
   public void testIDEADEV11595() { perform(); }
 
+  @Test
   public void testIDEADEV12762() { perform(); }
 
+  @Test
   public void testNewExpressionQualifier() {perform();}
+  @Test
   public void testThisSuperExpressions() {perform();}
 
+  @Test
   public void testNonDefaultConstructorAnonymousClass() {perform();}
+  @Test
   public void testDefaultConstructorAnonymousClass() {perform();}
+  @Test
   public void testFieldInitializerSplit() {perform();}
+  @Test
   public void testWarnAboutClassInitializer() {
     try {
       perform();
@@ -69,45 +90,54 @@ public class MakeClassStaticTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  @Test
   public void testRegReference() {
     perform();
   }
 
+  @Test
   public void testFieldWithMyPrefix() {
-    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     settings.FIELD_NAME_PREFIX = "my";
     performWithFields();
   }
 
   private void perform() {
-    configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    assertTrue(element instanceof PsiClass);
-    PsiClass aClass = (PsiClass)element;
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(TEST_ROOT + myFixture.getTestName(false) + ".java");
+    myFixture.runInCommand(() -> {
+      PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assertInstanceOf(PsiClass.class, element);
+      PsiClass aClass = (PsiClass)element;
 
-    boolean addClassParameter = MakeStaticUtil.isParameterNeeded(aClass);
+      boolean addClassParameter = MakeStaticUtil.isParameterNeeded(aClass);
 
-    new MakeClassStaticProcessor(
-            getProject(),
-            aClass,
-            new Settings(true, addClassParameter ? "anObject" : null, null)).run();
-    checkResultByFile(TEST_ROOT + getTestName(false) + "_after.java");
+      new MakeClassStaticProcessor(
+              myFixture.getProject(),
+              aClass,
+              new Settings(true, addClassParameter ? "anObject" : null, null)).run();
+      myFixture.checkResultByFile(TEST_ROOT + myFixture.getTestName(false) + "_after.java");
+    });
   }
 
   private void performWithFields() {
-    configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    assertTrue(element instanceof PsiClass);
-    PsiClass aClass = (PsiClass)element;
-    final ArrayList<VariableData> parametersForFields = new ArrayList<>();
-    final boolean addClassParameter = MakeStaticUtil.buildVariableData(aClass, parametersForFields);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(TEST_ROOT + myFixture.getTestName(false) + ".java");
+    myFixture.runInCommand(() -> {
+      PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assertInstanceOf(PsiClass.class, element);
+      PsiClass aClass = (PsiClass)element;
+      final ArrayList<VariableData> parametersForFields = new ArrayList<>();
+      final boolean addClassParameter = MakeStaticUtil.buildVariableData(aClass, parametersForFields);
 
-    new MakeClassStaticProcessor(
-            getProject(),
-            aClass,
-            new Settings(true, addClassParameter ? "anObject" : null,
-                         parametersForFields.toArray(
-                           new VariableData[0]))).run();
-    checkResultByFile(TEST_ROOT + getTestName(false) + "_after.java");
+      new MakeClassStaticProcessor(
+              myFixture.getProject(),
+              aClass,
+              new Settings(true, addClassParameter ? "anObject" : null,
+                           parametersForFields.toArray(
+                             new VariableData[0]))).run();
+      myFixture.checkResultByFile(TEST_ROOT + myFixture.getTestName(false) + "_after.java");
+    });
   }
 }

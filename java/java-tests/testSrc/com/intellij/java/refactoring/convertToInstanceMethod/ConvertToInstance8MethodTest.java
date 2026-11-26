@@ -6,27 +6,56 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
 public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_8));
+
+  @Override
+  protected TestFixture<LightJavaProject> getProjectFixture() {
+    return projectFixture;
+  }
+
   @Override
   protected String getBasePath() {
     return "/refactoring/convertToInstance8Method/";
   }
 
+  @Test
   public void testConflictingMembers() { doTest(0); }
+  @Test
   public void testNoConflictingMembers() { doTest(0); }
+  @Test
   public void testNoConflictingMembers2() { doTest(0); }
+  @Test
   public void testThisInsteadOfNoQualifier() { doTest(0); }
+  @Test
   public void testMethodReferenceAcceptableBySecondSearch() { doTest(0); }
+  @Test
   public void testConvertToInstanceMethodOfTheSameClass() { doTest(0); }
+  @Test
   public void testReassignedParameter() { doTest(0); }
   //todo temporary committed to check IDEA-366687
   //public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() { doTest(0, null, "I i", "this / new I()"); }
+  @Test
   public void testEnum() { doTest(0, null, "E e"); }
+  @Test
   public void testAnonymousClass() { doTest(0, null, "X x"); }
+  @Test
   public void testInnerClass() { doTest(0, null, "X x"); }
+  @Test
   public void testNestedClass() { doTest(1, null, "X x", "this / new Nested()"); }
   
+  @Test
   public void testImplicitClass() {
     try {
       doTestException();
@@ -37,6 +66,7 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
     }
   }
 
+  @Test
   public void testConvertToInstanceMethodOfTheSameClassWithTypeParams() {
     try {
       doTest(0);
@@ -46,12 +76,8 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
     }
   }
 
+  @Test
   public void testMethodReferenceToLambda() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(0));
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_8;
   }
 }

@@ -8,9 +8,6 @@ import org.junit.runners.Suite;
 
 @Ignore("Manual only")
 @RunWith(Suite.class)
-@Suite.SuiteClasses({
-  ChangeTypeSignatureTest.class,
-  GuavaInspectionTest.class,
-})
+@Suite.SuiteClasses(GuavaInspectionTest.class)
 public class AllTypeMigrationTestSuite {
 }

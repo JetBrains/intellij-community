@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -22,97 +21,143 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import junit.framework.Assert;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+
+@TestApplication
+public class ChangeSignaturePropagationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testParamSimple() {
     parameterPropagationTest();
   }
 
+  @Test
   public void testParamWithOverriding() {
     parameterPropagationTest();
   }
 
+  @Test
   public void testParamWithLambda() {
     parameterPropagationTest();
   }
 
+  @Test
   public void testParamTypeSubst() {
-    final PsiMethod method = getPrimaryMethod();
-    final HashSet<PsiMethod> methods = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
-      if (psiMethod != null) {
-        methods.add(psiMethod);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      final HashSet<PsiMethod> methods = new HashSet<>();
+      for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
+        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
+        if (psiMethod != null) {
+          methods.add(psiMethod);
+        }
       }
-    }
-    parameterPropagationTest(method, methods, JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("T"));
+      parameterPropagationTest(method, methods, JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeByFQClassName("T"));
+    });
   }
 
+  @Test
   public void testConflictingParameterName() {
-    final PsiMethod method = getPrimaryMethod();
-    final HashSet<PsiMethod> methods = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
-      if (psiMethod != null) {
-        methods.add(psiMethod);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      final HashSet<PsiMethod> methods = new HashSet<>();
+      for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
+        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
+        if (psiMethod != null) {
+          methods.add(psiMethod);
+        }
       }
-    }
-    PsiClassType stringType = PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject()));
-    final ParameterInfoImpl[] newParameters = {ParameterInfoImpl.createNew().withName("param").withType(stringType)};
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(newParameters, new ThrownExceptionInfo[0], methods, null, method));
+      PsiClassType stringType = PsiType.getJavaLangString(myFixture.getPsiManager(), GlobalSearchScope.allScope(myFixture.getProject()));
+      final ParameterInfoImpl[] newParameters = {ParameterInfoImpl.createNew().withName("param").withType(stringType)};
+      BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(newParameters, new ThrownExceptionInfo[0], methods, null, method));
+    });
   }
 
+  @Test
   public void testExceptionSimple() {
     exceptionPropagationTest();
   }
 
+  @Test
   public void testExceptionWithOverriding() {
     exceptionPropagationTest();
   }
 
+  @Test
   public void testParamWithNoConstructor() {
-    final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, collectNonPhysicalMethodsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      parameterPropagationTest(method, collectNonPhysicalMethodsToPropagate(method), JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myFixture.getProject())));
+    });
   }
 
+   @Test
    public void testExceptionWithNoConstructor() {
-    final PsiMethod method = getPrimaryMethod();
-     exceptionPropagationTest(method, collectNonPhysicalMethodsToPropagate(method));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+       exceptionPropagationTest(method, collectNonPhysicalMethodsToPropagate(method));
+    });
   }
 
   private HashSet<PsiMethod> collectNonPhysicalMethodsToPropagate(PsiMethod method) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
     final PsiReference[] references =
-      MethodReferencesSearch.search(method, GlobalSearchScope.allScope(getProject()), true).toArray(PsiReference.EMPTY_ARRAY);
+      MethodReferencesSearch.search(method, GlobalSearchScope.allScope(myFixture.getProject()), true).toArray(PsiReference.EMPTY_ARRAY);
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
-      Assert.assertTrue(element instanceof PsiClass);
+      assertInstanceOf(PsiClass.class, element);
       PsiClass containingClass = (PsiClass)element;
-      methodsToPropagate.add(JavaPsiFacade.getElementFactory(getProject()).createMethodFromText(containingClass.getName() + "(){}", containingClass));
+      methodsToPropagate.add(JavaPsiFacade.getElementFactory(myFixture.getProject()).createMethodFromText(containingClass.getName() + "(){}", containingClass));
     }
     return methodsToPropagate;
   }
 
+  @Test
   public void testParamWithImplicitConstructor() {
-    final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myFixture.getProject())));
+    });
   }
 
+  @Test
   public void testParamWithImplicitConstructors() {
-    final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myFixture.getProject())));
+    });
   }
 
+  @Test
   public void testExceptionWithImplicitConstructor() {
-    final PsiMethod method = getPrimaryMethod();
-    exceptionPropagationTest(method, collectDefaultConstructorsToPropagate(method));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      exceptionPropagationTest(method, collectDefaultConstructorsToPropagate(method));
+    });
   }
 
   private static HashSet<PsiMethod> collectDefaultConstructorsToPropagate(PsiMethod method) {
@@ -124,8 +169,11 @@ public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase
   }
 
   private void parameterPropagationTest() {
-    parameterPropagationTest(JavaPsiFacade.getElementFactory(getProject())
-                               .createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      parameterPropagationTest(JavaPsiFacade.getElementFactory(myFixture.getProject())
+                                 .createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myFixture.getProject())));
+    });
   }
 
   private void parameterPropagationTest(final PsiClassType paramType) {
@@ -140,12 +188,16 @@ public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase
   }
 
   private void exceptionPropagationTest() {
-    final PsiMethod method = getPrimaryMethod();
-    exceptionPropagationTest(method, new HashSet<>(Arrays.asList(method.getContainingClass().getMethods())));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.runInCommand(() -> {
+      final PsiMethod method = getPrimaryMethod();
+      exceptionPropagationTest(method, new HashSet<>(Arrays.asList(method.getContainingClass().getMethods())));
+    });
   }
 
   private void exceptionPropagationTest(final PsiMethod method, final Set<PsiMethod> methodsToPropagateExceptions) {
-    PsiClassType newExceptionType = JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClassType newExceptionType = JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(myFixture.getProject()));
     final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, newExceptionType)};
     doTest(new ParameterInfoImpl[0], newExceptions, null, methodsToPropagateExceptions, method);
   }
@@ -155,24 +207,26 @@ public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase
                       Set<PsiMethod> methodsToPropagateParameterChanges,
                       Set<PsiMethod> methodsToPropagateExceptionChanges,
                       PsiMethod primaryMethod) {
-    final String filePath = getBasePath() + getTestName(false) + ".java";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String filePath = getBasePath() + myFixture.getTestName(false) + ".java";
     final PsiType returnType = primaryMethod.getReturnType();
     final CanonicalTypes.Type type = returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType);
-    new ChangeSignatureProcessor(getProject(), primaryMethod, false, null,
+    new ChangeSignatureProcessor(myFixture.getProject(), primaryMethod, false, null,
                                  primaryMethod.getName(),
                                  type,
                                  generateParameterInfos(primaryMethod, newParameters),
                                  generateExceptionInfos(primaryMethod, newExceptions),
                                  methodsToPropagateParameterChanges,
                                  methodsToPropagateExceptionChanges).run();
-    checkResultByFile(filePath + ".after");
+    myFixture.checkResultByFile(filePath + ".after");
   }
 
   private PsiMethod getPrimaryMethod() {
-    final String filePath = getBasePath() + getTestName(false) + ".java";
-    configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String filePath = getBasePath() + myFixture.getTestName(false) + ".java";
+    myFixture.configureByFile(filePath);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    assertInstanceOf(PsiMethod.class, targetElement, "<caret> is not on method name");
     return (PsiMethod) targetElement;
   }
 
@@ -198,12 +252,6 @@ public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase
     }
     System.arraycopy(newExceptions, 0, result, exceptions.length, newExceptions.length);
     return result;
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
   }
 
 }

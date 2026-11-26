@@ -16,48 +16,66 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class ChangeSignatureTargetTest extends LightJavaCodeInsightTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+@TestApplication
+public class ChangeSignatureTargetTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/java/java-tests/testData");
+
+  @Test
   public void testInMethodParameters() {
     doTest("foo");
   }
 
+  @Test
   public void testInMethodArguments() {
     doTest("foo");
   }
 
+  @Test
   public void testInClassTypeParameters() {
     doTest("A1");
   }
 
+  @Test
   public void testInTypeArguments() {
     doTest("A1");
   }
 
+  @Test
   public void testDisabledForEnum() {
-    configureByFile("/refactoring/changeSignatureTarget/" + getTestName(true) + ".java");
-    assertNull(new JavaChangeSignatureHandler().findTargetMember(getFile(), getEditor()));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("/refactoring/changeSignatureTarget/" + myFixture.getTestName(true) + ".java");
+    assertNull(ReadAction.computeBlocking(() -> new JavaChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor())));
   }
 
   private void doTest(String expectedMemberName) {
-    String basePath = "/refactoring/changeSignatureTarget/" + getTestName(true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String basePath = "/refactoring/changeSignatureTarget/" + myFixture.getTestName(true);
     @NonNls final String filePath = basePath + ".java";
-    configureByFile(filePath);
-    final PsiElement member = new JavaChangeSignatureHandler().findTargetMember(getFile(), getEditor());
-    assertNotNull(member);
-    assertEquals(expectedMemberName, ((PsiMember)member).getName());
+    myFixture.configureByFile(filePath);
+    ReadAction.runBlocking(() -> {
+      final PsiElement member = new JavaChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor());
+      assertNotNull(member);
+      assertEquals(expectedMemberName, ((PsiMember)member).getName());
+    });
   }
 }

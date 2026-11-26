@@ -1,9 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.java.refactoring.ChangeSignatureFixture.GenParams;
+import com.intellij.java.refactoring.ChangeSignatureFixture.SimpleParameterGen;
+import com.intellij.java.refactoring.ChangeSignatureFixture.SimpleExceptionsGen;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
@@ -30,36 +35,54 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtil;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 
-public class ChangeSignatureTest extends ChangeSignatureBaseTest {
+import static com.intellij.java.refactoring.ChangeSignatureFixtureKt.changeSignatureFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class ChangeSignatureTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private static final String RELATIVE_PATH = "/refactoring/changeSignature/";
+  private final TestFixture<ChangeSignatureFixture> changeSignature =
+    changeSignatureFixture(projectFixture, RELATIVE_PATH, ChangeSignatureTest::getTargetElement);
+
   private CommonCodeStyleSettings getCommonSettings() {
-    return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    return CodeStyle.getSettings(changeSignature.get().getFixture().getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  @Override
-  protected @Nullable PsiElement getTargetElement() {
-    PsiElement target = super.getTargetElement();
+  private static @Nullable PsiElement getTargetElement(LightJavaCodeInsightTestFixture myFixture) {
+    PsiElement target = ChangeSignatureFixture.findTargetElement(myFixture);
     if (target instanceof PsiClass aClass) {
       return JavaPsiRecordUtil.findCanonicalConstructor(aClass);
     }
     if (target instanceof PsiRecordComponent component) {
       return JavaPsiRecordUtil.findCanonicalConstructor(component.getContainingClass());
     }
-    if (getTestName(false).contains("Implicit")) {
-      return findCalledElement();
+    if (myFixture.getTestName(false).contains("Implicit")) {
+      return findCalledElement(myFixture);
     }
     return target;
   }
   
-  private PsiElement findCalledElement() {
-    Editor editor = getEditor();
-    Project project = getProject();
+  private static PsiElement findCalledElement(LightJavaCodeInsightTestFixture myFixture) {
+    Editor editor = myFixture.getEditor();
+    Project project = myFixture.getProject();
     PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return null;
     int offset = editor.getCaretModel().getOffset();
@@ -68,116 +91,133 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     return call.resolveMethod();
   }
 
+  @Test
   public void testSimple() {
-    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+    changeSignature.get().doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
+  @Test
   public void testParameterReorder() {
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1), ParameterInfoImpl.create(0)}, false);
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1), ParameterInfoImpl.create(0)}, false);
   }
 
+  @Test
   public void testWarnAboutContract() {
     assertConflict(() -> {
-      doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1)}, false);
+      changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1)}, false);
     }, "@Contract annotation cannot be updated automatically: Parameter 'i' was deleted, but contract clause 'null, _ -> fail' depends on it");
   }
 
+  @Test
   public void testWarnAboutAssigningWeakerAccessPrivileges() {
     assertConflict(() -> {
-      doTest(PsiModifier.PRIVATE, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+      changeSignature.get().doTest(PsiModifier.PRIVATE, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
     }, "method <b><code>f()</code></b> will have incompatible access privileges with super method <b><code>X.f()</code></b>");
   }
 
+  @Test
   public void testDelegateWithoutChangesWarnAboutSameMethodInClass() {
     assertConflict(() -> {
-      doTest(null, new ParameterInfoImpl[0], true);
+      changeSignature.get().doTest(null, new ParameterInfoImpl[0], true);
     }, "Method <b><code>m()</code></b> is already defined in class <b><code>A</code></b>");
   }
 
+  @Test
   public void testDuplicatedSignatureInInheritor() {
     assertConflict(() -> {
-      doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
+      changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
     }, "Method <b><code>foo(int)</code></b> is already defined in class <b><code>B</code></b>");
   }
 
+  @Test
   public void testConflictForUsedParametersInMethodBody() {
     assertConflict(() -> {
-      doTest(null, new ParameterInfoImpl[0], true);
+      changeSignature.get().doTest(null, new ParameterInfoImpl[0], true);
     }, "Parameter <b><code>i</code></b> is used in method body");
   }
 
+  @Test
   public void testNoConflictForSuperCallDelegation() {
-    doTest(null, new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest(null, new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testGenericTypes() {
-    doTest(null, null, "T", method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("x").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue(
+    changeSignature.get().doTest(null, null, "T", method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("x").withType(changeSignature.get().getFactory().createTypeFromText("T", method.getParameterList())).withDefaultValue(
         "null"),
       ParameterInfoImpl.createNew().withName("y")
-        .withType(myFactory.createTypeFromText("C<T>", method.getParameterList())).withDefaultValue("null")
+        .withType(changeSignature.get().getFactory().createTypeFromText("C<T>", method.getParameterList())).withDefaultValue("null")
     }, false);
   }
 
+  @Test
   public void testGenericTypesInOldParameters() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("t").withType(myFactory.createTypeFromText("T", method)).withDefaultValue(null)
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("t").withType(changeSignature.get().getFactory().createTypeFromText("T", method)).withDefaultValue(null)
     }, false);
   }
 
+  @Test
   public void testTypeParametersInMethod() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("t").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue(
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("t").withType(changeSignature.get().getFactory().createTypeFromText("T", method.getParameterList())).withDefaultValue(
         "null"),
-      ParameterInfoImpl.createNew().withName("u").withType(myFactory.createTypeFromText("U", method.getParameterList())).withDefaultValue(
+      ParameterInfoImpl.createNew().withName("u").withType(changeSignature.get().getFactory().createTypeFromText("U", method.getParameterList())).withDefaultValue(
         "null"),
       ParameterInfoImpl.createNew().withName("cu")
-        .withType(myFactory.createTypeFromText("C<U>", method.getParameterList())).withDefaultValue("null")
+        .withType(changeSignature.get().getFactory().createTypeFromText("C<U>", method.getParameterList())).withDefaultValue("null")
     }, false);
   }
 
+  @Test
   public void testDefaultConstructor() {
-    doTest(null,
+    changeSignature.get().doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.createNew().withName("j").withType(PsiTypes.intType()).withDefaultValue("27")
            }, false
     );
   }
 
+  @Test
   public void testFlexibleConstructorBody() {
-    doTest(null,
+    changeSignature.get().doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")
            }, false
     );
   }
 
+  @Test
   public void testGenerateDelegate() {
-    doTest(null,
+    changeSignature.get().doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
            }, true
     );
   }
 
+  @Test
   public void testGenerateDelegateForAbstract() {
-    doTest(null,
+    changeSignature.get().doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
            }, true
     );
   }
 
+  @Test
   public void testGenerateDelegateWithReturn() {
-    doTest(null,
+    changeSignature.get().doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
            }, true
     );
   }
 
+  @Test
   public void testGenerateDelegateWithParametersReordering() {
-    doTest(null,
+    changeSignature.get().doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.create(1),
              ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.charType()).withDefaultValue("'a'"),
@@ -186,398 +226,464 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     );
   }
 
+  @Test
   public void testGenerateDelegateConstructor() {
-    doTest(null, new ParameterInfoImpl[0], true);
+    changeSignature.get().doTest(null, new ParameterInfoImpl[0], true);
   }
 
+  @Test
   public void testGenerateDelegateDefaultConstructor() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
     }, true);
   }
 
+  @Test
   public void testSCR40895() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testJavadocGenericsLink() {
-    doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
+    changeSignature.get().doTest(null, ReadAction.computeBlocking(() -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("y").withType(changeSignature.get().getFactory().createTypeFromText("java.util.List<java.lang.String>", null)),
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
-    }, false);
+    }), false);
   }
 
+  @Test
   public void testParamNameSameAsFieldName() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("fieldName").withType(PsiTypes.intType())
     }, false);
   }
 
+  @Test
   public void testParamNameNoConflict() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0),
       ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testVarargMethodToNonVarag() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("i").withType(PsiTypes.intType()),
       ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testParamJavadoc() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
     }, false);
   }
 
+  @Test
   public void testParamJavadoc0() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
     }, false);
   }
 
+  @Test
   public void testParamJavadoc1() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("z").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testParamJavadoc2() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("z").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testParamJavadoc3() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testParamJavadoc4() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("a").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testParamJavadocRenamedReordered() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.create(1).withName("b1").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testReturnJavadocAdded() {
-    doTest("int", new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest("int", new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testReturnJavadocUnchanged() {
-    doTest("int", new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest("int", new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testJavadocNoNewLineInserted() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("newArgs").withType(PsiTypes.doubleType()),
     }, false);
   }
 
+  @Test
   public void testSuperCallFromOtherMethod() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("nnn").withType(PsiTypes.intType()).withDefaultValue("-222"),
     }, false);
   }
 
+  @Test
   public void testUseAnyVariable() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("l").withType(myFactory.createTypeFromText("List", method))
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("l").withType(changeSignature.get().getFactory().createTypeFromText("List", method))
         .withDefaultValue("null").useAnySingleVariable()
     }, false);
   }
 
+  @Test
   public void testUseThisAsAnyVariable() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("l").withType(myFactory.createTypeFromText("List", method))
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("l").withType(changeSignature.get().getFactory().createTypeFromText("List", method))
         .withDefaultValue("null").useAnySingleVariable()
     }, false);
   }
 
+  @Test
   public void testUseAnyVariableAndDefault() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("c").withType(myFactory.createTypeFromText("C", method))
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("c").withType(changeSignature.get().getFactory().createTypeFromText("C", method))
         .withDefaultValue("null").useAnySingleVariable()
     }, false);
   }
 
+  @Test
   public void testRemoveVarargParameter() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() ->
-                                                                              doTest(null, null, null,
+                                                                              changeSignature.get().doTest(null, null, null,
                                                                                      new ParameterInfoImpl[]{ParameterInfoImpl.create(0)},
                                                                                      new ThrownExceptionInfo[0], false)
     );
   }
 
+  @Test
   public void testEnumConstructor() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("10")
     }, false);
   }
 
+  @Test
   public void testVarargs1() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true"),
       ParameterInfoImpl.create(0)
     }, false);
   }
 
+  @Test
   public void testVarargs2() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("i").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("b").withType(new PsiEllipsisType(PsiTypes.booleanType()))
     }, false);
   }
 
+  @Test
   public void testJavadocOfDeleted() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("role").withType(PsiTypes.intType()),
     }, false);
   }
 
+  @Test
   public void testCovariantReturnType() {
-    doTest(CommonClassNames.JAVA_LANG_RUNNABLE, new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest(CommonClassNames.JAVA_LANG_RUNNABLE, new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testReorderExceptions() {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+    changeSignature.get().doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new SimpleExceptionsGen(new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(1), new JavaThrownExceptionInfo(0)}), false);
   }
 
+  @Test
   public void testAlreadyHandled() {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+    changeSignature.get().doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            method -> new ThrownExceptionInfo[]{
-             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+             new JavaThrownExceptionInfo(-1, changeSignature.get().getFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
            },
            false
     );
   }
 
+  @Test
   public void testConstructorException() {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+    changeSignature.get().doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            method -> new ThrownExceptionInfo[]{
-             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
+             new JavaThrownExceptionInfo(-1, changeSignature.get().getFactory().createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
            },
            false
     );
   }
 
+  @Test
   public void testAddRuntimeException() {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+    changeSignature.get().doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            method -> new ThrownExceptionInfo[]{
-             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
+             new JavaThrownExceptionInfo(-1, changeSignature.get().getFactory().createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
            },
            false
     );
   }
 
+  @Test
   public void testAddException() {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+    changeSignature.get().doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            method -> new ThrownExceptionInfo[]{
-             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+             new JavaThrownExceptionInfo(-1, changeSignature.get().getFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
            },
            false
     );
   }
 
+  @Test
   public void testLessSpecificException() {
-    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+    changeSignature.get().doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            method -> new ThrownExceptionInfo[]{
-             new JavaThrownExceptionInfo(0, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+             new JavaThrownExceptionInfo(0, changeSignature.get().getFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
            },
            false
     );
   }
 
+  @Test
   public void testReorderWithVarargs() {  // IDEADEV-26977
-    doTest(null, new ParameterInfoImpl[]{
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    changeSignature.get().doTest(null, ReadAction.computeBlocking(() -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1),
-      ParameterInfoImpl.create(0).withName("s").withType(myFactory.createTypeFromText("java.lang.String...", getFile()))
-    }, false);
+      ParameterInfoImpl.create(0).withName("s").withType(changeSignature.get().getFactory().createTypeFromText("java.lang.String...", myFixture.getFile()))
+    }), false);
   }
 
+  @Test
   public void testReorderWithVarargsFromSimpleType() {
-    doTest(null, new ParameterInfoImpl[]{
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    changeSignature.get().doTest(null, ReadAction.computeBlocking(() -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1),
-      ParameterInfoImpl.create(0).withName("s").withType(myFactory.createTypeFromText("java.lang.String...", getFile()))
-    }, false);
+      ParameterInfoImpl.create(0).withName("s").withType(changeSignature.get().getFactory().createTypeFromText("java.lang.String...", myFixture.getFile()))
+    }), false);
   }
 
+  @Test
   public void testIntroduceParameterWithDefaultValueInHierarchy() {
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")},
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")},
            false);
   }
 
+  @Test
   public void testReorderMultilineMethodParameters() {
     // Inspired by IDEA-54902
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1), ParameterInfoImpl.create(0)}, false);
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1), ParameterInfoImpl.create(0)}, false);
   }
 
+  @Test
   public void testRemoveFirstParameter() {
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1)}, false);
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1)}, false);
   }
 
+  @Test
   public void testReplaceVarargWithArray() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("l")
-        .withType(myFactory.createTypeFromText("List<T>[]", method.getParameterList())).withDefaultValue("null"),
-      ParameterInfoImpl.create(0).withName("s").withType(myFactory.createTypeFromText("String", method.getParameterList()))
+        .withType(changeSignature.get().getFactory().createTypeFromText("List<T>[]", method.getParameterList())).withDefaultValue("null"),
+      ParameterInfoImpl.create(0).withName("s").withType(changeSignature.get().getFactory().createTypeFromText("String", method.getParameterList()))
     }, false);
   }
 
+  @Test
   public void testReplaceOldStyleArrayWithVarargs() {
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(0).withName("a").withType(new PsiEllipsisType(PsiTypes.intType()))},
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(0).withName("a").withType(new PsiEllipsisType(PsiTypes.intType()))},
            false);
   }
 
+  @Test
   public void testReorderParamsOfFunctionalInterface() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testReorderParamsOfFunctionalInterfaceExpandMethodReference() {
     GenParams genParams = method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
     };
-    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+    changeSignature.get().doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  @Test
   public void testAddParenthesisForLambdaParameterList() {
     GenParams genParams = method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType()),
       ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.intType())
     };
-    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+    changeSignature.get().doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  @Test
   public void testAddParenthesisForLambdaParameterListDeleteTheOnlyOne() {
     GenParams genParams = method -> new ParameterInfoImpl[0];
-    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+    changeSignature.get().doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  @Test
   public void testExpandMethodReferenceToDeleteParameter() {
     GenParams genParams = method -> new ParameterInfoImpl[0];
-    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+    changeSignature.get().doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  @Test
   public void testRenameMethodUsedInMethodReference() {
     GenParams genParams = method -> new ParameterInfoImpl[]{ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())};
-    doTest(PsiModifier.PRIVATE, "alwaysFalse", null, genParams, new SimpleExceptionsGen(), false, false);
+    changeSignature.get().doTest(PsiModifier.PRIVATE, "alwaysFalse", null, genParams, new SimpleExceptionsGen(), false, false);
   }
 
+  @Test
   public void testMethodParametersAlignmentAfterMethodNameChange() {
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest(null, "test123asd", null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+    changeSignature.get().doTest(null, "test123asd", null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  @Test
   public void testMethodParametersAlignmentAfterMethodVisibilityChange() {
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest(PsiModifier.PROTECTED, null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+    changeSignature.get().doTest(PsiModifier.PROTECTED, null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  @Test
   public void testMethodParametersAlignmentAfterMethodReturnTypeChange() {
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+    changeSignature.get().doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  @Test
   public void testRemoveOverride() {
-    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+    changeSignature.get().doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
+  @Test
   public void testPreserveOverride() {
-    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+    changeSignature.get().doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
+  @Test
   public void testKeepTryWithResources() {
-    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+    changeSignature.get().doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
+  @Test
   public void testVisibilityOfOverriddenMethod() {
-    doTest(PsiModifier.PACKAGE_LOCAL, "foo", "void", new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+    changeSignature.get().doTest(PsiModifier.PACKAGE_LOCAL, "foo", "void", new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
+  @Test
   public void testRemoveExceptions() {
-    doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+    changeSignature.get().doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  @Test
   public void testPropagateParameter() {
-    String basePath = getRelativePath() + getTestName(false);
-    configureByFile(basePath + ".java");
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)targetElement;
-    final PsiClass containingClass = method.getContainingClass();
-    assertNotNull(containingClass);
-    final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
-    assertTrue(callers.length > 0);
-    final PsiMethod caller = callers[0];
-    final HashSet<PsiMethod> propagateParametersMethods = new HashSet<>();
-    propagateParametersMethods.add(caller);
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
-                                 CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())}, null, propagateParametersMethods, null
-    ).run();
-    checkResultByFile(basePath + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    String basePath = RELATIVE_PATH + myFixture.getTestName(false);
+    myFixture.configureByFile(basePath + ".java");
+    myFixture.runInCommand(() -> {
+      final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assertInstanceOf(PsiMethod.class, targetElement, "<caret> is not on method name");
+      PsiMethod method = (PsiMethod)targetElement;
+      final PsiClass containingClass = method.getContainingClass();
+      assertNotNull(containingClass);
+      final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
+      assertTrue(callers.length > 0);
+      final PsiMethod caller = callers[0];
+      final HashSet<PsiMethod> propagateParametersMethods = new HashSet<>();
+      propagateParametersMethods.add(caller);
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      new ChangeSignatureProcessor(myFixture.getProject(), method, false, null, method.getName(),
+                                   CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
+        ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())}, null, propagateParametersMethods, null
+      ).run();
+      myFixture.checkResultByFile(basePath + "_after.java");
+    });
   }
 
+  @Test
   public void testPropagateParameterWithOverrider() {
-    String basePath = getRelativePath() + getTestName(false);
-    configureByFile(basePath + ".java");
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)targetElement;
-    final PsiClass containingClass = method.getContainingClass();
-    assertNotNull(containingClass);
-    final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
-    assertTrue(callers.length > 0);
-    final PsiMethod caller = callers[0];
-    final HashSet<PsiMethod> propagateParametersMethods = new HashSet<>();
-    propagateParametersMethods.add(caller);
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
-                                 CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true")}, null,
-                                 propagateParametersMethods, null
-    ).run();
-    checkResultByFile(basePath + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    String basePath = RELATIVE_PATH + myFixture.getTestName(false);
+    myFixture.configureByFile(basePath + ".java");
+    myFixture.runInCommand(() -> {
+      final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assertInstanceOf(PsiMethod.class, targetElement, "<caret> is not on method name");
+      PsiMethod method = (PsiMethod)targetElement;
+      final PsiClass containingClass = method.getContainingClass();
+      assertNotNull(containingClass);
+      final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
+      assertTrue(callers.length > 0);
+      final PsiMethod caller = callers[0];
+      final HashSet<PsiMethod> propagateParametersMethods = new HashSet<>();
+      propagateParametersMethods.add(caller);
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      new ChangeSignatureProcessor(myFixture.getProject(), method, false, null, method.getName(),
+                                   CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
+        ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true")}, null,
+                                   propagateParametersMethods, null
+      ).run();
+      myFixture.checkResultByFile(basePath + "_after.java");
+    });
   }
 
+  @Test
   public void testTypeAnnotationsAllAround() {
     //String[] ps = {"@TA(1) int @TA(2) []", "java.util.@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
     //String[] ex = {"@TA(42) IllegalArgumentException", "java.lang.@TA(43) IllegalStateException"};
-    //doTest("java.util.@TA(0) List<@TA(1) C.@TA(1) Inner>", ps, ex, false);
+    //changeSignature.get().doTest("java.util.@TA(0) List<@TA(1) C.@TA(1) Inner>", ps, ex, false);
     String[] ps = {"@TA(2) int @TA(3) []", "@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
     String[] ex = ArrayUtil.EMPTY_STRING_ARRAY;
-    doTest("@TA(0) List<@TA(1) Inner>", ps, ex, false);
+    changeSignature.get().doTest("@TA(0) List<@TA(1) Inner>", ps, ex, false);
   }
 
+  @Test
   public void testContractUpdate() {
     GenParams genParams = method -> {
       PsiClassType stringType = PsiType.getJavaLangString(method.getManager(), method.getResolveScope());
@@ -587,29 +693,33 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
         ParameterInfoImpl.createNew().withName("c").withType(stringType)
       };
     };
-    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, false);
+    changeSignature.get().doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, false);
   }
 
+  @Test
   public void testRecordHeaderDeleteRename() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("yyy").withType(PsiTypes.longType())
       };
     }, false);
   }
 
+  @Test
   public void testRecordHeaderDeleteRename2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("p2").withType(pointType)
       };
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorRename() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
@@ -618,10 +728,12 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorRename2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("point2").withType(pointType),
         ParameterInfoImpl.create(1).withName("point1").withType(pointType),
@@ -630,8 +742,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorReorder() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("y").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(2).withName("z").withType(PsiTypes.intType()),
@@ -640,10 +753,12 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorReorder2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(1).withName("point2").withType(pointType),
@@ -652,8 +767,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorAddParameter() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(-1).withName("y").withType(PsiTypes.intType())
@@ -661,10 +777,12 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorAddParameter2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("point1").withType(pointType),
         ParameterInfoImpl.create(1).withName("point2").withType(pointType),
@@ -673,65 +791,75 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordComponentWithImportToBeAdded() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
+        ParameterInfoImpl.create(-1).withName("y").withType(changeSignature.get().getFactory().createTypeFromText("java.util.List<java.lang.String>", method))
       };
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorMissingHeader() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(-1).withName("x").withType(PsiTypes.intType())
       };
     }, false);
   }
 
+  @Test
   public void testRemoveAnnotation() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
     }, false);
   }
 
+  @Test
   public void testAddReturnAnnotation() {
-    doTest(null, null, "java.lang.@org.jetbrains.annotations.NotNull String", method -> new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest(null, null, "java.lang.@org.jetbrains.annotations.NotNull String", method -> new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testMultilineJavadoc() { // IDEA-281568
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
   }
 
+  @Test
   public void testPreserveEmptyTrailingLeadingLinesJavadoc() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
   }
 
+  @Test
   public void testMultilineJavadocWithoutFormatting() { // IDEA-281568
-    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    JavaCodeStyleSettings.getInstance(myFixture.getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
   }
 
+  @Test
   public void testJavadocNotBrokenAfterDelete() { // IDEA-139879
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("i1")
     }, false);
   }
 
+  @Test
   public void testNoGapsInParameterTags() { // IDEA-139879
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(1).withType(PsiTypes.longType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.booleanType()).withName("c"),
@@ -739,39 +867,44 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testVarargToArray() { // IDEA-318626
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x"),
       ParameterInfoImpl.create(1).withName("args").withType(
         method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
     }, false);
   }
 
+  @Test
   public void testEnumVarargToArray() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x"),
       ParameterInfoImpl.create(1).withName("args").withType(
         method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
     }, false);
   }
 
+  @Test
   public void testDefCtorVarargToArray() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("args").withType(
         method.getParameterList().getParameter(0).getType().getDeepComponentType().createArrayType())
     }, false);
   }
 
+  @Test
   public void testArrayToVararg() { // IDEA-318626
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x"),
       ParameterInfoImpl.create(1).withName("args").withType(
         new PsiEllipsisType(method.getParameterList().getParameter(1).getType().getDeepComponentType()))
     }, false);
   }
 
+  @Test
   public void testVarargToArrayReorder() { // IDEA-318626
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("args").withType(
         method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType()),
       ParameterInfoImpl.create(0).withName("x")
@@ -779,25 +912,29 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   /* Markdown javadoc variant */
+  @Test
   public void testParamJavadocMarkdown2() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("z").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testRecordHeaderDeleteRenameMarkdown() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("yyy").withType(PsiTypes.longType())
       };
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorReorderMarkdown2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(1).withName("point2").withType(pointType),
@@ -806,16 +943,19 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testJavadocMarkdownOfDeleted() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("role").withType(PsiTypes.intType()),
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorAddParameterMarkdown2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("point1").withType(pointType),
         ParameterInfoImpl.create(1).withName("point2").withType(pointType),
@@ -824,40 +964,47 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testJavadocMarkdownNoNewLineInserted() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("newArgs").withType(PsiTypes.doubleType()),
     }, false);
   }
 
+  @Test
   public void testMultilineJavadocMarkdownWithoutFormatting() { // IDEA-281568
-    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    JavaCodeStyleSettings.getInstance(myFixture.getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
   }
 
+  @Test
   public void testParamJavadocMarkdown1() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("z").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testParamJavadocMarkdown0() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
     }, false);
   }
 
+  @Test
   public void testReturnJavadocMarkdownAdded() {
-    doTest("int", new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest("int", new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorRenameMarkdown() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
@@ -866,15 +1013,17 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testParamJavadocMarkdown() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorAddParameterMarkdown() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(-1).withName("y").withType(PsiTypes.intType())
@@ -882,71 +1031,82 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testParamJavadocMarkdown4() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("a").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testSCRMarkdown40895() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
       ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
+  @Test
   public void testReturnJavadocMarkdownUnchanged() {
-    doTest("int", new ParameterInfoImpl[0], false);
+    changeSignature.get().doTest("int", new ParameterInfoImpl[0], false);
   }
 
+  @Test
   public void testRecordComponentWithImportToBeAddedMarkdown() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
+        ParameterInfoImpl.create(-1).withName("y").withType(changeSignature.get().getFactory().createTypeFromText("java.util.List<java.lang.String>", method))
       };
     }, false);
   }
 
+  @Test
   public void testMethodParametersAlignmentAfterMethodReturnTypeChangeMarkdown() {
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+    changeSignature.get().doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  @Test
   public void testParamJavadocMarkdown3() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testRecordHeaderDeleteRenameMarkdown2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("p2").withType(pointType)
       };
     }, false);
   }
 
+  @Test
   public void testParamJavadocMarkdownRenamedReordered() {
-    doTest(null, new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.booleanType()),
       ParameterInfoImpl.create(1).withName("b1").withType(PsiTypes.booleanType()),
     }, false);
   }
 
+  @Test
   public void testJavadocMarkdownGenericsLink() {
-    doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
+    changeSignature.get().doTest(null, ReadAction.computeBlocking(() -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("y").withType(changeSignature.get().getFactory().createTypeFromText("java.util.List<java.lang.String>", null)),
       ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
-    }, false);
+    }), false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorReorderMarkdown() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("y").withType(PsiTypes.intType()),
         ParameterInfoImpl.create(2).withName("z").withType(PsiTypes.intType()),
@@ -955,24 +1115,27 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testMultilineJavadocMarkdown() { // IDEA-281568
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
   }
 
+  @Test
   public void testPreserveEmptyTrailingLeadingLinesJavadocMarkdown() {
-      doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
         ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
         ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
       }, false);
   }
 
+  @Test
   public void testNoGapsInParameterTagsMarkdown() { // IDEA-139879
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("b"),
       ParameterInfoImpl.create(1).withType(PsiTypes.longType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.booleanType()).withName("c"),
@@ -980,10 +1143,12 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testRecordCanonicalConstructorRenameMarkdown2() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("Point", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("point2").withType(pointType),
         ParameterInfoImpl.create(1).withName("point1").withType(pointType),
@@ -992,17 +1157,20 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  @Test
   public void testJavadocMarkdownNotBrokenAfterDelete() { // IDEA-139879
-    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+    changeSignature.get().doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("i1")
     }, false);
   }
 
+  @Test
   public void testConflictsForFieldRecord() {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
     assertConflict(() -> {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
-      doTest(null, null, null, method -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+      final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("String", null));
+      changeSignature.get().doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
           ParameterInfoImpl.create(1).withName("b").withType(pointType)
         };
@@ -1010,11 +1178,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, "Record component 'a' is used");
   }
 
+  @Test
   public void testConflictsForGetRecord() {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
     assertConflict(() -> {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
-      doTest(null, null, null, method -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+      final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("String", null));
+      changeSignature.get().doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
           ParameterInfoImpl.create(1).withName("b").withType(pointType)
         };
@@ -1022,29 +1192,34 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, "Record component 'a' is used");
   }
 
+  @Test
   public void testImplicitDefaultConstructor() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())
       };
     }, false);
   }
 
+  @Test
   public void testWithoutConflictsForGet() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
-    doTest(null, null, null, method -> {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("String", null));
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(1).withName("b").withType(pointType)
       };
     }, false);
   }
 
+  @Test
   public void testConflictsSwitchUsedDeconstruction() {
+    LightJavaCodeInsightTestFixture myFixture = changeSignature.get().getFixture();
     assertConflict(() -> {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
-      doTest(null, null, null, method -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+      final PsiType pointType = ReadAction.computeBlocking(() -> facade.getElementFactory().createTypeFromText("String", null));
+      changeSignature.get().doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
           ParameterInfoImpl.create(1).withName("b").withType(pointType)
         };
@@ -1052,17 +1227,19 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, "Record component 'a' is used");
   }
 
+  @Test
   public void testWithoutConflictsSwitchUsedDeconstruction() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
       };
     }, false);
   }
 
+  @Test
   public void testConflictsSwitchNarrowedDeconstruction() {
     assertConflict(() -> {
-      doTest(null, null, null, method -> {
+      changeSignature.get().doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
           ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
         };
@@ -1070,17 +1247,19 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, "Record component 'b' is used");
   }
 
+  @Test
   public void testWithoutConflictsSwitchExtendedDeconstruction() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
       };
     }, false);
   }
 
+  @Test
   public void testConflictsSwitchNestedDeconstruction() {
     assertConflict(() -> {
-      doTest(null, null, null, method -> {
+      changeSignature.get().doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
           ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
         };
@@ -1088,17 +1267,19 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, "Record component 'y' is used");
   }
 
+  @Test
   public void testWithoutConflictsSwitchNestedDeconstruction() {
-    doTest(null, null, null, method -> {
+    changeSignature.get().doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
       };
     }, false);
   }
 
+  @Test
   public void testConflictsSwitchNestedDeconstructionDifTypes() {
     assertConflict(() -> {
-      doTest(null, null, null, method -> {
+      changeSignature.get().doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
           ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
         };
