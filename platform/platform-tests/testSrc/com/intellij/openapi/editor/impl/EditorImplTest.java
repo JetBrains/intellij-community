@@ -428,7 +428,7 @@ public class EditorImplTest {
       assertEquals(new Dimension(50, (int)(30 * FontPreferences.DEFAULT_LINE_SPACING)), myFixture.getEditor().getContentComponent().getPreferredSize());
     });
   }
-  
+
   @Test
   public void testCollapsingRegionContainingSoftWrap() {
     myFixture.runTest(() -> {

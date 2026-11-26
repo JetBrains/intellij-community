@@ -36,6 +36,8 @@ public class EditorPerformanceTest {
 
   private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
 
+  private static final int LARGE_FILE_LINE_COUNT = 100_000;
+
   private EditorModelFixture myFixture;
 
 
@@ -61,5 +63,35 @@ public class EditorPerformanceTest {
       .attempts(100)
       .start();
     // attempt.min.ms varies ~15% (from experiments)
+  }
+
+  /**
+   * Each edit replaces the text around a line break in the middle of a large file and keeps the line count.
+   * The editor must recalculate only the widths of the two changed lines, not of all lines.
+   */
+  @Test
+  public void testEditOfTwoLinesInLargeFile() {
+    Document document = initLargeFile();
+    int offset = document.getLineEndOffset(LARGE_FILE_LINE_COUNT / 2) - 1;
+    String[] replacements = {"x\ny", "y\nx"};
+    Benchmark.newBenchmark("Edit of two lines in a large file", () -> {
+      for (int i = 0; i < 100; i++) {
+        String replacement = replacements[i % 2];
+        myFixture.runWriteCommand(() -> document.replaceString(offset, offset + 3, replacement));
+        myFixture.getEditor().getContentComponent().getPreferredSize();
+      }
+    }).warmupIterations(20)
+      .attempts(50)
+      .start();
+  }
+
+  /**
+   * Makes a file of {@link #LARGE_FILE_LINE_COUNT} lines, with the longest line at the start, and calculates the editor width once.
+   */
+  private Document initLargeFile() {
+    myFixture.initText("The longest line of the file\n" + StringUtil.repeat("line x\n", LARGE_FILE_LINE_COUNT));
+    myFixture.getEditor().getCaretModel().moveToOffset(0);
+    myFixture.getEditor().getContentComponent().getPreferredSize();
+    return myFixture.getEditor().getDocument();
   }
 }
