@@ -409,8 +409,8 @@ route exists. No lane time is measured for this route.
 
 The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
 lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
-`//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
-the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `dist.config`
+`//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//build:idea_dist_linux_aarch64` on
+the default guest, and `//build:idea_dist` on a macOS one. The field `dist.config`
 of the descriptor names the file of that distribution's `_ide_config` companion target, not the distribution itself.
 The field `ide.flagsFile` names the IDE flags file. The guest agent reads both from these fields. Of the static flags,
 it reads only `-Dair.trace.recorder`, `-Dair.flow.trace=off`, `-Dair.flow.trace.screen=on` and
@@ -493,9 +493,9 @@ Go to File and Find in Files of the accio plugin against the accio of the guest,
 
 The lane has two descriptors of its own: `//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light` on the
 default guest and `:ui_daemon_light` on a macOS guest. They name the distribution
-`//plugins/air/tests/integration/ide:light_air_lane_dist_linux` and `:light_air_lane_dist`. JetBrains Light does not
-bundle the performance plugin, which the bridge needs for its robot. So the IDE context gets that plugin beside the
-bridge. The distribution holds the accio plugin, which JetBrains Light publishes and does not bundle. The descriptors
+`//build:jetbrains_light_dist_linux_aarch64` and `//build:jetbrains_light_dist`. JetBrains Light does not bundle the
+performance plugin, which the bridge needs for its robot, the MCP server plugin, or the accio plugin, which JetBrains
+Light publishes. So the IDE context gets these three plugins beside the bridge. The descriptors
 declare the accio that `community/tools/accio.cmd` pins as a CLI runtime, so the guest puts it on the PATH of the IDE.
 The lane document turns the registry key `ijlight.workspace.enabled` on, so the driven project opens as a member of a
 workspace host frame. It also sets `ijlight.accio.test.any.mode`, the test switch that keeps the accio plugin on in the

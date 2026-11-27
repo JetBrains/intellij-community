@@ -53,11 +53,11 @@ when `SystemInfoRt.isLinux`.
 server. Xvfb satisfies both.
 
 **A Linux distribution cross-builds here, and does so today.**
-`//plugins/air/tests/integration/ide:idea_air_lane_dist_linux`
+`//build:idea_dist_linux_aarch64`
 assembles on this macOS arm64 host and is a genuine Linux build: its `product-info.json` reports
 `Linux`/`aarch64` with launcher `bin/idea`, and `lib/native/linux-aarch64` where the macOS distribution
 has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon` builds under
-`--define=air_lane_guest_os=linux` with its stub naming `idea_air_lane_dist_linux` and
+`--define=air_lane_guest_os=linux` with its stub naming `idea_dist_linux_aarch64` and
 `jbr_linux_aarch64`. This is piece 1 below, and it is done.
 
 **A Linux worker is a cheap worker.** Measured on 2026-08-12 with `air-linux-1`, an
@@ -91,7 +91,7 @@ Three pieces, in the order they have to happen.
 
 The distribution fragment macros take one `target_platform` that selects both OS and architecture,
 `preloaded_downloads_for_platform` names that platform's archives without a host `select`, and
-`//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` puts the two together. `ui_lane_ide.bzl` selects the pair on
+`//build:idea_dist_linux_aarch64` puts the two together. `ui_lane_ide.bzl` selects the pair on
 `--define=air_lane_guest_os=linux` on a macOS host. On a Linux x86_64 host the same define selects the
 x86_64 Docker guest, whose distribution is the host build.
 
