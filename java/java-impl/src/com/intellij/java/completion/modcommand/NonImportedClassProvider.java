@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor;
 import com.intellij.codeInsight.completion.LimitedAccessibleClassPreprocessor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.Project;
@@ -119,8 +120,25 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
 
   private static void suggestNonImportedClasses(CompletionContext parameters,
                                                 ModCompletionResult sink) {
-    if (UNEXPECTED_REFERENCE_AFTER_DOT.accepts(parameters.getPosition())) return;
-    addAllClasses(parameters, parameters.invocationCount() <= 2, parameters.matcher(), sink);
+    PsiElement position = parameters.getPosition();
+    if (UNEXPECTED_REFERENCE_AFTER_DOT.accepts(position)) return;
+    addAllClasses(parameters, parameters.invocationCount() <= 2, getClassMatcher(parameters), sink);
+  }
+
+  /**
+   * In the basic completion of the first invocation, accept only the class names that start with the prefix.
+   * The camel hump matcher also accepts a name with the prefix in a middle hump, which is much more names to process.
+   */
+  private static PrefixMatcher getClassMatcher(CompletionContext parameters) {
+    PrefixMatcher matcher = parameters.matcher();
+    PsiElement position = parameters.getPosition();
+    if (!parameters.isBasic() ||
+        parameters.invocationCount() > 1 ||
+        IN_PERMITS_LIST.accepts(position) ||
+        JavaCompletionContributor.getAnnotationNameIfInside(position) != null) {
+      return matcher;
+    }
+    return new BetterPrefixMatcher.AutoRestarting(matcher);
   }
 
   public static void addAllClasses(CompletionContext parameters,

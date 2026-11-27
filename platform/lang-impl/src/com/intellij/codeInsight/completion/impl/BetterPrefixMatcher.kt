@@ -69,7 +69,13 @@ open class BetterPrefixMatcher(
     original: PrefixMatcher,
     minMatchingDegree: Int,
   ) : BetterPrefixMatcher(original, minMatchingDegree) {
-    constructor(result: CompletionResultSet) : this(result.prefixMatcher, Int.MIN_VALUE)
+    constructor(result: CompletionResultSet) : this(result.prefixMatcher)
+
+    /**
+     * Creates a matcher that accepts only the start matches of [original].
+     * It restarts the completion on any prefix change when it rejects a worse match.
+     */
+    constructor(original: PrefixMatcher) : this(original, Int.MIN_VALUE)
 
     override fun createCopy(original: PrefixMatcher, degree: Int): BetterPrefixMatcher =
       AutoRestarting(original, degree)
