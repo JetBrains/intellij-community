@@ -8,6 +8,8 @@ import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
+import java.util.PriorityQueue
+import java.util.Queue
 import kotlin.math.max
 
 /**
@@ -161,4 +163,18 @@ fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { f
 @ApiStatus.Internal
 fun LinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): IntSet {
   return LinearGraphUtils.asLiteLinearGraph(this).exclusiveNodes(headNode, isHead)
+}
+
+/**
+ * Returns a set of the most recent nodes in the graph that are reachable from the specified start nodes.
+ */
+@ApiStatus.Internal
+fun LinearGraph.recentNodes(startNodes: Collection<Int>, limit: Int): List<Int> {
+  val visited = IntHashSetFlags(this.nodesCount())
+  val bfsWalk = object : BfsWalk(startNodes.min(), LinearGraphUtils.asLiteLinearGraph(this),
+                                 visited) {
+    override val queue: Queue<Int> = PriorityQueue<Int>(startNodes.size).also { it.addAll(startNodes) }
+  }
+  bfsWalk.walk { visited.data.size < limit }
+  return visited.data.sorted().take(limit)
 }
