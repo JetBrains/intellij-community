@@ -6,10 +6,13 @@ import io.ktor.client.request.header
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
+import java.io.FilterInputStream
 
 private const val IJ_MCP_PREFIX = "IJ_MCP_"
 const val IJ_MCP_HEADER_PREFIX: String = "${IJ_MCP_PREFIX}HEADER_"
@@ -30,7 +33,12 @@ suspend fun main() {
   // kotlin-logging prints a banner to stdout when the SDK creates its first logger, and stdout carries the MCP protocol.
   System.setProperty("kotlin-logging.logStartupMessage", "false")
 
-  val inputStream = System.`in`
+  // Standard input belongs to this proxy process. On Windows, closing its
+  // native pipe while a reader is blocked in ReadFile can itself block forever.
+  // The SDK cancels (but does not join) its reader; let process exit close stdin.
+  val inputStream = object : FilterInputStream(System.`in`) {
+    override fun close() = Unit
+  }
   val outputStream = System.out
 
   val port = System.getenv(IJ_MCP_SERVER_PORT)?.toIntOrNull() ?: run {
@@ -68,21 +76,12 @@ suspend fun main() {
     stdioServerTransport.send(it)
   }
 
-  stdioServerTransport.onClose {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      info("STDIO closed -> closing SSE")
-      sseClientTransport.close()
-    }
-  }
-
-  sseClientTransport.onClose {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      info("SSE closed -> closing STDIO")
-      stdioServerTransport.close()
-    }
-  }
+  // Close callbacks can run inside a transport's writer coroutine. Closing
+  // another transport here can call back into close() and join that same writer.
+  // Signal completion only; the main coroutine owns transport cleanup.
+  val finished = CompletableDeferred<Unit>()
+  stdioServerTransport.onClose { finished.complete(Unit) }
+  sseClientTransport.onClose { finished.complete(Unit) }
 
   stdioServerTransport.onError {
     error("Error in STDIO: $it")
@@ -90,17 +89,32 @@ suspend fun main() {
   sseClientTransport.onError {
     error("Error in SSE: $it")
   }
-  sseClientTransport.start()
-  stdioServerTransport.start()
+  try {
+    sseClientTransport.start()
+    stdioServerTransport.start()
 
-  info("Proxy transports started")
-  val finished = CompletableDeferred<Unit>()
-
-  stdioServerTransport.onClose { finished.complete(Unit) }
-
-  info("Waiting for the transports to finish")
-  finished.await()
-  info("Transports finished")
+    info("Proxy transports started")
+    info("Waiting for the transports to finish")
+    finished.await()
+    info("Transports finished")
+  }
+  finally {
+    // Run cleanup outside the transport callbacks, including on startup failure
+    // and cancellation. Always release the HTTP client, even if close fails.
+    withContext(NonCancellable + Dispatchers.IO) {
+      try {
+        stdioServerTransport.close()
+      }
+      finally {
+        try {
+          sseClientTransport.close()
+        }
+        finally {
+          httpClient.close()
+        }
+      }
+    }
+  }
 }
 
 object ClassPathMarker
