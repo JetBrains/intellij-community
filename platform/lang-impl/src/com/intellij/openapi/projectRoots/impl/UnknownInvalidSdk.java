@@ -68,6 +68,8 @@ public final class UnknownInvalidSdk implements UnknownSdk {
 
       UnknownInvalidSdk invalidSdk = resolveInvalidSdk(sdk);
       if (invalidSdk != null) {
+        LOG.info("The SDK '" + sdk.getName() + "' (home: " + sdk.getHomePath() + ", id: " + System.identityHashCode(sdk) +
+                 ") is invalid and has no pending download");
         result.add(invalidSdk);
       }
     }

@@ -68,7 +68,12 @@ public final class SdkDownloadTracker {
 
     PendingDownload task = findTask(sdk);
     if (task == null) return;
+    LOG.info("Cancelling the SDK download because the SDK was removed: " + describe(sdk), new Throwable());
     task.cancel();
+  }
+
+  private static @NotNull String describe(@NotNull Sdk sdk) {
+    return "'" + sdk.getName() + "' (home: " + sdk.getHomePath() + ", id: " + System.identityHashCode(sdk) + ")";
   }
 
   @RequiresEdt
@@ -373,7 +378,10 @@ public final class SdkDownloadTracker {
 
     void startDownloadIfNeeded(@Nullable Project project, @NotNull Sdk sdkFromTable) {
       if (!myIsDownloading.compareAndSet(false, true)) return;
-      if (myProgressIndicator.isCanceled()) return;
+      if (myProgressIndicator.isCanceled()) {
+        LOG.info("The SDK download was cancelled before it started: " + describe(sdkFromTable));
+        return;
+      }
 
       myModalityTracker.updateModality();
       SdkType type = (SdkType)sdkFromTable.getSdkType();

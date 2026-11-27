@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,7 +18,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+
+private val LOG = logger<JdkDownloadService>()
+
+private fun Sdk.describe(): String = "'$name' (home: $homePath, id: ${System.identityHashCode(this)})"
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -34,10 +41,20 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   }
 
   fun scheduleDownloadSdk(sdk: Sdk?): CompletableFuture<Boolean> {
-    return coroutineScope.async {
-      if (sdk == null || !SdkDownloadTracker.getInstance().isDownloading(sdk)) return@async false
+    val deferred = coroutineScope.async {
+      if (sdk == null) return@async false
+      if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) {
+        if (sdk.homePath?.let { !Files.exists(Path.of(it)) } == true) {
+          LOG.info("The SDK ${sdk.describe()} has no pending download")
+        }
+        return@async false
+      }
       JdkDownloadUtil.downloadSdk(project, sdk)
-    }.asCompletableFuture()
+    }
+    deferred.invokeOnCompletion { cause ->
+      if (cause != null) LOG.info("The download job of the SDK ${sdk?.describe()} stopped", cause)
+    }
+    return deferred.asCompletableFuture()
   }
 
   fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onJdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
