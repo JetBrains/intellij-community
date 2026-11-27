@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 import java.awt.Color;
@@ -169,6 +170,7 @@ public final class ImmediatePainter {
                                  document.getTextLength() + ", highlighter's last offset:" + highlighter.getSegments().getLastValidOffset(),
                                  e);
     }
+    final Color typedSyntaxBackground = attributes.get(1).getBackgroundColor();
     final AfterLineEnd afterLineEnd = updateAttributes(editor, offset, attributes);
     final Color backgroundAfterLineEnd = afterLineEnd.background();
 
@@ -178,7 +180,7 @@ public final class ImmediatePainter {
     if (!(canRender(attributes1) && canRender(attributes2))) {
       return false;
     }
-    if (!canRenderBackgrounds(editor, attributes1, attributes2, afterLineEnd)) {
+    if (!canRenderBackgrounds(editor, attributes1, attributes2, afterLineEnd, typedSyntaxBackground)) {
       return false;
     }
 
@@ -281,15 +283,18 @@ public final class ImmediatePainter {
   /**
    * Whether this painter can draw these backgrounds of the previous character, the typed character and the area after the
    * line end. It fills straight rectangles, so it skips a change of the background color while the editor rounds the
-   * highlighting. It paints no stub, so it skips a background that ends at the text over the line break.
+   * highlighting. It paints no stub, so while the editor ends the highlighting at the text, it skips a highlighter
+   * background over the line break and a syntax background of the typed character.
    */
   private static boolean canRenderBackgrounds(
     EditorImpl editor,
     TextAttributes previous,
     TextAttributes typed,
-    AfterLineEnd afterLineEnd
+    AfterLineEnd afterLineEnd,
+    @Nullable Color typedSyntaxBackground
   ) {
-    if (afterLineEnd.exactRangeBackground() && editor.isHuggingHighlighting()) {
+    if (editor.isHuggingHighlighting()
+        && (afterLineEnd.exactRangeBackground() || isSyntaxBackground(editor, typedSyntaxBackground))) {
       return false;
     }
     if (!editor.isRoundedHighlighting()) {
@@ -297,6 +302,15 @@ public final class ImmediatePainter {
     }
     Color background = typed.getBackgroundColor();
     return background.equals(previous.getBackgroundColor()) && background.equals(afterLineEnd.background());
+  }
+
+  /**
+   * Says that the lexer gives this color as a background that differs from the background of the editor.
+   */
+  private static boolean isSyntaxBackground(EditorImpl editor, @Nullable Color color) {
+    return color != null
+           && !color.equals(editor.getColorsScheme().getDefaultBackground())
+           && !color.equals(editor.getBackgroundColor());
   }
 
   /**

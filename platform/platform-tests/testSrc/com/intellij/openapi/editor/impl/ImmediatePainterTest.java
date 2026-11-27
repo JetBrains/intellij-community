@@ -1,12 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.junit5.RegistryKey;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.awt.Color;
 import java.awt.Font;
 
 /**
@@ -14,6 +24,9 @@ import java.awt.Font;
  */
 @TestApplication
 public class ImmediatePainterTest extends ImmediatePainterTestCase {
+  private static final TextAttributesKey SYNTAX_BACKGROUND =
+    TextAttributesKey.createTextAttributesKey("IMMEDIATE_PAINTER_TEST_SYNTAX_BACKGROUND");
+
   @Test
   public void testEmptyFile() {
     myFixture.runTest(() -> {
@@ -227,6 +240,16 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
   }
 
   @Test
+  public void testHuggingSyntaxBackgroundTurnsImmediatePaintingOff() {
+    myFixture.runTest(() -> {
+      enableHuggingHighlighting();
+      init("a\nb");
+      setSyntaxBackground(JBColor.GREEN);
+      assertNotRenderedImmediately(1, 'c');
+    });
+  }
+
+  @Test
   public void testHuggingKeepsImmediatePaintingOnHighlighterBeforeLineBreak() {
     myFixture.runTest(() -> {
       enableHuggingHighlighting();
@@ -244,6 +267,27 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
       addLineHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
       assertRenderedCorrectly(1, 'c');
     });
+  }
+
+  /**
+   * Sets a plain text highlighter that gives every token the background {@code color}.
+   */
+  private void setSyntaxBackground(Color color) {
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    scheme.setAttributes(SYNTAX_BACKGROUND, background(color));
+    SyntaxHighlighterBase highlighter = new SyntaxHighlighterBase() {
+      @Override
+      public @NotNull Lexer getHighlightingLexer() {
+        return PlainTextSyntaxHighlighterFactory.createPlainTextLexer();
+      }
+
+      @Override
+      public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+        return new TextAttributesKey[]{SYNTAX_BACKGROUND};
+      }
+    };
+    editor.setHighlighter(new LexerEditorHighlighter(highlighter, scheme));
   }
 
   @Test
