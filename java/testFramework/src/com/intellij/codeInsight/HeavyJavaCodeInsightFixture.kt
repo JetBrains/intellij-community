@@ -47,6 +47,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiJavaFile
@@ -172,7 +173,10 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
    */
   var configureInterceptor: ConfigureInterceptor? = null
 
-  private val psiManager: PsiManagerEx
+  /**
+   * The PSI manager of [project]. It is `myPsiManager` of [com.intellij.testFramework.JavaPsiTestCase].
+   */
+  val psiManager: PsiManagerEx
     get() = PsiManagerEx.getInstanceEx(project)
 
   val javaFacade: JavaPsiFacadeEx
@@ -320,11 +324,12 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
 
   /**
    * Copies the directory [rootPath] to a new directory in the temporary directory of the test.
-   * The new directory becomes a content root and a source root of [module].
+   * When [addProjectRoots] is `true`, the new directory becomes a content root and a source root of [module].
    */
-  fun createTestProjectStructure(rootPath: String?): VirtualFile {
+  @JvmOverloads
+  fun createTestProjectStructure(rootPath: String?, addProjectRoots: Boolean = true): VirtualFile {
     val dir = Files.createTempDirectory(tempRoot, "structure")
-    val result = HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, true)
+    val result = HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots)
     runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
     return result
   }
@@ -655,17 +660,39 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
    * It is `configureByFile` of [com.intellij.testFramework.JavaResolveTestCase].
    */
   fun configureReferenceByFile(filePath: String): PsiReference {
-    val vFile = VfsTestUtil.findFileByCaseSensitivePath(testDataPath + filePath)
-    val fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile))
-    val offset = fileText.indexOf(REFERENCE_MARKER)
-    check(offset >= 0) { "Expected to find $REFERENCE_MARKER marker in file but was none" }
-    val text = fileText.substring(0, offset) + fileText.substring(offset + REFERENCE_MARKER.length)
-    val psiFile = createFile(vFile.name, text)
-    file = psiFile
+    val offset = configureByFileWithoutMarker(filePath, REFERENCE_MARKER)
+    val psiFile = file!!
     return checkNotNull(ReadAction.computeBlocking<PsiReference?, RuntimeException> { psiFile.findReferenceAt(offset) }) {
       "No reference at $offset in $filePath"
     }
   }
+
+  /**
+   * Writes the file [filePath] of the test data without its [marker] to a new source root of [module].
+   * Returns the PSI element at the marker. The new file becomes [file].
+   * It is `configureByFileWithMarker` of [com.intellij.testFramework.JavaPsiTestCase], with a path relative to [testDataPath].
+   */
+  fun configureByFileWithMarker(filePath: String, marker: String): PsiElement? {
+    val offset = configureByFileWithoutMarker(filePath, marker)
+    val psiFile = file!!
+    return ReadAction.computeBlocking<PsiElement?, RuntimeException> { psiFile.findElementAt(offset) }
+  }
+
+  private fun configureByFileWithoutMarker(filePath: String, marker: String): Int {
+    val vFile = VfsTestUtil.findFileByCaseSensitivePath(testDataPath + filePath)
+    val fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile))
+    val offset = fileText.indexOf(marker)
+    check(offset >= 0) { "Expected to find $marker marker in file but was none" }
+    val text = fileText.substring(0, offset) + fileText.substring(offset + marker.length)
+    file = createFile(vFile.name, text)
+    return offset
+  }
+
+  /**
+   * Returns the text of the file [name] in [testDataPath], with `\n` line separators.
+   * It is `loadFile` of [com.intellij.testFramework.JavaPsiTestCase].
+   */
+  fun loadFile(name: String): String = StringUtil.convertLineSeparators(FileUtil.loadFile(File(testDataPath + File.separatorChar + name)))
 
   fun findClass(name: String): PsiClass {
     val aClass = ReadAction.computeBlocking<PsiClass?, RuntimeException> { javaFacade.findClass(name, ProjectScope.getProjectScope(project)) }

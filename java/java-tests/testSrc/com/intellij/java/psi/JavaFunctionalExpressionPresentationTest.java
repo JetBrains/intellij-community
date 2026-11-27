@@ -15,8 +15,10 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiExpression;
@@ -24,23 +26,36 @@ import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_8);
-  }
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightSubFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
-  }
+@TestApplication
+public class JavaFunctionalExpressionPresentationTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture =
+    heavyJavaCodeInsightSubFixture("javaFunctionalExpressionPresentationFixture", context ->
+      new HeavyJavaCodeInsightFixture(context, JavaTestUtil.getJavaTestDataPath()) {
+        @Override
+        protected @NotNull Sdk getTestProjectJdk() {
+          return IdeaTestUtil.getMockJdk18();
+        }
 
+        @Override
+        protected @NotNull LanguageLevel getProjectLanguageLevel() {
+          return LanguageLevel.JDK_1_8;
+        }
+      });
+
+  @Test
   public void testLambdaPresentation() {
     doTest("import java.util.*;" +
            "import java.util.function.BiFunction;" +
@@ -49,6 +64,7 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
            "(Map<? extends String, ? super List<String>> x, String y) -> {...}");
   }
 
+  @Test
   public void testLambdaPresentation2() {
     doTest("import java.util.*;" +
            "import java.util.function.Function;" +
@@ -58,6 +74,7 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
 
   }
 
+  @Test
   public void testLambdaPresentation3() {
     doTest("import java.util.*;" +
            "import java.util.function.Function;" +
@@ -67,6 +84,7 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
 
   }
 
+  @Test
   public void testLambdaEllipsisParameter() {
     doTest("import java.util.*;" +
            "import java.util.function.Function;" +
@@ -75,6 +93,7 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
            "(String... s) -> {...}");
   }
 
+  @Test
   public void testLambdaArrayParameter() {
     doTest("import java.util.*;" +
            "import java.util.function.Function;" +
@@ -83,6 +102,7 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
            "(String[] is) -> {...}");
   }
 
+  @Test
   public void testLambdaWithPrimitiveParameter() {
     doTest("import java.util.*;" +
            "import java.util.function.Function;" +
@@ -91,12 +111,14 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
            "(int[] i) -> {...}");
   }
 
+  @Test
   public void testMethodReferencePresentation() {
     doTest("import java.util.Supplier; " +
            "class A { Supplier<String> s = java.util.Collections.<String>emptyEnumeration()::toString; }",
            "java.util.Collections.emptyEnumeration()::toString");
   }
 
+  @Test
   public void testMethodReferencePresentation2() {
     doTest("import java.util.Supplier; " +
            "class A { final static Integer NUMBER = 10; Supplier<String> r2 = A.NUMBER::toString;}",
@@ -104,19 +126,21 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
   }
 
   private void doTest(@Language("JAVA") @NotNull String funExprText, @NotNull String expectedPresentableString) {
-    final PsiFileImpl file = assertInstanceOf(configureByText(JavaFileType.INSTANCE, funExprText), PsiFileImpl.class);
+    final PsiFileImpl file = assertInstanceOf(PsiFileImpl.class, heavyFixture.get().configureByText(JavaFileType.INSTANCE, funExprText));
 
-    //stub based test
-    final FunctionalExpressionStub functionalExpressionStub = StreamEx
-      .of(file.calcStubTree().getPlainList())
-      .select(FunctionalExpressionStub.class)
-      .collect(MoreCollectors.onlyOne())
-      .orElse(null);
-    assertNotNull(functionalExpressionStub);
-    assertEquals("Comparing with stub based rendering", expectedPresentableString, functionalExpressionStub.getPresentableText());
+    ReadAction.runBlocking(() -> {
+      //stub based test
+      final FunctionalExpressionStub functionalExpressionStub = StreamEx
+        .of(file.calcStubTree().getPlainList())
+        .select(FunctionalExpressionStub.class)
+        .collect(MoreCollectors.onlyOne())
+        .orElse(null);
+      assertNotNull(functionalExpressionStub);
+      assertEquals(expectedPresentableString, functionalExpressionStub.getPresentableText(), "Comparing with stub based rendering");
 
-    //ast based test
-    final PsiExpression psi = assertInstanceOf(functionalExpressionStub.getPsi(), PsiExpression.class);
-    assertEquals("Comparing with AST based rendering", expectedPresentableString, PsiExpressionTrimRenderer.render(psi));
+      //ast based test
+      final PsiExpression psi = assertInstanceOf(PsiExpression.class, functionalExpressionStub.getPsi());
+      assertEquals(expectedPresentableString, PsiExpressionTrimRenderer.render(psi), "Comparing with AST based rendering");
+    });
   }
 }

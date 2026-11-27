@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -13,40 +15,53 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-@HeavyPlatformTestCase.WrapInCommand
-public class AddClassToFileTest extends JavaPsiTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class AddClassToFileTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void test() throws Exception {
-    VirtualFile root = createTestProjectStructure();
-    PsiDirectory dir = myPsiManager.findDirectory(root);
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    VirtualFile root = fixture.createTestProjectStructure(null);
+    PsiDirectory dir = ReadAction.computeBlocking(() -> fixture.getPsiManager().findDirectory(root));
     assertNotNull(dir);
-    PsiFile file = WriteAction.compute(() -> dir.createFile("AAA.java"));
-    PsiClass aClass = myJavaFacade.getElementFactory().createClass("AAA");
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    PsiFile file = WriteCommandAction.writeCommandAction(fixture.getProject()).compute(() -> dir.createFile("AAA.java"));
+    PsiClass aClass = ReadAction.computeBlocking(() -> fixture.getJavaFacade().getElementFactory().createClass("AAA"));
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
       file.add(aClass);
     });
 
 
-    PsiTestUtil.checkFileStructure(file);
+    ReadAction.runBlocking(() -> PsiTestUtil.checkFileStructure(file));
   }
 
-  public void testFileModified() throws Exception {
-    VirtualFile root = createTestProjectStructure();
-    VirtualFile pkg = createChildDirectory(root, "foo");
-    PsiDirectory dir = myPsiManager.findDirectory(pkg);
+  @Test
+  public void testFileModified() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    VirtualFile root = fixture.createTestProjectStructure(null);
+    VirtualFile pkg = VfsTestUtil.createDir(root, "foo");
+    PsiDirectory dir = ReadAction.computeBlocking(() -> fixture.getPsiManager().findDirectory(pkg));
     assertNotNull(dir);
     String text = "package foo;\n\nclass A {}";
-    PsiElement created = WriteAction
-      .compute(() -> dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText("A.java", JavaFileType.INSTANCE, text)));
-    VirtualFile virtualFile = created.getContainingFile().getVirtualFile();
+    PsiElement created = WriteCommandAction.writeCommandAction(fixture.getProject())
+      .compute(() -> dir.add(PsiFileFactory.getInstance(fixture.getProject()).createFileFromText("A.java", JavaFileType.INSTANCE, text)));
+    VirtualFile virtualFile = ReadAction.computeBlocking(() -> created.getContainingFile().getVirtualFile());
     assertNotNull(virtualFile);
     String fileText = LoadTextUtil.loadText(virtualFile).toString();
     assertEquals(text, fileText);
 
-    Document doc = FileDocumentManager.getInstance().getDocument(virtualFile);
+    Document doc = ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(virtualFile));
     assertNotNull(doc);
     assertFalse(FileDocumentManager.getInstance().isDocumentUnsaved(doc));
     assertFalse(FileDocumentManager.getInstance().isFileModified(virtualFile));

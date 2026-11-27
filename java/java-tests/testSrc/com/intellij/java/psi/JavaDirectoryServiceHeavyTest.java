@@ -15,6 +15,8 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
@@ -22,38 +24,58 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaDirectoryServiceHeavyTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testCreatingEnumInLanguageLevel3Project() {
-    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), LanguageLevel.JDK_1_3);
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_7);
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
 
-    PsiDirectory dir = getPsiManager().findDirectory(myFixture.getTempDirFixture().getFile(""));
-    PsiClass createdEnum = JavaDirectoryService.getInstance().createEnum(dir, "Foo");
-    assertTrue(createdEnum.isEnum());
-    assertEquals(LanguageLevel.JDK_1_7, PsiUtil.getLanguageLevel(createdEnum));
+    VirtualFile tempDir = myFixture.getTempDirFixture().getFile("");
+    PsiDirectory dir = ReadAction.computeBlocking(() -> myFixture.getPsiManager().findDirectory(tempDir));
+    PsiClass createdEnum = EdtTestUtil.runInEdtAndGet(() -> JavaDirectoryService.getInstance().createEnum(dir, "Foo"));
+    ReadAction.runBlocking(() -> {
+      assertTrue(createdEnum.isEnum());
+      assertEquals(LanguageLevel.JDK_1_7, PsiUtil.getLanguageLevel(createdEnum));
+    });
   }
 
+  @Test
   public void testEffectiveLanguageLevelWorksForLibrarySourceRoot() throws Exception {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     TempDirTestFixtureImpl temp = new TempDirTestFixtureImpl();
     temp.setUp();
 
     try {
       VirtualFile root = temp.findOrCreateDir("lib");
-      PsiTestUtil.addLibrary(getModule(), "lib", root.getPath(), new String[]{}, new String[]{""});
+      PsiTestUtil.addLibrary(myFixture.getModule(), "lib", root.getPath(), new String[]{}, new String[]{""});
 
-      IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
-      IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
-      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+      IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), LanguageLevel.JDK_1_3);
+      IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_7);
+      IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
 
-      assertEquals(LanguageLevel.JDK_1_3, JavaDirectoryService.getInstance().getLanguageLevel(getPsiManager().findDirectory(root)));
-      assertEquals(LanguageLevel.JDK_1_3, JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(root));
+      ReadAction.runBlocking(() -> {
+        assertEquals(LanguageLevel.JDK_1_3, JavaDirectoryService.getInstance().getLanguageLevel(myFixture.getPsiManager().findDirectory(root)));
+        assertEquals(LanguageLevel.JDK_1_3, JavaPsiImplementationHelper.getInstance(myFixture.getProject()).getEffectiveLanguageLevel(root));
+      });
     }
     finally {
       temp.tearDown();

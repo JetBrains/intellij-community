@@ -15,7 +15,9 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
-import com.intellij.java.psi.GenericsTestCase;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -23,30 +25,48 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class BindToGenericClassTest extends GenericsTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setupGenericSampleClasses();
-    JavaCodeStyleSettings.getInstance(getProject()).USE_FQ_CLASS_NAMES = true;
+import static com.intellij.java.psi.GenericsFixture.genericsFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class BindToGenericClassTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> genericsFixture = genericsFixture();
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeStyleSettings.getInstance(genericsFixture.get().getProject()).USE_FQ_CLASS_NAMES = true;
   }
 
+  @Test
   public void testReferenceElement() {
-    final JavaPsiFacade manager = getJavaFacade();
-    final PsiClass classA = manager.getElementFactory().createClassFromText("class A extends List<String>{}", null).getInnerClasses()[0];
-    final PsiClass classTestList = manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+    HeavyJavaCodeInsightFixture fixture = genericsFixture.get();
+    final JavaPsiFacade manager = fixture.getJavaFacade();
+    final PsiClass classA = ReadAction.computeBlocking(
+      () -> manager.getElementFactory().createClassFromText("class A extends List<String>{}", null).getInnerClasses()[0]);
+    final PsiClass classTestList = ReadAction.computeBlocking(
+      () -> manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(fixture.getModule())));
     assertNotNull(classTestList);
-    classA.getExtendsList().getReferenceElements()[0].bindToElement(classTestList);
-    assertEquals("class A extends test.List<String>{}", classA.getText());
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(
+      () -> classA.getExtendsList().getReferenceElements()[0].bindToElement(classTestList));
+    assertEquals("class A extends test.List<String>{}", ReadAction.computeBlocking(() -> classA.getText()));
   }
 
+  @Test
   public void testReference() {
-    final JavaPsiFacade manager = getJavaFacade();
-    final PsiExpression psiExpression = manager.getElementFactory().createExpressionFromText("List", null);
-    final PsiClass classTestList = manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+    HeavyJavaCodeInsightFixture fixture = genericsFixture.get();
+    final JavaPsiFacade manager = fixture.getJavaFacade();
+    final PsiExpression psiExpression = ReadAction.computeBlocking(() -> manager.getElementFactory().createExpressionFromText("List", null));
+    final PsiClass classTestList = ReadAction.computeBlocking(
+      () -> manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(fixture.getModule())));
     assertNotNull(classTestList);
-    final PsiElement result = ((PsiReferenceExpression) psiExpression).bindToElement(classTestList);
-    assertEquals("test.List", result.getText());
+    final PsiElement result = WriteCommandAction.writeCommandAction(fixture.getProject()).compute(
+      () -> ((PsiReferenceExpression) psiExpression).bindToElement(classTestList));
+    assertEquals("test.List", ReadAction.computeBlocking(() -> result.getText()));
   }
 }

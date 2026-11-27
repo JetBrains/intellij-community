@@ -16,7 +16,10 @@
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -29,20 +32,30 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class LibraryOrderTest extends JavaPsiTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class LibraryOrderTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void test1() {
     setupPaths();
     checkClassFromLib("test.A", "1");
 
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    final ModifiableRootModel rootModel = ReadAction.computeBlocking(() -> ModuleRootManager.getInstance(heavyFixture.get().getModule()).getModifiableModel());
     final OrderEntry[] order = rootModel.getOrderEntries();
     final int length = order.length;
     OrderEntry lib2 = order[length - 1];
@@ -56,27 +69,32 @@ public class LibraryOrderTest extends JavaPsiTestCase {
     order[length - 2] = lib2;
     rootModel.rearrangeOrderEntries(order);
 
-    ApplicationManager.getApplication().runWriteAction(() -> rootModel.commit()
+    WriteAction.runAndWait(() -> rootModel.commit()
     );
 
     checkClassFromLib("test.A", "2");
   }
 
+  @Test
   public void testNavigation() {
     setupPaths();
-    final PsiClass classA = getJavaFacade().findClass("test.A");
-    final PsiElement navigationElement = classA.getNavigationElement();
-    assertNotNull(navigationElement);
-    assertTrue(navigationElement != classA);
-    assertEquals("A.java", navigationElement.getContainingFile().getVirtualFile().getName());
+    ReadAction.runBlocking(() -> {
+      final PsiClass classA = heavyFixture.get().getJavaFacade().findClass("test.A");
+      final PsiElement navigationElement = classA.getNavigationElement();
+      assertNotNull(navigationElement);
+      assertTrue(navigationElement != classA);
+      assertEquals("A.java", navigationElement.getContainingFile().getVirtualFile().getName());
+    });
   }
 
   private void checkClassFromLib(String qualifiedName, String index) {
-    final PsiClass classA = (PsiClass)getJavaFacade().findClass(qualifiedName).getNavigationElement();
-    assertNotNull(classA);
-    final PsiMethod[] methodsA = classA.getMethods();
-    assertEquals(1, methodsA.length);
-    assertEquals("methodOfClassFromLib" + index, methodsA[0].getName());
+    ReadAction.runBlocking(() -> {
+      final PsiClass classA = (PsiClass)heavyFixture.get().getJavaFacade().findClass(qualifiedName).getNavigationElement();
+      assertNotNull(classA);
+      final PsiMethod[] methodsA = classA.getMethods();
+      assertEquals(1, methodsA.length);
+      assertEquals("methodOfClassFromLib" + index, methodsA[0].getName());
+    });
   }
 
   public void setupPaths() {
@@ -93,7 +111,8 @@ public class LibraryOrderTest extends JavaPsiTestCase {
     addLibraryWithSourcePath("lib1", lib1classes, lib1SrcFile);
     addLibraryWithSourcePath("lib2", lib2classes, lib2SrcFile);
 
-    final List<VirtualFile> list = Arrays.asList(OrderEnumerator.orderEntries(myModule).getClassesRoots());
+    final List<VirtualFile> list =
+      Arrays.asList(ReadAction.computeBlocking(() -> OrderEnumerator.orderEntries(heavyFixture.get().getModule()).getClassesRoots()));
     assertTrue(list.contains(lib1classes));
     assertTrue(list.contains(lib2classes));
   }
@@ -105,8 +124,9 @@ public class LibraryOrderTest extends JavaPsiTestCase {
   }
 
   private void addLibraryWithSourcePath(String name, VirtualFile libClasses, final VirtualFile libSource) {
-    ModuleRootModificationUtil.addModuleLibrary(myModule, name, Collections.singletonList(libClasses.getUrl()),
+    Module module = heavyFixture.get().getModule();
+    ModuleRootModificationUtil.addModuleLibrary(module, name, Collections.singletonList(libClasses.getUrl()),
                                                 Collections.singletonList(libSource.getUrl()));
-    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 }

@@ -2,52 +2,60 @@
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-@HeavyPlatformTestCase.WrapInCommand
-public class NormalizeDeclarationTest extends JavaPsiTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class NormalizeDeclarationTest {
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/normalizeDeclaration";
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return BASE_PATH;
-  }
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(BASE_PATH);
 
-  public void test1() throws Exception { doTest(); }
-  public void test2() throws Exception { doTest(); }
-  public void testCStyleArrayParameterBeforeErrorId() throws Exception { doTest(); }
-  public void testForLoopInitializer() throws Exception { doTest(); }
+  @Test public void test1() { doTest(); }
+  @Test public void test2() { doTest(); }
+  @Test public void testCStyleArrayParameterBeforeErrorId() { doTest(); }
+  @Test public void testForLoopInitializer() { doTest(); }
 
-  public void testSCR6549() throws Exception { doTest(); }
-  public void testSCR9467() throws Exception { doTest(); }
-  public void testSCR9467_1() throws Exception { doTest(); }
+  @Test public void testSCR6549() { doTest(); }
+  @Test public void testSCR9467() { doTest(); }
+  @Test public void testSCR9467_1() { doTest(); }
 
-  private void doTest() throws Exception {
-    PsiElement element = configureByFileWithMarker(BASE_PATH + "/" + getTestName(false) + ".java", "<var>");
+  private void doTest() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Project project = fixture.getProject();
+    PsiElement element = fixture.configureByFileWithMarker("/" + fixture.getTestName(false) + ".java", "<var>");
     assertTrue(element instanceof PsiIdentifier);
-    assertTrue(element.getParent() instanceof PsiVariable);
+    assertTrue(ReadAction.computeBlocking(() -> element.getParent()) instanceof PsiVariable);
 
-    ApplicationManager.getApplication().runWriteAction(() -> ((PsiVariable)element.getParent()).normalizeDeclaration());
+    WriteCommandAction.writeCommandAction(project).run(() -> ((PsiVariable)element.getParent()).normalizeDeclaration());
 
 
-    String textAfter = loadFile(getTestName(false) + "_after.java");
-    ApplicationManager.getApplication().runWriteAction(() -> PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting());
+    String textAfter = fixture.loadFile(fixture.getTestName(false) + "_after.java");
+    WriteCommandAction.writeCommandAction(project).run(() -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting());
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
-    String fileText = myFile.getText();
+    PsiFile myFile = fixture.getFile();
+    String fileText = ReadAction.computeBlocking(() -> myFile.getText());
     assertEquals(textAfter, fileText);
-    PsiTestUtil.checkFileStructure(myFile);
+    ReadAction.runBlocking(() -> PsiTestUtil.checkFileStructure(myFile));
   }
 
 }

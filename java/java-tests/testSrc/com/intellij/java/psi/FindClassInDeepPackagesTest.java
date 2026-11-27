@@ -16,7 +16,10 @@
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -25,16 +28,27 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
-  @Override
-  protected void setUpJdk() {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class FindClassInDeepPackagesTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @BeforeEach
+  void setUp() {
+    ModuleRootModificationUtil.setModuleSdk(heavyFixture.get().getModule(), null);
   }
 
   private void setUpLibrary(final String s) {
+    Module module = heavyFixture.get().getModule();
     final String testRoot = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/deepPackages";
     VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       String path = testRoot + "/" + s;
@@ -42,21 +56,27 @@ public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
       return StandardFileSystems.local().refreshAndFindFileByPath(path);
     });
     assertNotNull(classesRoot);
-    ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    ModuleRootModificationUtil.addModuleLibrary(module, classesRoot.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
+  @Test
   public void testSRC() {
     setUpLibrary("classes");
-    final JavaPsiFacade psiManager = getJavaFacade();
-    final PsiClass classA = psiManager.findClass("a.a.a.a.e.f.i", GlobalSearchScope.moduleWithLibrariesScope(myModule));
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final JavaPsiFacade psiManager = fixture.getJavaFacade();
+    final PsiClass classA = ReadAction.computeBlocking(
+      () -> psiManager.findClass("a.a.a.a.e.f.i", GlobalSearchScope.moduleWithLibrariesScope(fixture.getModule())));
     assertNotNull(classA);
   }
 
+  @Test
   public void test3() {
     setUpLibrary("classes2");
-    final JavaPsiFacade psiManager = getJavaFacade();
-    final PsiClass classA = psiManager.findClass("com.intellij.internal.f.a.b.a.i", GlobalSearchScope.moduleWithLibrariesScope(myModule));
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final JavaPsiFacade psiManager = fixture.getJavaFacade();
+    final PsiClass classA = ReadAction.computeBlocking(
+      () -> psiManager.findClass("com.intellij.internal.f.a.b.a.i", GlobalSearchScope.moduleWithLibrariesScope(fixture.getModule())));
     assertNotNull(classA);
   }
 }
