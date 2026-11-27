@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.project.manage
 import com.intellij.ide.InvalidateCacheService
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
@@ -95,6 +96,31 @@ class ExternalProjectsDataStorageTest : UsefulTestCase() {
     val thenList = then(list)
     thenList.anyMatch { it.externalProjectStructure?.data?.externalName == externalName1 }
     thenList.anyMatch { it.externalProjectStructure?.data?.externalName == externalName2 }
+  }
+
+  @Test
+  fun `test external project data is loaded lazily on demand`() = runBlocking<Unit> {
+    val testSystemId = ProjectSystemId("Test")
+    val externalName = "lazy_external_name"
+    val externalProjectPath = createTempDirectory(externalName).invariantSeparatorsPathString
+
+    val writerStorage = ExternalProjectsDataStorage(myFixture.project)
+    writerStorage.update(createExternalProjectInfo(testSystemId, externalName, externalProjectPath))
+    writerStorage.save()
+
+    myFixture.project.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, null)
+    val readerStorage = ExternalProjectsDataStorage(myFixture.project)
+    val rootProjectsField = ExternalProjectsDataStorage::class.java.getDeclaredField("myExternalRootProjects").apply {
+      isAccessible = true
+    }
+
+    readerStorage.load()
+    then(myFixture.project.getUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES)).isTrue()
+    then(rootProjectsField.get(readerStorage) as Map<*, *>).isEmpty()
+
+    val loadedList = readerStorage.list(testSystemId)
+    then(loadedList).hasSize(1)
+    then(loadedList.single().externalProjectStructure?.data?.externalName).isEqualTo(externalName)
   }
 
   fun `test external project data is marked as broken after invalidating`() = runBlocking {
