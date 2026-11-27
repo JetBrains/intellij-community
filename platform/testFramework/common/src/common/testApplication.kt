@@ -192,6 +192,10 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
       // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
       val timeout = System.getProperty("intellij.testFramework.modules.timeout.seconds", "40").toLong()
       val pluginSet = loadedModuleFuture.asCompletableFuture().get(timeout, TimeUnit.SECONDS)
+      checkNotNull(pluginSet.findEnabledPlugin(PluginManagerCore.CORE_ID)) {
+        "The test application found no core plugin descriptor on the classpath. " +
+        "Give the test module `intellij.platform.monolith.main` and `intellij.idea.community.customization` with the RUNTIME scope."
+      }
       app.registerComponents(descriptors = pluginSet.sequenceResolvedSortedDescriptorsForRegistration(), app = app)
 
       val task = suspend {
