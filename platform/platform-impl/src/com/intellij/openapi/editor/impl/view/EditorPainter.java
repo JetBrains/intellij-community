@@ -780,15 +780,11 @@ public final class EditorPainter implements TextDrawingCallback {
       int y,
       boolean dryRun
     ) {
-      float paintWidth = myFillEndX - myFillStartX;
       if (myHuggingHighlighting && isSelected(cfr)) {
-        paintWidth = cfr.getWidthInPixels();
         backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
-        float start = myFillStartX - (myEditor.isRightAligned() ? myStubWidth : 0.0f);
-        float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : myStubWidth);
-        paintSelectionBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
+        paintSelectionBlock(withStub(x, x + cfr.getWidthInPixels(), y, cfr.getHeightInPixels()));
       } else {
-        paintLayeredBackground(layers, myFillStartX, y, paintWidth, cfr.getHeightInPixels());
+        paintLayeredBackground(layers, myFillStartX, y, myFillEndX - myFillStartX, cfr.getHeightInPixels());
       }
       if (dryRun) {
         return;
