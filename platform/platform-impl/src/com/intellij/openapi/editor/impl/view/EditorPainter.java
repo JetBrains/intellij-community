@@ -309,6 +309,10 @@ public final class EditorPainter implements TextDrawingCallback {
      */
     private final float myStubWidth;
     private final BackgroundFill myBackgroundFill;
+    /**
+     * Gives the background of the selection, or null when the selection sets no background.
+     */
+    private final @Nullable BackgroundLayer mySelectionLayer;
     private boolean myBrokenFragmentRangeReported;
 
     Session(EditorView view, EditorPainterCache cache, EditorCaretPainter caretPainter, Graphics2D g) {
@@ -361,9 +365,15 @@ public final class EditorPainter implements TextDrawingCallback {
       myFillEndX = fillEndX();
       myStubWidth = stubWidth();
       if (myRoundedHighlighting) {
-        myBackgroundFill = new HighlighterVisualModel(myEditor, myYShift, myHuggingHighlighting);
+        myBackgroundFill = new HighlighterVisualModel(myYShift);
       } else {
-        myBackgroundFill = new DirectBackgroundFill(myGraphics, myEditor, myDefaultBackgroundColor, myBackgroundColor);
+        myBackgroundFill = new DirectBackgroundFill(myGraphics, myDefaultBackgroundColor, myBackgroundColor);
+      }
+      Color selectionColor = selectionBackgroundColor();
+      if (selectionColor != null) {
+        mySelectionLayer = BackgroundLayer.selection(selectionColor, myRoundedHighlighting, myHuggingHighlighting);
+      } else {
+        mySelectionLayer = null;
       }
     }
 
@@ -537,8 +547,8 @@ public final class EditorPainter implements TextDrawingCallback {
       );
     }
 
-    private Color selectionBackgroundColor() {
-      return myEditor.getSelectionModel().getTextAttributes().getBackgroundColor();
+    private @Nullable Color selectionBackgroundColor() {
+      return mySelectionModel.getTextAttributes().getBackgroundColor();
     }
 
     /**
@@ -1086,7 +1096,9 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintSelectionBlock(Rectangle2D block) {
-      myBackgroundFill.fillSelectionBlock(block);
+      if (mySelectionLayer != null && block.getWidth() > 0 && !isDefaultBackground(mySelectionLayer.getColor())) {
+        myBackgroundFill.fillBlock(block, mySelectionLayer);
+      }
     }
 
     private void paintBackground(@Nullable TextAttributes attributes, float x, int y, float width, int height) {
@@ -1833,9 +1845,8 @@ public final class EditorPainter implements TextDrawingCallback {
         private @Nullable BackgroundLayer filling;
 
         private MyProcessor(boolean selection) {
-          Color selectionColor = selection ? selectionBackgroundColor() : null;
-          if (selectionColor != null) {
-            top = BackgroundLayer.selection(selectionColor, myRoundedHighlighting, myHuggingHighlighting);
+          if (selection && mySelectionLayer != null) {
+            top = mySelectionLayer;
             if (!top.getHugs()) {
               filling = top;
             }
@@ -2107,11 +2118,8 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       List<BackgroundLayer> layers = new ArrayList<>(2);
       boolean selected = isSelected(foldRegion);
-      if (selected) {
-        Color selectionColor = selectionBackgroundColor();
-        if (selectionColor != null) {
-          layers.add(BackgroundLayer.selection(selectionColor, rounded, myHuggingHighlighting));
-        }
+      if (selected && mySelectionLayer != null) {
+        layers.add(mySelectionLayer);
       }
       Color placeholderColor;
       if (!selected && FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(foldRegion)) {

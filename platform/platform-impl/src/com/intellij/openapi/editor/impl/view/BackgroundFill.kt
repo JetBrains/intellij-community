@@ -23,11 +23,6 @@ internal interface BackgroundFill {
   fun fillBlock(block: Rectangle2D, layer: BackgroundLayer)
 
   /**
-   * Fills one block with the background of the selection.
-   */
-  fun fillSelectionBlock(block: Rectangle2D)
-
-  /**
    * Fills the stub of a line break with these [layers] of the line break. The list starts at the top layer.
    * The stub shows a hugging layer that the fill of the line leaves out. A filling layer above it stays on top.
    */

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view
 
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.GraphicsUtil
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
@@ -24,11 +23,7 @@ import java.util.TreeMap
  * A rectangle outside the clip of the paint gives the corners of its neighbors, and it paints nothing.
  * The model lives for one paint. It keeps no state for the next paint.
  */
-internal class HighlighterVisualModel(
-  private val editor: EditorImpl,
-  private val yShift: Int,
-  private val huggingHighlighting: Boolean,
-) : BackgroundFill {
+internal class HighlighterVisualModel(private val yShift: Int) : BackgroundFill {
   private val rows = BackgroundRows()
   private val styleIds = TreeMap<BackgroundLayer, Int>(BackgroundLayer.STYLE_ORDER)
   private val styles = ArrayList<BackgroundLayer>()
@@ -43,11 +38,6 @@ internal class HighlighterVisualModel(
    * Gives for each background of [fillLineExtensionBackground] the number of rows that the painter added before it.
    */
   private val rowCountsBeforeExtensions = IntArrayList()
-
-  override fun fillSelectionBlock(block: Rectangle2D) {
-    val color = editor.editorModel.selectionModel.textAttributes.backgroundColor ?: return
-    fillBlock(block, BackgroundLayer.selection(color, true, huggingHighlighting))
-  }
 
   /**
    * Adds one block with several [layers]. The list starts at the top layer.

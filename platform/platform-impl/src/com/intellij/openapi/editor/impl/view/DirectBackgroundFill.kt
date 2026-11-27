@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view
 
-import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
@@ -12,7 +11,6 @@ import java.awt.geom.Rectangle2D
  */
 internal class DirectBackgroundFill(
   private val graphics: Graphics2D,
-  private val editor: EditorImpl,
   private val defaultBackground: Color,
   private val background: Color,
 ) : BackgroundFill {
@@ -25,20 +23,6 @@ internal class DirectBackgroundFill(
 
   override fun fillBlock(block: Rectangle2D, layer: BackgroundLayer) {
     fill(block, layer.color)
-  }
-
-  /**
-   * Fills the block from its top at a whole pixel, with a height of whole pixels.
-   */
-  override fun fillSelectionBlock(block: Rectangle2D) {
-    val color = editor.selectionModel.textAttributes.backgroundColor ?: return
-    val rectangle = Rectangle2D.Float(
-      block.x.toFloat(),
-      block.y.toInt().toFloat(),
-      block.width.toFloat(),
-      block.height.toInt().toFloat(),
-    )
-    fill(rectangle, color)
   }
 
   /**
