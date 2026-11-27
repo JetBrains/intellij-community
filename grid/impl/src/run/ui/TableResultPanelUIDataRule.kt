@@ -30,6 +30,7 @@ internal class TableResultPanelUIDataRule : UiDataRule {
 
 internal class InnerEditorsTableResultPanelUIDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    if (snapshot[DatabaseDataKeys.DATA_GRID_KEY] == null) return
     val editor = snapshot[EDITOR] as? EditorEx ?: return
 
     @Suppress("UNCHECKED_CAST") // the cast is safe because java optional doesn't care about nullability
