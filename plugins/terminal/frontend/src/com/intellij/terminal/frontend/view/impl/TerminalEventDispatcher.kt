@@ -256,6 +256,7 @@ private class TerminalEventDispatcher(
       "TW.MoveToNextSplitter",
       "TW.MoveToPreviousSplitter",
       "MoveToolWindowTabToEditorAction",
+      "MoveToolWindowTabFromEditorToToolWindowAction",
       // non-essential terminal actions
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
