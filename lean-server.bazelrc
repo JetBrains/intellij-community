@@ -1,0 +1,31 @@
+# Options to configure the Bazel Server in CI to be stricter in terms of RAM consumption, at the cost of speed of analysis in subsequent
+# runs.
+#
+# See `BAZEL_CI_STARTUP_OPTIONS` in the TeamCity DSL.
+# No workspace `.bazelrc` imports it.
+# It should not be used locally either.
+
+# The server stops after each command.
+#
+# TODO: remove and replace with shutting down the server at appropriated times in TeamCity, the server will have to be stopped
+# TODO:  - after every group of steps that re-used the server (server are shared following some things like working dirs, etc.)
+# TODO:  - at the end of the build configuration that spawned it
+# TODO:  - at worst by a aggressive --max_idle_secs
+startup --batch
+
+# A short-lived server needs less memory than the server of `common.bazelrc`.
+# On the Windows staging run of MRI-5920, 6 GB ran out of memory and 7 GB passed.
+# A `--host_jvm_args=-Xmx` on the command line comes after this one, so the heap of a build that sets its own stays.
+# Keep it in sync with the `-Xmx` of `common.bazelrc`: the heap of `common.bazelrc` minus the size of the analysis cache.
+# Today it is 10 - 3 = 7.
+startup --host_jvm_args=-Xmx7g
+
+# The next command starts a new server, so the state of this one has no use.
+# A `common` line skips an option that the command does not support: `query` and `mod` skip `--discard_analysis_cache`.
+common --notrack_incremental_state
+common --discard_analysis_cache
+common --nokeep_state_after_build
+
+# `cquery` and `aquery` read the analysis, so they need the incremental state.
+cquery --track_incremental_state
+aquery --track_incremental_state
