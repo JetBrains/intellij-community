@@ -6,19 +6,44 @@ import org.junit.Test
 
 class DetektRunnerTest {
     @Test
-    fun `parseOptInAnnotations extracts opt_in list values, deduped and sorted`() {
+    fun `parseJewelModuleDirs returns the folders of the Jewel modules, deduped and sorted`() {
+        val xml =
+            modulesXml(
+                "platform/jewel/ui/intellij.platform.jewel.ui.iml",
+                "platform/jewel/ui/intellij.platform.jewel.ui.tests.iml",
+                "platform/core-api/intellij.platform.core.iml",
+                "platform/jewel/markdown/core/intellij.platform.jewel.markdown.core.iml",
+                "platform/jewelry/intellij.platform.jewelry.iml",
+                "platform/jewel/foundation/intellij.platform.jewel.foundation.iml",
+            )
+
+        assertEquals(
+            listOf("platform/jewel/foundation", "platform/jewel/markdown/core", "platform/jewel/ui"),
+            parseJewelModuleDirs(xml),
+        )
+    }
+
+    @Test
+    fun `parseJewelModuleDirs returns an empty list when no Jewel module is registered`() {
+        val xml = modulesXml("platform/core-api/intellij.platform.core.iml")
+
+        assertEquals(emptyList(), parseJewelModuleDirs(xml))
+    }
+
+    @Test
+    fun `parseOptInAnnotations extracts x_optin list values, deduped and sorted`() {
         val xml =
             """
             <?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <query>
               <rule class="kt_kotlinc_options" name="//platform/jewel/foundation:custom_foundation">
-                <list name="opt_in">
+                <list name="x_optin">
                   <string value="org.jetbrains.jewel.foundation.ExperimentalJewelApi"/>
                   <string value="org.jetbrains.jewel.foundation.InternalJewelApi"/>
                 </list>
               </rule>
               <rule class="kt_kotlinc_options" name="//platform/jewel/ui:custom_ui">
-                <list name="opt_in">
+                <list name="x_optin">
                   <string value="org.jetbrains.jewel.foundation.InternalJewelApi"/>
                   <string value="androidx.compose.ui.ExperimentalComposeUiApi"/>
                 </list>
@@ -43,7 +68,7 @@ class DetektRunnerTest {
     }
 
     @Test
-    fun `parseOptInAnnotations returns an empty list when no opt_in list is present`() {
+    fun `parseOptInAnnotations returns an empty list when no x_optin list is present`() {
         val xml =
             """
             <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -113,5 +138,19 @@ class DetektRunnerTest {
             "androidx.compose.ui.ExperimentalComposeUiApi,org.jetbrains.jewel.foundation.InternalJewelApi",
             result.last(),
         )
+    }
+
+    private fun modulesXml(vararg imlPaths: String): String {
+        val projectDir = "\$PROJECT_DIR\$"
+        val modules =
+            imlPaths.joinToString("\n") { """<module fileurl="file://$projectDir/$it" filepath="$projectDir/$it" />""" }
+        return """<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+$modules
+    </modules>
+  </component>
+</project>"""
     }
 }

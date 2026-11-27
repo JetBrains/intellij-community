@@ -691,6 +691,7 @@ jvm_library(
 # outside this checkout).
 java_binary(
     name = "detekt",
+    jvm_flags = ["--sun-misc-unsafe-memory-access=allow"],
     main_class = "org.jetbrains.jewel.scripts.bazel.DetektRunnerKt",
     runtime_deps = [
         ":detekt-lib",

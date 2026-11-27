@@ -48,7 +48,7 @@ comments:
     allowParamOnConstructorProperties: true
   UndocumentedPublicClass:
     active: true
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
+    excludes: [ '**/test/**', '**/spectreTest/**', '**/e2eTest/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
     searchInNestedClass: true
     searchInInnerClass: true
     searchInInnerObject: true
@@ -58,12 +58,12 @@ comments:
     ignoreAnnotated: [ 'Deprecated', 'InternalJewelApi' ]
   UndocumentedPublicFunction:
     active: true
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
+    excludes: [ '**/test/**', '**/spectreTest/**', '**/e2eTest/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
     searchProtectedFunction: false
     ignoreAnnotated: [ 'Deprecated', 'InternalJewelApi' ]
   UndocumentedPublicProperty:
     active: true
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
+    excludes: [ '**/test/**', '**/spectreTest/**', '**/e2eTest/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/generated/**' ]
     searchProtectedProperty: false
     ignoreAnnotated: [ 'Deprecated', 'InternalJewelApi' ]
 
@@ -91,7 +91,7 @@ coroutines:
 
 exceptions:
   active: true
-  excludes: [ '**/test/**', '**/androidTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
+  excludes: [ '**/test/**', '**/spectreTest/**', '**/e2eTest/**', '**/androidTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
   NotImplementedDeclaration:
     active: true
   ObjectExtendsThrowable:
@@ -101,7 +101,7 @@ performance:
   active: true
   SpreadOperator:
     active: false
-    excludes: [ '**/test/**', '**/androidTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
+    excludes: [ '**/test/**', '**/spectreTest/**', '**/e2eTest/**', '**/androidTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
 
 potential-bugs:
   active: true
@@ -147,7 +147,7 @@ style:
     maxJumpCount: 3
   MagicNumber:
     active: false
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
+    excludes: [ '**/test/**', '**/spectreTest/**', '**/e2eTest/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.Test.kt', '**/*.Spec.kt', '**/*.Spek.kt' ]
     ignoreNumbers: [ '-1', '0', '1', '2' ]
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true

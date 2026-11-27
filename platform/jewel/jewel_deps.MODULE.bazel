@@ -17,8 +17,8 @@ http_file(
 http_file(
     name = "jewel_deps_detekt",
     downloaded_file_path = "detekt.jar",
-    sha256 = "dc71f1eb705fa87abac0d63a5ebb51868d6a6e64bc96eaf56cd2c2a889d2491d",
-    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-cli/2.0.0-alpha.3/detekt-cli-2.0.0-alpha.3-all.jar",
+    sha256 = "d46ca62ea4d62769b5d5c3ba94d49fa9b80ba11c7dba74ddb6df7fcc2c19c5fd",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-cli/2.0.0-alpha.6/detekt-cli-2.0.0-alpha.6-all.jar",
 )
 
 http_file(
@@ -38,15 +38,15 @@ http_file(
 http_file(
     name = "jewel_deps_detekt_test",
     downloaded_file_path = "detekt-test.jar",
-    sha256 = "150d48aa77f83134ec8e40974ad6031bb78e725242fa1f8623b59e5757ca37fb",
-    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-test/2.0.0-alpha.3/detekt-test-2.0.0-alpha.3.jar",
+    sha256 = "9c148c3492d5c4bc9d7801490304bf2105679974f2074680f63ecb37d39248b7",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-test/2.0.0-alpha.6/detekt-test-2.0.0-alpha.6.jar",
 )
 
 http_file(
     name = "jewel_deps_detekt_test_utils",
     downloaded_file_path = "detekt-test-utils.jar",
-    sha256 = "b8135c709a0df679e6cf89215d61f04690ab1f0039a2217954eb9287991592b8",
-    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-test-utils/2.0.0-alpha.3/detekt-test-utils-2.0.0-alpha.3.jar",
+    sha256 = "382dc2f0899f554b6ef3c0f66299e29cb04c772ca5b723c93b0a0ae4957fdf96",
+    url = "https://cache-redirector.jetbrains.com/maven-central/dev/detekt/detekt-test-utils/2.0.0-alpha.6/detekt-test-utils-2.0.0-alpha.6.jar",
 )
 
 # Spectre (JEWEL-1390). Declared here rather than in `lib/MODULE.bazel` so it cannot reach the
