@@ -192,6 +192,18 @@ internal class LspSignatureHelpTest {
     }
 
     @Test
+    fun `Parameter Info after whitespace asks the server once, at the caret`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("signature20.txt", "function(1, $CARET)").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 12), SignatureHelp(listOf(signature("a", "b")), null, 1))
+
+      changingHint { showParameterInfo() }
+
+      assertEquals(1, serverSession.receivedRequests(serverSession.SIGNATURE_HELP).size)
+      assertEquals("<html>function(a, <b>b</b>)</html>", hintText())
+    }
+
+    @Test
     fun `no hint when the server has no signatures`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("signature12.txt", "function(1$CARET)").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)

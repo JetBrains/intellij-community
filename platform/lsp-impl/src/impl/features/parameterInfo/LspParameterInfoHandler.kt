@@ -40,6 +40,10 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     context.showHint(element, context.offset, this)
   }
 
+  // Otherwise the platform moves the offset of an update back over the whitespace before the caret.
+  // The spec asks at the cursor position, and `findElementForParameterInfo` asks at the caret, so the cache answers the update.
+  override fun isWhitespaceSensitive(): Boolean = true
+
   override fun updateParameterInfo(parameterOwner: PsiElement, context: UpdateParameterInfoContext) {
     if (context.parameterOwner != parameterOwner) {
       context.removeHint()
@@ -48,7 +52,6 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     val storedContext = context.objectsToView?.firstOrNull() as? LspParameterInfoContext ?: return
     val virtualFile = context.file.virtualFile?.let { (it as? VirtualFileWindow)?.delegate ?: it } ?: return
     // The hint updates right after it shows, and the cache answers that update with the answer of `findElementForParameterInfo`.
-    // Not when the caret follows whitespace: the platform then moves the offset of the update to before the whitespace.
     val signatureHelp = storedContext.client.requestExecutor.getSignatureHelpCaching(virtualFile, context.offset)
     if (signatureHelp == null || signatureHelp.signatures.isEmpty()) {
       context.removeHint()
