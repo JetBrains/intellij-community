@@ -7,12 +7,11 @@ import java.awt.geom.Rectangle2D
 
 /**
  * Fills each background at once with a straight rectangle at the device pixels.
- * It fills no background of the color [defaultBackground] or [background].
+ * It fills no background that [defaultBackgrounds] gives as a default one.
  */
 internal class DirectBackgroundFill(
   private val graphics: Graphics2D,
-  private val defaultBackground: Color,
-  private val background: Color,
+  private val defaultBackgrounds: DefaultBackgrounds,
 ) : BackgroundFill {
   /**
    * Fills the block with the one layer that the user sees.
@@ -61,7 +60,7 @@ internal class DirectBackgroundFill(
   }
 
   private fun fill(block: Rectangle2D, color: Color) {
-    if (block.width <= 0 || color == defaultBackground || color == background) {
+    if (block.width <= 0 || defaultBackgrounds.isDefault(color)) {
       return
     }
     EditorPainter.fillRectExact(graphics, block, color)

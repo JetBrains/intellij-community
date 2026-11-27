@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
+import com.intellij.openapi.editor.impl.view.DefaultBackgrounds;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
@@ -308,9 +309,7 @@ public final class ImmediatePainter {
    * Says that the lexer gives this color as a background that differs from the background of the editor.
    */
   private static boolean isSyntaxBackground(EditorImpl editor, @Nullable Color color) {
-    return color != null
-           && !color.equals(editor.getColorsScheme().getDefaultBackground())
-           && !color.equals(editor.getBackgroundColor());
+    return color != null && !DefaultBackgrounds.of(editor).isDefault(color);
   }
 
   /**

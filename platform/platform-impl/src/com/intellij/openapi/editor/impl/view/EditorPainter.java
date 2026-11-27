@@ -272,7 +272,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final int myAscent;
     private final int myDescent;
     private final EditorColorsScheme myColorsScheme;
-    private final Color myDefaultBackgroundColor;
+    private final DefaultBackgrounds myDefaultBackgrounds;
     private final Color myBackgroundColor;
     private final int myMarginColumns;
     private final ScaleContext myScaleContext;
@@ -349,7 +349,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myAscent = myViewSnapshot.ascent();
       myDescent = myViewSnapshot.descent();
       myColorsScheme = myEditor.getColorsScheme();
-      myDefaultBackgroundColor = myColorsScheme.getDefaultBackground();
+      myDefaultBackgrounds = DefaultBackgrounds.of(myEditor);
       myBackgroundColor = myEditor.getBackgroundColor();
       myMarginColumns = mySettings.getRightMargin();
       myScaleContext = ScaleContext.create(myGraphics);
@@ -367,7 +367,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (myRoundedHighlighting) {
         myBackgroundFill = new HighlighterVisualModel(myYShift);
       } else {
-        myBackgroundFill = new DirectBackgroundFill(myGraphics, myDefaultBackgroundColor, myBackgroundColor);
+        myBackgroundFill = new DirectBackgroundFill(myGraphics, myDefaultBackgrounds);
       }
       Color selectionColor = mySelectionModel.getTextAttributes().getBackgroundColor();
       if (selectionColor != null) {
@@ -784,7 +784,7 @@ public final class EditorPainter implements TextDrawingCallback {
       betweenLinesAttributes.put(visualLine, attributes);
       if (topLayer != null && topLayer.getHugs()) {
         paintBackgroundLayer(layers.filling(), myFillStartX, top, myFillEndX - myFillStartX, bottom - top);
-        if (isDefaultBackground(topLayer.getColor())) {
+        if (myDefaultBackgrounds.isDefault(topLayer.getColor())) {
           return;
         }
         for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
@@ -855,7 +855,7 @@ public final class EditorPainter implements TextDrawingCallback {
         return;
       }
       regionLayers.sort(Comparator.reverseOrder());
-      int count = visibleLayerCount(regionLayers);
+      int count = myDefaultBackgrounds.visibleCount(regionLayers);
       if (count > 0 && regionLayers.getFirst().getHugs()) {
         backgroundAttributes.setBackgroundColor(regionLayers.getFirst().getColor());
       }
@@ -998,7 +998,7 @@ public final class EditorPainter implements TextDrawingCallback {
      * Paints the {@code stub} with these layers of a line break, when one of them hugs.
      */
     private void paintStub(List<BackgroundLayer> breakLayers, Rectangle2D stub) {
-      int count = visibleLayerCount(breakLayers);
+      int count = myDefaultBackgrounds.visibleCount(breakLayers);
       List<BackgroundLayer> layers = breakLayers.subList(0, count);
       if (ContainerUtil.exists(layers, BackgroundLayer::getHugs)) {
         myBackgroundFill.fillStub(stub, layers);
@@ -1071,10 +1071,6 @@ public final class EditorPainter implements TextDrawingCallback {
       paintSelectionBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
     }
 
-    private boolean isDefaultBackground(Color color) {
-      return color.equals(myDefaultBackgroundColor) || color.equals(myBackgroundColor);
-    }
-
     private void paintLayeredBackground(List<BackgroundLayer> layers, float x, int y, float width) {
       paintLayeredBackground(layers, x, y, width, myLineHeight);
     }
@@ -1083,33 +1079,22 @@ public final class EditorPainter implements TextDrawingCallback {
       if (width <= 0) {
         return;
       }
-      int count = visibleLayerCount(layers);
+      int count = myDefaultBackgrounds.visibleCount(layers);
       if (count == 0) {
         return;
       }
       myBackgroundFill.fillLayeredBlock(new Rectangle2D.Float(x, y, width, height), layers.subList(0, count));
     }
 
-    /**
-     * Gives the number of layers that the user can see: the layers without the tail of the default background.
-     */
-    private int visibleLayerCount(List<BackgroundLayer> layers) {
-      int count = layers.size();
-      while (count > 0 && isDefaultBackground(layers.get(count - 1).getColor())) {
-        count--;
-      }
-      return count;
-    }
-
     private void paintBackgroundLayer(@Nullable BackgroundLayer layer, float x, int y, float width, int height) {
-      if (layer == null || width <= 0 || isDefaultBackground(layer.getColor())) {
+      if (layer == null || width <= 0 || myDefaultBackgrounds.isDefault(layer.getColor())) {
         return;
       }
       myBackgroundFill.fillBlock(new Rectangle2D.Float(x, y, width, height), layer);
     }
 
     private void paintSelectionBlock(Rectangle2D block) {
-      if (mySelectionLayer != null && block.getWidth() > 0 && !isDefaultBackground(mySelectionLayer.getColor())) {
+      if (mySelectionLayer != null && block.getWidth() > 0 && !myDefaultBackgrounds.isDefault(mySelectionLayer.getColor())) {
         myBackgroundFill.fillBlock(block, mySelectionLayer);
       }
     }
@@ -1118,7 +1103,7 @@ public final class EditorPainter implements TextDrawingCallback {
      * Paints the background of the prefix text at once, with straight corners. It takes no part in the rounded shapes.
      */
     private void paintPrefixBackground(@Nullable Color color, float x, int y, float width) {
-      if (width <= 0 || color == null || isDefaultBackground(color)) {
+      if (width <= 0 || color == null || myDefaultBackgrounds.isDefault(color)) {
         return;
       }
       fillRectExact(myGraphics, new Rectangle2D.Float(x, y, width, myLineHeight), color);
@@ -1444,7 +1429,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintLineExtensionBackground(Color color, float x, int y, float width) {
-      if (width > 0 && color != null && !isDefaultBackground(color)) {
+      if (width > 0 && color != null && !myDefaultBackgrounds.isDefault(color)) {
         myBackgroundFill.fillLineExtensionBackground(new Rectangle2D.Float(x, y, width, myLineHeight), color);
       }
     }
@@ -1492,7 +1477,7 @@ public final class EditorPainter implements TextDrawingCallback {
         effects.add(() -> paintEffectsAfterEndOfLine(attributes, x, y));
       }
       Color color = attributes.getBackgroundColor();
-      if (color == null || isDefaultBackground(color)) return;
+      if (color == null || myDefaultBackgrounds.isDefault(color)) return;
       float width = myViewSnapshot.plainSpaceWidth();
       BackgroundLayer layer = BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting, myHuggingHighlighting);
       myBackgroundFill.fillAfterLineEndBox(new Rectangle2D.Float(x, y, width, myLineHeight), layer);
