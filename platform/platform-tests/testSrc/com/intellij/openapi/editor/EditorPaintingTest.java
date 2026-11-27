@@ -172,6 +172,35 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testFoldPlaceholderOnCaretRowRounded() {
+    runWithLook(true, false, () -> {
+      myFixture.initText("abcd x<caret>y\nmn");
+      myFixture.getEditor().getColorsScheme().setAttributes(
+        EditorColors.FOLDED_TEXT_ATTRIBUTES,
+        new TextAttributes(null, Color.lightGray, null, null, Font.PLAIN)
+      );
+      myFixture.addCollapsedFoldRegion(0, 4, "....");
+      checkResult();
+    });
+  }
+
+  @Test
+  public void testFoldPlaceholdersOnStraightBackgroundsRounded() {
+    runWithLook(true, false, () -> {
+      myFixture.initText("abcd xy\n\nabcd x<caret>y\n\nabcd xy");
+      myFixture.getEditor().getColorsScheme().setAttributes(
+        EditorColors.FOLDED_TEXT_ATTRIBUTES,
+        new TextAttributes(null, Color.lightGray, null, null, Font.PLAIN)
+      );
+      myFixture.addCollapsedFoldRegion(0, 4, "....");
+      myFixture.addCollapsedFoldRegion(9, 13, "....");
+      myFixture.addCollapsedFoldRegion(18, 22, "....");
+      myFixture.getEditor().getMarkupModel().addLineHighlighter(4, 0, new TextAttributes(null, Color.green, null, null, Font.PLAIN));
+      checkResult();
+    });
+  }
+
+  @Test
   public void testIndentGuideStartingAtInlineFold() {
     myFixture.runTest(() -> {
       myFixture.initText("  - parent\n    child\n    child\n  next");

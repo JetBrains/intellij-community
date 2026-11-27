@@ -316,6 +316,11 @@ public final class EditorPainter implements TextDrawingCallback {
      * Holds the layers of one custom fold region while {@link #paintHuggingRegion} paints it.
      */
     private final List<BackgroundLayer> myRegionLayers = new ArrayList<>();
+    /**
+     * Iterates forward over the full-line backgrounds of the visited lines for {@link #fullLineLayersAt}.
+     * It is null until the first call.
+     */
+    private @Nullable IterationState myFullLineState;
     private boolean myBrokenFragmentRangeReported;
 
     Session(EditorView view, EditorPainterCache cache, EditorCaretPainter caretPainter, Graphics2D g) {
@@ -2157,7 +2162,41 @@ public final class EditorPainter implements TextDrawingCallback {
       if (placeholderColor != null) {
         layers.add(BackgroundLayer.foldPlaceholder(placeholderColor, rounded));
       }
+      if (rounded) {
+        addStraightLayersAtStart(foldRegion, layers);
+      }
       return layers;
+    }
+
+    /**
+     * Adds the straight backgrounds at the start of {@code foldRegion} below the {@code layers} of its placeholder.
+     * These are the caret row and the line highlighters.
+     */
+    private void addStraightLayersAtStart(FoldRegion foldRegion, List<BackgroundLayer> layers) {
+      List<BackgroundLayer> startLayers = fullLineLayersAt(foldRegion.getStartOffset());
+      for (int i = 0; i < startLayers.size(); i++) {
+        BackgroundLayer layer = startLayers.get(i);
+        if (!layer.isRounded()) {
+          layers.add(layer);
+        }
+      }
+    }
+
+    /**
+     * Gives the backgrounds at {@code offset} of the selection, the caret row and the line highlighters.
+     * The calls are cheap while their offsets grow.
+     */
+    private @NotNull List<BackgroundLayer> fullLineLayersAt(int offset) {
+      IterationState state = myFullLineState;
+      if (state == null || offset < state.getStartOffset() || state.atEnd()) {
+        int end = Math.max(offset, myView.visualLineToOffset(myLastVisitedLine + 1));
+        state = new IterationState(myEditor, offset, end, myCaretData, true, false, false, false);
+        myFullLineState = state;
+      }
+      while (state.getEndOffset() <= offset && !state.atEnd()) {
+        state.advance();
+      }
+      return state.getBackgroundLayers();
     }
 
     private @Nullable Color getFoldedTextBackground(FoldRegion foldRegion) {
