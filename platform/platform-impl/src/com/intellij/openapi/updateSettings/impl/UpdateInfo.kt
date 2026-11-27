@@ -117,8 +117,8 @@ class PatchInfo internal constructor(node: Element) {
 @Internal
 class DistributionInfo(val product: String, val manifestUrl: String, val fileUrl: String)
 
-// the `os` values of the systems where the IDE can install and start the distribution: macOS and Windows
-private val MIGRATION_OS = setOf("mac", "win")
+// the `os` values of the systems where the IDE can install and start the distribution: macOS, Windows and Linux
+private val MIGRATION_OS = setOf("mac", "win", "unix")
 private val ARCH_SUFFIX: String by lazy { distributionArchSuffix() }
 
 /**
@@ -144,9 +144,10 @@ fun distributionArchSuffix(
 }
 
 /**
- * Returns `null` when [isMigrationDisabled] is true, when the element is not valid, when [os] is not macOS or Windows,
+ * Returns `null` when [isMigrationDisabled] is true, when the element is not valid, when [os] is not macOS, Windows or Linux,
  * or when the element has no file for [os] and [arch].
  * The update then works as if the element did not exist.
+ * The `unix` value of [os] is also the value of the other Unix systems, so it is accepted only when [currentOs] is Linux.
  */
 @Internal
 fun parseDistribution(
@@ -154,6 +155,7 @@ fun parseDistribution(
   os: String = PatchInfo.OS_SUFFIX,
   arch: String = ARCH_SUFFIX,
   isMigrationDisabled: Boolean = MigrationKillSwitch.isActive(),
+  currentOs: OS = OS.CURRENT,
 ): DistributionInfo? {
   fun invalid(reason: String): DistributionInfo? {
     logger<DistributionInfo>().info("ignored <distribution>: ${reason}")
@@ -161,7 +163,9 @@ fun parseDistribution(
   }
 
   if (isMigrationDisabled) return null
-  if (os !in MIGRATION_OS) return invalid("the migration works only on macOS and Windows")
+  if (os !in MIGRATION_OS || os == "unix" && currentOs != OS.Linux) {
+    return invalid("the migration works only on macOS, Windows and Linux")
+  }
   val product = node.getAttributeValue("product")?.takeIf { it.isNotBlank() } ?: return invalid("no 'product'")
   val manifestUrl = node.getAttributeValue("manifest")?.takeIf { it.isNotBlank() } ?: return invalid("no 'manifest'")
   val fileUrl = node.getChildren("file")

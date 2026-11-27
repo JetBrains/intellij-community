@@ -18,7 +18,8 @@ import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
 /**
- * A `<distribution>` element with a macOS file and a Windows file for each CPU. Only macOS and Windows read the element.
+ * A `<distribution>` element with a macOS file, a Windows file and a Linux file for each CPU.
+ * Only macOS, Windows and Linux read the element.
  * A `null` [product] makes the element invalid.
  */
 internal fun distributionXml(product: String? = "JB"): String {
@@ -26,6 +27,7 @@ internal fun distributionXml(product: String? = "JB"): String {
     listOf(
       """<file os="mac" arch="${arch}" url="https://download.jetbrains.com/unified-ide/unified-ide-${arch}.dmg"/>""",
       """<file os="win" arch="${arch}" url="https://download.jetbrains.com/unified-ide/unified-ide-${arch}.exe"/>""",
+      """<file os="unix" arch="${arch}" url="https://download.jetbrains.com/unified-ide/unified-ide-${arch}.tar.gz"/>""",
     )
   }
   return """

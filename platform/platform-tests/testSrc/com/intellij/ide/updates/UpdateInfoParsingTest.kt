@@ -169,7 +169,14 @@ class UpdateInfoParsingTest {
 
       assertNull(builds[1].distribution)
     }
-    assertNull(parseUpdateData(updateData, "GO", distributionOs = "unix")!!.channels[0].builds[0].distribution)
+    // `unix` is also the value of the other Unix systems, and only Linux reads the element
+    val unixDistribution = parseUpdateData(updateData, "GO", distributionOs = "unix")!!.channels[0].builds[0].distribution
+    if (OS.CURRENT == OS.Linux) {
+      assertTrue(unixDistribution!!.fileUrl, unixDistribution.fileUrl.endsWith(".tar.gz"))
+    }
+    else {
+      assertNull(unixDistribution)
+    }
   }
 
   @Test
@@ -218,8 +225,26 @@ class UpdateInfoParsingTest {
         <file os="win" arch="x64" url="https://download.jetbrains.com/unified-ide.exe"/>
         <file os="unix" arch="x64" url="https://download.jetbrains.com/unified-ide.tar.gz"/>
       </distribution>""".trimIndent())
-    assertNull(parseDistribution(distribution, os = "unix", arch = "x64"))
+    for (os in OS.entries - OS.Linux) {
+      assertNull(os.name, parseDistribution(distribution, os = "unix", arch = "x64", currentOs = os))
+    }
     assertNull(parseDistribution(distribution, os = "unknown", arch = "x64"))
+    assertNull(parseDistribution(distribution, os = "unknown", arch = "x64", currentOs = OS.Linux))
+  }
+
+  @Test
+  fun distributionOnLinux() {
+    val distribution = JDOMUtil.load("""
+      <distribution product="JB" manifest="https://www.jetbrains.com/m.json">
+        <file os="win" arch="x64" url="https://download.jetbrains.com/unified-ide.exe"/>
+        <file os="unix" arch="x64" url="https://download.jetbrains.com/unified-ide.tar.gz"/>
+        <file os="unix" arch="aarch64" url="https://download.jetbrains.com/unified-ide-aarch64.tar.gz"/>
+      </distribution>""".trimIndent())
+    assertEquals("https://download.jetbrains.com/unified-ide.tar.gz",
+                 parseDistribution(distribution, os = "unix", arch = "x64", currentOs = OS.Linux)?.fileUrl)
+    assertEquals("https://download.jetbrains.com/unified-ide-aarch64.tar.gz",
+                 parseDistribution(distribution, os = "unix", arch = "aarch64", currentOs = OS.Linux)?.fileUrl)
+    assertNull(parseDistribution(distribution, os = "unix", arch = "x64", isMigrationDisabled = true, currentOs = OS.Linux))
   }
 
   @Test
