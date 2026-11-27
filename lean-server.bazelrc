@@ -10,7 +10,7 @@
 # TODO: remove and replace with shutting down the server at appropriated times in TeamCity, the server will have to be stopped
 # TODO:  - after every group of steps that re-used the server (server are shared following some things like working dirs, etc.)
 # TODO:  - at the end of the build configuration that spawned it
-# TODO:  - at worst by a aggressive --max_idle_secs
+# TODO:  - at worst by an aggressive --max_idle_secs flag
 startup --batch
 
 # A short-lived server needs less memory than the server of `common.bazelrc`.
