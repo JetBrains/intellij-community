@@ -613,13 +613,26 @@ public final class IterationState {
   }
 
   private boolean isInDocumentGuardedBlock(boolean atBreak, boolean beforeBreak) {
-    if (myGuardedBlocks == null || (atBreak && beforeBreak)) {
+    if (myGuardedBlocks == null) {
       return false;
+    }
+    if (atBreak && beforeBreak) {
+      return isSoftWrapGuarded();
     }
     if (myReverseIteration) {
       return myGuardedBlocks.isGuarded(myStartOffset - 1);
     }
     return myGuardedBlocks.isGuarded(myStartOffset);
+  }
+
+  /**
+   * Says that a guarded block holds both sides of the soft wrap at the current offset.
+   */
+  private boolean isSoftWrapGuarded() {
+    return !myReverseIteration
+           && myStartOffset > 0
+           && myGuardedBlocks.isGuarded(myStartOffset - 1)
+           && myGuardedBlocks.isGuarded(myStartOffset);
   }
 
   private static boolean lessThan(int x, int y, boolean orEquals) {

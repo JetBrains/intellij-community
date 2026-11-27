@@ -582,6 +582,46 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   /**
+   * Gives the color at {@code x} in the middle of visual line 0, with a guarded block from {@code start} to {@code end}
+   * over the soft wrap after "ab ".
+   */
+  private int colorPastSoftWrap(int start, int end, int x) throws IOException {
+    myFixture.initText("ab cdefghij");
+    configureSoftWraps(8);
+    myFixture.getEditor().getDocument().createGuardedBlock(start, end);
+    BufferedImage image = paintEditor(false, null, null);
+    return image.getRGB(x, myFixture.getEditor().visualLineToYRange(0)[0] + 7);
+  }
+
+  private int guardRgb() {
+    return myFixture.getEditor().getColorsScheme().getColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR).getRGB();
+  }
+
+  @Test
+  public void testGuardedBlockAcrossSoftWrapHugging() {
+    runWithLook(false, true, () -> {
+      int color = colorPastSoftWrap(1, 5, 35);
+      assertEquals(guardRgb(), color, "the stub at the soft wrap");
+    });
+  }
+
+  @Test
+  public void testGuardedBlockAcrossSoftWrapFilling() {
+    runWithLook(false, false, () -> {
+      int color = colorPastSoftWrap(1, 5, 45);
+      assertEquals(guardRgb(), color, "the fill after the soft wrap");
+    });
+  }
+
+  @Test
+  public void testGuardedBlockEndingAtSoftWrapHasNoStub() {
+    runWithLook(false, true, () -> {
+      int color = colorPastSoftWrap(1, 3, 35);
+      assertNotEquals(guardRgb(), color, "the stub at the soft wrap");
+    });
+  }
+
+  /**
    * Runs {@code test} with the rounding option {@code rounded} and the hugging look {@code hugging}.
    */
   private void runWithLook(boolean rounded, boolean hugging, ThrowableRunnable<Exception> test) {
