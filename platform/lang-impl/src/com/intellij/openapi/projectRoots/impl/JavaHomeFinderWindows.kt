@@ -2,10 +2,7 @@
 @file:Suppress("ConvertSecondaryConstructorToPrimary")
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
@@ -64,7 +61,6 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
   @JvmOverloads
   constructor(
     registeredJdks: Boolean,
-    wslJdks: Boolean,
     systemInfoProvider: JavaHomeFinder.SystemInfoProvider,
     processRunner: (cmd: List<String>) -> CharSequence = { cmd -> WindowsRegistryUtil.readRegistry(cmd.joinToString(" ")) },
   ) : super(systemInfoProvider) {
@@ -82,31 +78,6 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       }
     }
     registerFinder(this::guessPossibleLocations)
-    if (wslJdks) {
-      val installedDistributions = try {
-        WslDistributionManager.getInstance().installedDistributions
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (t: Throwable) {
-        thisLogger().warn(IllegalStateException("Unable to get WSL distributions list: ${t.message}", t))
-        emptyList()
-      }
-
-      for (distro in installedDistributions) {
-        try {
-          val wslFinder = JavaHomeFinderWsl(distro)
-          registerFinder { wslFinder.findExistingJdks() }
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (t: Throwable) {
-          thisLogger().warn(IllegalStateException("Unable to connect to WSL distribution '${distro.id}': ${t.message}", t))
-        }
-      }
-    }
   }
 
   private fun readRegisteredLocationsOS64J64() = readRegisteredLocations(Bitness.x64)

@@ -330,7 +330,7 @@ public class JavaHomeFinderBasic {
       if (localAppData != null) return localAppData;
       localAppData = getPathInUserHome("AppData/Local/mise/installs");
       if (localAppData != null && safeIsDirectory(localAppData)) return localAppData;
-    } else if (!(this instanceof JavaHomeFinderWsl)) {
+    } else {
       // Unix and macOS
       Path installsDir = getPathInUserHome(".local/share/mise/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
@@ -442,7 +442,7 @@ public class JavaHomeFinderBasic {
     if (asdfDataDirInstalls != null) return asdfDataDirInstalls;
 
     // finally, try the usual location in Unix or macOS
-    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+    if (!(this instanceof JavaHomeFinderWindows)) {
       Path installsDir = getPathInUserHome(".asdf/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }

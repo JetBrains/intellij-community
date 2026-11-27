@@ -114,7 +114,6 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
     is EelPlatform.Windows ->
       JavaHomeFinderWindows(
         registeredJdks = true,
-        wslJdks = false,
         systemInfoProvider = systemInfoProvider,
         processRunner = { cmd ->
           runBlockingMaybeCancellable {

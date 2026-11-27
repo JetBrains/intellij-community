@@ -52,7 +52,7 @@ class JavaHomeFinderWindowsTest {
       override fun getUserHome(): Path = tempDir.root.toPath().resolve("home")
       override fun getFsRoots(): Collection<Path> = listOf(fsRoot)
     }
-    val finder = JavaHomeFinderWindows(registeredJdks = false, wslJdks = false, systemInfoProvider = systemInfo, processRunner = { "" })
+    val finder = JavaHomeFinderWindows(registeredJdks = false, systemInfoProvider = systemInfo, processRunner = { "" })
 
     assertThat(finder.findExistingJdks()).containsExactly(jdkHome.toAbsolutePath().toString())
   }
