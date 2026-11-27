@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.options.OptHorizontalStack
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
@@ -31,7 +32,8 @@ class EditInspectionOptionsModCommandAction(private val toolId: String) : ModCom
 
   override fun getPresentation(context: ActionContext): Presentation? {
     val toolWrapper = findToolWrapper(context.file()) ?: return null
-    if (toolWrapper.tool.optionsPane == OptPane.EMPTY) return null
+    val pane = toolWrapper.tool.optionsPane
+    if (isEmpty(pane)) return null
     return Presentation.of(InspectionsBundle.message("edit.inspection.options", toolWrapper.displayName))
   }
 
@@ -43,12 +45,15 @@ class EditInspectionOptionsModCommandAction(private val toolId: String) : ModCom
   override fun perform(context: ActionContext): ModCommand {
     val file = context.file()
     val toolWrapper = findToolWrapper(file) ?: return ModCommand.nop()
-    if (toolWrapper.tool.optionsPane == OptPane.EMPTY) return ModCommand.nop()
+    val pane = toolWrapper.tool.optionsPane
+    if (isEmpty(pane)) return ModCommand.nop()
     return ModCommand.editOptions(file, InspectionsBundle.message("edit.inspection.options", toolWrapper.displayName), {
       val toolWrapper = checkNotNull(findToolWrapper(file)) { "Tool not found: ${toolId}" }
       getToolCopy(file, toolWrapper.tool)
     }, false, ::updateOptions)
   }
+
+  private fun isEmpty(pane: OptPane): Boolean = pane.components.all { it is OptHorizontalStack && it.children.isEmpty() }
 
   private fun findToolWrapper(file: PsiFile): InspectionToolWrapper<*, *>? {
     val profile = InspectionProjectProfileManager.getInstance(file.project).currentProfile
