@@ -3,14 +3,14 @@ package com.intellij.database.csv.ui;
 import com.intellij.database.csv.ui.preview.CsvFormatPreview;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.ui.components.JBPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JPanel;
 import java.awt.BorderLayout;
 
 import static com.intellij.database.csv.CsvFormatEditor.CSV_FORMAT_EDITOR_KEY;
 
-public class FormatsListAndPreviewPanel extends JPanel implements UiDataProvider {
+public class FormatsListAndPreviewPanel extends JBPanel<FormatsListAndPreviewPanel> implements UiDataProvider {
   private final CsvFormatsUI myList;
 
   public FormatsListAndPreviewPanel(@NotNull CsvFormatsUI formatsList, @NotNull CsvFormatPreview preview) {

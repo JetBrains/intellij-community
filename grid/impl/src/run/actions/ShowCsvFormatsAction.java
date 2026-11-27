@@ -49,7 +49,7 @@ public class ShowCsvFormatsAction extends DumbAwareAction {
     DialogBuilder builder = new DialogBuilder(getEventProject(e))
       .title(DataGridBundle.message("dialog.title.csv.formats"))
       .dimensionKey(getClass().getName())
-      .centerPanel(component.getComponent());
+      .centerPanel(component.getComponent().withPreferredWidth(800));
     builder.setHelpId(HelpID.DATA_EXTRACTORS);
     builder.addDisposable(disposable);
 
