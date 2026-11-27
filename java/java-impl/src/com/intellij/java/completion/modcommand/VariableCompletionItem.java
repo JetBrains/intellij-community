@@ -2,6 +2,7 @@
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.codeInsight.JavaTailTypes;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.MemberLookupHelper;
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -61,13 +63,19 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
   private final PsiSubstitutor mySubstitutor;
   private final @Nullable PsiClass myQualifierClass;
   private final double myPriority;
+  /**
+   * True if {@link #update} does nothing, so {@link #getTextToInsert} can return the simple text.
+   * It is computed in {@link #qualifyIfNeeded}.
+   */
+  private final boolean mySimpleInsertion;
 
   VariableCompletionItem(PsiVariable var) {
-    this(var, null, null, PsiSubstitutor.EMPTY, null, 0);
+    this(var, null, null, PsiSubstitutor.EMPTY, null, 0, false);
   }
 
   VariableCompletionItem(PsiField field, boolean shouldImport) {
-    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false), null, PsiSubstitutor.EMPTY, null, 0);
+    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false), null, PsiSubstitutor.EMPTY, null, 0,
+         false);
   }
 
   /**
@@ -75,7 +83,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
    * @param tailText specific tail text to insert (initializer text is used if not specified)
    */
   VariableCompletionItem(PsiVariable var, @Nls String tailText) {
-    this(var, null, tailText, PsiSubstitutor.EMPTY, null, -1);
+    this(var, null, tailText, PsiSubstitutor.EMPTY, null, -1, false);
   }
 
   private VariableCompletionItem(PsiVariable var,
@@ -83,7 +91,8 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
                                  @Nullable @Nls String tailText,
                                  PsiSubstitutor substitutor,
                                  @Nullable PsiClass qualifierClass, 
-                                 double priority) {
+                                 double priority,
+                                 boolean simpleInsertion) {
     super(Objects.requireNonNull(var.getName()), var);
     myHelper = helper;
     myPriority = priority;
@@ -91,12 +100,21 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
     myNegatable = TypeConversionUtil.isBooleanType(var.getType());
     mySubstitutor = substitutor;
     myQualifierClass = qualifierClass;
+    mySimpleInsertion = simpleInsertion;
   }
 
   public VariableCompletionItem withSubstitutor(PsiSubstitutor substitutor) {
-    return new VariableCompletionItem(contextObject(), myHelper, myTailText, substitutor, myQualifierClass, 0);
+    return new VariableCompletionItem(contextObject(), myHelper, myTailText, substitutor, myQualifierClass, 0, mySimpleInsertion);
   }
 
+  /**
+   * Adds a qualifier if the field needs it at the given position.
+   * Also checks whether {@link #update} does nothing at the given position. Then the result inserts the simple text.
+   *
+   * @param position the reference at the completion position
+   * @param origClass the class to use as a qualifier, if it is accessible
+   * @return the item for the given position
+   */
   @ApiStatus.Internal
   public VariableCompletionItem qualifyIfNeeded(@Nullable PsiReference position, @Nullable PsiClass origClass) {
     PsiVariable var = contextObject();
@@ -110,10 +128,33 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
         aClass = origClass;
       }
       if (aClass != null && aClass.getName() != null) {
-        return new VariableCompletionItem(var, myHelper, myTailText, mySubstitutor, aClass, 0);
+        return new VariableCompletionItem(var, myHelper, myTailText, mySubstitutor, aClass, 0, false);
       }
     }
+    else if (!mySimpleInsertion && isSimpleInsertion(position)) {
+      return new VariableCompletionItem(var, myHelper, myTailText, mySubstitutor, myQualifierClass, myPriority, true);
+    }
     return this;
+  }
+
+  /**
+   * @param position the reference at the completion position. If the variable is a field,
+   *                 {@link VariableLookupItem#shouldQualify} must return false for it.
+   * @return true if {@link #update} does nothing at the given position
+   */
+  private boolean isSimpleInsertion(@Nullable PsiReference position) {
+    if (shouldImport() || myQualifierClass != null) return false;
+    if (!(position instanceof PsiReferenceExpression ref) || ref.isQualified()) return false;
+    if (PsiTreeUtil.getParentOfType(ref, PsiSwitchLabelStatementBase.class) != null) return false;
+    PsiVariable var = contextObject();
+    // VariableLookupItem.shouldQualify has already resolved the name of a field
+    if (var instanceof PsiField) return true;
+    PsiVariable target = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper().resolveReferencedVariable(mainLookupString(), ref);
+    if (target == null ||
+        !ref.getManager().areElementsEquivalent(CompletionUtil.getOriginalOrSelf(target), CompletionUtil.getOriginalOrSelf(var))) {
+      return false;
+    }
+    return !PsiUtil.isJvmLocalVariable(target) || PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, ref);
   }
   
   private boolean shouldImport() {
@@ -141,6 +182,18 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
     String className = myQualifierClass.getName();
     if (className == null) return null;
     return contextObject().hasModifierProperty(PsiModifier.STATIC) ? className + "." : className + ".this.";
+  }
+
+  @Override
+  protected @Nullable String getTextToInsert(ActionContext actionContext, InsertionContext insertionContext) {
+    if (!mySimpleInsertion) return null;
+    if (insertionContext.mode() == InsertionMode.INSERT) {
+      // The identifier after the insertion must be the variable name
+      CharSequence text = actionContext.file().getFileDocument().getCharsSequence();
+      int end = actionContext.selection().getEndOffset();
+      if (end < text.length() && Character.isJavaIdentifierPart(text.charAt(end))) return null;
+    }
+    return getLookupStringWithCompletionChar(insertionContext);
   }
 
   @Override

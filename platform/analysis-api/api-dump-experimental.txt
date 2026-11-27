@@ -405,8 +405,10 @@ com.intellij.modcommand.ModTemplateBuilder
 *a:com.intellij.modcompletion.PsiUpdateCompletionItem
 - com.intellij.modcompletion.ModCompletionItem
 - p:<init>(java.lang.String,java.lang.Object):V
-- p:calculateEndOffsetForOverwrite(com.intellij.openapi.editor.Document,I):I
+- p:calculateEndOffsetForOverwrite(java.lang.CharSequence,I):I
 - contextObject():java.lang.Object
+- pf:getLookupStringWithCompletionChar(com.intellij.modcompletion.ModCompletionItem$InsertionContext):java.lang.String
+- p:getTextToInsert(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext):java.lang.String
 - mainLookupString():java.lang.String
 - perform(com.intellij.modcommand.ActionContext,com.intellij.modcompletion.ModCompletionItem$InsertionContext):com.intellij.modcommand.ModCommand
 - p:shouldAddCompletionChar(com.intellij.modcompletion.ModCompletionItem$InsertionContext):Z

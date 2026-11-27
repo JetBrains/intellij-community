@@ -29,7 +29,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
   private final Set<String> myAdditionalStrings;
   private final ModCompletionItemPresentation myPresentation;
   private final ModNavigatorTailType myTail;
-  private final InsertionAwareUpdateHandler myAdditionalUpdater;
+  private final @Nullable InsertionAwareUpdateHandler myAdditionalUpdater;
   private final AutoCompletionPolicy myPolicy;
   private final double myPriority;
   private final @Nullable Predicate<InsertionContext> mySuppressCharacterPredicate;
@@ -40,13 +40,13 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     myAdditionalStrings = Set.of();
     myTail = (ModNavigatorTailType)TailTypes.noneType();
     myPriority = 0;
-    myAdditionalUpdater = (UpdateHandler)(start, updater) -> { };
+    myAdditionalUpdater = null;
     myPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
     mySuppressCharacterPredicate = null;
   }
   
   private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, ModCompletionItemPresentation presentation,
-                               ModNavigatorTailType tail, double priority, InsertionAwareUpdateHandler additionalUpdater,
+                               ModNavigatorTailType tail, double priority, @Nullable InsertionAwareUpdateHandler additionalUpdater,
                                AutoCompletionPolicy policy, @Nullable Predicate<InsertionContext> suppressCharacterPredicate) {
     super(text, object);
     myAdditionalStrings = additionalStrings;
@@ -208,12 +208,23 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> 
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     Document document = updater.getDocument();
     manager.commitDocument(document);
-    myAdditionalUpdater.update(actionContext.selection().getStartOffset(), updater, insertionContext);
-    manager.commitDocument(document);
+    if (myAdditionalUpdater != null) {
+      myAdditionalUpdater.update(actionContext.selection().getStartOffset(), updater, insertionContext);
+      manager.commitDocument(document);
+    }
     manager.doPostponedOperationsAndUnblockDocument(document);
     if (myTail.isApplicableForCompletionCharacter(insertionContext.insertionCharacter())) {
       myTail.processTail(updater, updater.getCaretOffset());
     }
+  }
+
+  @Override
+  protected @Nullable String getTextToInsert(ActionContext actionContext, InsertionContext insertionContext) {
+    if (myAdditionalUpdater != null ||
+        myTail != ModNavigatorTailType.noneType() && myTail.isApplicableForCompletionCharacter(insertionContext.insertionCharacter())) {
+      return null;
+    }
+    return getLookupStringWithCompletionChar(insertionContext);
   }
 
   @Override

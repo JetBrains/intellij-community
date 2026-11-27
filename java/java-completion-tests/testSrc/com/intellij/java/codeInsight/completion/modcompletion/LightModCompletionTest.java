@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.LightModCompletionServiceImpl;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcompletion.CommonCompletionItem;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -68,6 +69,40 @@ public final class LightModCompletionTest {
                                 }
                               }
                               """);
+    });
+  }
+
+  @Test
+  public void testCommonItemWithoutUpdateMatchesPsiUpdate() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("Test.java", """
+        public class Test {
+          void test() {
+            int x = fo<caret>oBar;
+          }
+        }
+        """);
+      int offset = myFixture.getEditor().getCaretModel().getOffset();
+      ActionContext context = ActionContext.from(myFixture.getEditor(), myFixture.getFile());
+      List<ActionContext> contexts = List.of(
+        context,
+        context.withOffset(offset - 2).withSelection(TextRange.create(offset - 2, offset)));
+      List<ModCompletionItem.InsertionContext> insertionContexts = List.of(
+        ModCompletionItem.DEFAULT_INSERTION_CONTEXT,
+        new ModCompletionItem.InsertionContext(ModCompletionItem.InsertionMode.INSERT, '('),
+        new ModCompletionItem.InsertionContext(ModCompletionItem.InsertionMode.OVERWRITE, '	'),
+        new ModCompletionItem.InsertionContext(ModCompletionItem.InsertionMode.OVERWRITE, ';'));
+      CommonCompletionItem fastItem = new CommonCompletionItem("foo");
+      // A no-op updater makes the item use ModCommand.psiUpdate
+      CommonCompletionItem psiUpdateItem = fastItem.withAdditionalUpdater((start, updater) -> { });
+      for (ActionContext actionContext : contexts) {
+        for (ModCompletionItem.InsertionContext insertionContext : insertionContexts) {
+          ModCommand expected = psiUpdateItem.perform(actionContext, insertionContext);
+          ModCommand actual = fastItem.perform(actionContext, insertionContext);
+          assertEquals(expected, actual, () -> actionContext + "; " + insertionContext);
+        }
+      }
     });
   }
 
