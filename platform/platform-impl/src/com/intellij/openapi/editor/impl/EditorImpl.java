@@ -5533,15 +5533,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   /**
-   * Says that the selection stops at the text, and that it does not fill the line. This is true when the Islands theme
-   * is on, the editor is not in column mode, and the registry key {@code editor.old.full.horizontal.selection.enabled}
-   * of {@code registry} is off.
+   * Says that the selection stops at the text, and that it does not fill the line.
+   * It is false in column mode, and while the registry key {@code editor.old.full.horizontal.selection.enabled} of
+   * {@code registry} is on. Otherwise, the choice of the user decides. Without a choice, the current theme decides.
    */
   @ApiStatus.Internal
   public boolean isHuggingHighlighting(@NotNull EditorRegistry registry) {
-    return !registry.isOldFullHorizontalSelectionEnabled()
-           && !isColumnMode()
-           && IslandsState.Companion.isEnabled();
+    if (registry.isOldFullHorizontalSelectionEnabled() || isColumnMode()) {
+      return false;
+    }
+    Boolean option = getSettingsSnapshot().getHuggingHighlightingOption();
+    return option != null ? option : IslandsState.Companion.isEnabled();
   }
 
   @TestOnly

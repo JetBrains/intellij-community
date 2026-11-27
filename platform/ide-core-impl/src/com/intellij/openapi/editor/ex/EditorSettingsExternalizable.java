@@ -250,6 +250,23 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ROUNDED_HIGHLIGHTING, old, val);
   }
 
+  /**
+   * Gives the choice of the user to end the highlighting and the selection at the end of the text of a line.
+   * {@code null} follows the theme.
+   */
+  @ApiStatus.Internal
+  public @Nullable Boolean getHuggingHighlightingOption() {
+    return myOptions.HUGGING_HIGHLIGHTING;
+  }
+
+  @ApiStatus.Internal
+  public void setHuggingHighlightingOption(@Nullable Boolean val) {
+    Boolean old = myOptions.HUGGING_HIGHLIGHTING;
+    if (Objects.equals(old, val)) return;
+    myOptions.HUGGING_HIGHLIGHTING = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HUGGING_HIGHLIGHTING, old, val);
+  }
+
   public boolean isWhitespacesShown() {
     return myOptions.IS_WHITESPACES_SHOWN;
   }
@@ -1170,6 +1187,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     /** {@code null} follows the theme. Read it through {@link #getRoundedHighlightingOption()}. */
     @ApiStatus.Internal
     public @Nullable Boolean ROUNDED_HIGHLIGHTING = null;
+    /** {@code null} follows the theme. Read it through {@link #getHuggingHighlightingOption()}. */
+    @ApiStatus.Internal
+    public @Nullable Boolean HUGGING_HIGHLIGHTING = null;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
@@ -1312,6 +1332,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @ApiStatus.Experimental public static final @NonNls String PROP_CARET_EASING = "caretEasing";
     public static final @NonNls String PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES = "isHighlightSelectionOccurrences";
     @ApiStatus.Internal public static final @NonNls String PROP_ROUNDED_HIGHLIGHTING = "roundedHighlighting";
+    @ApiStatus.Internal public static final @NonNls String PROP_HUGGING_HIGHLIGHTING = "huggingHighlighting";
     public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";
     public static final @NonNls String PROP_IS_LEADING_WHITESPACES_SHOWN = "isLeadingWhitespacesShown";
     public static final @NonNls String PROP_IS_INNER_WHITESPACES_SHOWN = "isInnerWhitespacesShown";

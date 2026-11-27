@@ -41,6 +41,7 @@ class SettingsSnapshot internal constructor(
   fun isRightMarginShown(): Boolean = booleanAt(Index.rightMarginShown)
   fun isHighlightSelectionOccurrences(): Boolean = booleanAt(Index.selectionOccurrencesHighlighted)
   fun getRoundedHighlightingOption(): Boolean? = valueAt(Index.roundedHighlightingOption) as Boolean?
+  fun getHuggingHighlightingOption(): Boolean? = valueAt(Index.huggingHighlightingOption) as Boolean?
   fun isWhitespacesShown(): Boolean = booleanAt(Index.whitespacesShown)
   fun isLeadingWhitespaceShown(): Boolean = booleanAt(Index.leadingWhitespaceShown)
   fun isInnerWhitespaceShown(): Boolean = booleanAt(Index.innerWhitespaceShown)
@@ -137,6 +138,7 @@ class SettingsSnapshot internal constructor(
     val rightMarginShown: Int = indexOf(EditorSettingsState::myIsRightMarginShown)
     val selectionOccurrencesHighlighted: Int = indexOf(EditorSettingsState::myIsHighlightSelectionOccurrences)
     val roundedHighlightingOption: Int = indexOf(EditorSettingsState::roundedHighlightingOption)
+    val huggingHighlightingOption: Int = indexOf(EditorSettingsState::huggingHighlightingOption)
     val whitespacesShown: Int = indexOf(EditorSettingsState::myIsWhitespacesShown)
     val leadingWhitespaceShown: Int = indexOf(EditorSettingsState::myIsLeadingWhitespacesShown)
     val innerWhitespaceShown: Int = indexOf(EditorSettingsState::myIsInnerWhitespacesShown)
