@@ -110,7 +110,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-//@ApiStatus.Internal
 public final class EditorPainter implements TextDrawingCallback {
 
   private static final Logger LOG = Logger.getInstance(EditorPainter.class);
@@ -1191,7 +1190,7 @@ public final class EditorPainter implements TextDrawingCallback {
       return myView.visualLineToY(visualLine) - EditorUtil.getInlaysHeight(myInlayModel, visualLine, true);
     }
 
-    public int getVisualLineAreaEndY(int visualLine) {
+    private int getVisualLineAreaEndY(int visualLine) {
       return myView.visualLineToYRange(visualLine)[1] + EditorUtil.getInlaysHeight(myInlayModel, visualLine, false);
     }
 
@@ -1878,14 +1877,18 @@ public final class EditorPainter implements TextDrawingCallback {
           return true;
         }
 
-        private static int layerOf(@Nullable BackgroundLayer layer) {
-          return layer == null ? Integer.MIN_VALUE : layer.getLayer();
-        }
       }
       MyProcessor processor = new MyProcessor(selection);
       myDocMarkup.processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
       myEditorMarkup.processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
       return new BetweenLinesLayers(processor.top, processor.filling);
+    }
+
+    /**
+     * Gives the layer index of {@code layer}, or the lowest index for no layer.
+     */
+    private static int layerOf(@Nullable BackgroundLayer layer) {
+      return layer == null ? Integer.MIN_VALUE : layer.getLayer();
     }
 
     /**
@@ -2171,10 +2174,9 @@ public final class EditorPainter implements TextDrawingCallback {
     // local copy of com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl.FRONTEND_CREATED
     // to avoid circular dependency.
     private static final Key<Boolean> FRONTEND_CREATED = Key.create("FRONTEND_CREATED");
-    private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
-      if (EditorRegistry.current().isMarkupCacheDebugEnabled() && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
+    private TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
+      if (myRegistry.isMarkupCacheDebugEnabled() && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
         TextAttributes zombieAttr = foldAttributes.clone();
-        zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);
         if (FRONTEND_CREATED.isIn(region)) {
           zombieAttr.setEffectColor(JBColor.MAGENTA);
