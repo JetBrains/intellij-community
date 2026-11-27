@@ -14,6 +14,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -108,16 +109,49 @@ public final class ImmutableZipFile implements ZipFile {
   public void processResources(@NotNull String dir,
                                @NotNull Predicate<? super String> nameFilter,
                                @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
-    String[] names = this.names;
-    if (names == null) {
-      names = getOrComputeNames();
+    String[] cachedNames = this.names;
+    if (cachedNames != null) {
+      int minNameLength = dir.length() + 2;
+      for (String name : cachedNames) {
+        if (name.length() >= minNameLength && name.charAt(dir.length()) == '/' && name.startsWith(dir)) {
+          long pair = ikv.getOffsetAndSize(Xxh3.hash(name.getBytes(StandardCharsets.UTF_8)));
+          if (pair >= 0 && ikv.getSizeByValue(pair) >= 0 && nameFilter.test(name)) {
+            // DirectByteBufferBackedInputStream is not pooled - no need to close
+            consumer.accept(name, new DirectByteBufferBackedInputStream(ikv.getByteBufferByValue(pair), false));
+          }
+        }
+      }
+      return;
     }
 
-    int minNameLength = dir.length() + 2;
-    for (String name : names) {
-      if (name.length() >= minNameLength && name.charAt(dir.length()) == '/' && name.startsWith(dir) && nameFilter.test(name)) {
-        // DirectByteBufferBackedInputStream is not pooled - no need to close
-        consumer.accept(name, getInputStream(name));
+    byte[] dirBytes = dir.getBytes(StandardCharsets.UTF_8);
+    int dirByteLen = dirBytes.length;
+    int minByteLength = dirByteLen + 2;
+    int entryCount = ikv.getEntryCount();
+    short[] nameLengthInBytes = new short[entryCount];
+    ByteBuffer buffer = ikv.getMappedBufferAt(nameDataPosition);
+    buffer.asShortBuffer().get(nameLengthInBytes);
+    buffer.position(buffer.position() + (entryCount * Short.BYTES));
+    byte[] tempNameBytes = null;
+    for (int i = 0; i < entryCount; i++) {
+      int sizeInBytes = nameLengthInBytes[i] & 0xFFFF;
+      if (sizeInBytes < minByteLength) {
+        buffer.position(buffer.position() + sizeInBytes);
+        continue;
+      }
+      if (tempNameBytes == null || tempNameBytes.length < sizeInBytes) {
+        tempNameBytes = new byte[Math.max(4096, sizeInBytes)];
+      }
+      buffer.get(tempNameBytes, 0, sizeInBytes);
+      if (tempNameBytes[dirByteLen] == '/' && Arrays.equals(tempNameBytes, 0, dirByteLen, dirBytes, 0, dirByteLen)) {
+        long pair = ikv.getOffsetAndSize(Xxh3.hash(tempNameBytes, 0, sizeInBytes));
+        if (pair >= 0 && ikv.getSizeByValue(pair) >= 0) {
+          String name = new String(tempNameBytes, 0, sizeInBytes, StandardCharsets.UTF_8);
+          if (nameFilter.test(name)) {
+            // DirectByteBufferBackedInputStream is not pooled - no need to close
+            consumer.accept(name, new DirectByteBufferBackedInputStream(ikv.getByteBufferByValue(pair), false));
+          }
+        }
       }
     }
   }
