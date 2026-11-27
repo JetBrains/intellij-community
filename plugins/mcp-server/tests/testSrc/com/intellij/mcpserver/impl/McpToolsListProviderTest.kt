@@ -116,6 +116,27 @@ internal class McpToolsListProviderTest {
     assertThat(provider.allTools.value).isEmpty()
   }
 
+  /**
+   * [McpServerServiceImpl] converts the initial tools before it creates the provider and its listeners. A provider
+   * that arrives in between must still get its tools listed.
+   */
+  @Test
+  fun `provider registered during the initial conversion is listed`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val initialTools = McpToolsListProvider.computeAllMcpToolsAsync()
+    ExtensionTestUtil.addExtensions(McpToolsProvider.EP, listOf(RecordingToolsProvider()), disposable)
+
+    @Suppress("RAW_SCOPE_CREATION")
+    val scope = CoroutineScope(SupervisorJob())
+    try {
+      val provider = McpToolsListProvider(scope, initialTools)
+
+      provider.allTools.first { tools -> tools.any { it.descriptor.name == TEST_TOOL_NAME } }
+    }
+    finally {
+      scope.cancel()
+    }
+  }
+
   private class RecordingToolsProvider : McpToolsProvider {
     val conversionThreadNames: MutableSet<String> = ConcurrentHashMap.newKeySet()
 

@@ -89,6 +89,15 @@ internal class McpToolsListProvider(private val scope: CoroutineScope, initialTo
         requestUpdate("McpToolset extension removed")
       }
     })
+
+    // The initial conversion ran before the listeners above existed, so neither saw an extension change during it.
+    val toolsetsChanged = McpToolset.EP.extensionList != initialTools.toolsets
+    if (toolsetsChanged) {
+      invalidateReflectionProviders()
+    }
+    if (toolsetsChanged || McpToolsProvider.EP.extensionList != initialTools.byProvider.keys.toList()) {
+      requestUpdate("Extensions changed during the initial conversion")
+    }
   }
 
   /**
@@ -122,7 +131,12 @@ internal class McpToolsListProvider(private val scope: CoroutineScope, initialTo
   /**
    * Tools of all providers, plus the per-provider breakdown needed to invalidate them selectively.
    */
-  internal class ProviderTools(val byProvider: Map<McpToolsProvider, List<McpTool>>, val allTools: List<McpTool>)
+  internal class ProviderTools(
+    val byProvider: Map<McpToolsProvider, List<McpTool>>,
+    val allTools: List<McpTool>,
+    /** The toolsets of [McpToolset.EP] when the conversion started. */
+    val toolsets: List<McpToolset>,
+  )
 
   companion object {
     /**
@@ -141,6 +155,7 @@ internal class McpToolsListProvider(private val scope: CoroutineScope, initialTo
       alreadyConverted: Map<McpToolsProvider, List<McpTool>>,
       convert: (McpToolsProvider) -> List<McpTool>,
     ): ProviderTools {
+      val toolsets = McpToolset.EP.extensionList
       val byProvider = LinkedHashMap<McpToolsProvider, List<McpTool>>()
       for (provider in McpToolsProvider.EP.extensionList) {
         byProvider[provider] = alreadyConverted[provider] ?: try {
@@ -156,7 +171,7 @@ internal class McpToolsListProvider(private val scope: CoroutineScope, initialTo
       }
       // The MCP SDK rejects a batch with a repeated tool name; the tool of the later provider wins, as it did in SDK 0.12
       val allTools = byProvider.values.asSequence().flatten().associateBy { it.descriptor.name }.values.toList()
-      return ProviderTools(byProvider, allTools)
+      return ProviderTools(byProvider, allTools, toolsets)
     }
   }
 }
