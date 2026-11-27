@@ -179,6 +179,7 @@ This table maps each layer and locality to its file. The requirements below defi
   knows the file. A save from the IDE editor then reaches the settings at once. Every other read must take the
   disk.
   See [ADR 00GVJL](../adr/00GVJL-a-refresh-on-a-vfs-event-reads-the-config-file-from-the-vfs-and-every-other-read-takes-the-disk.md).
+  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/ConfigFileEditTest.kt
 - The watch start and a write must make the config file known to the VFS through an asynchronous lookup.
   Settings v2 must never run a synchronous VFS refresh or lookup, so the application load never waits for the EDT
   on its behalf.
