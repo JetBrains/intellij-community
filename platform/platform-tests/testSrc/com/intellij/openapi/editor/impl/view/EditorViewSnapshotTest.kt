@@ -312,6 +312,28 @@ class EditorViewSnapshotTest {
   }
 
   @Test
+  fun `test hiding a scroll bar outside a layout takes the insets that follow it`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val scrollBar = editorEx.scrollPane.horizontalScrollBar
+    scrollBar.isVisible = true
+    editor.contentComponent.border = ScrollBarGapBorder { scrollBar.isVisible }
+    val insetsBefore = editor.contentComponent.insets
+    scrollBar.isVisible = false
+    val componentInsets = editor.contentComponent.insets
+    assertNotEquals(
+      insetsBefore,
+      componentInsets,
+      "The hidden scroll bar removes the gap from the insets of the border",
+    )
+    assertEquals(
+      componentInsets,
+      view.insets,
+      "The visibility change puts the insets into the snapshot",
+    )
+  }
+
+  @Test
   fun `test the release of an editor ignores insets that the release changes`(): Unit = fixture.runTest {
     val editorFactory = EditorFactory.getInstance()
     val otherEditor = editorFactory.createEditor(editorFactory.createDocument("text")) as EditorEx

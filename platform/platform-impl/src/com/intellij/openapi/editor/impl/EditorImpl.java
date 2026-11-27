@@ -2964,7 +2964,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   /**
    * Returns the content component insets from the view snapshot. The caller owns the result.
-   * The snapshot also takes new insets after a layout of the scroll pane and at an opacity change of a scroll bar.
+   * The snapshot also takes new insets after a layout of the scroll pane,
+   * and at a visibility or opacity change of a scroll bar.
    */
   @ApiStatus.Internal
   public @NotNull Insets getContentInsets() {
@@ -3800,6 +3801,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setOpaque(boolean opaque) {
       myOpaque = opaque;
       super.setOpaque(opaque || shouldScrollBarBeOpaque());
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+      super.setVisible(visible);
+      updateContentInsets();
     }
 
     @Override
