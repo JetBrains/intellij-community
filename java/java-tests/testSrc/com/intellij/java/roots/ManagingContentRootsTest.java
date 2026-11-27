@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -12,41 +14,56 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.HeavyTestHelper;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
-public class ManagingContentRootsTest extends JavaProjectTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildDirectory;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class ManagingContentRootsTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private VirtualFile dir;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    dir = getTempDir().createVirtualDir();
+  @BeforeEach
+  void setUp() {
+    dir = VfsTestUtil.createDir(HeavyTestHelper.getOrCreateProjectBaseDir(heavyFixture.get().getProject()), "dir");
   }
 
+  @Test
   public void testCreationOfContentRootWithFile() {
     VirtualFile root = createChildDirectory(dir, "root");
     String url = root.getUrl();
 
-    PsiTestUtil.addContentRoot(myModule, root);
+    PsiTestUtil.addContentRoot(heavyFixture.get().getModule(), root);
     assertEquals(root, findContentEntry(url).getFile());
 
-    delete(root);
+    VfsTestUtil.deleteFile(root);
     assertNotNull(findContentEntry(url));
 
     root = createChildDirectory(dir, "root");
     assertEquals(root, findContentEntry(url).getFile());
   }
 
+  @Test
   public void testCreationOfContentRootWithUrl() {
     VirtualFile root = createChildDirectory(dir, "root");
     String url = root.getUrl();
     String path = root.getPath();
-    delete(root);
+    VfsTestUtil.deleteFile(root);
 
     addContentRoot(path);
 
@@ -56,27 +73,32 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
     assertEquals(root, findContentEntry(url).getFile());
   }
 
+  @Test
   public void testCreationOfContentRootWithUrlWhenFileExists() {
     VirtualFile root = createChildDirectory(dir, "root");
     addContentRoot(root.getPath());
     assertEquals(root, findContentEntry(root.getUrl()).getFile());
   }
 
+  @Test
   public void testExcludePatternSerialization() throws Exception {
-    PsiTestUtil.addContentRoot(myModule, dir);
-    ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("exc"));
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    PsiTestUtil.addContentRoot(fixture.getModule(), dir);
+    ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> findContentEntry(dir.getUrl(), model).addExcludePattern("exc"));
 
-    StoreUtil.saveSettings(myProject);
+    StoreUtil.saveSettings(fixture.getProject());
 
-    Element root = JDOMUtil.load(myModule.getModuleNioFile());
+    Element root = JDOMUtil.load(fixture.getModule().getModuleNioFile());
     String elementText = "<content url=\"file://$MODULE_DIR$/" + dir.getNameSequence() + "\">\n" +
                          "  <excludePattern pattern=\"exc\" />\n" +
                          "</content>";
     assertEquals(elementText, JDOMUtil.writeElement(root.getChild("component").getChild("content")));
   }
 
+  @Test
   public void testExcludePatternDeserialization() throws Exception {
-    Path dir = getTempDir().createDir();
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Path dir = fixture.createTempVirtualDir().toNioPath();
     String dirUrl = VfsUtilCore.pathToUrl(dir.toString());
 
     Path iml = dir.resolve("module.iml");
@@ -91,8 +113,8 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
       "  </component>\n" +
       "</module>");
 
-    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(myProject).loadModule(iml));
-    assertEquals("exc", assertOneElement(findContentEntry(dirUrl, ModuleRootManager.getInstance(module)).getExcludePatterns()));
+    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(fixture.getProject()).loadModule(iml));
+    assertEquals("exc", assertThat(findContentEntry(dirUrl, ModuleRootManager.getInstance(module)).getExcludePatterns()).singleElement().actual());
   }
 
   private ContentEntry findContentEntry(String url) {
@@ -107,10 +129,10 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
   }
 
   private void addContentRoot(final String path) {
-    ModuleRootModificationUtil.addContentRoot(getModule(), path);
+    ModuleRootModificationUtil.addContentRoot(heavyFixture.get().getModule(), path);
   }
 
   private ModuleRootManager getRootManager() {
-    return ModuleRootManager.getInstance(myModule);
+    return ModuleRootManager.getInstance(heavyFixture.get().getModule());
   }
 }

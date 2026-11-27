@@ -2,8 +2,15 @@
 
 package com.intellij.java.util.descriptors;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.descriptors.ConfigFile;
 import com.intellij.util.descriptors.ConfigFileContainer;
 import com.intellij.util.descriptors.ConfigFileInfo;
@@ -11,86 +18,99 @@ import com.intellij.util.descriptors.ConfigFileInfoSet;
 import com.intellij.util.descriptors.ConfigFileListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FileDescriptorsContainerTest extends DescriptorsTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.setFileText;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+@TestApplication
+public class FileDescriptorsContainerTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  private DescriptorsTestHelper myDescriptors;
   private ConfigFileContainer myContainer;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myContainer = createContainer();
+  @BeforeEach
+  void setUp() {
+    myDescriptors = new DescriptorsTestHelper(heavyFixture.get());
+    myContainer = myDescriptors.createContainer();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myContainer = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testAddRemoveDescriptor() throws IOException {
-    final ConfigFileInfo configuration = createDescriptor();
+    final ConfigFileInfo configuration = myDescriptors.createDescriptor();
     myContainer.getConfiguration().addConfigFile(configuration);
-    assertSame(configuration, assertOneElement(myContainer.getConfigFiles()).getInfo());
+    assertSame(configuration, assertThat(myContainer.getConfigFiles()).singleElement().actual().getInfo());
 
     myContainer.getConfiguration().removeConfigFile(configuration);
     assertEquals(0, myContainer.getConfigFiles().size());
   }
 
 
+  @Test
   public void testReadWriteExternal() throws IOException {
-    final ConfigFileInfoSet configuration = createConfiguration();
-    final ConfigFileInfo descriptor = createDescriptor();
+    final ConfigFileInfoSet configuration = myDescriptors.createConfiguration();
+    final ConfigFileInfo descriptor = myDescriptors.createDescriptor();
     configuration.addConfigFile(descriptor);
     Element root = new Element("root");
     configuration.writeExternal(root);
 
     myContainer.getConfiguration().readExternal(root);
-    assertEquals(descriptor, assertOneElement(myContainer.getConfigFiles()).getInfo());
+    assertEquals(descriptor, assertThat(myContainer.getConfigFiles()).singleElement().actual().getInfo());
   }
 
+  @Test
   public void testCreateContainer() throws IOException {
-    final ConfigFileInfoSet configuration = createConfiguration();
-    final ConfigFileInfo descriptor = createDescriptor();
+    final ConfigFileInfoSet configuration = myDescriptors.createConfiguration();
+    final ConfigFileInfo descriptor = myDescriptors.createDescriptor();
     configuration.addConfigFile(descriptor);
 
-    final ConfigFileContainer container = createContainer(configuration);
+    final ConfigFileContainer container = myDescriptors.createContainer(configuration);
 
-    assertEquals(descriptor, assertOneElement(container.getConfigFiles()).getInfo());
+    assertEquals(descriptor, assertThat(container.getConfigFiles()).singleElement().actual().getInfo());
   }
 
+  @Test
   public void testListeners() throws IOException {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     final MyConfigFileListener listener = new MyConfigFileListener();
     myContainer.addListener(listener);
 
-    myContainer.getConfiguration().addConfigFile(createDescriptor());
-    ConfigFile descriptor = assertOneElement(myContainer.getConfigFiles());
+    myContainer.getConfiguration().addConfigFile(myDescriptors.createDescriptor());
+    ConfigFile descriptor = assertThat(myContainer.getConfigFiles()).singleElement().actual();
     assertNull(descriptor.getVirtualFile());
-    assertNull(descriptor.getPsiFile());
+    assertNull(ReadAction.computeBlocking(() -> descriptor.getPsiFile()));
 
-    assertSame(descriptor, assertOneElement(listener.getAdded()));
+    assertSame(descriptor, assertThat(listener.getAdded()).singleElement().actual());
     assertEquals(0, listener.getRemoved().length);
 
-    final VirtualFile file = createDescriptorFile(descriptor);
-    assertSame(descriptor, assertOneElement(listener.getChanged()));
+    final VirtualFile file = DescriptorsTestHelper.createDescriptorFile(descriptor);
+    assertSame(descriptor, assertThat(listener.getChanged()).singleElement().actual());
     assertEquals(file, descriptor.getVirtualFile());
-    assertNotNull(descriptor.getPsiFile());
+    assertNotNull(ReadAction.computeBlocking(() -> descriptor.getPsiFile()));
 
     setFileText(file, "<root />");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments());
     assertEquals(0, listener.getChanged().length);
     assertEquals(file, descriptor.getVirtualFile());
 
-    delete(file);
-    assertSame(descriptor, assertOneElement(listener.getChanged()));
-    assertNull(descriptor.getPsiFile());
+    VfsTestUtil.deleteFile(file);
+    assertSame(descriptor, assertThat(listener.getChanged()).singleElement().actual());
+    assertNull(ReadAction.computeBlocking(() -> descriptor.getPsiFile()));
     assertNull(descriptor.getVirtualFile());
 
     myContainer.getConfiguration().removeConfigFile(descriptor.getInfo());
-    assertSame(descriptor, assertOneElement(listener.getRemoved()));
+    assertSame(descriptor, assertThat(listener.getRemoved()).singleElement().actual());
     assertEquals(0, listener.getAdded().length);
     assertEquals(0, listener.getChanged().length);
   }

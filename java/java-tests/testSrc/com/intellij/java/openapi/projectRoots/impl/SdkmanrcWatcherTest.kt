@@ -8,18 +8,23 @@ import com.intellij.openapi.projectRoots.impl.SdkmanrcConfigurationProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.cancel
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.junit.Ignore
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
-@Ignore("AT-3959")
-class SdkmanrcWatcherHeavyTests : ExternalJavaConfigurationTest() {
-  override val mockJdkVersions: List<String> = listOf(
+@Disabled("AT-3959")
+@TestApplication
+class SdkmanrcWatcherHeavyTests {
+  private val fixture by externalJavaConfigurationFixture(listOf(
     "GraalVM CE 23.1.2 - Java 21.0.2",
     "Oracle OpenJDK 11.0.2",
     "JetBrains Runtime 17.0.7",
-  )
+  ))
+  private val project get() = fixture.project
 
+  @Test
   fun `test jdk suggestion after sdkmanrc change`() {
     timeoutRunBlocking {
       val scope = childScope("")
@@ -29,9 +34,9 @@ class SdkmanrcWatcherHeavyTests : ExternalJavaConfigurationTest() {
 
         assert(watcher.getReleaseData(configProvider) == null)
 
-        checkSuggestion(watcher, configProvider, "java=21.0.2-graalce", "GraalVM CE 23.1.2 - Java 21.0.2")
-        checkSuggestion(watcher, configProvider, "java=11.0.2-open", "Oracle OpenJDK 11.0.2")
-        checkSuggestion(watcher, configProvider, "java=17.0.7-jbr", "JetBrains Runtime 17.0.7")
+        fixture.checkSuggestion(watcher, configProvider, "java=21.0.2-graalce", "GraalVM CE 23.1.2 - Java 21.0.2")
+        fixture.checkSuggestion(watcher, configProvider, "java=11.0.2-open", "Oracle OpenJDK 11.0.2")
+        fixture.checkSuggestion(watcher, configProvider, "java=17.0.7-jbr", "JetBrains Runtime 17.0.7")
       }
       catch (_: Exception) {}
       finally {

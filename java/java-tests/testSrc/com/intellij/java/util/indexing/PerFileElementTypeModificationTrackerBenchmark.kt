@@ -2,31 +2,34 @@
 package com.intellij.java.util.indexing
 
 import com.intellij.lang.java.JavaParserDefinition
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightFixture
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.psi.tree.IFileElementType
-import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.writeChild
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.io.write
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 /**
  * set "stub.index.per.file.element.type.modification.tracker.precise.check.threshold" system
  * property to ~1000 before executing and comment out @Ignore
  */
-@RunWith(JUnit4::class)
-class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
+@TestApplication
+class PerFileElementTypeModificationTrackerBenchmark {
+  private val fixture by heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath())
+  private val project get() = fixture.project
+
   @Test
-  @Ignore
+  @Disabled
   fun benchmark() {
     var lastModCount = getModCount(JavaParserDefinition.JAVA_FILE)
     fun assertModCountIncreasedAtLeast(minInc: Int) {
@@ -49,13 +52,13 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
       }
     }
 
-    val srcDir = createTestProjectStructure()
-    val pkg = runWriteAction {
+    val srcDir = fixture.createTestProjectStructure(null)
+    val pkg = runWriteActionAndWait {
       srcDir.createChildDirectory(this, "pkg")
     }
 
     val filesRange = 1..500
-    runWriteAction {
+    runWriteActionAndWait {
       for (i in filesRange) {
         pkg.writeChild("C$i.java", """
           class C$i {
@@ -93,12 +96,12 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
       assertModCountIncreasedAtLeast(1)
       ensureIndexUpToDate()
 
-      runWriteAction { pkg.rename(this, "pkg2") }
+      runWriteActionAndWait { pkg.rename(this, "pkg2") }
       srcDir.refresh(false, true)
       assertModCountIsSame()
       ensureIndexUpToDate()
 
-      runWriteAction { pkg.rename(this, "pkg") }
+      runWriteActionAndWait { pkg.rename(this, "pkg") }
       srcDir.refresh(false, true)
       assertModCountIsSame()
       ensureIndexUpToDate()

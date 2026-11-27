@@ -2,6 +2,7 @@
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightFixture
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.IdeView
 import com.intellij.ide.actions.CreateFileFromTemplateAction
@@ -28,55 +29,77 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.DumbModeTestUtils
-import com.intellij.testFramework.JavaProjectTestCase
+import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.delete
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
 import java.util.Properties
 
-internal class FileTemplatesTest : JavaProjectTestCase() {
-  private var testConfigDir: Path? = null
+private val LOG = logger<FileTemplatesTest>()
 
-  override fun tearDown() {
-    try {
-      testConfigDir?.delete()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+@TestApplication
+internal class FileTemplatesTest {
+  private val fixture by heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath())
+  private val project get() = fixture.project
+  private val module get() = fixture.module
+  private val testRootDisposable get() = fixture.testRootDisposable
+
+  private var testConfigDir: Path? = null
+  private lateinit var name: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    name = testInfo.testMethod.get().name
   }
 
-  fun testAllTemplates() {
+  @Test
+  fun testAllTemplates(): Unit = timeoutRunBlocking {
     val testsDir = File("${JavaTestUtil.getJavaTestDataPath()}/ide/fileTemplates")
     val includeTemplateName = "include1.inc"
     val includeTemplateExtension = "txt"
@@ -126,23 +149,26 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val e = properties.propertyNames()
     while (e.hasMoreElements()) {
       val s = e.nextElement() as String
-      assertTrue("Attribute '$s' not found in properties", attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE === s)
+      assertTrue(attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE === s, "Attribute '$s' not found in properties")
     }
   }
 
-  fun testFindFileByUrl() {
+  @Test
+  fun testFindFileByUrl(): Unit = timeoutRunBlocking {
     val catchBodyTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY)
     assertNotNull(catchBodyTemplate)
   }
 
-  fun testCollect_undefined_attribute_names() {
+  @Test
+  fun testCollect_undefined_attribute_names(): Unit = timeoutRunBlocking {
     val template = addTestTemplate("my_class", "\${ABC} \${DEF} \${NAME}")
     val properties = Properties()
     properties["NAME"] = "zzz"
     Assertions.assertThat(template.getUnsetAttributes(properties, project)).containsOnly("ABC", "DEF")
   }
 
-  fun test_collect_undefined_attribute_names_from_included_templates() {
+  @Test
+  fun test_collect_undefined_attribute_names_from_included_templates(): Unit = timeoutRunBlocking {
     val included = addTestTemplate("included", "\${ABC} \${DEF}")
     assert(included === FileTemplateManager.getInstance(project).getTemplate("included.java"))
     val template = addTestTemplate("my_class", "#parse(\"included.java\") \${DEF} \${NAME}")
@@ -151,7 +177,8 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     Assertions.assertThat(template.getUnsetAttributes(properties, project)).contains("ABC", "DEF")
   }
 
-  fun `test survive plugin reload`() {
+  @Test
+  fun `test survive plugin reload`(): Unit = timeoutRunBlocking {
     val template = addTestTemplate("foo", "bar")
     val fileName = "filename"
     template.fileName = fileName
@@ -165,21 +192,25 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     assertEquals(fileName, t.fileName)
   }
 
-  fun testDefaultPackage() {
+  @Test
+  fun testDefaultPackage(): Unit = timeoutRunBlocking {
     doClassTest("package \${PACKAGE_NAME}; public class \${NAME} {}", "public class XXX {\n}")
   }
 
-  private fun doClassTest(templateText: String, result: String) {
+  private suspend fun doClassTest(templateText: String, result: String) {
     val name = "my_class"
     val template = addTestTemplate(name, templateText)
     val psiDirectory = createDirectory()
-    val psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "XXX", name)
-    assertNotNull(psiClass)
-    assertEquals(result, psiClass.containingFile.text)
+    withContext(Dispatchers.EDT) {
+      val psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "XXX", name)
+      assertNotNull(psiClass)
+      assertEquals(result, psiClass.containingFile.text)
+    }
     FileTemplateManager.getInstance(project).removeTemplate(template)
   }
 
-  fun testPopulateDefaultProperties() {
+  @Test
+  fun testPopulateDefaultProperties(): Unit = timeoutRunBlocking {
     val name = "my_class"
     val template = addTestTemplate(name, """
    package ${"$"}{PACKAGE_NAME}; 
@@ -187,55 +218,68 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
    public class ${"$"}{NAME} {}
    """.trimIndent())
     val psiDirectory = createDirectory()
-    val psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "XXX", name)
-    assertFalse(psiClass.containingFile.text.contains("\${USER}"))
+    withContext(Dispatchers.EDT) {
+      val psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "XXX", name)
+      assertFalse(psiClass.containingFile.text.contains("\${USER}"))
+    }
     FileTemplateManager.getInstance(project).removeTemplate(template)
   }
 
-  fun testDirPath() {
+  @Test
+  fun testDirPath(): Unit = timeoutRunBlocking {
     val template = FileTemplateManager.getInstance(project).addTemplate(name, "txt")
-    disposeOnTearDown(
-      Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    removeAfterTest(template)
     template.text = "\${DIR_PATH}; \${FILE_NAME}"
-    val tempDir = tempDir.createVirtualDir()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir)
-    val element = FileTemplateUtil.createFromTemplate(template, "foo", Properties(), directory!!)
-    com.intellij.testFramework.assertions.Assertions.assertThat(element.text).endsWith(tempDir.nameSequence.toString() + "; foo.txt")
+    val tempDir = VfsTestUtil.createDir(HeavyTestHelper.getOrCreateProjectBaseDir(project), "dir")
+    val directory = readAction { PsiManager.getInstance(project).findDirectory(tempDir) }
+    withContext(Dispatchers.EDT) {
+      val element = FileTemplateUtil.createFromTemplate(template, "foo", Properties(), directory!!)
+      com.intellij.testFramework.assertions.Assertions.assertThat(element.text).endsWith(tempDir.nameSequence.toString() + "; foo.txt")
+    }
   }
 
-  fun testFileNameTrimming() {
+  @Test
+  fun testFileNameTrimming(): Unit = timeoutRunBlocking {
     val handler: CreateFromTemplateHandler = DefaultCreateFromTemplateHandler()
     ApplicationManager.getApplication().registerExtension(CreateFromTemplateHandler.EP_NAME, handler, testRootDisposable)
     val template = FileTemplateManager.getInstance(project).addTemplate(name, "txt")
-    disposeOnTearDown(
-      Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    removeAfterTest(template)
     template.text = "\${FILE_NAME}"
-    val tempDir = tempDir.createVirtualDir()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir)
-    val element = FileTemplateUtil.createFromTemplate(template, "foo.txt", Properties(), directory!!)
-    assertEquals("foo.txt", element.text)
+    val tempDir = fixture.createTempVirtualDir()
+    val directory = readAction { PsiManager.getInstance(project).findDirectory(tempDir) }
+    withContext(Dispatchers.EDT) {
+      val element = FileTemplateUtil.createFromTemplate(template, "foo.txt", Properties(), directory!!)
+      assertEquals("foo.txt", element.text)
+    }
   }
 
-  fun testCreateFileFromTemplateRunsPropertiesProvidersOffEdt() {
+  @Test
+  fun testCreateFileFromTemplateRunsPropertiesProvidersOffEdt(): Unit = timeoutRunBlocking {
     val providerCalls = recordPropertiesProviderCalls()
     val template = addTxtTemplate()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
-    val file = CreateFileFromTemplateAction.createFileFromTemplate("foo", template, directory, null, false)
-    assertEquals("foo.txt", file!!.text)
+    val directory = findDirectory(fixture.createTempVirtualDir())
+    withContext(Dispatchers.EDT) {
+      val file = CreateFileFromTemplateAction.createFileFromTemplate("foo", template, directory, null, false)
+      assertEquals("foo.txt", file!!.text)
+    }
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
   }
 
-  fun testCreateFromTemplateDialogRunsPropertiesProvidersOffEdt() {
+  @Test
+  fun testCreateFromTemplateDialogRunsPropertiesProvidersOffEdt(): Unit = timeoutRunBlocking {
     val providerCalls = recordPropertiesProviderCalls()
     val template = addTxtTemplate()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
-    val element = CreateFromTemplateDialog(project, directory, template, AttributesDefaults("foo").withFixedName(true), null).create()
+    val directory = findDirectory(fixture.createTempVirtualDir())
+    val element = withContext(Dispatchers.EDT) {
+      CreateFromTemplateDialog(project, directory, template, AttributesDefaults("foo").withFixedName(true), null).create()
+    }
     assertNotNull(element)
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false),
                                                          ProviderCall(onEdt = false, writeAccess = false))
   }
 
-  fun testCreateFromTemplateDialogCreatesChildFileBeforeMergingMainTemplate() {
+  @Test
+  fun testCreateFromTemplateDialogCreatesChildFileBeforeMergingMainTemplate(): Unit = timeoutRunBlocking {
     val template = addTxtTemplate() as FileTemplateBase
     val child = CustomFileTemplate(template.getChildName(0), "txt")
     child.fileName = "child"
@@ -244,72 +288,85 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     val filesSeenByProviders = ContainerUtil.createConcurrentList<List<String>>()
     val provider = DefaultTemplatePropertiesProvider { directory, _ -> filesSeenByProviders.add(directory.files.map { it.name }) }
     ApplicationManager.getApplication().registerExtension(DefaultTemplatePropertiesProvider.EP_NAME, provider, testRootDisposable)
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
-    val element = CreateFromTemplateDialog(project, directory, template, AttributesDefaults("foo").withFixedName(true), null).create()
+    val directory = findDirectory(fixture.createTempVirtualDir())
+    val element = withContext(Dispatchers.EDT) {
+      CreateFromTemplateDialog(project, directory, template, AttributesDefaults("foo").withFixedName(true), null).create()
+    }
     assertNotNull(element)
     Assertions.assertThat(filesSeenByProviders).containsExactly(emptyList(), emptyList(), listOf("child.txt"))
   }
 
-  fun testCreateFileFromTemplateInWriteActionRunsPropertiesProvidersInPlace() {
+  @Test
+  fun testCreateFileFromTemplateInWriteActionRunsPropertiesProvidersInPlace(): Unit = timeoutRunBlocking {
     val providerCalls = recordPropertiesProviderCalls()
     val template = addTxtTemplate()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
-    val file = WriteAction.compute<PsiFile?, Throwable> {
+    val directory = findDirectory(fixture.createTempVirtualDir())
+    val file = edtWriteAction {
       CreateFileFromTemplateAction.createFileFromTemplate("foo", template, directory, null, false)
     }
-    assertEquals("foo.txt", file!!.text)
+    assertEquals("foo.txt", readAction { file!!.text })
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = true, writeAccess = true))
   }
 
-  fun testNewFileActionRunsPropertiesProvidersOutsideWriteAction() {
+  @Test
+  fun testNewFileActionRunsPropertiesProvidersOutsideWriteAction(): Unit = timeoutRunBlocking {
     val providerCalls = recordPropertiesProviderCalls()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val directory = findDirectory(fixture.createTempVirtualDir())
     val created = performNewFileAction(addTxtTemplate(), directory, "foo")
-    assertEquals("foo.txt", created!!.text)
+    assertEquals("foo.txt", readAction { created!!.text })
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
   }
 
-  fun testNewFileActionCreatesSubdirectoriesOfTheName() {
+  @Test
+  fun testNewFileActionCreatesSubdirectoriesOfTheName(): Unit = timeoutRunBlocking {
     val providerCalls = recordPropertiesProviderCalls()
-    val root = tempDir.createVirtualDir()
+    val root = fixture.createTempVirtualDir()
     VfsTestUtil.createDir(root, "a")
-    val created = performNewFileAction(addTxtTemplate(), PsiManager.getInstance(project).findDirectory(root)!!, "a/b/foo")
+    val created = performNewFileAction(addTxtTemplate(), findDirectory(root), "a/b/foo")
     assertEquals("a/b/foo.txt", VfsUtilCore.getRelativePath(created!!.virtualFile, root))
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
   }
 
-  fun testNewFileActionCreatesFileInDumbMode() {
+  @Test
+  fun testNewFileActionCreatesFileInDumbMode(): Unit = timeoutRunBlocking {
     val providerCalls = recordPropertiesProviderCalls()
     val template = addTxtTemplate()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
-    val created = DumbModeTestUtils.computeInDumbModeSynchronously(project) { performNewFileAction(template, directory, "foo") }
-    assertEquals("foo.txt", created!!.text)
+    val directory = findDirectory(fixture.createTempVirtualDir())
+    val created = withContext(Dispatchers.EDT) {
+      DumbModeTestUtils.computeInDumbModeSynchronously(project) { doPerformNewFileAction(template, directory, "foo") }
+    }
+    assertEquals("foo.txt", readAction { created!!.text })
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
   }
 
-  fun testNewFileActionStartsLiveTemplateOutsideWriteAction() {
+  @Test
+  fun testNewFileActionStartsLiveTemplateOutsideWriteAction(): Unit = timeoutRunBlocking {
     TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     val template = addTxtTemplate()
     template.text = "\${FILE_NAME} #[[\$END\$]]#"
     template.isLiveTemplateEnabled = true
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val directory = findDirectory(fixture.createTempVirtualDir())
     val created = performNewFileAction(template, directory, "foo")
-    assertEquals("foo.txt ", created!!.text)
+    assertEquals("foo.txt ", readAction { created!!.text })
   }
 
-  fun testNewFileActionReportsTemplateErrorWithoutCreatingFile() {
+  @Test
+  fun testNewFileActionReportsTemplateErrorWithoutCreatingFile(): Unit = timeoutRunBlocking {
     TestDialogManager.setTestDialog(TestDialog.OK, testRootDisposable)
     val template = addTxtTemplate()
     template.text = "#if("
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val directory = findDirectory(fixture.createTempVirtualDir())
     assertNull(performNewFileAction(template, directory, "foo"))
-    assertEmpty(directory.files)
+    assertThat(readAction { directory.files }).isEmpty()
   }
 
-  fun testComputeUnderModalProgressRethrowsCheckedException() {
-    Assertions.assertThatThrownBy {
-      FileTemplateUtil.computeUnderModalProgress<Unit, IOException>(project) { throw IOException("template error") }
-    }.isExactlyInstanceOf(IOException::class.java).hasMessage("template error")
+  @Test
+  fun testComputeUnderModalProgressRethrowsCheckedException(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      Assertions.assertThatThrownBy {
+        FileTemplateUtil.computeUnderModalProgress<Unit, IOException>(project) { throw IOException("template error") }
+      }.isExactlyInstanceOf(IOException::class.java).hasMessage("template error")
+    }
   }
 
   private data class ProviderCall(val onEdt: Boolean, val writeAccess: Boolean)
@@ -324,9 +381,12 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
   }
 
   /**
-   * Performs a New File action that creates [name] from [template] in [directory], and returns the file it selects.
+   * Performs a New File action on the EDT that creates [name] from [template] in [directory], and returns the file it selects.
    */
-  private fun performNewFileAction(template: FileTemplate, directory: PsiDirectory, name: String): PsiFile? {
+  private suspend fun performNewFileAction(template: FileTemplate, directory: PsiDirectory, name: String): PsiFile? =
+    withContext(Dispatchers.EDT) { doPerformNewFileAction(template, directory, name) }
+
+  private fun doPerformNewFileAction(template: FileTemplate, directory: PsiDirectory, name: String): PsiFile? {
     var selected: PsiFile? = null
     val view = object : IdeView {
       override fun getDirectories(): Array<PsiDirectory> = arrayOf(directory)
@@ -367,26 +427,36 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     }
   }
 
+  /**
+   * Removes [template] from the template manager of the project when the project closes.
+   */
+  private fun removeAfterTest(template: FileTemplate) {
+    val templateManager = FileTemplateManager.getInstance(project)
+    Disposer.register(project, Disposable { templateManager.removeTemplate(template) })
+  }
+
   private fun addTxtTemplate(): FileTemplate {
     val template = FileTemplateManager.getInstance(project).addTemplate(name, "txt")
-    disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    removeAfterTest(template)
     template.text = "\${FILE_NAME}"
     return template
   }
 
   private fun addTestTemplate(name: String, text: String): CustomFileTemplate {
     val template = FileTemplateManager.getInstance(project).addTemplate(name, "java")
-    disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    removeAfterTest(template)
     template.text = text
     return template as CustomFileTemplate
   }
 
-  private fun createDirectory(): PsiDirectory? {
-    val tempDir = tempDir.createVirtualDir()
+  private suspend fun createDirectory(): PsiDirectory? {
+    val tempDir = fixture.createTempVirtualDir()
     PsiTestUtil.addSourceRoot(module, tempDir)
     val sourceRoot = ModuleRootManager.getInstance(module).sourceRoots[0]
-    return PsiManager.getInstance(project).findDirectory(sourceRoot)
+    return readAction { PsiManager.getInstance(project).findDirectory(sourceRoot) }
   }
+
+  private suspend fun findDirectory(dir: VirtualFile): PsiDirectory = readAction { PsiManager.getInstance(project).findDirectory(dir)!! }
 
   private fun doTestSaveLoadTemplate(name: String, ext: String) {
     val templateManager = FTManager("test", testConfigRoot!!)
@@ -396,7 +466,7 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     templateManager.removeTemplate(qName)
     templateManager.loadCustomizedContent()
     val loadedTemplate: FileTemplate? = templateManager.findTemplateByName(name)
-    assertNotNull("Template '$qName' was not found", loadedTemplate)
+    assertNotNull(loadedTemplate, "Template '$qName' was not found")
     assertEquals(name, loadedTemplate!!.name)
     assertEquals(ext, loadedTemplate.extension)
     assertNotSame(template, loadedTemplate)
@@ -405,37 +475,43 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
   private val testConfigRoot: Path?
     get() {
       if (testConfigDir == null) {
-        testConfigDir = FileUtil.createTempDirectory(getTestName(true), "config").toPath()
+        testConfigDir = fixture.createTempVirtualDir().toNioPath()
       }
       return testConfigDir
     }
 
-  fun testSaveLoadCustomTemplate() {
+  @Test
+  fun testSaveLoadCustomTemplate(): Unit = timeoutRunBlocking {
     doTestSaveLoadTemplate("name", "ext")
   }
 
-  fun testSaveLoadCustomTemplateDottedName() {
+  @Test
+  fun testSaveLoadCustomTemplateDottedName(): Unit = timeoutRunBlocking {
     doTestSaveLoadTemplate("name.has.dots", "ext")
   }
 
-  fun testSaveLoadCustomTemplateDottedExt() {
+  @Test
+  fun testSaveLoadCustomTemplateDottedExt(): Unit = timeoutRunBlocking {
     if (checkFileWithUnicodeNameCanBeFound()) {
       doTestSaveLoadTemplate("name", "ext.has.dots")
     }
   }
 
-  fun testCanCreateDoubleExtension() {
+  @Test
+  fun testCanCreateDoubleExtension(): Unit = timeoutRunBlocking {
     val template = FileTemplateManager.getInstance(project).addTemplate(name, "my.txt")
-    disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
-    val tempDir = tempDir.createVirtualDir()
-    val directory = PsiManager.getInstance(project).findDirectory(tempDir)
-    assertTrue(FileTemplateUtil.canCreateFromTemplate(arrayOf(directory), template))
+    removeAfterTest(template)
+    val tempDir = fixture.createTempVirtualDir()
+    readAction {
+      val directory = PsiManager.getInstance(project).findDirectory(tempDir)
+      assertTrue(FileTemplateUtil.canCreateFromTemplate(arrayOf(directory), template))
+    }
   }
 
   private fun checkFileWithUnicodeNameCanBeFound(): Boolean {
     try {
       val name = FTManager.encodeFileName("test", "ext.has.dots")
-      val file = createTempFile(name, "test")
+      val file = Files.writeString(fixture.createTempVirtualDir().toNioPath().resolve(name), "test").toFile()
       FileUtil.loadFile(File(file.absolutePath), StandardCharsets.UTF_8)
       LOG.debug("File loaded: " + file.absolutePath)
       val dir = File(file.parent)
@@ -457,9 +533,10 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     return false
   }
 
-  fun testInternalTemplates() {
+  @Test
+  fun testInternalTemplates(): Unit = timeoutRunBlocking {
     val manager = FileTemplateManager.getInstance(project)
     val intersect = manager.internalTemplates.toSet().intersect(manager.allTemplates.toSet())
-    assertTrue("Internal templates should be located in 'internal' folder: $intersect", intersect.isEmpty())
+    assertTrue(intersect.isEmpty(), "Internal templates should be located in 'internal' folder: $intersect")
   }
 }

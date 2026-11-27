@@ -379,6 +379,19 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     return newModule
   }
 
+  /**
+   * Creates a new Java module with the module file [moduleFile]. The fixture disposes the module after the test.
+   * It is `createModule(Path)` of [com.intellij.testFramework.JavaModuleTestCase].
+   */
+  fun createModule(moduleFile: Path): Module {
+    val newModule = WriteAction.computeAndWait<Module, RuntimeException> {
+      ModuleManager.getInstance(project).newModule(moduleFile, JavaModuleType.getModuleType().id)
+    }
+    modulesToDispose.add(newModule)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    return newModule
+  }
+
   fun findVirtualFile(filePath: String): VirtualFile {
     val absolutePath = testDataPath + filePath
     VfsRootAccess.allowRootAccess(testRootDisposable, absolutePath)
@@ -917,6 +930,7 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
      * By default, the project is new and empty. When [testDataProjectDir] is set, it gets the test name
      * without the `test` prefix and with a lowercase first letter, and returns a directory with an `.ipr` project.
      * The fixture opens a copy of this project, as a JUnit 3 test that overrides `setUpProject` with `loadAndOpenProject` does.
+     * A new project is directory-based. See [heavyJavaCodeInsightFileBasedSubFixture] for a file-based project.
      */
     @TestOnly
     @JvmStatic
@@ -925,6 +939,25 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
       debugName: String,
       testDataProjectDir: Function<String, String>? = null,
       create: (Context) -> T,
+    ): TestFixture<T> = subFixture(debugName, testDataProjectDir, fileBasedProject = false, create)
+
+    /**
+     * Creates a sub-fixture of [HeavyJavaCodeInsightFixture] with [create], with a new file-based project for each test.
+     * The project has an `.ipr` file, as the project of [com.intellij.testFramework.HeavyPlatformTestCase] has.
+     * See [heavyJavaCodeInsightSubFixture] for the lifecycle.
+     */
+    @TestOnly
+    @JvmStatic
+    fun <T : HeavyJavaCodeInsightFixture> heavyJavaCodeInsightFileBasedSubFixture(
+      debugName: String,
+      create: (Context) -> T,
+    ): TestFixture<T> = subFixture(debugName, testDataProjectDir = null, fileBasedProject = true, create)
+
+    private fun <T : HeavyJavaCodeInsightFixture> subFixture(
+      debugName: String,
+      testDataProjectDir: Function<String, String>?,
+      fileBasedProject: Boolean,
+      create: (Context) -> T,
     ): TestFixture<T> =
       testFixture(debugName) { testContext ->
         val tempRoot = tempPathFixture().init()
@@ -932,7 +965,7 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
         val testMethod = extensionContext.requiredTestMethod
         val projectDisposable = Disposer.newDisposable(debugName)
         val project = if (testDataProjectDir == null) {
-          projectFixture(tempPathFixture(), openAfterCreation = true).init()
+          projectFixture(if (fileBasedProject) iprPathFixture() else tempPathFixture(), openAfterCreation = true).init()
         }
         else {
           val projectDir = testDataProjectDir.apply(PlatformTestUtil.getTestName(testMethod.name, true))
@@ -950,6 +983,10 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
           }
         }
       }
+
+    private fun iprPathFixture(): TestFixture<Path> = testFixture("iprPathFixture") {
+      initialized(tempPathFixture().init().resolve("test" + ProjectFileType.DOT_DEFAULT_EXTENSION)) {}
+    }
 
     private fun openTestDataProject(projectDir: String, dir: Path, disposable: Disposable): Project {
       val copyDir = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)) { dir.toString() }

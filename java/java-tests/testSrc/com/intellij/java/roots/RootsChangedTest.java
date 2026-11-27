@@ -2,6 +2,7 @@
 package com.intellij.java.roots;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -36,16 +37,21 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.HeavyTestHelper;
 import com.intellij.testFramework.ModuleRootEventTracker;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,49 +59,58 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildData;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildDirectory;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.move;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.rename;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Checks that proper {@link ModuleRootListener#rootsChanged} events are sent. Consider adding new tests to {@link LibraryRootsChangedTest}
  * or {@link ModuleRootsChangedTest} which use more convenient API.
  */
-public class RootsChangedTest extends JavaModuleTestCase {
+@TestApplication
+public class RootsChangedTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private ModuleRootEventTracker myModuleRootListener;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
 
-    getOrCreateProjectBaseDir();
-    MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
-    myModuleRootListener = new ModuleRootEventTracker(myProject);
+    HeavyTestHelper.getOrCreateProjectBaseDir(fixture.getProject());
+    MessageBusConnection connection = fixture.getProject().getMessageBus().connect(fixture.getTestRootDisposable());
+    myModuleRootListener = new ModuleRootEventTracker(fixture.getProject());
     connection.subscribe(ModuleRootListener.TOPIC, myModuleRootListener);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myModuleRootListener = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testEventsAfterFileModifications() {
-    File root = new File(FileUtil.getTempDirectory());
+    File root = heavyFixture.get().createTempVirtualDir().toNioPath().toFile();
 
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdirs());
     VirtualFile vDir1 = StandardFileSystems.local().refreshAndFindFileByPath(dir1.getAbsolutePath());
     assertNotNull(vDir1);
 
-    Module moduleA = createModule("a.iml");
+    Module moduleA = heavyFixture.get().createModule("a.iml");
     myModuleRootListener.reset();
 
     ModuleRootModificationUtil.addContentRoot(moduleA, vDir1.getPath());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
     myModuleRootListener.assertEventsCount(1);
-    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
+    assertThat(ModuleRootManager.getInstance(moduleA).getContentRoots()).containsExactlyInAnyOrder(vDir1);
 
     VfsTestUtil.deleteFile(vDir1);
     myModuleRootListener.assertEventsCount(1);
-    assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
+    assertThat(ModuleRootManager.getInstance(moduleA).getContentRoots()).isEmpty();
 
     File dir2 = new File(root, "dir2");
     assertTrue(dir2.mkdirs());
@@ -104,12 +119,12 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     rename(vDir2, "dir1");
     myModuleRootListener.assertEventsCount(1);
-    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+    assertThat(ModuleRootManager.getInstance(moduleA).getContentRoots()).containsExactlyInAnyOrder(vDir2);
 
     // when the existing root is renamed, it remains a root
     rename(vDir2, "dir2");
     myModuleRootListener.assertEventsCount(1);
-    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+    assertThat(ModuleRootManager.getInstance(moduleA).getContentRoots()).containsExactlyInAnyOrder(vDir2);
 
     // and event if it is moved, it's still a root
     File subdir = new File(root, "subdir");
@@ -119,59 +134,67 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     move(vDir2, vSubdir);
     myModuleRootListener.assertEventsCount(1);
-    assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
+    assertThat(ModuleRootManager.getInstance(moduleA).getContentRoots()).containsExactlyInAnyOrder(vDir2);
   }
 
+  @Test
   public void testProjectLibraryChangeEvent() {
-    final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(heavyFixture.get().getProject());
     verifyLibraryTableEditing(projectLibraryTable);
   }
 
+  @Test
   public void testGlobalLibraryChangeEvent() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditing(globalLibraryTable);
   }
 
+  @Test
   public void testProjectLibraryEventsInUncommittedModel() {
-    final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(heavyFixture.get().getProject());
     verifyLibraryTableEditingInUncommittedModel(projectLibraryTable);
   }
 
+  @Test
   public void testGlobalLibraryEventsInUncommittedModel() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditingInUncommittedModel(globalLibraryTable);
   }
 
+  @Test
   public void testEditLibraryForModuleLoadFromXml() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      Module a = loadModule(Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("moduleRootManager/rootsChanged/emptyModule/a.iml"));
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    WriteAction.runAndWait(() -> {
+      Module a = fixture.loadModule(Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("moduleRootManager/rootsChanged/emptyModule/a.iml"));
       myModuleRootListener.assertEventsCount(1);
 
       final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
-      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(jdk, fixture.getTestRootDisposable());
       myModuleRootListener.assertNoEvents();
 
       ModuleRootModificationUtil.setModuleSdk(a, jdk);
       myModuleRootListener.assertEventsCount(1);
 
       SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator.addRoot(fixture.createTempVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
     });
 
     myModuleRootListener.assertEventsCount(1);
   }
 
+  @Test
   public void testModuleJdkEditing() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final Module moduleA = createModule("a.iml");
-      final Module moduleB = createModule("b.iml");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    WriteAction.runAndWait(() -> {
+      final Module moduleA = fixture.createModule("a.iml");
+      final Module moduleB = fixture.createModule("b.iml");
       myModuleRootListener.assertEventsCount(2);
 
       final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       final Sdk unused = ProjectJdkTable.getInstance().createSdk("unused", JavaSdk.getInstance());
-      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-      ProjectJdkTable.getInstance().addJdk(unused, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(jdk, fixture.getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(unused, fixture.getTestRootDisposable());
       myModuleRootListener.assertNoEvents();
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
@@ -183,21 +206,23 @@ public class RootsChangedTest extends JavaModuleTestCase {
       myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator.addRoot(fixture.createTempVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
 
       myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator2 = unused.getSdkModificator();
-      sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator2.addRoot(fixture.createTempVirtualDir(), OrderRootType.CLASSES);
       sdkModificator2.commitChanges();
       myModuleRootListener.assertNoEvents();
     });
   }
 
+  @Test
   public void testSetupUnknownJdk() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      Module module = createModule("a.iml");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    WriteAction.runAndWait(() -> {
+      Module module = fixture.createModule("a.iml");
       myModuleRootListener.assertEventsCount(1);
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
       model.setInvalidSdk("new-jdk", JavaSdk.getInstance().getName());
@@ -205,38 +230,40 @@ public class RootsChangedTest extends JavaModuleTestCase {
       myModuleRootListener.assertEventsCount(1);
 
       Sdk unusedJdk = ProjectJdkTable.getInstance().createSdk("unused-jdk", JavaSdk.getInstance());
-      ProjectJdkTable.getInstance().addJdk(unusedJdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(unusedJdk, fixture.getTestRootDisposable());
       myModuleRootListener.assertNoEvents();
       
       Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
-      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(jdk, fixture.getTestRootDisposable());
 
       myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator.addRoot(fixture.createTempVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
       myModuleRootListener.assertEventsCount(1);
     });
   }
 
+  @Test
   public void testInheritedJdkEditing() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final Module moduleA = createModule("a.iml");
-      final Module moduleB = createModule("b.iml");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    WriteAction.runAndWait(() -> {
+      final Module moduleA = fixture.createModule("a.iml");
+      final Module moduleB = fixture.createModule("b.iml");
       myModuleRootListener.assertEventsCount(2);
 
       final Sdk jdk;
       final Sdk jdkBBB;
       jdk = ProjectJdkTable.getInstance().createSdk("AAA", JavaSdk.getInstance());
-      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(jdk, fixture.getTestRootDisposable());
       myModuleRootListener.assertNoEvents();
 
       jdkBBB = ProjectJdkTable.getInstance().createSdk("BBB", JavaSdk.getInstance());
-      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(jdk, fixture.getTestRootDisposable());
       myModuleRootListener.assertNoEvents();
 
-      ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
+      ProjectRootManager.getInstance(fixture.getProject()).setProjectSdk(jdkBBB);
 
       // don't care if there are references from modules to project SDK or not: change in the "project sdk" always generates events
       myModuleRootListener.assertEventsCount(1);
@@ -249,22 +276,23 @@ public class RootsChangedTest extends JavaModuleTestCase {
       ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       myModuleRootListener.assertEventsCount(1);
 
-      ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
+      ProjectRootManager.getInstance(fixture.getProject()).setProjectSdk(jdk);
       myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator.addRoot(fixture.createTempVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
       myModuleRootListener.assertEventsCount(1);
     });
   }
 
   private void verifyLibraryTableEditing(final LibraryTable libraryTable) {
-    final Module moduleA = createModule("a.iml");
-    final Module moduleB = createModule("b.iml");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final Module moduleA = fixture.createModule("a.iml");
+    final Module moduleB = fixture.createModule("b.iml");
     myModuleRootListener.assertEventsCount(2);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       final Library libraryA = libraryTable.createLibrary("A");
       final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
       libraryModifiableModel.addRoot(someAbsoluteUrl("a"), OrderRootType.CLASSES);
@@ -282,7 +310,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       myModuleRootListener.assertEventsCount(1);
 
       Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
-      VirtualFile file = getTempDir().createVirtualDir();
+      VirtualFile file = fixture.createTempVirtualDir();
       libraryModifiableModel2.addRoot(file.getUrl(), OrderRootType.CLASSES);
       libraryModifiableModel2.commit();
       myModuleRootListener.assertEventsCount(1);
@@ -294,7 +322,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       myModuleRootListener.assertEventsCount(1);
 
       Library.ModifiableModel model = libraryQ.getModifiableModel();
-      model.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      model.addRoot(fixture.createTempVirtualDir(), OrderRootType.CLASSES);
       model.commit();
       myModuleRootListener.assertEventsCount(1);
 
@@ -309,9 +337,10 @@ public class RootsChangedTest extends JavaModuleTestCase {
   }
 
   private void verifyLibraryTableEditingInUncommittedModel(LibraryTable libraryTable) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final Module moduleA = createModule("a.iml");
-      final Module moduleB = createModule("b.iml");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    WriteAction.runAndWait(() -> {
+      final Module moduleA = fixture.createModule("a.iml");
+      final Module moduleB = fixture.createModule("b.iml");
       myModuleRootListener.assertEventsCount(2);
 
       final Library libraryA = libraryTable.createLibrary("A");
@@ -348,27 +377,23 @@ public class RootsChangedTest extends JavaModuleTestCase {
     });
   }
 
-  // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
-  @Override
-  protected boolean isCreateDirectoryBasedProject() {
-    return true;
-  }
-
+  @Test
   public void testShelveChangesMustNotLeadToRootsChangedEvent() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     // create .idea
-    StoreUtil.saveSettings(getProject());
-    VirtualFile shelf = createChildDirectory(getProject().getProjectFile().getParent(), "shelf");
-    VcsIgnoreManager vcsIgnoreManager = VcsIgnoreManager.getInstance(myProject);
+    StoreUtil.saveSettings(fixture.getProject());
+    VirtualFile shelf = createChildDirectory(fixture.getProject().getProjectFile().getParent(), "shelf");
+    VcsIgnoreManager vcsIgnoreManager = VcsIgnoreManager.getInstance(fixture.getProject());
 
     myModuleRootListener.reset();
 
     VirtualFile xxx = createChildData(shelf, "shelf1.dat");
     assertTrue(vcsIgnoreManager.isPotentiallyIgnoredFile(xxx));
 
-    assertEquals(myModuleRootListener.getModificationCount(), ProjectRootManager.getInstance(myProject).getModificationCount());
+    assertEquals(myModuleRootListener.getModificationCount(), ProjectRootManager.getInstance(fixture.getProject()).getModificationCount());
 
-    VirtualFile newShelf = createChildDirectory(getOrCreateProjectBaseDir().getParent(), "newShelf");
-    VcsConfiguration vcs = VcsConfiguration.getInstance(myProject);
+    VirtualFile newShelf = createChildDirectory(HeavyTestHelper.getOrCreateProjectBaseDir(fixture.getProject()).getParent(), "newShelf");
+    VcsConfiguration vcs = VcsConfiguration.getInstance(fixture.getProject());
     vcs.USE_CUSTOM_SHELF_PATH = true;
     vcs.CUSTOM_SHELF_PATH = newShelf.getPath();
     myModuleRootListener.reset();
@@ -377,15 +402,17 @@ public class RootsChangedTest extends JavaModuleTestCase {
     assertTrue(vcsIgnoreManager.isPotentiallyIgnoredFile(xxx2));
   }
 
+  @Test
   public void testCreationDeletionOfRootDirectoriesMustLeadToRootsChanged() {
-    File root = new File(FileUtil.getTempDirectory());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File root = heavyFixture.get().createTempVirtualDir().toNioPath().toFile();
 
     File dir1 = new File(root, "dir1");
     assertTrue(dir1.mkdirs());
     VirtualFile contentRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir1.getAbsolutePath());
     assertNotNull(contentRoot);
 
-    Module moduleA = createModule("a.iml");
+    Module moduleA = fixture.createModule("a.iml");
     ModuleRootModificationUtil.addContentRoot(moduleA, contentRoot.getPath());
     String excludedUrl = contentRoot.getUrl() + "/excluded";
     String sourceUrl = contentRoot.getUrl() + "/src";
@@ -422,28 +449,30 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
   private void checkRootChangedOnDirCreationDeletion(VirtualFile contentRoot, String dirUrl, int mustGenerateEvents) {
     myModuleRootListener.reset();
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
     VirtualFile dir = createChildDirectory(contentRoot, new File(dirUrl).getName());
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
 
     myModuleRootListener.reset();
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    delete(dir);
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
+    VfsTestUtil.deleteFile(dir);
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
   }
 
+  @Test
   public void testEmptyDirectoryCreatedAndSomeRogueFileListenerImmediatelyCallsGetChildrenPreventingFurtherCreationEventsForFilesThatHappenedToBeAlreadyThereByThatMoment() {
-    File ioRoot = new File(FileUtil.getTempDirectory());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File ioRoot = heavyFixture.get().createTempVirtualDir().toNioPath().toFile();
 
     VirtualFile vRoot = StandardFileSystems.local().refreshAndFindFileByPath(ioRoot.getAbsolutePath());
     vRoot.getChildren();
 
-    Module module = createModule("a.iml");
+    Module module = fixture.createModule("a.iml");
     ModuleRootModificationUtil.addContentRoot(module, vRoot.getPath());
     ModuleRootModificationUtil.updateModel(module, model -> model.getContentEntries()[0].addExcludeFolder(vRoot.getUrl() + "/parent/excluded"));
 
-    MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(fixture.getTestRootDisposable());
     BulkFileListener rogueListenerWhichStupidlyGetChildrenRightAway = new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -459,23 +488,27 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File iParent = new File(ioRoot, "parent");
     assertTrue(iParent.mkdirs());
-    vRoot.refresh(true, true);
-
-    TimeoutUtil.sleep(1000); // hope that now async refresh has found "parent" and is waiting for EDT to fire events
-
     File ioExcluded = new File(iParent, "excluded");
-    assertTrue(ioExcluded.mkdirs());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
+    EdtTestUtil.runInEdtAndWait(() -> {
+      vRoot.refresh(true, true);
+
+      TimeoutUtil.sleep(1000); // hope that now async refresh has found "parent" and is waiting for EDT to fire events
+
+      assertTrue(ioExcluded.mkdirs());
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
+    });
 
     assertNotNull(StandardFileSystems.local().refreshAndFindFileByPath(ioExcluded.getAbsolutePath()));
   }
 
+  @Test
   public void testChangesInsideCompilerOutputDirectoryMustNotLeadToRootsChange() {
-    File temp = new File(FileUtil.getTempDirectory());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File temp = heavyFixture.get().createTempVirtualDir().toNioPath().toFile();
     VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(temp.getAbsolutePath());
     VirtualFile content = VfsTestUtil.createDir(root, "content");
 
-    Module module = createModule("a.iml");
+    Module module = fixture.createModule("a.iml");
     ModuleRootModificationUtil.addContentRoot(module, content.getPath());
     VirtualFile out = VfsTestUtil.createDir(root, "out");
 
@@ -495,20 +528,17 @@ public class RootsChangedTest extends JavaModuleTestCase {
     myModuleRootListener.assertEventsCount(0);
   }
 
+  @Test
   public void testBulkRootsChanging() {
-    WriteAction.run(() -> {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    WriteAction.runAndWait(() -> {
       myModuleRootListener.reset();
-      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+      ProjectRootManagerEx.getInstanceEx(fixture.getProject()).mergeRootsChangesDuring(() -> {
         for (int i = 0; i < 10; i++) {
-          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          try {
-            File dir = createTempDir("src-" + i);
-            VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
-            model.addContentEntry(vDir);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+          ModifiableRootModel model = ModuleRootManager.getInstance(fixture.getModule()).getModifiableModel();
+          File dir = fixture.createTempVirtualDir().toNioPath().toFile();
+          VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
+          model.addContentEntry(vDir);
           model.commit();
 
           assertEquals(1, myModuleRootListener.getBeforeCount());
@@ -519,16 +549,18 @@ public class RootsChangedTest extends JavaModuleTestCase {
     });
   }
 
+  @Test
   public void testRootDirDeletionDoesntLeadToIndexing() throws IOException {
-    File contentRoot = createTempDir("content-root");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File contentRoot = fixture.createTempVirtualDir().toNioPath().toFile();
     File excludedRoot = new File(contentRoot, "excluded-root");
     assertTrue(excludedRoot.mkdirs());
     VirtualFile excludedRootVFile = StandardFileSystems.local().refreshAndFindFileByPath(excludedRoot.getAbsolutePath());
 
-    ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile));
+    ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile));
 
     AtomicInteger dumbModeCount = new AtomicInteger();
-    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    SimpleMessageBusConnection connection = fixture.getProject().getMessageBus().simpleConnect();
     try {
       connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
@@ -547,14 +579,16 @@ public class RootsChangedTest extends JavaModuleTestCase {
     }
   }
 
+  @Test
   public void testRootsChangeEventAtCreatingAndMoveFolderUnderJarDir() throws IOException {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     String rootJarDirName = "jarDir";
 
-    File temp = new File(FileUtil.getTempDirectory());
+    File temp = heavyFixture.get().createTempVirtualDir().toNioPath().toFile();
     VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(temp.getAbsolutePath());
     VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
 
-    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(fixture.getProject());
     LibraryTable.ModifiableModel projectLibraryTableModifiableModel = projectLibraryTable.getModifiableModel();
     Library projectLib = projectLibraryTableModifiableModel.createLibrary("lib");
     Library.ModifiableModel modifiableModel = projectLib.getModifiableModel();
@@ -579,17 +613,19 @@ public class RootsChangedTest extends JavaModuleTestCase {
     myModuleRootListener.assertEventsCount(1);
   }
 
+  @Test
   public void testRootsChangeEventAtRenameCopyAndDeleteFileUnderJarDir() throws IOException {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     String rootJarDirName = "jarDir";
 
-    File temp = new File(FileUtil.getTempDirectory());
+    File temp = heavyFixture.get().createTempVirtualDir().toNioPath().toFile();
     VirtualFile root = StandardFileSystems.local().refreshAndFindFileByPath(temp.getAbsolutePath());
     VirtualFile testFileUnderRoot = VfsTestUtil.createFile(root, "test.jar");
 
     VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
     VirtualFile testFileUnderJarDir = VfsTestUtil.createFile(jarDir, "test.jar");
 
-    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(fixture.getProject());
     LibraryTable.ModifiableModel projectLibraryTableModifiableModel = projectLibraryTable.getModifiableModel();
     Library projectLib = projectLibraryTableModifiableModel.createLibrary("lib");
     Library.ModifiableModel modifiableModel = projectLib.getModifiableModel();

@@ -8,14 +8,19 @@ import com.intellij.openapi.projectRoots.impl.ToolVersionsConfigurationProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.cancel
+import org.junit.jupiter.api.Test
 
-class ToolVersionsWatcherHeavyTests : ExternalJavaConfigurationTest() {
-  override val mockJdkVersions: List<String> = listOf(
+@TestApplication
+class ToolVersionsWatcherHeavyTests {
+  private val fixture by externalJavaConfigurationFixture(listOf(
     "GraalVM CE 23.1.2 - Java 21.0.2",
     "Eclipse Temurin 17.0.11",
-  )
+  ))
+  private val project get() = fixture.project
 
+  @Test
   fun `test jdk suggestion after sdkmanrc change`() {
     timeoutRunBlocking {
       val scope = childScope("")
@@ -25,8 +30,8 @@ class ToolVersionsWatcherHeavyTests : ExternalJavaConfigurationTest() {
 
         assert(watcher.getReleaseData(configProvider) == null)
 
-        checkSuggestion(watcher, configProvider, "java graalvm-community-21.0.2", "GraalVM CE 23.1.2 - Java 21.0.2")
-        checkSuggestion(watcher, configProvider,
+        fixture.checkSuggestion(watcher, configProvider, "java graalvm-community-21.0.2", "GraalVM CE 23.1.2 - Java 21.0.2")
+        fixture.checkSuggestion(watcher, configProvider,
                         """
                           # Configuration for asdf
                           java temurin-17.0.11+9

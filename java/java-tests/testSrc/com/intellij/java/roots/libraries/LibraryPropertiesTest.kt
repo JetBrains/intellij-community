@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots.libraries
 
-import com.intellij.java.roots.ModuleRootManagerTestCase
+import com.intellij.java.roots.ModuleRootManagerFixture.moduleRootManagerFixture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -19,14 +20,23 @@ import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import javax.swing.JComponent
 
-class LibraryPropertiesTest : ModuleRootManagerTestCase() {
+@TestApplication
+class LibraryPropertiesTest {
+  private val fixture by moduleRootManagerFixture()
+  @Test
   fun `test set type and properties`() {
-    registerLibraryType(testRootDisposable)
+    registerLibraryType(fixture.testRootDisposable)
     addLibrary("custom", "data")
-    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).libraries.single() as LibraryEx
+    val library = LibraryTablesRegistrar.getInstance().getLibraryTable(fixture.project).libraries.single() as LibraryEx
     assertEquals(MockLibraryType.KIND, library.kind)
     assertEquals("data", (library.properties as MockLibraryProperties).data)
     assertEquals("""
@@ -38,12 +48,12 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
          <JAVADOC />
          <SOURCES />
        </library>
-       """.trimIndent(), LibraryTest.serializeLibraries(myProject))
+       """.trimIndent(), LibraryTest.serializeLibraries(fixture.project))
   }
 
   private fun addLibrary(name: String, data: String) {
-    val table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
-    runWriteAction {
+    val table = LibraryTablesRegistrar.getInstance().getLibraryTable(fixture.project)
+    runWriteActionAndWait {
       val model = table.modifiableModel
       val lib = model.createLibrary(name, MockLibraryType.KIND)
       val libModel = lib.modifiableModel as LibraryEx.ModifiableModelEx
@@ -53,8 +63,9 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
     }
   }
 
+  @Test
   fun `test convert to unknown library type is unregistered`() {
-    val table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
+    val table = LibraryTablesRegistrar.getInstance().getLibraryTable(fixture.project)
     runWithRegisteredType {
       addLibrary("lib", "hello")
       val library = table.libraries.single() as LibraryEx
@@ -63,7 +74,7 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
     }
 
     val unknown = table.libraries.single() as LibraryEx
-    assertInstanceOf(unknown.kind, UnknownLibraryKind::class.java)
+    assertInstanceOf(UnknownLibraryKind::class.java, unknown.kind)
     assertNotNull(unknown.properties)
 
     runWithRegisteredType {
@@ -73,9 +84,10 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
     }
   }
 
+  @Test
   fun `test set library properties in modifiable model`() {
-    registerLibraryType(testRootDisposable)
-    ModuleRootModificationUtil.updateModel(myModule) {
+    registerLibraryType(fixture.testRootDisposable)
+    ModuleRootModificationUtil.updateModel(fixture.module) {
       val library = it.moduleLibraryTable.createLibrary("foo")
       val model = library.modifiableModel as LibraryEx.ModifiableModelEx
       model.kind = MockLibraryType.KIND
@@ -85,7 +97,7 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
 
     assertEquals("1", getMockLibraryData())
 
-    ModuleRootModificationUtil.updateModel(myModule) {
+    ModuleRootModificationUtil.updateModel(fixture.module) {
       val library = it.moduleLibraryTable.libraries.single()
       val model = library.modifiableModel as LibraryEx.ModifiableModelEx
       model.properties = MockLibraryProperties("2")
@@ -94,7 +106,7 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
 
     assertEquals("2", getMockLibraryData())
 
-    ModuleRootModificationUtil.updateModel(myModule) {
+    ModuleRootModificationUtil.updateModel(fixture.module) {
       val library = it.moduleLibraryTable.libraries.single()
       val model = library.modifiableModel as LibraryEx.ModifiableModelEx
       model.kind = null
@@ -104,7 +116,7 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
   }
 
   private fun getMockLibraryData(): String? {
-    val libEntries = ModuleRootManager.getInstance(myModule).orderEntries.filterIsInstance<LibraryOrderEntry>()
+    val libEntries = ModuleRootManager.getInstance(fixture.module).orderEntries.filterIsInstance<LibraryOrderEntry>()
     return ((libEntries.single().library as LibraryEx).properties as? MockLibraryProperties)?.data
   }
 
@@ -122,7 +134,7 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
   private fun registerLibraryType(disposable: Disposable) {
     val libraryTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
-      runWriteAction {
+      runWriteActionAndWait {
         Disposer.dispose(libraryTypeDisposable)
       }
     })

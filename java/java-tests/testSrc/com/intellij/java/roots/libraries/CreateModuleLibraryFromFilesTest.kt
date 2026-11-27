@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots.libraries
 
-import com.intellij.java.roots.ModuleRootManagerTestCase
+import com.intellij.java.roots.ModuleRootManagerFixture.moduleRootManagerFixture
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
@@ -12,42 +12,44 @@ import com.intellij.openapi.roots.ui.configuration.classpath.CreateModuleLibrary
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.HeavyTestHelper
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 
-class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
+@TestApplication
+class CreateModuleLibraryFromFilesTest {
+  private val fixture by moduleRootManagerFixture()
   private var modifiableModel: LibraryTable.ModifiableModel? = null
   private var modifiableRootModel: ModifiableRootModel? = null
 
-  override fun setUp() {
-    super.setUp()
-    modifiableRootModel = ModuleRootManager.getInstance(myModule).modifiableModel
+  @BeforeEach
+  fun setUp() {
+    modifiableRootModel = ModuleRootManager.getInstance(fixture.module).modifiableModel
     modifiableModel = modifiableRootModel!!.moduleLibraryTable.modifiableModel
   }
 
-  override fun tearDown() {
-    try {
-      modifiableRootModel!!.dispose()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      modifiableModel = null
-      modifiableRootModel = null
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    modifiableRootModel?.dispose()
   }
 
+  @Test
   fun testSingleJar() {
     val jar = createJar("library.jar")
-    val library = UsefulTestCase.assertOneElement(createLibraries(OrderRoot(jar, OrderRootType.CLASSES)))
+    val library = assertThat(createLibraries(OrderRoot(jar, OrderRootType.CLASSES))).singleElement().actual()
     assertThat(library.name).isNull()
     assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(jar)
     assertThat(library.getFiles(OrderRootType.SOURCES)).isEmpty()
   }
 
+  @Test
   fun testTwoJars() {
     val firstJar = createJar("first.jar")
     val secondJar = createJar("second.jar")
@@ -60,6 +62,7 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
     assertThat(libraries[1].getFiles(OrderRootType.CLASSES)).containsExactly(secondJar)
   }
 
+  @Test
   fun testJarAndSources() {
     val classesJar = createJar("library.jar")
     val sourcesJar = createJar("library-sources.jar")
@@ -72,6 +75,7 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
     assertThat(library.getUrls(OrderRootType.SOURCES)).containsExactly(sourcesJar.url)
   }
 
+  @Test
   fun testJarWithSourcesInside() {
     val jar = createJar("library.jar")
     val library = createLibraries(OrderRoot(jar, OrderRootType.CLASSES), OrderRoot(jar, OrderRootType.SOURCES)).single()
@@ -80,6 +84,7 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
     assertThat(library.getFiles(OrderRootType.SOURCES)).containsExactly(jar)
   }
 
+  @Test
   fun testTwoJarAndSources() {
     val firstJar = createJar("first.jar")
     val secondJar = createJar("second.jar")
@@ -95,6 +100,7 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
     assertThat(library.getUrls(OrderRootType.SOURCES)).containsExactly(sourcesJar.url)
   }
 
+  @Test
   fun testTwoJarWithSourcesInside() {
     val firstJar = createJar("first.jar")
     val secondJar = createJar("second.jar")
@@ -104,16 +110,16 @@ class CreateModuleLibraryFromFilesTest : ModuleRootManagerTestCase() {
                                     OrderRoot(secondJar, OrderRootType.SOURCES))
     assertEquals(2, libraries.size)
     assertNull(libraries[0].name)
-    UsefulTestCase.assertSameElements(libraries[0].getFiles(OrderRootType.CLASSES), firstJar)
-    UsefulTestCase.assertSameElements(libraries[0].getFiles(OrderRootType.SOURCES), firstJar)
+    assertThat(libraries[0].getFiles(OrderRootType.CLASSES)).containsExactlyInAnyOrder(firstJar)
+    assertThat(libraries[0].getFiles(OrderRootType.SOURCES)).containsExactlyInAnyOrder(firstJar)
     assertNull(libraries[1].name)
-    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.CLASSES), secondJar)
-    UsefulTestCase.assertSameElements(libraries[1].getFiles(OrderRootType.SOURCES), secondJar)
+    assertThat(libraries[1].getFiles(OrderRootType.CLASSES)).containsExactlyInAnyOrder(secondJar)
+    assertThat(libraries[1].getFiles(OrderRootType.SOURCES)).containsExactlyInAnyOrder(secondJar)
   }
 
   private fun createJar(name: String): VirtualFile {
-    val jar = IoTestUtil.createTestJar(File(getOrCreateProjectBaseDir().path, name))
-    return requireNotNull(JarFileSystem.getInstance().getJarRootForLocalFile(getVirtualFile(jar)))
+    val jar = IoTestUtil.createTestJar(File(HeavyTestHelper.getOrCreateProjectBaseDir(fixture.project).path, name))
+    return requireNotNull(JarFileSystem.getInstance().getJarRootForLocalFile(requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar))))
   }
 
   private fun createLibraries(vararg roots: OrderRoot): List<Library> {

@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -21,13 +22,14 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,14 +40,18 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
-  private @NotNull ModuleRootManager createTempModuleRootManager() {
-    Module module = createModule(getTempDir().newPath("tst" + ModuleFileType.DOT_DEFAULT_EXTENSION));
-    return ModuleRootManager.getInstance(module);
-  }
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class ModuleRootsExternalizationTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void testContentWrite() throws IOException, JDOMException {
-    File content = new File(getProject().getBasePath());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File content = new File(fixture.getProject().getBasePath());
     File source = new File(content, "source");
     File testSource = new File(content, "testSource");
     File exclude = new File(content, "exclude");
@@ -58,7 +64,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     FileUtil.createDirectory(testClasses);
     final VirtualFile contentFile = StandardFileSystems.local().refreshAndFindFileByPath(content.getAbsolutePath());
     assertNotNull(contentFile);
-    refreshRecursively(contentFile);
+    contentFile.refresh(false, true);
     final VirtualFile sourceFile = StandardFileSystems.local().findFileByPath(source.getAbsolutePath());
     assertNotNull(sourceFile);
     final VirtualFile testSourceFile = StandardFileSystems.local().findFileByPath(testSource.getAbsolutePath());
@@ -74,7 +80,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertNotNull(testClassesFile);
 
     Path moduleFile = content.toPath().resolve("test.iml");
-    Module module = createModule(moduleFile);
+    Module module = fixture.createModule(moduleFile);
 
     PsiTestUtil.addContentRoot(module, contentFile);
     PsiTestUtil.addSourceRoot(module, sourceFile);
@@ -84,7 +90,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     PsiTestUtil.setCompilerOutputPath(module, classesFile.getUrl(), false);
     PsiTestUtil.setCompilerOutputPath(module, testClassesFile.getUrl(), true);
 
-    StoreUtil.saveSettings(myProject);
+    StoreUtil.saveSettings(fixture.getProject());
 
     assertEquals(
       """
@@ -104,24 +110,26 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     );
   }
 
+  @Test
   public void testJavaExternalPaths() throws JDOMException, IOException {
-    File content = new File(getProject().getBasePath());
-    VirtualFile contentRoot = refreshAndFindFile(content);
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File content = new File(fixture.getProject().getBasePath());
+    VirtualFile contentRoot = StandardFileSystems.local().refreshAndFindFileByPath(content.getAbsolutePath());
     File javadocDir = new File(content, "javadoc");
     File annotationsDir = new File(content, "annotations");
     FileUtil.createDirectory(javadocDir);
     FileUtil.createDirectory(annotationsDir);
-    String javadocUrl = refreshAndFindFile(javadocDir).getUrl();
-    String annotationsUrl = refreshAndFindFile(annotationsDir).getUrl();
+    String javadocUrl = StandardFileSystems.local().refreshAndFindFileByPath(javadocDir.getAbsolutePath()).getUrl();
+    String annotationsUrl = StandardFileSystems.local().refreshAndFindFileByPath(annotationsDir.getAbsolutePath()).getUrl();
     Path moduleFile = content.toPath().resolve("test.iml");
-    Module module = createModule(moduleFile);
+    Module module = fixture.createModule(moduleFile);
     ModuleRootModificationUtil.updateModel(module, (model) -> {
       JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
       extension.setExternalAnnotationUrls(new String[]{annotationsUrl});
       extension.setJavadocUrls(new String[]{javadocUrl});
     });
 
-    StoreUtil.saveSettings(myProject);
+    StoreUtil.saveSettings(fixture.getProject());
 
     assertEquals(
       """
@@ -150,28 +158,30 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     return result;
   }
 
+  @Test
   public void testModuleLibraries() throws IOException, JDOMException {
-    Path moduleFile = ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("test.iml");
-    Module module = createModule(moduleFile);
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Path moduleFile = ProjectKt.getStateStore(fixture.getProject()).getProjectBasePath().resolve("test.iml");
+    Module module = fixture.createModule(moduleFile);
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     final LibraryTable moduleLibraryTable = rootModel.getModuleLibraryTable();
 
     final Library unnamedLibrary = moduleLibraryTable.createLibrary();
-    final File unnamedLibClasses = new File(myProject.getBasePath(), "unnamedLibClasses");
+    final File unnamedLibClasses = new File(fixture.getProject().getBasePath(), "unnamedLibClasses");
     FileUtil.createDirectory(unnamedLibClasses);
     final VirtualFile unnamedLibClassesRoot = StandardFileSystems.local().refreshAndFindFileByPath(unnamedLibClasses.getAbsolutePath());
     final Library.ModifiableModel libraryModifiableModel = unnamedLibrary.getModifiableModel();
     libraryModifiableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     final Library namedLibrary = moduleLibraryTable.createLibrary("namedLibrary");
-    final File namedLibClasses = new File(myProject.getBasePath(), "namedLibClasses");
+    final File namedLibClasses = new File(fixture.getProject().getBasePath(), "namedLibClasses");
     FileUtil.createDirectory(namedLibClasses);
     final VirtualFile namedLibClassesRoot = StandardFileSystems.local().refreshAndFindFileByPath(namedLibClasses.getAbsolutePath());
     final Library.ModifiableModel namedLibraryModel = namedLibrary.getModifiableModel();
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       libraryModifiableModel.commit();
       namedLibraryModel.commit();
     });
@@ -180,8 +190,8 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals(libraryIterator.next(), unnamedLibrary);
     assertEquals(libraryIterator.next(), namedLibrary);
 
-    ApplicationManager.getApplication().runWriteAction(rootModel::commit);
-    StoreUtil.saveSettings(myProject);
+    WriteAction.runAndWait(rootModel::commit);
+    StoreUtil.saveSettings(fixture.getProject());
 
     assertEquals(
       """
@@ -211,14 +221,16 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     );
   }
 
+  @Test
   public void testCompilerOutputInheritance() throws IOException, JDOMException {
-    Path moduleFile = ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("test.iml");
-    Module module = createModule(moduleFile);
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Path moduleFile = ProjectKt.getStateStore(fixture.getProject()).getProjectBasePath().resolve("test.iml");
+    Module module = fixture.createModule(moduleFile);
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
-    ApplicationManager.getApplication().runWriteAction(rootModel::commit);
-    StoreUtil.saveSettings(myProject);
+    WriteAction.runAndWait(rootModel::commit);
+    StoreUtil.saveSettings(fixture.getProject());
 
     assertEquals(
       """
@@ -230,6 +242,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     );
   }
 
+  @Test
   public void testMacroSubstituteWin() {
     final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
     final String path = "jar://C:/idea/lib/forms_rt.jar!/";
@@ -239,6 +252,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://$MODULE_DIR$/../../idea/lib/forms_rt.jar!/", substituted);
   }
 
+  @Test
   public void testExpandMacro1() {
     final ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand("MACRO", "C:/idea");
@@ -247,6 +261,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://C:/idea/lib/forms_rt.jar!/", expanded);
   }
 
+  @Test
   public void testExpandMacro2() {
     final ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand("MACRO", "forms_rt.jar!/");
@@ -255,6 +270,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://C:/idea/lib/forms_rt.jar!/", expanded);
   }
 
+  @Test
   public void testExpandMacro3() {
     final ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand("MACRO1", "C:/idea");
@@ -264,6 +280,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://C:/idea/lib/forms_rt.jar!/", expanded);
   }
 
+  @Test
   public void testExpandMacroNoExpand() {
     final ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand("MACRO", "C:/idea");
@@ -272,6 +289,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://C:/idea$/lib/forms_rt.jar!/", expanded);
   }
 
+  @Test
   public void testExpandMacroNoExpand2() {
     final ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand("MACRO", "C:/idea");
@@ -280,6 +298,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://C:/idea/lib/forms_rt.jar!/$", expanded);
   }
 
+  @Test
   public void testExpandMacroNoExpand3() {
     final ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand("MACRO", "C:/idea");
@@ -288,6 +307,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals("jar://$UNKNOWN$/lib/forms_rt.jar!/", expanded);
   }
 
+  @Test
   public void testMacroSubstitute2() {
     final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
     final String path = "jar://C:/idea/lib/forms_rt.jar!/";

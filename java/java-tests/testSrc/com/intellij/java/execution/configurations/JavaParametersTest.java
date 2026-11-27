@@ -3,7 +3,7 @@ package com.intellij.java.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.java.roots.ModuleRootManagerTestCase;
+import com.intellij.java.roots.ModuleRootManagerFixture;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -15,106 +15,140 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.HeavyTestHelper;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-public class JavaParametersTest extends ModuleRootManagerTestCase {
+import static com.intellij.java.roots.ModuleRootManagerFixture.assertRoots;
+import static com.intellij.java.roots.ModuleRootManagerFixture.getMockJdk17WithRtJarOnly;
+import static com.intellij.java.roots.ModuleRootManagerFixture.getMockJdk18WithRtJarOnly;
+import static com.intellij.java.roots.ModuleRootManagerFixture.getRtJarJdk17;
+import static com.intellij.java.roots.ModuleRootManagerFixture.getRtJarJdk18;
+import static com.intellij.java.roots.ModuleRootManagerFixture.moduleRootManagerFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaParametersTest {
+  private final TestFixture<ModuleRootManagerFixture> heavyFixture = moduleRootManagerFixture();
+
+  @Test
   public void testLibrary() throws Exception {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
     var libraryJar = createJar("library.jar");
-    ModuleRootModificationUtil.addDependency(myModule, createLibraryWithSources(libraryJar));
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), libraryJar);
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, libraryJar);
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, libraryJar);
-    assertClasspath(myProject, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), libraryJar);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), createLibraryWithSources(libraryJar));
+    assertClasspath(fixture.getModule(), JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), libraryJar);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_ONLY, libraryJar);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS, libraryJar);
+    assertClasspath(fixture.getProject(), JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), libraryJar);
   }
 
   private Library createLibraryWithSources(VirtualFile classesRoot) {
-    return createLibrary("library", classesRoot, createJar("library-sources.jar"));
+    return heavyFixture.get().createLibrary("library", classesRoot, createJar("library-sources.jar"));
   }
 
   private VirtualFile createJar(String name) {
-    var jar = IoTestUtil.createTestJar(new File(getOrCreateProjectBaseDir().toNioPath().toFile(), name));
-    var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(getVirtualFile(jar));
+    var jar = IoTestUtil.createTestJar(new File(HeavyTestHelper.getOrCreateProjectBaseDir(heavyFixture.get().getProject()).toNioPath().toFile(), name));
+    var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar)));
     assertNotNull(jarRoot);
     return jarRoot;
   }
 
+  @Test
   public void testModuleSourcesAndOutput() throws Exception {
-    addSourceRoot(myModule, false);
-    addSourceRoot(myModule, true);
-    VirtualFile output = setModuleOutput(myModule, false);
-    VirtualFile testOutput = setModuleOutput(myModule, true);
+    ModuleRootManagerFixture fixture = heavyFixture.get();
+    fixture.addSourceRoot(fixture.getModule(), false);
+    fixture.addSourceRoot(fixture.getModule(), true);
+    VirtualFile output = fixture.setModuleOutput(fixture.getModule(), false);
+    VirtualFile testOutput = fixture.setModuleOutput(fixture.getModule(), true);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, output);
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, testOutput, output);
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), testOutput, output);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_ONLY, output);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS, testOutput, output);
+    assertClasspath(fixture.getModule(), JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), testOutput, output);
   }
 
+  @Test
   public void testLibraryScope() throws Exception {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
     var libraryJar = createJar("library.jar");
     var testLibraryJar = createJar("test-library.jar");
-    ModuleRootModificationUtil.addDependency(myModule, createLibraryWithSources(libraryJar), DependencyScope.RUNTIME, false);
-    ModuleRootModificationUtil.addDependency(myModule, createLibrary("test-library", testLibraryJar, null), DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), createLibraryWithSources(libraryJar), DependencyScope.RUNTIME, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), fixture.createLibrary("test-library", testLibraryJar, null), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, libraryJar, testLibraryJar);
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, libraryJar);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS, libraryJar, testLibraryJar);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_ONLY, libraryJar);
   }
 
+  @Test
   public void testProvidedScope() throws Exception {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
     var libraryJar = createJar("library.jar");
     var testLibraryJar = createJar("test-library.jar");
-    ModuleRootModificationUtil.addDependency(myModule, createLibraryWithSources(libraryJar), DependencyScope.PROVIDED, false);
-    ModuleRootModificationUtil.addDependency(myModule, createLibrary("test-library", testLibraryJar, null), DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), createLibraryWithSources(libraryJar), DependencyScope.PROVIDED, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), fixture.createLibrary("test-library", testLibraryJar, null), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, libraryJar, testLibraryJar);
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), libraryJar);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS, libraryJar, testLibraryJar);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_ONLY);
+    assertClasspath(fixture.getModule(), JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), libraryJar);
   }
 
+  @Test
   public void testModuleDependency() throws Exception {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
     var libraryJar = createJar("library.jar");
-    final Module dep = createModule("dep");
-    final VirtualFile depOutput = setModuleOutput(dep, false);
-    final VirtualFile depTestOutput = setModuleOutput(dep, true);
+    final Module dep = fixture.createModule("dep");
+    final VirtualFile depOutput = fixture.setModuleOutput(dep, false);
+    final VirtualFile depTestOutput = fixture.setModuleOutput(dep, true);
     ModuleRootModificationUtil.addDependency(dep, createLibraryWithSources(libraryJar));
-    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), dep, DependencyScope.COMPILE, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_ONLY,
                     depOutput, libraryJar);
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS,
                     depTestOutput, depOutput, libraryJar);
   }
 
+  @Test
   public void testModuleDependencyScope() throws Exception {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
     var libraryJar = createJar("library.jar");
-    final Module dep = createModule("dep");
+    final Module dep = fixture.createModule("dep");
     ModuleRootModificationUtil.addDependency(dep, createLibraryWithSources(libraryJar));
-    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), dep, DependencyScope.TEST, true);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_ONLY);
+    assertClasspath(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS,
                     libraryJar);
 
-    assertClasspath(myProject, JavaParameters.CLASSES_ONLY,
+    assertClasspath(fixture.getProject(), JavaParameters.CLASSES_ONLY,
                     libraryJar);
   }
 
+  @Test
   public void testUseNewestJreVersion() throws CantRunException {
-    Module dep = createModule("dep");
-    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
-    ModuleRootModificationUtil.setModuleSdk(myModule, getMockJdk17WithRtJarOnly());
+    ModuleRootManagerFixture fixture = heavyFixture.get();
+    Module dep = fixture.createModule("dep");
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), dep, DependencyScope.TEST, true);
+    ModuleRootModificationUtil.setModuleSdk(fixture.getModule(), getMockJdk17WithRtJarOnly());
     Sdk sdk = getMockJdk18WithRtJarOnly();
-    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, fixture.getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(dep, sdk);
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES, getRtJarJdk17());
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk18());
+    assertClasspath(fixture.getModule(), JavaParameters.JDK_AND_CLASSES, getRtJarJdk17());
+    assertClasspath(fixture.getModule(), JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk18());
   }
 
   private static void assertClasspath(final Module module, @MagicConstant(flagsFromClass = JavaParameters.class) int type, VirtualFile... roots) throws CantRunException {
@@ -125,26 +159,28 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
 
   private void assertClasspath(final Project project, @MagicConstant(flagsFromClass = JavaParameters.class) int type, VirtualFile... roots) throws CantRunException {
     final JavaParameters javaParameters = new JavaParameters();
-    javaParameters.configureByProject(project, type, getTestProjectJdk());
+    javaParameters.configureByProject(project, type, getMockJdk17WithRtJarOnly());
     assertRoots(javaParameters.getClassPath(), roots);
   }
 
+  @Test
   public void testPreviewLanguageFeatures() throws CantRunException {
-    ModuleRootModificationUtil.updateModel(myModule, (model) -> {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
+    ModuleRootModificationUtil.updateModel(fixture.getModule(), (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
            .setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
       Sdk mockJdk = IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
-      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, myProject));
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, fixture.getProject()));
       model.setSdk(mockJdk);
     });
     JavaParameters javaParameters = new JavaParameters();
-    javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
+    javaParameters.configureByModule(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS);
     assertTrue(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
 
-    ModuleRootModificationUtil.updateModel(myModule, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
+    ModuleRootModificationUtil.updateModel(fixture.getModule(), (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
                                                                      .setLanguageLevel(LanguageLevel.JDK_15));
     javaParameters = new JavaParameters();
-    javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
+    javaParameters.configureByModule(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS);
     assertFalse(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
   }
 
@@ -152,28 +188,30 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
    * A dependency at a preview language level needs the flag, and one flag is enough. The enumeration visits the whole
    * graph, so a plain dependency after a preview one must neither hide the flag nor add it again.
    */
+  @Test
   public void testPreviewLanguageFeaturesInDependencies() throws CantRunException {
+    ModuleRootManagerFixture fixture = heavyFixture.get();
     Sdk mockJdk = IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
-    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, myProject));
-    ModuleRootModificationUtil.updateModel(myModule, (model) -> model.setSdk(mockJdk));
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, fixture.getProject()));
+    ModuleRootModificationUtil.updateModel(fixture.getModule(), (model) -> model.setSdk(mockJdk));
 
-    Module preview = createModule("preview");
+    Module preview = fixture.createModule("preview");
     ModuleRootModificationUtil.updateModel(preview, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
                                                                     .setLanguageLevel(LanguageLevel.JDK_21_PREVIEW));
-    Module alsoPreview = createModule("alsoPreview");
+    Module alsoPreview = fixture.createModule("alsoPreview");
     ModuleRootModificationUtil.updateModel(alsoPreview, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
                                                                         .setLanguageLevel(LanguageLevel.JDK_21_PREVIEW));
-    Module plain = createModule("plain");
+    Module plain = fixture.createModule("plain");
     ModuleRootModificationUtil.updateModel(plain, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
                                                                   .setLanguageLevel(LanguageLevel.JDK_15));
 
-    ModuleRootModificationUtil.addDependency(myModule, preview, DependencyScope.COMPILE, false);
-    ModuleRootModificationUtil.addDependency(myModule, plain, DependencyScope.COMPILE, false);
-    ModuleRootModificationUtil.addDependency(myModule, alsoPreview, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), preview, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), plain, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), alsoPreview, DependencyScope.COMPILE, false);
 
     JavaParameters javaParameters = new JavaParameters();
-    javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
+    javaParameters.configureByModule(fixture.getModule(), JavaParameters.CLASSES_AND_TESTS);
     List<String> vmParameters = javaParameters.getVMParametersList().getList();
-    assertEquals(vmParameters.toString(), 1, Collections.frequency(vmParameters, JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
+    assertEquals(1, Collections.frequency(vmParameters, JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY), vmParameters.toString());
   }
 }

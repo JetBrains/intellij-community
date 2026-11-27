@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -11,62 +13,60 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
 
-public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildDirectory;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class ManagingContentRootFoldersTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private VirtualFile root;
   private ContentEntry entry;
   private ModifiableRootModel myModel;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ApplicationManager.getApplication().runWriteAction(() -> {
+  @BeforeEach
+  void setUp() {
+    WriteAction.runAndWait(() -> {
       initContentRoot();
       initModifiableModel();
     });
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (myModel != null && myModel.isWritable()) {
-        myModel.dispose();
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myModel = null;
-      entry = null;
-      super.tearDown();
+  @AfterEach
+  void tearDown() {
+    if (myModel != null && myModel.isWritable()) {
+      myModel.dispose();
     }
   }
 
   private void initContentRoot() {
-    try {
-      File dir = createTempDirectory();
-      root = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
-      PsiTestUtil.addContentRoot(myModule, root);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    File dir = fixture.createTempVirtualDir().toNioPath().toFile();
+    root = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
+    PsiTestUtil.addContentRoot(fixture.getModule(), root);
   }
 
   private void initModifiableModel() {
-    myModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    myModel = ModuleRootManager.getInstance(heavyFixture.get().getModule()).getModifiableModel();
     for (ContentEntry e : myModel.getContentEntries()) {
       if (Comparing.equal(e.getFile(), root)) entry = e;
     }
   }
 
+  @Test
   public void testCreationOfSourceFolderWithFile() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
@@ -75,7 +75,7 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
 
-    delete(dir);
+    VfsTestUtil.deleteFile(dir);
     assertNull(f.getFile());
     assertEquals(url, f.getUrl());
 
@@ -85,10 +85,13 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
   }
 
 
+  @Test
+
+
   public void testCreationOfSourceFolderWithUrl() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
-    delete(dir);
+    VfsTestUtil.deleteFile(dir);
 
     ContentFolder f = entry.addSourceFolder(url, false);
     assertNull(f.getFile());
@@ -99,6 +102,7 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     assertEquals(url, f.getUrl());
   }
 
+  @Test
   public void testCreationOfSourceFolderWithUrlWhenFileExists() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
@@ -108,6 +112,7 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     assertEquals(url, f.getUrl());
   }
 
+  @Test
   public void testCreationOfExcludedFolderWithFile() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
@@ -116,7 +121,7 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
 
-    delete(dir);
+    VfsTestUtil.deleteFile(dir);
     assertNull(f.getFile());
     assertEquals(url, f.getUrl());
 
@@ -130,10 +135,11 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     return createChildDirectory(root, "src");
   }
 
+  @Test
   public void testCreationOfExcludedFolderWithUrl() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
-    delete(dir);
+    VfsTestUtil.deleteFile(dir);
 
     ContentFolder f = entry.addExcludeFolder(url);
     assertNull(f.getFile());
@@ -144,6 +150,7 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     assertEquals(url, f.getUrl());
   }
 
+  @Test
   public void testCreationOfExcludedFolderWithUrlWhenFileExists() {
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
@@ -153,12 +160,14 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     assertEquals(url, f.getUrl());
   }
 
+  @Test
   public void testAddingExcludeWithoutSlash() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     VirtualFile dir = createSrc();
     String url = dir.getUrl();
 
     Ref<ContentEntry> ref = Ref.create();
-    ModuleRootModificationUtil.updateModel(myModule, model -> {
+    ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
       var entry = model.addContentEntry(url + "/");
       ref.set(entry);
     });

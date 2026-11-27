@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.openapi.roots.impl;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -8,27 +11,38 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@HeavyPlatformTestCase.WrapInCommand
-public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildDirectory;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ProjectFileIndexRestoreTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private VirtualFile myTempVFile;
   private String myTestDirPath;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
 
     VirtualFileSystem fs = StandardFileSystems.local();
-    File temp = createTempDirectory();
+    File temp = fixture.createTempVirtualDir().toNioPath().toFile();
     myTempVFile = fs.refreshAndFindFileByPath(temp.getAbsolutePath());
     assertNotNull(myTempVFile);
     File root = new File(temp, "top/d1/d2/root");
@@ -39,9 +53,9 @@ public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
     VirtualFile moduleDir = createChildDirectory(rootVFile, "module");
     VirtualFile srcDir = createChildDirectory(moduleDir, "src");
     VirtualFile testDir = createChildDirectory(srcDir, "pkg");
-    ModuleRootModificationUtil.setModuleSdk(myModule, null);
-    PsiTestUtil.addContentRoot(myModule, moduleDir);
-    PsiTestUtil.addSourceRoot(myModule, srcDir);
+    ModuleRootModificationUtil.setModuleSdk(fixture.getModule(), null);
+    PsiTestUtil.addContentRoot(fixture.getModule(), moduleDir);
+    PsiTestUtil.addSourceRoot(fixture.getModule(), srcDir);
 
     myTestDirPath = testDir.getPath();
 
@@ -49,7 +63,9 @@ public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
     VfsTestUtil.syncRefresh();
   }
 
+  @Test
   public void testDeepDeleteAndRecreate() throws IOException {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     AtomicInteger counter = new AtomicInteger(0);
     ContentIterator iterator = file -> {
       boolean found = file.getPath().equals(myTestDirPath);
@@ -61,17 +77,17 @@ public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
     File bakFile = new File(myTempVFile.getPath(), "top.bak");
     assertFalse(bakFile.exists());
 
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
+    ReadAction.runBlocking(() -> ProjectRootManager.getInstance(fixture.getProject()).getFileIndex().iterateContent(iterator));
     assertEquals(1, counter.get());
 
     FileUtil.rename(topFile, bakFile);
     List<String> events1 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
-    assertEquals("Events recorded: "+events1, 1, counter.get());
+    ReadAction.runBlocking(() -> ProjectRootManager.getInstance(fixture.getProject()).getFileIndex().iterateContent(iterator));
+    assertEquals(1, counter.get(), "Events recorded: "+events1);
 
     FileUtil.rename(bakFile, topFile);
     List<String> events2 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
-    assertEquals("Events recorded: "+events2, 2, counter.get());
+    ReadAction.runBlocking(() -> ProjectRootManager.getInstance(fixture.getProject()).getFileIndex().iterateContent(iterator));
+    assertEquals(2, counter.get(), "Events recorded: "+events2);
   }
 }

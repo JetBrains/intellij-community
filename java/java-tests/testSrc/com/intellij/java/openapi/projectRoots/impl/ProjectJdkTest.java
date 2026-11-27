@@ -2,7 +2,10 @@
 package com.intellij.java.openapi.projectRoots.impl;
 
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -13,27 +16,44 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-@RunWith(JUnit4.class)
-public class ProjectJdkTest extends HeavyPlatformTestCase {
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ProjectJdkTest {
+  @SuppressWarnings("deprecation")
+  private final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  @TempDir
+  Path myTempDir;
 
   @Test
   public void testDoesntCrashOnJdkRootDisappearance() throws Exception {
-    VirtualFile nDir = getTempDir().createVirtualDir();
+    VirtualFile nDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectory(myTempDir.resolve("n"))));
     String nUrl = nDir.getUrl();
-    Sdk jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Sdk, Exception>)()->{
+    Sdk jdk = WriteCommandAction.runWriteCommandAction(projectFixture.get(), (ThrowableComputable<Sdk, Exception>)()->{
       SdkBridge myJdk = (SdkBridge)ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance());
       @Language("XML")
       String s = "<jdk version=\"2\">\n" +
@@ -57,39 +77,39 @@ public class ProjectJdkTest extends HeavyPlatformTestCase {
 
     try {
       List<String> urls = Arrays.stream(jdk.getRootProvider().getFiles(OrderRootType.CLASSES)).peek(v -> assertTrue(v.isValid())).map(VirtualFile::getUrl).collect(Collectors.toList());
-      assertOrderedEquals(urls, nUrl);
+      assertThat(urls).containsExactly(nUrl);
 
-      delete(nDir);
+      VfsTestUtil.deleteFile(nDir);
       assertFalse(nDir.isValid());
 
       urls = Arrays.stream(jdk.getRootProvider().getFiles(OrderRootType.CLASSES)).peek(v -> assertTrue(v.isValid())).map(VirtualFile::getUrl).collect(Collectors.toList());
-      assertEmpty(urls);
+      assertThat(urls).isEmpty();
     }
     finally {
-      WriteCommandAction.runWriteCommandAction(getProject(), ()->ProjectJdkTable.getInstance().removeJdk(jdk));
+      WriteCommandAction.runWriteCommandAction(projectFixture.get(), ()->ProjectJdkTable.getInstance().removeJdk(jdk));
     }
   }
 
   @Test
   public void testJdkAnnotationsAttachedAutomaticallyOnJDKCreation() throws Exception {
-    Sdk jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Sdk, Exception>)()->
+    Sdk jdk = WriteCommandAction.runWriteCommandAction(projectFixture.get(), (ThrowableComputable<Sdk, Exception>)()->
       ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance()));
     ((SdkType)jdk.getSdkType()).setupSdkPaths(jdk);
 
     try {
-      Runnable fix = MagicConstantInspection.getAttachAnnotationsJarFix(getProject());
+      Runnable fix = ReadAction.computeBlocking(() -> MagicConstantInspection.getAttachAnnotationsJarFix(projectFixture.get()));
       assertNull(fix);
 
       VirtualFile[] virtualFiles = jdk.getRootProvider().getFiles(AnnotationOrderRootType.getInstance());
       List<VirtualFile> annotations = Arrays.asList(virtualFiles);
 
-      assertNotEmpty(annotations);
+      assertThat(annotations).isNotEmpty();
 
       VirtualFile internalAnnotationsPath = JavaSdkImpl.internalJdkAnnotationsPath(new ArrayList<>(), false);
-      assertContainsElements(annotations, internalAnnotationsPath);
+      assertThat(annotations).contains(internalAnnotationsPath);
     }
     finally {
-      WriteCommandAction.runWriteCommandAction(getProject(), ()->ProjectJdkTable.getInstance().removeJdk(jdk));
+      WriteCommandAction.runWriteCommandAction(projectFixture.get(), ()->ProjectJdkTable.getInstance().removeJdk(jdk));
     }
   }
 }

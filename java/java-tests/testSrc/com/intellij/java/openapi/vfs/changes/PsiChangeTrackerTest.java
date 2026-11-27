@@ -16,6 +16,8 @@
 package com.intellij.java.openapi.vfs.changes;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -29,55 +31,60 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiFilter;
-import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiChangeTrackerTest extends JavaProjectTestCase {
+@TestApplication
+public class PsiChangeTrackerTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private PsiFile myOriginalFile;
   private PsiFile myChangedFile;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     final VirtualFile testRoot = getTestRoot();
     final VirtualFile child = testRoot.findChild("PsiChangesTest.java");
     assert child != null : "Can't find PsiChangesTest.java";
-    final PsiFile original = getPsiManager().findFile(child);
+    final PsiFile original = ReadAction.computeBlocking(() -> fixture.getPsiManager().findFile(child));
     assert original != null : "Can't create PsiFile from VirtualFile " + child.getName();
     myOriginalFile = original;
 
     final VirtualFile changedFile = testRoot.findChild("PsiChangesTest_changed.java");
     assert changedFile != null : "Can't find PsiChangesTest_changed.java";
 
-    myChangedFile = PsiFileFactory.getInstance(myProject)
-      .createFileFromText(LoadTextUtil.loadText(changedFile), myOriginalFile);
+    myChangedFile = ReadAction.computeBlocking(() -> PsiFileFactory.getInstance(fixture.getProject())
+      .createFileFromText(LoadTextUtil.loadText(changedFile), myOriginalFile));
     assert myChangedFile != null : "Can't create PsiFile from " + changedFile.getPath();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myOriginalFile = null;
-    myChangedFile = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testMethods() {
     doTest(new PsiFilter<>(PsiMethod.class));
   }
 
+  @Test
   public void testFields() {
     doTest(new PsiFilter<>(PsiField.class));
   }
 
   private <T extends PsiElement> void doTest(PsiFilter<T> filter) {
-    final Map<T,FileStatus> map = PsiChangeTracker.getElementsChanged(myChangedFile, myOriginalFile, filter);
-    final Map<String, String> changes = convert(map);
+    final Map<String, String> changes = ReadAction.computeBlocking(() -> {
+      final Map<T,FileStatus> map = PsiChangeTracker.getElementsChanged(myChangedFile, myOriginalFile, filter);
+      return convert(map);
+    });
     final Map<String, String> expected = getExpectedResults();
     assert expected.equals(changes) : "Changes are not equal \n Expected:\n" + expected + "\nFound:\n" + changes;
   }
@@ -97,7 +104,7 @@ public class PsiChangeTrackerTest extends JavaProjectTestCase {
   }
 
   private Map<String, String> getExpectedResults() {
-    final String resultFileName = getTestName(true) + ".txt";
+    final String resultFileName = heavyFixture.get().getTestName(true) + ".txt";
     final VirtualFile resultsDir = getTestRoot().findChild("results");
     assert resultsDir != null : "Can't find results dir";
     final VirtualFile result = resultsDir.findChild(resultFileName);

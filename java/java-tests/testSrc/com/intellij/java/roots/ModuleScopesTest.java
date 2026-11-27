@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.roots.DependencyScope;
@@ -13,43 +15,53 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.PathsList;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertNotEquals;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildData;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ModuleScopesTest extends JavaModuleTestCase {
+
+@TestApplication
+public class ModuleScopesTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private LightTempDirTestFixtureImpl myFixture;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() throws Exception {
     myFixture = new LightTempDirTestFixtureImpl();
     myFixture.setUp();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myFixture.tearDown();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myFixture = null;
-      super.tearDown();
+  @AfterEach
+  void tearDown() throws Exception {
+    if (myFixture != null) {
+      EdtTestUtil.runInEdtAndWait(() -> myFixture.tearDown());
     }
   }
 
+  @Test
   public void testBasics() throws Exception {
-    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
+    Module moduleA = heavyFixture.get().createModule(Path.of("a.iml"));
     addDependentModule(moduleA, DependencyScope.COMPILE);
     addLibrary(moduleA, DependencyScope.COMPILE);
 
@@ -72,8 +84,9 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(moduleA.getModuleRuntimeScope(true).contains(libraryClass));
   }
 
+  @Test
   public void testContentFileOutsideSourceRoots() throws IOException {
-    Module module = createModule("a");
+    Module module = heavyFixture.get().createModule("a");
     VirtualFile file = myFixture.createFile("a/data/A.java", "class A {}");
     PsiTestUtil.addContentRoot(module, file.getParent());
     assertFalse(module.getModuleScope().contains(file));
@@ -83,21 +96,25 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertFalse(module.getModuleWithDependenciesAndLibrariesScope(true).contains(file));
   }
 
+  @Test
   public void testLibraryScope() throws IOException {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     VirtualFile libraryClass = myFixture.createFile("lib/classes/Test.class");
     VirtualFile librarySrc = myFixture.createFile("lib/src/Test.java", "public class Test { }");
-    Library library = PsiTestUtil.addProjectLibrary(myModule, "my-lib", Collections.singletonList(libraryClass.getParent()),
+    Library library = PsiTestUtil.addProjectLibrary(fixture.getModule(), "my-lib", Collections.singletonList(libraryClass.getParent()),
                                                     Collections.singletonList(librarySrc.getParent()));
-    LibraryScope scope = new LibraryScope(myProject, library);
+    LibraryScope scope = new LibraryScope(fixture.getProject(), library);
     assertTrue(scope.contains(libraryClass));
     assertTrue(scope.contains(librarySrc));
   }
 
+  @Test
   public void testLibraryScopeCompare() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     VirtualFile root1 = myFixture.findOrCreateDir("root1");
     VirtualFile root2 = myFixture.findOrCreateDir("root2");
-    Library lib = PsiTestUtil.addProjectLibrary(getModule(), "lib", List.of(root1, root2), Collections.emptyList());
-    LibraryScope libScope = new LibraryScope(getProject(), lib);
+    Library lib = PsiTestUtil.addProjectLibrary(fixture.getModule(), "lib", List.of(root1, root2), Collections.emptyList());
+    LibraryScope libScope = new LibraryScope(fixture.getProject(), lib);
 
     // Compare files within the same library.
     VirtualFile file1 = createChildData(root1, "file1");
@@ -108,7 +125,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
 
     // Compare against files from another library.
     VirtualFile otherRoot = myFixture.findOrCreateDir("otherRoot");
-    PsiTestUtil.addProjectLibrary(getModule(), "otherLib", otherRoot);
+    PsiTestUtil.addProjectLibrary(fixture.getModule(), "otherLib", otherRoot);
     VirtualFile fileInOtherLib = createChildData(otherRoot, "fileInOtherLib");
     assertTrue(libScope.compare(file1, fileInOtherLib) > 0);
     assertTrue(libScope.compare(fileInOtherLib, file1) < 0);
@@ -133,10 +150,12 @@ public class ModuleScopesTest extends JavaModuleTestCase {
    * when {@code ModuleWithDependenciesScope.calcRootsMultiverse} assigned priorities last-wins: the direct
    * Lib1 entry (listed last) overwrote Lib1's early index, pushing it behind Lib2.
    */
+  @Test
   public void testRuntimeScopeRanksLibraryByFirstReachableEntry() {
-    Module main = getModule();
-    Module dep1 = createModule("dep1");
-    Module dep2 = createModule("dep2");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module main = fixture.getModule();
+    Module dep1 = fixture.createModule("dep1");
+    Module dep2 = fixture.createModule("dep2");
 
     VirtualFile lib1Root = myFixture.findOrCreateDir("lib1");
     VirtualFile lib2Root = myFixture.findOrCreateDir("lib2");
@@ -151,12 +170,13 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     ModuleRootModificationUtil.addDependency(main, lib1); // the same Lib1, directly — appended last
 
     GlobalSearchScope runtimeScope = main.getModuleRuntimeScope(true);
-    assertTrue("A must resolve from Lib1 (reachable first via Dep1), not Lib2", runtimeScope.compare(a1, a2) > 0);
+    assertTrue(runtimeScope.compare(a1, a2) > 0, "A must resolve from Lib1 (reachable first via Dep1), not Lib2");
     assertTrue(runtimeScope.compare(a2, a1) < 0);
   }
 
+  @Test
   public void testTestOnlyModuleDependency() throws Exception {
-    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
+    Module moduleA = heavyFixture.get().createModule(Path.of("a.iml"));
     Module moduleB = addDependentModule(moduleA, DependencyScope.TEST);
 
     VirtualFile classB = myFixture.createFile("b/Test.java", "public class Test { }");
@@ -168,7 +188,7 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
     assertEquals(1, compilationClasspath.length);
     VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(moduleA);
-    assertEmpty(productionCompilationClasspath);
+    assertThat(productionCompilationClasspath).isEmpty();
 
     PathsList pathsList = OrderEnumerator.orderEntries(moduleA).recursively().getPathsList();
     assertEquals(1, pathsList.getPathList().size());
@@ -177,9 +197,10 @@ public class ModuleScopesTest extends JavaModuleTestCase {
   }
 
   private Module addDependentModule(Module moduleA, DependencyScope scope) {
-    Module moduleB = createModule("b" + ".iml", JavaModuleType.getModuleType());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module moduleB = fixture.createModule(Path.of("b" + ".iml"));
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       VirtualFile rootB = myFixture.findOrCreateDir("b");
       VirtualFile outB = myFixture.findOrCreateDir("out");
 
@@ -192,11 +213,13 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     return moduleB;
   }
 
+  @Test
   public void testModuleTwiceInDependents() {
-    Module m = createModule("m.iml", JavaModuleType.getModuleType());
-    Module a = createModule("a.iml", JavaModuleType.getModuleType());
-    Module b = createModule("b.iml", JavaModuleType.getModuleType());
-    Module c = createModule("c.iml", JavaModuleType.getModuleType());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module m = fixture.createModule(Path.of("m.iml"));
+    Module a = fixture.createModule(Path.of("a.iml"));
+    Module b = fixture.createModule(Path.of("b.iml"));
+    Module c = fixture.createModule(Path.of("c.iml"));
 
     ModuleRootModificationUtil.addDependency(a, m, DependencyScope.COMPILE, false);
     ModuleRootModificationUtil.addDependency(b, m, DependencyScope.COMPILE, true);
@@ -211,11 +234,13 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(deps.contains(file));
   }
 
+  @Test
   public void testModuleContentWithDependenciesScopeRootOrdering() {
-    Module m = createModule("m.iml", JavaModuleType.getModuleType());
-    Module a = createModule("a.iml", JavaModuleType.getModuleType());
-    Module b = createModule("b.iml", JavaModuleType.getModuleType());
-    Module c = createModule("c.iml", JavaModuleType.getModuleType());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module m = fixture.createModule(Path.of("m.iml"));
+    Module a = fixture.createModule(Path.of("a.iml"));
+    Module b = fixture.createModule(Path.of("b.iml"));
+    Module c = fixture.createModule(Path.of("c.iml"));
 
     ModuleRootModificationUtil.addDependency(b, m, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
@@ -247,8 +272,9 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertEquals(0, deps.compare(cRoot, cRoot));
   }
 
+  @Test
   public void testTestOnlyLibraryDependency() {
-    Module m = createModule("a.iml", JavaModuleType.getModuleType());
+    Module m = heavyFixture.get().createModule(Path.of("a.iml"));
     addLibrary(m, DependencyScope.TEST);
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
 
@@ -258,31 +284,33 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     VirtualFile[] compilationClasspath = getCompilationClasspath(m);
     assertEquals(1, compilationClasspath.length);
     VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(m);
-    assertEmpty(productionCompilationClasspath);
+    assertThat(productionCompilationClasspath).isEmpty();
   }
 
+  @Test
   public void testRuntimeModuleDependency() {
-    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
+    Module moduleA = heavyFixture.get().createModule(Path.of("a.iml"));
     addDependentModule(moduleA, DependencyScope.RUNTIME);
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
     assertEquals(1, runtimeClasspath.length);
     VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
     assertEquals(1, compilationClasspath.length);
     VirtualFile[] production = getProductionCompileClasspath(moduleA);
-    assertEmpty(production);
+    assertThat(production).isEmpty();
   }
 
+  @Test
   public void testRuntimeLibraryDependency() {
-    Module m = createModule("a.iml", JavaModuleType.getModuleType());
+    Module m = heavyFixture.get().createModule(Path.of("a.iml"));
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.RUNTIME);
 
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
-    assertOrderedEquals(runtimeClasspath, libraryRoot);
+    assertThat(runtimeClasspath).containsExactly(libraryRoot);
 
     VirtualFile[] compilationClasspath = getCompilationClasspath(m);
     assertEquals(1, compilationClasspath.length);
     VirtualFile[] production = getProductionCompileClasspath(m);
-    assertEmpty(production);
+    assertThat(production).isEmpty();
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
     assertFalse(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
@@ -292,24 +320,26 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertTrue(m.getModuleRuntimeScope(false).contains(libraryClass));
   }
 
+  @Test
   public void testProvidedModuleDependency() {
-    Module moduleA = createModule("a.iml", JavaModuleType.getModuleType());
+    Module moduleA = heavyFixture.get().createModule(Path.of("a.iml"));
     addDependentModule(moduleA, DependencyScope.PROVIDED);
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
-    assertEmpty(runtimeClasspath);
+    assertThat(runtimeClasspath).isEmpty();
     VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
     assertEquals(1, compilationClasspath.length);
   }
 
+  @Test
   public void testProvidedLibraryDependency() {
-    Module m = createModule("a.iml", JavaModuleType.getModuleType());
+    Module m = heavyFixture.get().createModule(Path.of("a.iml"));
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.PROVIDED);
 
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
-    assertEmpty(runtimeClasspath);
+    assertThat(runtimeClasspath).isEmpty();
 
     VirtualFile[] compilationClasspath = getCompilationClasspath(m);
-    assertOrderedEquals(compilationClasspath, libraryRoot);
+    assertThat(compilationClasspath).containsExactly(libraryRoot);
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
@@ -340,17 +370,20 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     return libraryRoot;
   }
 
+  @Test
   public void testLibUnderModuleContent() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     VirtualFile lib = myFixture.findOrCreateDir("lib");
-    PsiTestUtil.addContentRoot(myModule, lib);
+    PsiTestUtil.addContentRoot(fixture.getModule(), lib);
 
     VirtualFile file = createChildData(lib, "a.txt");
-    addLibrary(myModule, DependencyScope.COMPILE);
-    assertTrue(myModule.getModuleWithDependenciesAndLibrariesScope(false).contains(file));
+    addLibrary(fixture.getModule(), DependencyScope.COMPILE);
+    assertTrue(fixture.getModule().getModuleWithDependenciesAndLibrariesScope(false).contains(file));
   }
 
+  @Test
   public void testScopeEquality() {
-    Module module = createModule("a.iml", JavaModuleType.getModuleType());
+    Module module = heavyFixture.get().createModule(Path.of("a.iml"));
     addDependentModule(module, DependencyScope.COMPILE);
     addLibrary(module, DependencyScope.COMPILE);
 
@@ -373,10 +406,12 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     assertEquals(depsTests, depsTests2);
   }
 
+  @Test
   public void testHonorExportsWhenCalculatingLibraryScope() throws IOException {
-    Module a = createModule("a.iml", JavaModuleType.getModuleType());
-    Module b = createModule("b.iml", JavaModuleType.getModuleType());
-    Module c = createModule("c.iml", JavaModuleType.getModuleType());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule(Path.of("a.iml"));
+    Module b = fixture.createModule(Path.of("b.iml"));
+    Module c = fixture.createModule(Path.of("c.iml"));
     ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
 
@@ -388,7 +423,9 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     ModuleRootModificationUtil.addModuleLibrary(c, "l", Collections.singletonList(libFile2.getParent().getUrl()),
                                                 Collections.emptyList(), Collections.emptyList(), DependencyScope.COMPILE, true);
 
-    assertTrue(ResolveScopeManager.getElementResolveScope(getPsiManager().findFile(libFile1)).contains(libFile2));
-    assertTrue(ResolveScopeManager.getElementResolveScope(getPsiManager().findFile(libFile2)).contains(libFile1));
+    ReadAction.runBlocking(() -> {
+      assertTrue(ResolveScopeManager.getElementResolveScope(fixture.getPsiManager().findFile(libFile1)).contains(libFile2));
+      assertTrue(ResolveScopeManager.getElementResolveScope(fixture.getPsiManager().findFile(libFile2)).contains(libFile1));
+    });
   }
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.roots;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JavaProjectDependenciesAnalyzer;
@@ -11,8 +13,10 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,66 +25,86 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class FindReachableExportedDependenciesTest extends JavaModuleTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+@TestApplication
+public class FindReachableExportedDependenciesTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void testModuleDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Module c = createModule("c");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Module c = fixture.createModule("c");
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
-    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b)).getKey();
+    OrderEntry dependency = assertThat(findReachableViaThisDependencyOnly(a, b)).singleElement().actual().getKey();
     assertSame(c, ((ModuleOrderEntry)dependency).getModule());
     ModuleRootModificationUtil.addDependency(a, c);
-    assertEmpty(findReachableViaThisDependencyOnly(a, b));
+    assertThat(findReachableViaThisDependencyOnly(a, b)).isEmpty();
   }
 
+  @Test
   public void testModuleDependencyNotExported() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Module c = createModule("c");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Module c = fixture.createModule("c");
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(b, c);
-    assertEmpty(findReachableViaThisDependencyOnly(a, b));
+    assertThat(findReachableViaThisDependencyOnly(a, b)).isEmpty();
   }
 
+  @Test
   public void testLibraryDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Library lib = PsiTestUtil.addProjectLibrary(myModule, "lib", Arrays.asList(), Collections.emptyList());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Library lib = PsiTestUtil.addProjectLibrary(fixture.getModule(), "lib", Arrays.asList(), Collections.emptyList());
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(b, lib, DependencyScope.COMPILE, true);
-    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b)).getKey();
+    OrderEntry dependency = assertThat(findReachableViaThisDependencyOnly(a, b)).singleElement().actual().getKey();
     assertSame(lib, ((LibraryOrderEntry)dependency).getLibrary());
     ModuleRootModificationUtil.addDependency(a, lib);
-    assertEmpty(findReachableViaThisDependencyOnly(a, b));
+    assertThat(findReachableViaThisDependencyOnly(a, b)).isEmpty();
   }
 
+  @Test
   public void testLibraryDependencyNotExported() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Library lib = PsiTestUtil.addProjectLibrary(myModule, "lib", Arrays.asList(), Collections.emptyList());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Library lib = PsiTestUtil.addProjectLibrary(fixture.getModule(), "lib", Arrays.asList(), Collections.emptyList());
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(b, lib);
-    assertEmpty(findReachableViaThisDependencyOnly(a, b));
+    assertThat(findReachableViaThisDependencyOnly(a, b)).isEmpty();
   }
 
+  @Test
   public void testTwoPaths() {
-    Module a = createModule("a");
-    Module b1 = createModule("b1");
-    Module b2 = createModule("b2");
-    Module c = createModule("c");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b1 = fixture.createModule("b1");
+    Module b2 = fixture.createModule("b2");
+    Module c = fixture.createModule("c");
     ModuleRootModificationUtil.addDependency(a, b1);
     ModuleRootModificationUtil.addDependency(a, b2);
     ModuleRootModificationUtil.addDependency(b1, c, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(b2, c, DependencyScope.COMPILE, true);
-    assertEmpty(findReachableViaThisDependencyOnly(a, b1));
+    assertThat(findReachableViaThisDependencyOnly(a, b1)).isEmpty();
   }
 
+  @Test
   public void testExportedOfExportedDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Module c = createModule("c");
-    Module d = createModule("d");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Module c = fixture.createModule("c");
+    Module d = fixture.createModule("d");
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(c, d, DependencyScope.COMPILE, true);
@@ -92,40 +116,46 @@ public class FindReachableExportedDependenciesTest extends JavaModuleTestCase {
     assertSame(c, ((ModuleOrderEntry)result.get(1).getValue()).getModule());
   }
 
+  @Test
   public void testIgnoreDirectRuntimeDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Module c = createModule("c");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Module c = fixture.createModule("c");
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(a, c, DependencyScope.RUNTIME, false);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
-    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b)).getKey();
+    OrderEntry dependency = assertThat(findReachableViaThisDependencyOnly(a, b)).singleElement().actual().getKey();
     assertSame(c, ((ModuleOrderEntry)dependency).getModule());
   }
 
+  @Test
   public void testIgnoreDirectTestDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Module c = createModule("c");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Module c = fixture.createModule("c");
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(a, c, DependencyScope.TEST, false);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
-    OrderEntry dependency = assertOneElement(findReachableViaThisDependencyOnly(a, b)).getKey();
+    OrderEntry dependency = assertThat(findReachableViaThisDependencyOnly(a, b)).singleElement().actual().getKey();
     assertSame(c, ((ModuleOrderEntry)dependency).getModule());
   }
 
+  @Test
   public void testHonorDirectTestDependencyWhenAnalyzingTestDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
-    Module c = createModule("c");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
+    Module c = fixture.createModule("c");
     ModuleRootModificationUtil.addDependency(a, b, DependencyScope.TEST, false);
     ModuleRootModificationUtil.addDependency(a, c, DependencyScope.TEST, false);
     ModuleRootModificationUtil.addDependency(b, c, DependencyScope.COMPILE, true);
-    assertEmpty(findReachableViaThisDependencyOnly(a, b));
+    assertThat(findReachableViaThisDependencyOnly(a, b)).isEmpty();
   }
 
   private Set<Map.Entry<OrderEntry, OrderEntry>> findReachableViaThisDependencyOnly(Module a, Module b) {
-    ModulesProvider rootModelProvider = DefaultModulesProvider.createForProject(myProject);
+    ModulesProvider rootModelProvider = DefaultModulesProvider.createForProject(heavyFixture.get().getProject());
     return JavaProjectDependenciesAnalyzer.findExportedDependenciesReachableViaThisDependencyOnly(a, b, rootModelProvider).entrySet();
   }
 }

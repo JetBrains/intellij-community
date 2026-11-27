@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.roots.ui.configuration.actions;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -12,88 +14,111 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ModuleDeleteProviderTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @BeforeEach
+  void setUp() {
     TestDialogManager.setTestDialog(TestDialog.OK);
   }
 
+  @Test
   public void testSimple() {
-    createModule("a");
+    heavyFixture.get().createModule("a");
     assertNotNull(getModuleManager().findModuleByName("a"));
     deleteModules("a");
     assertNull(getModuleManager().findModuleByName("a"));
   }
 
+  @Test
   public void testDeleteDependency() {
-    Module a = createModule("a");
-    Module b = createModule("b");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
     ModuleRootModificationUtil.addDependency(a, b);
-    assertSameElements(ModuleRootManager.getInstance(a).getDependencyModuleNames(), "b");
+    assertThat(ModuleRootManager.getInstance(a).getDependencyModuleNames()).containsExactlyInAnyOrder("b");
     deleteModules("b");
-    assertEmpty(ModuleRootManager.getInstance(a).getDependencyModuleNames());
+    assertThat(ModuleRootManager.getInstance(a).getDependencyModuleNames()).isEmpty();
   }
 
+  @Test
   public void testDeleteTwoModules() {
-    Module a = createModule("a");
-    Module b = createModule("b");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
     ModuleRootModificationUtil.addDependency(a, b);
-    ModuleRootModificationUtil.addDependency(myModule, a);
-    ModuleRootModificationUtil.addDependency(myModule, b);
-    assertSameElements(ModuleRootManager.getInstance(myModule).getDependencyModuleNames(), "a", "b");
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), a);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), b);
+    assertThat(ModuleRootManager.getInstance(fixture.getModule()).getDependencyModuleNames()).containsExactlyInAnyOrder("a", "b");
     deleteModules("a", "b");
     assertNull(getModuleManager().findModuleByName("a"));
     assertNull(getModuleManager().findModuleByName("b"));
-    assertEmpty(ModuleRootManager.getInstance(myModule).getDependencyModuleNames());
+    assertThat(ModuleRootManager.getInstance(fixture.getModule()).getDependencyModuleNames()).isEmpty();
   }
 
+  @Test
   public void testUnloaded() {
-    createModule("a");
+    heavyFixture.get().createModule("a");
     getModuleManager().setUnloadedModulesSync(List.of("a"));
     assertNotNull(getModuleManager().getUnloadedModuleDescription("a"));
     deleteModules("a");
     assertNull(getModuleManager().getUnloadedModuleDescription("a"));
   }
 
+  @Test
   public void testDeleteDependencyOnUnloadedModule() {
-    Module a = createModule("a");
-    Module b = createModule("b");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
     ModuleRootModificationUtil.addDependency(a, b);
     getModuleManager().setUnloadedModulesSync(List.of("b"));
-    assertSameElements(ModuleRootManager.getInstance(a).getDependencyModuleNames(), "b");
+    assertThat(ModuleRootManager.getInstance(a).getDependencyModuleNames()).containsExactlyInAnyOrder("b");
     deleteModules("b");
-    assertEmpty(ModuleRootManager.getInstance(a).getDependencyModuleNames());
+    assertThat(ModuleRootManager.getInstance(a).getDependencyModuleNames()).isEmpty();
   }
 
+  @Test
   public void testLoadedAndUnloadedModule() {
-    Module a = createModule("a");
-    Module b = createModule("b");
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module a = fixture.createModule("a");
+    Module b = fixture.createModule("b");
     ModuleRootModificationUtil.addDependency(a, b);
-    ModuleRootModificationUtil.addDependency(myModule, a);
-    ModuleRootModificationUtil.addDependency(myModule, b);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), a);
+    ModuleRootModificationUtil.addDependency(fixture.getModule(), b);
     getModuleManager().setUnloadedModulesSync(List.of("a"));
-    assertSameElements(ModuleRootManager.getInstance(myModule).getDependencyModuleNames(), "a", "b");
+    assertThat(ModuleRootManager.getInstance(fixture.getModule()).getDependencyModuleNames()).containsExactlyInAnyOrder("a", "b");
     deleteModules("a", "b");
     assertNull(getModuleManager().findModuleByName("a"));
     assertNull(getModuleManager().findModuleByName("b"));
-    assertEmpty(getModuleManager().getUnloadedModuleDescriptions());
-    assertEmpty(ModuleRootManager.getInstance(myModule).getDependencyModuleNames());
+    assertThat(getModuleManager().getUnloadedModuleDescriptions()).isEmpty();
+    assertThat(ModuleRootManager.getInstance(fixture.getModule()).getDependencyModuleNames()).isEmpty();
   }
 
   private ModuleManager getModuleManager() {
-    return ModuleManager.getInstance(myProject);
+    return ModuleManager.getInstance(heavyFixture.get().getProject());
   }
 
   private void deleteModules(String... names) {
     MapDataContext dataContext = new MapDataContext();
-    dataContext.put(CommonDataKeys.PROJECT, myProject);
+    dataContext.put(CommonDataKeys.PROJECT, heavyFixture.get().getProject());
     List<Module> modules = new ArrayList<>();
     List<UnloadedModuleDescription> unloaded = new ArrayList<>();
     for (String name : names) {
@@ -103,7 +128,7 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
       }
       else {
         Module module = getModuleManager().findModuleByName(name);
-        assertNotNull("Module " + name + " not found", module);
+        assertNotNull(module, "Module " + name + " not found");
         modules.add(module);
       }
     }
@@ -114,20 +139,14 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
       dataContext.put(ProjectView.UNLOADED_MODULES_CONTEXT_KEY, unloaded);
     }
     ModuleDeleteProvider provider = ModuleDeleteProvider.getInstance();
-    assertTrue(provider.canDeleteElement(dataContext));
-    provider.deleteElement(dataContext);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      assertTrue(provider.canDeleteElement(dataContext));
+      provider.deleteElement(dataContext);
+    });
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      TestDialogManager.setTestDialog(TestDialog.DEFAULT);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT);
   }
 }

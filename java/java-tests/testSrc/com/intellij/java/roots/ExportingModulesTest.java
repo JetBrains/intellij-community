@@ -2,7 +2,9 @@
 package com.intellij.java.roots;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -16,25 +18,35 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Path;
 
-public class ExportingModulesTest extends JavaProjectTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class ExportingModulesTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void test1() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     String rootPath = JavaTestUtil.getJavaTestDataPath().replace(File.separatorChar, '/') + "/moduleRootManager/exportedModules/";
     VirtualFile testRoot = StandardFileSystems.local().refreshAndFindFileByPath(rootPath);
     assertNotNull(testRoot);
 
-    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+    Path dir = ProjectKt.getStateStore(fixture.getProject()).getProjectBasePath();
 
     final Module[] moduleB = new Module[1];
     final Module[] moduleC = new Module[1];
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    WriteAction.runAndWait(() -> {
+      ModifiableModuleModel moduleModel = ModuleManager.getInstance(fixture.getProject()).getModifiableModel();
       Module moduleA = moduleModel.newModule(dir.resolve("A.iml"), JavaModuleType.getModuleType().getId());
 
       moduleB[0] = moduleModel.newModule(dir.resolve("B.iml"), JavaModuleType.getModuleType().getId());
@@ -49,19 +61,21 @@ public class ExportingModulesTest extends JavaProjectTestCase {
 
       ModuleRootModificationUtil.addDependency(moduleC[0], moduleB[0]);
     });
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IndexingTestUtil.waitUntilIndexesAreReady(fixture.getProject());
 
-    final PsiClass pCClass =
-      JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));
-    assertNotNull(pCClass);
+    ReadAction.runBlocking(() -> {
+      final PsiClass pCClass =
+        JavaPsiFacade.getInstance(fixture.getProject()).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));
+      assertNotNull(pCClass);
 
-    final PsiClass pAClass =
-      JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleB[0]));
-    assertNotNull(pAClass);
+      final PsiClass pAClass =
+        JavaPsiFacade.getInstance(fixture.getProject()).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleB[0]));
+      assertNotNull(pAClass);
 
-    final PsiClass pAClass2 =
-      JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));
-    assertNotNull(pAClass2);
+      final PsiClass pAClass2 =
+        JavaPsiFacade.getInstance(fixture.getProject()).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));
+      assertNotNull(pAClass2);
+    });
   }
 
   private static void configureModule(final Module module, final VirtualFile testRoot, final String name) {
