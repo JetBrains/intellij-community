@@ -172,6 +172,7 @@ This table maps each layer and locality to its file. The requirements below defi
 - The application layer must register the config `options` directory as a watch root, so the VFS reports an
   external edit of an application config file when the IDE frame gets the focus.
   See [ADR 00GVJM](../adr/00GVJM-the-application-layer-registers-the-options-directory-as-a-watch-root.md).
+  [@test] ../../../../tests/remote-driver-tests/settingsSmoke/testSrc/com/intellij/driver/tests/idea/platform/settings/AppSettingsFileExternalEditTest.kt
 - The watch start and a write must make the config file known to the VFS through an asynchronous lookup.
   Settings v2 must never run a synchronous VFS refresh or lookup, so the application load never waits for the EDT
   on its behalf.
