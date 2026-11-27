@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.ex.EditorEx
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.impl.EditorViewAccessor
 import com.intellij.openapi.editor.impl.editorModelFixture
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.scale.JBUIScale
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 import javax.swing.JComponent
+import javax.swing.border.EmptyBorder
 
 @TestApplication
 class EditorViewSnapshotTest {
@@ -229,6 +232,7 @@ class EditorViewSnapshotTest {
       )
     } finally {
       JBUIScale.setUserScaleFactorForTest(originalScale)
+      editor.contentComponent.updateUI()
     }
   }
 
@@ -249,6 +253,7 @@ class EditorViewSnapshotTest {
       )
     } finally {
       JBUIScale.setUserScaleFactorForTest(originalScale)
+      editor.contentComponent.updateUI()
     }
   }
 
@@ -279,7 +284,24 @@ class EditorViewSnapshotTest {
       )
     } finally {
       JBUIScale.setUserScaleFactorForTest(originalScale)
+      editor.contentComponent.updateUI()
     }
+  }
+
+  @Test
+  fun `test the release of an editor reports insets that changed without a border change`(): Unit = fixture.runTest {
+    val editorFactory = EditorFactory.getInstance()
+    val otherEditor = editorFactory.createEditor(editorFactory.createDocument("text"))
+    val border = MutableLeftBorder()
+    otherEditor.contentComponent.border = border
+    border.changeLeft(7)
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      editorFactory.releaseEditor(otherEditor)
+    }
+    assertTrue(
+      error.message!!.contains(MutableLeftBorder::class.java.name),
+      "The message must name the border class, but it was '${error.message}'",
+    )
   }
 
   @Test
@@ -308,6 +330,12 @@ class EditorViewSnapshotTest {
       null,
       HierarchyEvent.SHOWING_CHANGED.toLong(),
     )
+  }
+
+  private class MutableLeftBorder : EmptyBorder(0, 0, 0, 0) {
+    fun changeLeft(value: Int) {
+      left = value
+    }
   }
 
   private class FixedSizeRenderer : EditorCustomElementRenderer {

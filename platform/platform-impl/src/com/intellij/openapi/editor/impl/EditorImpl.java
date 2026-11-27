@@ -1563,6 +1563,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createDefaultUI());
       mouseSelectionStateAlarm.dispose();
       errorStripeDelayedRepaintAlarm.dispose();
+      myView.checkSnapshotInsets();
     });
   }
 

@@ -53,6 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -792,6 +794,32 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private void updateInsets() {
     EditorInsets insets = readInsets();
     SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> snapshot.withInsets(insets));
+  }
+
+  /**
+   * Reports an error when the snapshot insets differ from the content component insets.
+   */
+  public void checkSnapshotInsets() {
+    EditorInsets snapshotInsets = mySnapshot.insets();
+    EditorInsets componentInsets = readInsets();
+    if (!snapshotInsets.equals(componentInsets)) {
+      LOG.error("The content component insets changed without a border change or a UI update." +
+                " Snapshot: " + snapshotInsets +
+                ", component: " + componentInsets +
+                ", border: " + describeBorder(myEditor.getContentComponent().getBorder()));
+    }
+  }
+
+  private static String describeBorder(@Nullable Border border) {
+    if (border == null) {
+      return "null";
+    }
+    if (border instanceof CompoundBorder compound) {
+      String outside = describeBorder(compound.getOutsideBorder());
+      String inside = describeBorder(compound.getInsideBorder());
+      return "CompoundBorder(" + outside + ", " + inside + ")";
+    }
+    return border.getClass().getName();
   }
 
   private void runPaintCallback() {
