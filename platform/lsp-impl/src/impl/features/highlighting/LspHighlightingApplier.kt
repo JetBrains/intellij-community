@@ -111,6 +111,13 @@ internal class LspHighlightingApplier(private val project: Project) {
   private fun launchRefresh(file: VirtualFile, generationCounter: AtomicLong, gen: Long) {
     LspCoroutineScopeService.getInstance(project).cs.launch(serializedDispatcher) {
       if (generationCounter.get() > gen) return@launch
+      if (FileDocumentManager.getInstance().getCachedDocument(file) == null) {
+        // No editor shows the file, and its highlighters went away with its document. A server can push diagnostics
+        // for files that it does not have open, and loading their documents would read each of them for nothing.
+        // A file that had errors when it was open loses its problem mark, as after an apply of no highlights.
+        reportErrorsToWolf(file, emptyList(), gen)
+        return@launch
+      }
       val highlights = readAction { collectHighlightsForApply(file) } ?: return@launch
       afterCollectHook?.invoke(file)
       val applied = readAction {
@@ -134,7 +141,7 @@ internal class LspHighlightingApplier(private val project: Project) {
     // The refresh is scheduled asynchronously, so the file may have been deleted/invalidated between the cache update and this read action
     if (!file.isValid) return null
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+    val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
     val groupId = GROUP_ID
     if (groupId == UNREGISTERED_PASS_ID) return null
     val highlights = collectHighlightInfos(psiFile, file, document)

@@ -1,13 +1,21 @@
 package com.intellij.platform.lsp
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.idea.TestFor
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -36,6 +44,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +72,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -343,6 +353,53 @@ internal class LspDiagnosticsTest {
       }
 
       checkHighlightingByPolling(createExpectedDataFromText("""hello <error descr="fresh">world</error>"""))
+    }
+
+    @Test
+    fun `a push for a file with no loaded document does not load it`(): Unit = timeoutRunBlocking {
+      // No daemon runs in this test: instantiate the pass registrar, so it assigns LspHighlightingApplier.GROUP_ID.
+      TextEditorHighlightingPassRegistrar.getInstance(project)
+      val openFile = codeInsightFixture.configureByText("pushWithoutLoadOpen.txt", "hello world").virtualFile
+      val openDocument = codeInsightFixture.editor.document
+      val serverSession = fakeLspIntegration.serverSession(openFile)
+      // A file written through the VFS has no document.
+      val unopenedFile = edtWriteAction {
+        openFile.parent.createChildData(this@LspDiagnosticsTest, "pushWithoutLoadUnopened.txt").also {
+          it.setBinaryContent("hello world".toByteArray())
+        }
+      }
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(unopenedFile))
+      val loadedFiles = Collections.synchronizedList(mutableListOf<VirtualFile>())
+      ApplicationManager.getApplication().messageBus.connect(codeInsightFixture.testRootDisposable)
+        .subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
+          override fun fileContentLoaded(file: VirtualFile, document: Document) {
+            loadedFiles.add(file)
+          }
+        })
+
+      val unopenedPushReceived = async(start = CoroutineStart.UNDISPATCHED) {
+        awaitDiagnosticsFromLspServer(project, unopenedFile)
+      }
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(serverSession.fileUri(unopenedFile), listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "unopened", DiagnosticSeverity.Error, null)
+        ))
+      }
+      unopenedPushReceived.await()
+      // The client schedules the refresh of a file before it reports the push, and the applier runs the refreshes
+      // one after the other. So when the push for the open file reaches the markup, the other refresh has run.
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(serverSession.fileUri(openFile), listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "marker", DiagnosticSeverity.Error, null)
+        ))
+      }
+      waitUntilAssertSucceeds(message = "the push for the open file must reach the markup") {
+        assertEquals(listOf("marker"), readAction {
+          DaemonCodeAnalyzerImpl.getHighlights(openDocument, HighlightSeverity.ERROR, project).map { it.description }
+        })
+      }
+
+      assertEquals(emptyList<VirtualFile>(), loadedFiles.filter { it == unopenedFile })
     }
   }
 
@@ -1137,6 +1194,44 @@ internal class LspDiagnosticsTest {
         assertFalse(wolf.isProblemFile(virtualFile))
       }
     }
+
+    @Test
+    fun `a push for a closed file with no loaded document clears its problem mark`(): Unit = timeoutRunBlocking {
+      // No daemon runs in this test: instantiate the pass registrar, so it assigns LspHighlightingApplier.GROUP_ID.
+      TextEditorHighlightingPassRegistrar.getInstance(project)
+      val serverSession = fakeLspIntegration.unstartedServerSession()
+      val virtualFile = codeInsightFixture.addFileToProject("closedWithMark.txt", "hello world").virtualFile
+      val uri by lazy { serverSession.fileUri(virtualFile) }
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
+        DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "error", DiagnosticSeverity.Error, null)
+        )))
+      }
+      val didOpen = serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri == uri }
+      // Not through the fixture: its editor would keep the document after the close.
+      FileEditorManager.getInstance(project).openFile(virtualFile, FileEditorOpenRequest.defaults())
+      didOpen.await()
+      waitUntilAssertSucceeds(message = "Wolf must register the file after the pull") {
+        assertTrue(wolf.isProblemFile(virtualFile))
+      }
+
+      val didClose = serverSession.expectNotification(serverSession.DID_CLOSE) { it.textDocument.uri == uri }
+      withContext(Dispatchers.EDT) {
+        FileEditorManager.getInstance(project).closeFile(virtualFile)
+      }
+      didClose.await()
+      awaitDocumentCollected(virtualFile)
+      assertTrue(wolf.isProblemFile(virtualFile), "the close alone must not clear the mark")
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(uri, listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "error", DiagnosticSeverity.Error, null)
+        ))
+      }
+      waitUntilAssertSucceeds(message = "Wolf must unregister a file that no client has open") {
+        assertFalse(wolf.isProblemFile(virtualFile))
+      }
+    }
   }
 
   /**
@@ -1333,6 +1428,18 @@ internal class LspDiagnosticsTest {
     codeInsightFixture.configureFromExistingVirtualFile(file)
     opened.await()
   }
+
+  /**
+   * Waits on another thread until the document of [file] is collected.
+   * Only the non-suspending [documentWatcher] has the document in a local, so no continuation keeps it.
+   */
+  private suspend fun awaitDocumentCollected(file: VirtualFile) {
+    val watcher = documentWatcher(file)
+    withContext(Dispatchers.IO) { watcher.ensureCollectedWithinTimeout(10_000) }
+  }
+
+  private fun documentWatcher(file: VirtualFile): GCWatcher =
+    GCWatcher.tracking(listOfNotNull(FileDocumentManager.getInstance().getCachedDocument(file)))
 
   private suspend fun checkHighlightingByPolling(data: ExpectedHighlightingData) {
     waitUntilAssertSucceeds {
