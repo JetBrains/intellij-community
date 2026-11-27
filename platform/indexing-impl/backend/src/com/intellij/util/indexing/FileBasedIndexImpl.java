@@ -576,7 +576,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                        @NotNull IndexVersionRegistrationSink versionRegistrationStatusSink,
                                        @NotNull IntSet dirtyFiles) throws Exception {
     ID<K, V> name = extension.getName();
-    int version = getIndexExtensionVersion(extension);
+    int version = getIndexExtensionVersion(extension) + GlobalIndexFilter.getFiltersVersion(name);
 
     IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
     versionRegistrationStatusSink.setIndexVersionDiff(name, diff);
@@ -640,10 +640,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        state.registerIndex(indexId,
-                            index,
-                            inputFilter,
-                            version + GlobalIndexFilter.getFiltersVersion(indexId));
+        state.registerIndex(indexId, index, inputFilter, version);
         break;
       }
       catch (Exception e) {

@@ -1,8 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
@@ -97,6 +101,77 @@ internal class FileBasedIndexImplIndexInvalidationTest {
     finally {
       FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(TestIndexExtension.INDEX_ID))
       FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(TestIndexExtension.INDEX_ID))
+    }
+  }
+
+  @Test
+  fun `the version on disk includes the version of a global index filter`(@TestDisposable disposable: Disposable) {
+    ExtensionTestUtil.addExtensions(GlobalIndexFilter.EP_NAME, listOf(TestIndexFilter()), disposable, fireEvents = false)
+    val events = mutableListOf<String>()
+    val extension = TestIndexExtension {
+      events.add("create")
+      mock()
+    }
+    val state = IndexConfiguration()
+
+    // a rebuild request writes the registered version, which includes the filter version
+    IndexVersion.rewriteVersion(TestIndexExtension.INDEX_ID, TestIndexExtension.VERSION + TestIndexFilter.VERSION)
+    try {
+      FileBasedIndexImpl.registerIndexer(
+        extension, TestLayout { events.add("clear") }, state, IndexVersionRegistrationSink(), IntOpenHashSet(),
+      )
+      state.freeze()
+
+      assertThat(events)
+        .describedAs("the version that a rebuild request writes must not clear the index at the next start")
+        .containsExactly("create")
+      assertThat(state.getIndexVersion(TestIndexExtension.INDEX_ID)).isEqualTo(TestIndexExtension.VERSION + TestIndexFilter.VERSION)
+      assertThat(extension.isUpToDate).isTrue()
+    }
+    finally {
+      deleteTestIndexFiles()
+    }
+  }
+
+  @Test
+  fun `a change of the global index filter version clears the index`(@TestDisposable disposable: Disposable) {
+    ExtensionTestUtil.addExtensions(GlobalIndexFilter.EP_NAME, listOf(TestIndexFilter()), disposable, fireEvents = false)
+    val events = mutableListOf<String>()
+    val extension = TestIndexExtension {
+      events.add("create")
+      mock()
+    }
+
+    IndexVersion.rewriteVersion(TestIndexExtension.INDEX_ID, TestIndexExtension.VERSION)
+    try {
+      FileBasedIndexImpl.registerIndexer(
+        extension, TestLayout { events.add("clear") }, IndexConfiguration(), IndexVersionRegistrationSink(), IntOpenHashSet(),
+      )
+
+      assertThat(events).containsExactly("clear", "create")
+      assertThat(extension.isUpToDate)
+        .describedAs("an index with cleared data is not up to date")
+        .isFalse()
+    }
+    finally {
+      deleteTestIndexFiles()
+    }
+  }
+
+  private fun deleteTestIndexFiles() {
+    FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(TestIndexExtension.INDEX_ID))
+    FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(TestIndexExtension.INDEX_ID))
+  }
+
+  private class TestIndexFilter : GlobalIndexFilter {
+    override fun isExcludedFromIndex(virtualFile: VirtualFile, indexId: IndexId<*, *>): Boolean = false
+
+    override fun getVersion(): Int = VERSION
+
+    override fun affectsIndex(indexId: IndexId<*, *>): Boolean = indexId == TestIndexExtension.INDEX_ID
+
+    companion object {
+      const val VERSION: Int = 1
     }
   }
 
