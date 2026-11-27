@@ -41,8 +41,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -52,6 +53,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JList
@@ -350,32 +352,31 @@ class CodeFloatingToolbar(
   }
 
   private fun showMenuPopupOnMouseHover(button: ActionButton) {
-    var mouseWasOutsideOfComponent: Boolean
     val isPopupButton = button.presentation.isPopupGroup
-    button.addMouseListener(object : java.awt.event.MouseListener {
+    button.addMouseListener(object : MouseAdapter() {
+      private var hoverJob: Job? = null
+
       override fun mouseEntered(e: MouseEvent?) {
+        hoverJob?.cancel()
+        if (activeMenuPopup == null) return
         val component = hintComponent ?: return
         val modality = ModalityState.stateForComponent(component)
-        coroutineScope.launch {
-          mouseWasOutsideOfComponent = false
-          val delayMs = if (isPopupButton && activeMenuPopup != null) 40L else 300L
+        hoverJob = coroutineScope.launch {
+          val delayMs = if (isPopupButton) 40L else 300L
           delay(delayMs)
-          if (mouseWasOutsideOfComponent) {
-            cancel()
-          }
           withContext(Dispatchers.EDT + modality.asContextElement()) {
-            if (isPopupButton) writeIntentReadAction {
-              button.click()
+            if (!isActive || activeMenuPopup == null) return@withContext
+            if (isPopupButton) {
+              if (!button.isSelected) writeIntentReadAction(button::click)
             }
             else activeMenuPopup?.cancel()
           }
         }
       }
-      override fun mouseClicked(e: MouseEvent?) { }
-      override fun mousePressed(e: MouseEvent?) { }
-      override fun mouseReleased(e: MouseEvent?) { }
+
       override fun mouseExited(e: MouseEvent?) {
-        mouseWasOutsideOfComponent = true
+        hoverJob?.cancel()
+        hoverJob = null
       }
     })
   }
