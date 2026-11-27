@@ -504,7 +504,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
     @Override
     public int getVisibleAreaWidth() {
-      Insets insets = myEditor.getContentComponent().getInsets();
+      Insets insets = myEditor.getContentInsets();
       int horizontalInsets = insets.left + insets.right;
       // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
       // as the underlying logic is very complicated. But we can reasonably assume that if they

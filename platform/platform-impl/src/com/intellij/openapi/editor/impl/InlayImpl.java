@@ -342,7 +342,7 @@ interface BlockInlay<R extends EditorCustomElementRenderer> extends EditorInlay<
         y += inlay.getHeightInPixels();
       }
     }
-    return new Point(editor.getContentComponent().getInsets().left, y);
+    return new Point(editor.getContentInsets().left, y);
   }
 
   @Override

@@ -328,7 +328,8 @@ public final class EditorComponentImpl extends JTextComponent
 
     Graphics2D gg = (Graphics2D)g;
     EditorUIUtil.setupEditorPainting(gg, editor.useEditorAntialiasing());
-    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, PaintUtil.RoundingMode.FLOOR);
+    Point2D insetsOffset = PaintUtil.insets2offset(editor.getContentInsets());
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, insetsOffset, true, false, PaintUtil.RoundingMode.FLOOR);
     // sticky lines and the offscreen dumb buffer might have a different alignment from the main area
     if (!editor.isStickyLinePainting() && !editor.isPaintingDumbBuffer()) {
       alignment = ObjectUtils.notNull(PaintUtil.getUserSpacePixelOffset(gg), Point2D.Double::new);

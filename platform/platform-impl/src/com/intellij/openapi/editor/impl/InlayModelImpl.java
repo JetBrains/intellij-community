@@ -559,7 +559,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   Inlay<?> getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
     return EditorThreading.compute(() -> {
-      Insets insets = myEditor.getContentComponent().getInsets();
+      Insets insets = myEditor.getContentInsets();
       Point point = location.getPoint();
       if (point.y < insets.top) return null; // can happen for mouse drag events
       int relX = point.x - insets.left;

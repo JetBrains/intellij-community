@@ -2960,6 +2960,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return EditorThreading.compute(myScrollPane::getInsets);
   }
 
+  /**
+   * Returns the content component insets from the view snapshot. The caller owns the result.
+   */
+  @ApiStatus.Internal
+  public @NotNull Insets getContentInsets() {
+    return myView.getInsets();
+  }
+
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     return myView.logicalPositionToOffset(pos);
@@ -5178,7 +5186,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     VisualPosition visualPosition = location.getVisualPosition();
     LogicalPosition logicalPosition = location.getLogicalPosition();
     int offset = location.getOffset();
-    int relX = point.x - myEditorComponent.getInsets().left;
+    int relX = point.x - getContentInsets().left;
     Inlay<?> inlayCandidate = inEditingArea ? myInlayModel.getElementAt(location, true) : null;
     Inlay<?> inlay = inlayCandidate == null ||
                      (inlayCandidate.getPlacement() == Inlay.Placement.BELOW_LINE ||

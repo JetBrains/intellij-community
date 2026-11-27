@@ -241,7 +241,7 @@ public final class ImmediatePainter {
 
     final Shape originalClip = g.getClip();
 
-    float clipStartX = (float)PaintUtil.alignToInt(p2x > editor.getContentComponent().getInsets().left ? p2x - caretShift : p2x,
+    float clipStartX = (float)PaintUtil.alignToInt(p2x > editor.getContentInsets().left ? p2x - caretShift : p2x,
                                                    g, PaintUtil.RoundingMode.FLOOR);
     float clipEndX = (float)PaintUtil.alignToInt(p2x + width2 - caretShift + caretWidth,
                                                  g, PaintUtil.RoundingMode.CEIL);

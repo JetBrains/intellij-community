@@ -443,8 +443,15 @@ public final class EditorUtil {
   }
 
   public static int nextTabStop(int x, @NotNull Editor editor, int tabSize) {
-    int leftInset = EditorThreading.compute(() -> editor.getContentComponent().getInsets().left);
+    int leftInset = getContentLeftInset(editor);
     return nextTabStop(x - leftInset, getSpaceWidth(Font.PLAIN, editor), tabSize) + leftInset;
+  }
+
+  private static int getContentLeftInset(Editor editor) {
+    if (editor instanceof EditorImpl editorImpl) {
+      return editorImpl.getContentInsets().left;
+    }
+    return EditorThreading.compute(() -> editor.getContentComponent().getInsets().left);
   }
 
   public static int nextTabStop(int x, int plainSpaceWidth, int tabSize) {

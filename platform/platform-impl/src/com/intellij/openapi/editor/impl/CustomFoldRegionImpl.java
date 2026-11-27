@@ -123,7 +123,7 @@ public final class CustomFoldRegionImpl extends FoldRegionImpl implements Custom
   public Point getLocation() {
     int startOffset = getStartOffset();
     FoldRegion visibleRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
-    return visibleRegion == this ? new Point(myEditor.getContentComponent().getInsets().left,
+    return visibleRegion == this ? new Point(myEditor.getContentInsets().left,
                                              myEditor.visualLineToY(myEditor.offsetToVisualLine(startOffset)))
                                  : null;
   }

@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -251,6 +253,36 @@ class EditorViewSnapshotTest {
   }
 
   @Test
+  fun `test a block inlay takes the insets of the view`(): Unit = fixture.runTest {
+    initText("text")
+    val inlay = editor.inlayModel.addBlockElement(0, false, true, 0, FixedSizeRenderer())!!
+    val originalScale = JBUIScale.scale(1f)
+    try {
+      JBUIScale.setUserScaleFactorForTest(1f)
+      editor.contentComponent.border = JBUI.Borders.emptyLeft(7)
+      JBUIScale.setUserScaleFactorForTest(2f)
+      val textX = editor.offsetToXY(0).x
+      assertEquals(
+        7,
+        textX,
+        "Before a UI update the view keeps the insets of the scale 1",
+      )
+      assertEquals(
+        textX,
+        inlay.bounds!!.x,
+        "The inlay starts where the text starts",
+      )
+      assertEquals(
+        inlay,
+        editor.inlayModel.getElementAt(Point(textX, 0)),
+        "A point at the start of the text hits the inlay",
+      )
+    } finally {
+      JBUIScale.setUserScaleFactorForTest(originalScale)
+    }
+  }
+
+  @Test
   fun `test a change of the returned insets leaves the view alone`(): Unit = fixture.runTest {
     initText("text")
     val view = EditorViewAccessor.getView(editor)
@@ -276,6 +308,12 @@ class EditorViewSnapshotTest {
       null,
       HierarchyEvent.SHOWING_CHANGED.toLong(),
     )
+  }
+
+  private class FixedSizeRenderer : EditorCustomElementRenderer {
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int = 50
+
+    override fun calcHeightInPixels(inlay: Inlay<*>): Int = 10
   }
 
   companion object {

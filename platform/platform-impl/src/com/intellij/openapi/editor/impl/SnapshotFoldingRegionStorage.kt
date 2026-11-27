@@ -527,7 +527,7 @@ internal class SnapshotCustomFoldRegion(
     val startOffset = startOffset
     val visibleRegion = storage.model.getCollapsedRegionAtOffset(startOffset)
     return if (visibleRegion === this) {
-      Point(editorImpl.contentComponent.insets.left, editorImpl.visualLineToY(editorImpl.offsetToVisualLine(startOffset)))
+      Point(editorImpl.contentInsets.left, editorImpl.visualLineToY(editorImpl.offsetToVisualLine(startOffset)))
     }
     else {
       null

@@ -538,7 +538,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
     FoldRegion region = location.getCollapsedRegion();
     return !ignoreCustomRegionWidth && region instanceof CustomFoldRegion custom &&
-           p.x >= myEditor.getContentComponent().getInsets().left + custom.getWidthInPixels() ? null : region;
+           p.x >= myEditor.getContentInsets().left + custom.getWidthInPixels() ? null : region;
   }
 
   @RequiresEdt

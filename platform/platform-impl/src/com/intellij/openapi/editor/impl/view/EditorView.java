@@ -780,7 +780,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   /**
    * Returns the content component insets from the snapshot. The caller owns the result.
    */
-  Insets getInsets() {
+  public Insets getInsets() {
     return mySnapshot.insets().toInsets();
   }
 
