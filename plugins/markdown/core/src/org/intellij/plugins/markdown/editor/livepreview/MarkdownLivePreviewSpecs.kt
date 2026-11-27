@@ -47,8 +47,6 @@ private val NoDescendTypes: Set<IElementType> = setOf(
   MarkdownElementTypes.AUTOLINK,
 )
 
-private val QuoteTypes: Set<IElementType> = setOf(MarkdownElementTypes.BLOCK_QUOTE, MarkdownElementTypes.ALERT)
-
 /**
  * The leaf autolink tokens, which the parser does not wrap in an element of their own.
  *
@@ -180,8 +178,8 @@ private class LineIndex(private val source: CharSequence, private val document: 
     }
   }
 
-  /** One spec per marker of the blockquote, in PSI traversal order. */
-  fun blockQuoteSpecs(blockQuoteRange: TextRange, alertType: MarkdownLivePreviewSpec.AlertType? = null): List<MarkdownLivePreviewSpec.BlockQuote> {
+  /** One spec per marker of the blockquote, in PSI traversal order. An alert with an [alertType] also gets its padding spec. */
+  fun blockQuoteSpecs(blockQuoteRange: TextRange, alertType: MarkdownLivePreviewSpec.AlertType? = null): List<MarkdownLivePreviewSpec> {
     while (quoteEnds.isNotEmpty() && quoteEnds.last() <= blockQuoteRange.startOffset) quoteEnds.removeLast()
     quoteEnds.addLast(blockQuoteRange.endOffset)
 
@@ -194,7 +192,7 @@ private class LineIndex(private val source: CharSequence, private val document: 
     val start = markers.firstAtOrAfter(blockQuoteRange.startOffset)
     val end = markers.firstAtOrAfter(blockQuoteRange.endOffset)
     val quoteMarkers = markers.subList(start, end)
-    return quoteMarkers.mapIndexed { index, marker ->
+    val specs = quoteMarkers.mapIndexed { index, marker ->
       val next = quoteMarkers.getOrNull(index + 1)
       val ruleEnd =
         if (next != null) document.getLineStartOffset(document.getLineNumber(next.startOffset))
@@ -206,6 +204,9 @@ private class LineIndex(private val source: CharSequence, private val document: 
         alertType = alertType,
       )
     }
+    if (alertType == null || quoteMarkers.isEmpty()) return specs
+    val padding = MarkdownLivePreviewRange(quoteMarkers.first().startOffset, quoteMarkers.last().endOffset)
+    return specs + MarkdownLivePreviewSpec.AlertPadding(padding)
   }
 
   private fun List<MarkdownLivePreviewRange>.firstAtOrAfter(offset: Int): Int {
@@ -270,22 +271,21 @@ private fun CharSequence.taskCheckboxEnd(offset: Int, lineEnd: Int): Int {
   return if (cursor + 3 < lineEnd && MarkdownLivePreviewUtils.isCheckbox(this, cursor) && this[cursor + 3] in " \t") cursor + 3 else offset
 }
 
-private fun PsiElement.alertType(): MarkdownLivePreviewSpec.AlertType? {
-  return when ((node.findChildByType(MarkdownTokenTypes.ALERT_TITLE)?.psi as? MarkdownAlertTitle)?.getType()) {
-    MarkdownAlertTitle.AlertType.NOTE -> MarkdownLivePreviewSpec.AlertType.NOTE
-    MarkdownAlertTitle.AlertType.TIP -> MarkdownLivePreviewSpec.AlertType.TIP
-    MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownLivePreviewSpec.AlertType.IMPORTANT
-    MarkdownAlertTitle.AlertType.WARNING -> MarkdownLivePreviewSpec.AlertType.WARNING
-    MarkdownAlertTitle.AlertType.CAUTION -> MarkdownLivePreviewSpec.AlertType.CAUTION
-    null -> null
-  }
+private fun PsiElement.alertType(): MarkdownLivePreviewSpec.AlertType? =
+  (node.findChildByType(MarkdownTokenTypes.ALERT_TITLE)?.psi as? MarkdownAlertTitle)?.getType()?.toSpecType()
+
+private fun MarkdownAlertTitle.AlertType.toSpecType(): MarkdownLivePreviewSpec.AlertType = when (this) {
+  MarkdownAlertTitle.AlertType.NOTE -> MarkdownLivePreviewSpec.AlertType.NOTE
+  MarkdownAlertTitle.AlertType.TIP -> MarkdownLivePreviewSpec.AlertType.TIP
+  MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownLivePreviewSpec.AlertType.IMPORTANT
+  MarkdownAlertTitle.AlertType.WARNING -> MarkdownLivePreviewSpec.AlertType.WARNING
+  MarkdownAlertTitle.AlertType.CAUTION -> MarkdownLivePreviewSpec.AlertType.CAUTION
 }
 
-/** Hides `[!` and `]` of `[!NOTE]`, leaving the alert type as text. */
-private fun PsiElement.toAlertTitleSpec(): MarkdownLivePreviewSpec.Conceal? {
-  val range = textRange
-  if (range.length < 4 || !text.startsWith("[!") || !text.endsWith("]")) return null
-  return inlineConceal(TextRange.from(range.startOffset, 2), TextRange.from(range.endOffset - 1, 1))
+/** Replaces `[!NOTE]` with the icon and the label of the alert type. A title of an unknown type keeps its source. */
+private fun PsiElement.toAlertTitleSpec(): MarkdownLivePreviewSpec.AlertTitle? {
+  val type = (this as? MarkdownAlertTitle)?.getType() ?: return null
+  return MarkdownLivePreviewSpec.AlertTitle(textRange.toMarkdownLivePreviewRange(), type.toSpecType())
 }
 
 private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(this, MarkdownTable::class.java) != null
@@ -309,7 +309,7 @@ private fun MarkdownHeader.toHeadingSpec(
 private fun PsiElement.isTopLevelOrQuoted(quotes: Boolean): Boolean =
   generateSequence(parent) { it.parent }
     .takeWhile { it !is MarkdownFile }
-    .all { quotes && PsiUtilCore.getElementType(it) in QuoteTypes }
+    .all { quotes && PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE }
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   val image = this as? MarkdownImage ?: return null

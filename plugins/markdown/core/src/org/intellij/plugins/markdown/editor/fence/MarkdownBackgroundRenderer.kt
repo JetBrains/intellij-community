@@ -2,6 +2,8 @@
 package org.intellij.plugins.markdown.editor.fence
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -12,6 +14,7 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
@@ -23,6 +26,7 @@ import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.Shape
 import java.awt.geom.Path2D
+import kotlin.math.roundToInt
 
 private val RENDERERS_BY_ATTRIBUTE_ID = MarkdownBackgroundRenderer.entries.associateBy { "IJ." + it.highlighterKey.externalName }
 
@@ -56,7 +60,7 @@ enum class MarkdownBackgroundRenderer(
         val startX = editor.offsetToXY(highlighter.startOffset).x
         val rows = visualLines(editor, highlighter.startOffset, highlighter.endOffset, graphics.clipBounds)
           .map { Row(minOf(startX, getTextStart(editor, it)), it.top, it.bottom) }
-        fillRows(editor, graphics, rows, getRightVisibleEdge(editor), roundLeft = false)
+        fillRows(editor, graphics, withAlertPadding(editor, rows, highlighter), getRightVisibleEdge(editor), roundLeft = false)
       }
       CODE_SPAN -> {
         for (line in visualLines(editor, highlighter.startOffset, highlighter.endOffset, graphics.clipBounds)) {
@@ -72,6 +76,47 @@ enum class MarkdownBackgroundRenderer(
   }
 
   internal fun getColor(editor: Editor): Color? = colorKeys.firstNotNullOfOrNull { editor.colorsScheme.getAttributes(it)?.backgroundColor }
+}
+
+/**
+ * Reserves vertical space of an alert in a block inlay: above its first line, below its last line, or below its title line.
+ * The block quote background and the block quote rule cover the space above the first line and below the last line.
+ */
+@ApiStatus.Internal
+class MarkdownAlertPaddingRenderer(private val editor: Editor, private val lineHeightRatio: Double) : EditorCustomElementRenderer {
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
+
+  override fun calcHeightInPixels(inlay: Inlay<*>): Int = (editor.lineHeight * lineHeightRatio).roundToInt().coerceAtLeast(1)
+}
+
+/** The top of the alert padding above the line of an offset from [startOffset] to [endOffset], or null when there is none. */
+@ApiStatus.Internal
+fun getAlertPaddingTop(editor: Editor, startOffset: Int, endOffset: Int): Int? =
+  getAlertPaddingBounds(editor, startOffset, endOffset, Inlay.Placement.ABOVE_LINE).minOfOrNull { it.y }
+
+/** The bottom of the alert padding below the line of an offset from [startOffset] to [endOffset], or null when there is none. */
+@ApiStatus.Internal
+fun getAlertPaddingBottom(editor: Editor, startOffset: Int, endOffset: Int): Int? =
+  getAlertPaddingBounds(editor, startOffset, endOffset, Inlay.Placement.BELOW_LINE).maxOfOrNull { it.y + it.height }
+
+private fun getAlertPaddingBounds(editor: Editor, startOffset: Int, endOffset: Int, placement: Inlay.Placement): List<Rectangle> =
+  editor.inlayModel.getBlockElementsInRange(startOffset, endOffset, MarkdownAlertPaddingRenderer::class.java)
+    .filter { it.placement == placement }
+    .mapNotNull { it.bounds }
+
+/** Stretches the first row over the alert padding above the first line, and the last row over the padding below the last line. */
+private fun withAlertPadding(editor: Editor, rows: List<Row>, highlighter: RangeHighlighter): List<Row> {
+  if (rows.isEmpty()) return rows
+  val document = editor.document
+  val start = highlighter.startOffset
+  val end = highlighter.endOffset
+  val top = getAlertPaddingTop(editor, start, DocumentUtil.getLineEndOffset(start, document))
+  val bottom = getAlertPaddingBottom(editor, DocumentUtil.getLineStartOffset(end, document), end)
+  if (top == null && bottom == null) return rows
+  val padded = rows.toMutableList()
+  if (top != null) padded[0] = Row(padded[0].left, minOf(top, padded[0].top), padded[0].bottom)
+  if (bottom != null) padded[padded.lastIndex] = Row(padded.last().left, padded.last().top, maxOf(bottom, padded.last().bottom))
+  return padded
 }
 
 @ApiStatus.Internal

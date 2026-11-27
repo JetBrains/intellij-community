@@ -139,6 +139,21 @@ sealed interface MarkdownLivePreviewSpec {
   @Serializable
   enum class AlertType { NOTE, TIP, IMPORTANT, WARNING, CAUTION }
 
+  /** Replaces the `[!NOTE]` title of an alert with the icon and the label of its [type] until a caret touches [range]. */
+  @Serializable
+  data class AlertTitle(
+    override val range: MarkdownLivePreviewRange,
+    val type: AlertType,
+  ) : MarkdownLivePreviewSpec
+
+  /**
+   * Adds space around an alert. The [range] starts at the first marker of the alert and ends after its last marker.
+   * The space goes after each marker of the alert, above its first line, and below its last line.
+   * An alert with more than one line also gets space below its title line.
+   */
+  @Serializable
+  data class AlertPadding(override val range: MarkdownLivePreviewRange) : MarkdownLivePreviewSpec
+
   /** Conceals a full logical line and paints it as a horizontal rule. */
   @Serializable
   data class HorizontalRule(override val range: MarkdownLivePreviewRange) : MarkdownLivePreviewSpec

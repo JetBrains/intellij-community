@@ -114,6 +114,8 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
     MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(editor),
     MarkdownLivePreviewSpec.ListIndent::class.java to MarkdownLivePreviewListIndentRenderer(editor),
     MarkdownLivePreviewSpec.BlockQuote::class.java to MarkdownLivePreviewBlockQuoteRenderer(editor),
+    MarkdownLivePreviewSpec.AlertTitle::class.java to MarkdownLivePreviewAlertTitleRenderer(editor),
+    MarkdownLivePreviewSpec.AlertPadding::class.java to MarkdownLivePreviewAlertPaddingRenderer(editor),
     MarkdownLivePreviewSpec.HorizontalRule::class.java to MarkdownLivePreviewHorizontalRuleRenderer(editor),
     MarkdownLivePreviewSpec.TaskCheckbox::class.java to MarkdownLivePreviewCheckboxRenderer(project, editor),
     MarkdownLivePreviewSpec.Image::class.java to MarkdownLivePreviewImageRenderer(project, editor),

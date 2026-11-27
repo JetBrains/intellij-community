@@ -94,6 +94,9 @@ internal class MarkdownLivePreviewLeakTest {
 
       > quote
 
+      > [!NOTE]
+      > alert
+
       - [ ] task
         - nested
 

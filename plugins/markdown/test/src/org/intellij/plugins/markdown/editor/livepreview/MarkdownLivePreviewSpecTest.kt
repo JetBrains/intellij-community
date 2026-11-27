@@ -426,7 +426,7 @@ class MarkdownLivePreviewSpecTest {
   }
 
   @Test
-  fun testQuotedAndAlertHeadingsCoverTheirLines() {
+  fun testQuotedHeadingsCoverTheirLines() {
     val content = """
       |> # one
       |
@@ -434,18 +434,15 @@ class MarkdownLivePreviewSpecTest {
       |
       |  >### three
       |
-      |> [!NOTE]
-      |> #### four
-      |
-      |> Quoted *five*
+      |> Quoted *four*
       |> ---
     """.trimMargin()
     val headings = headings(content)
     val lines = headings.map { content.substring(it.range.startOffset, it.range.endOffset) }
 
-    assertEquals(listOf("> # one", "> > ## two", "  >### three", "> #### four", "> Quoted *five*"), lines)
-    assertEquals(listOf(1, 2, 3, 4, 2), headings.map { it.level })
-    assertEquals(listOf("one", "two", "three", "four", "Quoted five"), headings.map { it.body().text() })
+    assertEquals(listOf("> # one", "> > ## two", "  >### three", "> Quoted *four*"), lines)
+    assertEquals(listOf(1, 2, 3, 2), headings.map { it.level })
+    assertEquals(listOf("one", "two", "three", "Quoted four"), headings.map { it.body().text() })
     for ([heading, line] in headings.zip(lines)) {
       for (span in heading.body().select("span[md-src-pos]")) {
         val [start, end] = span.attr("md-src-pos").split("..").map(String::toInt)
@@ -677,12 +674,30 @@ class MarkdownLivePreviewSpecTest {
   }
 
   @Test
-  fun testAlertsConcealTheirMarkersAndTitleBrackets() {
+  fun testAlertsConcealTheirMarkersAndTitle() {
     val content = "> [!NOTE]\n> text"
-    assertEquals(listOf(">", "[!", "]", ">"), concealed(content))
+    assertEquals(listOf(">", "[!NOTE]", ">"), concealed(content))
     assertEquals(listOf(">", "[!NOTE]", ">"), revealRanges(content))
     assertEquals(listOf("> [!NOTE]\n", "> text"), ruleSegments(content))
     assertEquals(listOf(AlertType.NOTE, AlertType.NOTE), blockQuotes(content).map { it.alertType })
+    assertEquals(listOf(AlertType.NOTE), elements(content).filterIsInstance<MarkdownLivePreviewSpec.AlertTitle>().map { it.type })
+  }
+
+  @Test
+  fun testAlertPaddingSpansFromTheFirstMarkerToTheLastMarker() {
+    val content = "> [!TIP]\n> text\n> > nested\n\n> plain"
+    assertEquals(listOf("> [!TIP]\n> text\n>"), alertPaddings(content))
+  }
+
+  @Test
+  fun testAlertPaddingOfAnAlertInAListItem() {
+    val content = "- > [!WARNING]\n  > text"
+    assertEquals(listOf("> [!WARNING]\n  >"), alertPaddings(content))
+  }
+
+  @Test
+  fun testHeadingInAnAlertKeepsItsSource() {
+    assertThat(headings("> [!NOTE]\n> # title\n> > ## nested")).isEmpty()
   }
 
   @Test
@@ -694,6 +709,7 @@ class MarkdownLivePreviewSpecTest {
   @Test
   fun testUnknownAlertTitleHasNoAlertType() {
     assertEquals(listOf(null), blockQuotes("> [!UNKNOWN]").map { it.alertType })
+    assertThat(alertPaddings("> [!UNKNOWN]")).isEmpty()
   }
 
   @Test
@@ -906,6 +922,8 @@ class MarkdownLivePreviewSpecTest {
   private fun MarkdownLivePreviewSpec.concealedRanges(): List<MarkdownLivePreviewRange> = when (this) {
     is MarkdownLivePreviewSpec.Conceal -> conceals
     is MarkdownLivePreviewSpec.BlockQuote -> listOf(markerRange)
+    is MarkdownLivePreviewSpec.AlertTitle -> listOf(range)
+    is MarkdownLivePreviewSpec.AlertPadding -> emptyList()
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
     is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
@@ -930,7 +948,7 @@ class MarkdownLivePreviewSpecTest {
         assertTrue(element.range.isEmpty && (offset == 0 || content[offset - 1] == '\n'), "An indent must be empty and sit at a line start: $element")
       }
       else if (element !is MarkdownLivePreviewSpec.CodeFence && element !is MarkdownLivePreviewSpec.CodeFenceLayout &&
-               element !is MarkdownLivePreviewSpec.CodeFont) {
+               element !is MarkdownLivePreviewSpec.CodeFont && element !is MarkdownLivePreviewSpec.AlertPadding) {
         assertFalse(conceals.isEmpty(), "An element with nothing to conceal must not be reported: $element")
       }
       assertTrue(conceals.all { element.range.contains(it) }, "An element must contain the markup it conceals: $element")
@@ -952,7 +970,10 @@ class MarkdownLivePreviewSpecTest {
 
   private fun revealRanges(content: String): List<String> =
     elements(content)
-      .filterNot { it is MarkdownLivePreviewSpec.ListIndent || it is MarkdownLivePreviewSpec.CodeFont || it is MarkdownLivePreviewSpec.CodeFenceLayout }
+      .filterNot {
+        it is MarkdownLivePreviewSpec.ListIndent || it is MarkdownLivePreviewSpec.CodeFont ||
+        it is MarkdownLivePreviewSpec.CodeFenceLayout || it is MarkdownLivePreviewSpec.AlertPadding
+      }
       .map { content.substring(it.range.startOffset, it.range.endOffset) }
 
   /** The line number and the depth of each list indent, in document order. */
@@ -966,6 +987,10 @@ class MarkdownLivePreviewSpecTest {
 
   private fun blockQuotes(content: String): List<MarkdownLivePreviewSpec.BlockQuote> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.BlockQuote>()
+
+  private fun alertPaddings(content: String): List<String> =
+    elements(content).filterIsInstance<MarkdownLivePreviewSpec.AlertPadding>()
+      .map { content.substring(it.range.startOffset, it.range.endOffset) }
 
   private fun images(
     content: String,

@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.idea.TestFor
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewAlertTitleInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewBulletInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
@@ -35,6 +36,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
@@ -71,6 +73,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.editor.fence.MarkdownAlertPaddingRenderer
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.publishSpecsAndWait
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -85,6 +88,7 @@ import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
@@ -1042,6 +1046,8 @@ class MarkdownLivePreviewFoldingTest {
                     "- [ ] task item that wraps over several visual lines\n\n" +
                     "- parent\n  - nested item that wraps over several visual lines\n\n" +
                     "> - quoted item that wraps over several visual lines\n\n" +
+                    "> blockquote item that wraps over several visual lines\n\n" +
+                    "> [!NOTE]\n> alert item that wraps over several visual lines\n\n" +
                     "plain item that wraps over several visual lines\n\ntail"
       configure("$content<caret>")
       val editor = myFixture.editor
@@ -1051,7 +1057,7 @@ class MarkdownLivePreviewFoldingTest {
       softWrapModel.applianceManager.recalculateIfNecessary("test")
       MarkdownLivePreviewReconciler.getExisting(editor)!!.reconcileNow()
       assertEquals(0, softWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP))
-      for (item in listOf("bullet", "ordered", "task", "nested", "quoted", "plain")) {
+      for (item in listOf("bullet", "ordered", "task", "nested", "quoted", "blockquote", "alert", "plain")) {
         val textStart = content.indexOf("$item item")
         val softWrap = softWrapModel.getSoftWrapsForRange(textStart + 1, content.indexOf('\n', textStart)).first()
         assertEquals(editor.offsetToXY(textStart).x, editor.offsetToXY(softWrap.start, true, false).x, item)
@@ -1864,14 +1870,16 @@ class MarkdownLivePreviewFoldingTest {
     withContext(Dispatchers.EDT) {
       val content = "> [!CAUTION]\n> text\n\ntail"
       configure("$content<caret>")
-      val concealedText = " CAUTION\n text\n\ntail"
+      val concealedText = " \n text\n\ntail"
       assertEquals(concealedText, visibleText())
+      assertEquals(listOf(MarkdownBundle.message("markdown.preview.alert.title.caution")), alertTitleInlays().map { it.renderer.label })
 
       moveCaretTo(content.indexOf("CAUTION"))
       assertEquals(" [!CAUTION]\n text\n\ntail", visibleText())
+      assertThat(alertTitleInlays()).isEmpty()
 
       moveCaretTo(0)
-      assertEquals("> CAUTION\n text\n\ntail", visibleText())
+      assertEquals("> \n text\n\ntail", visibleText())
 
       moveCaretTo(content.length)
       assertEquals(concealedText, visibleText())
@@ -1895,6 +1903,82 @@ class MarkdownLivePreviewFoldingTest {
       }
 
       assertEquals(Color.BLUE.rgb, bitmap.getRGB(editor.offsetToXY(rule.startOffset).x, editor.lineHeight / 2))
+    }
+  }
+
+  @Test
+  fun testAlertTitlePaintsTheLabelInTheTitleColorAfterTheIcon(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      configure("> [!CAUTION]\n> text\n\ntail<caret>")
+      val editor = myFixture.editor
+      val blue = TextAttributes(Color.BLUE, null, null, null, Font.PLAIN)
+      editor.colorsScheme.setAttributes(MarkdownHighlighterColors.ALERT_TITLE_CAUTION, blue)
+      val inlay = alertTitleInlays().single()
+      val bitmap = BufferedImage(inlay.widthInPixels, editor.lineHeight, BufferedImage.TYPE_INT_ARGB)
+      val graphics = bitmap.createGraphics()
+      try {
+        inlay.renderer.paint(inlay, graphics as Graphics, Rectangle(0, 0, bitmap.width, bitmap.height), TextAttributes())
+      }
+      finally {
+        graphics.dispose()
+      }
+
+      val iconPixels = (0 until editor.lineHeight / 2).flatMap { x -> (0 until bitmap.height).map { y -> bitmap.getRGB(x, y) } }
+      assertFalse(Color.BLUE.rgb in iconPixels, "The label must leave space for the icon")
+      val pixels = (0 until bitmap.width).flatMap { x -> (0 until bitmap.height).map { y -> bitmap.getRGB(x, y) } }
+      assertTrue(Color.BLUE.rgb in pixels, "The label must use the alert title color")
+    }
+  }
+
+  @Test
+  fun testAlertTextKeepsItsSpaceFromTheRule(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "> [!NOTE]\n> alert\n\n> quote\n\ntail"
+      configure("$content<caret>")
+      val editor = myFixture.editor
+      val alertX = editor.offsetToXY(content.indexOf("alert")).x
+      assertEquals(editor.offsetToXY(content.indexOf("quote")).x + 2 * EditorUtil.getPlainSpaceWidth(editor), alertX)
+
+      moveCaretTo(content.indexOf("> alert"))
+      assertEquals(listOf(">", "[!NOTE]", ">"), concealed())
+      assertEquals(alertX, editor.offsetToXY(content.indexOf("alert")).x, "A revealed marker must not move the text")
+    }
+  }
+
+  @Test
+  fun testAlertPaddingStaysWhileTheCaretRevealsTheAlert(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "> [!NOTE]\n> text\n\n> [!TIP]\n\n> quote\n\ntail"
+      configure("$content<caret>")
+      val expected = setOf(0 to Inlay.Placement.ABOVE_LINE, 0 to Inlay.Placement.BELOW_LINE, 1 to Inlay.Placement.BELOW_LINE,
+                           3 to Inlay.Placement.ABOVE_LINE, 3 to Inlay.Placement.BELOW_LINE)
+      assertEquals(expected, alertPaddings())
+
+      moveCaretTo(content.indexOf("NOTE"))
+      assertEquals(expected, alertPaddings())
+    }
+  }
+
+  @Test
+  fun testAlertRuleAndBackgroundCoverThePadding(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val content = "> [!NOTE]\n> text\n\ntail"
+      configure("$content<caret>")
+      val editor = myFixture.editor
+      val inlays = editor.inlayModel.getBlockElementsInRange(0, content.length, MarkdownAlertPaddingRenderer::class.java)
+      val top = inlays.single { it.placement == Inlay.Placement.ABOVE_LINE }.bounds!!
+      val bottom = inlays.single { editor.document.getLineNumber(it.offset) == 1 }.bounds!!
+      val rules = paintedRules()
+      assertEquals(top.y, rules.getValue(0).y)
+      val lastRule = rules.getValue(content.indexOf("> text"))
+      assertEquals(bottom.y + bottom.height - 1, lastRule.y + lastRule.height)
+
+      EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
+      editor.colorsScheme.setAttributes(MarkdownHighlighterColors.BLOCK_QUOTE, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
+      val image = MarkdownTestingUtil.paintEditor(editor)
+      val x = editor.offsetToXY(content.indexOf("text")).x
+      assertEquals(Color.RED.rgb, image.getRGB(x, top.y), "The background must cover the space above the alert")
+      assertEquals(Color.RED.rgb, image.getRGB(x, bottom.y + bottom.height - 1), "The background must cover the space below the alert")
     }
   }
 
@@ -3146,6 +3230,18 @@ class MarkdownLivePreviewFoldingTest {
     editor.markupModel.allHighlighters
       .filter { it.isValid && it.getTextAttributes(null)?.foregroundColor?.alpha == 0 }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  private fun alertTitleInlays(): List<Inlay<out MarkdownLivePreviewAlertTitleInlayRenderer>> =
+    myFixture.editor.inlayModel
+      .getInlineElementsInRange(0, myFixture.editor.document.textLength, MarkdownLivePreviewAlertTitleInlayRenderer::class.java)
+
+  /** The line and the placement of each alert padding inlay. */
+  private fun alertPaddings(): Set<Pair<Int, Inlay.Placement>> {
+    val editor = myFixture.editor
+    return editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength, MarkdownAlertPaddingRenderer::class.java)
+      .map { editor.document.getLineNumber(it.offset) to it.placement }
+      .toSet()
+  }
 
   private fun blockQuoteRules(): List<RangeHighlighter> =
     myFixture.editor.markupModel.allHighlighters

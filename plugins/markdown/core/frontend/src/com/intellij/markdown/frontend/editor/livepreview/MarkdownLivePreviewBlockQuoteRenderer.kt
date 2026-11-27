@@ -14,6 +14,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.ui.Gray
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
+import org.intellij.plugins.markdown.editor.fence.getAlertPaddingBottom
+import org.intellij.plugins.markdown.editor.fence.getAlertPaddingTop
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
@@ -67,7 +69,7 @@ internal class MarkdownLivePreviewBlockQuoteRenderer(private val editor: Editor)
     )
     private val rule = editor.markupModel.addRangeHighlighter(
       null, key.rule.startOffset, key.rule.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE,
-    ).also { it.customRenderer = MarkdownBlockQuotePainter(ruleColorKey(alertType)) }
+    ).also { it.customRenderer = MarkdownBlockQuotePainter(alertType) }
 
     fun key(): QuoteKey? =
       if (marker.isValid && rule.isValid) QuoteKey(marker.textRange, rule.textRange, alertType) else null
@@ -81,7 +83,7 @@ internal class MarkdownLivePreviewBlockQuoteRenderer(private val editor: Editor)
 
 private val HIDDEN_GLYPH = TextAttributes(Gray.TRANSPARENT, null, null, null, Font.PLAIN)
 
-private fun ruleColorKey(alertType: MarkdownLivePreviewSpec.AlertType?): TextAttributesKey = when (alertType) {
+internal fun ruleColorKey(alertType: MarkdownLivePreviewSpec.AlertType?): TextAttributesKey = when (alertType) {
   MarkdownLivePreviewSpec.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
   MarkdownLivePreviewSpec.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
   MarkdownLivePreviewSpec.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
@@ -94,20 +96,28 @@ private fun ruleColorKey(alertType: MarkdownLivePreviewSpec.AlertType?): TextAtt
  * Paints the vertical rule of one blockquote marker without changing editor layout or input handling.
  * The highlighter starts at the marker. The rule starts on the marker line at the x position of the marker.
  * A highlighter that ends at a line start stops the rule above that line.
+ * The rule of an alert also covers the alert padding above and below the marker line.
  * The rule takes the foreground of [ruleColorKey].
  */
 @ApiStatus.Internal
-class MarkdownBlockQuotePainter internal constructor(private val ruleColorKey: TextAttributesKey) : CustomHighlighterRenderer {
+class MarkdownBlockQuotePainter internal constructor(
+  private val alertType: MarkdownLivePreviewSpec.AlertType?,
+) : CustomHighlighterRenderer {
   override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
     if (editor.isDisposed || !highlighter.isValid) return
     val markerOffset = highlighter.startOffset
     val endOffset = highlighter.endOffset
     if (markerOffset >= endOffset) return
 
-    val start = editor.visualLineToY(editor.offsetToVisualPosition(markerOffset).line)
-    val end =
-      if (DocumentUtil.isAtLineStart(endOffset, editor.document)) editor.visualLineToY(editor.offsetToVisualPosition(endOffset).line)
-      else editor.visualLineToYRange(editor.offsetToVisualPosition(endOffset - 1).line)[1]
+    val lineTop = editor.visualLineToY(editor.offsetToVisualPosition(markerOffset).line)
+    val start = if (alertType == null) lineTop else getAlertPaddingTop(editor, markerOffset, markerOffset) ?: lineTop
+    val end = if (DocumentUtil.isAtLineStart(endOffset, editor.document)) {
+      editor.visualLineToY(editor.offsetToVisualPosition(endOffset).line)
+    }
+    else {
+      val lineBottom = editor.visualLineToYRange(editor.offsetToVisualPosition(endOffset - 1).line)[1]
+      if (alertType == null) lineBottom else getAlertPaddingBottom(editor, markerOffset, markerOffset) ?: lineBottom
+    }
     if (start >= end) return
 
     val offset = if (editor.foldingModel.getCollapsedRegionAtOffset(markerOffset) !is CustomFoldRegion) {
@@ -119,7 +129,7 @@ class MarkdownBlockQuotePainter internal constructor(private val ruleColorKey: T
     val scheme = editor.colorsScheme
     val child = (graphics as? Graphics2D)?.create() as? Graphics2D ?: return
     try {
-      child.color = scheme.getAttributes(ruleColorKey)?.foregroundColor ?: scheme.defaultForeground
+      child.color = scheme.getAttributes(ruleColorKey(alertType))?.foregroundColor ?: scheme.defaultForeground
       child.fillRect(x, start, JBUI.scale(3), end - start)
     }
     finally {
