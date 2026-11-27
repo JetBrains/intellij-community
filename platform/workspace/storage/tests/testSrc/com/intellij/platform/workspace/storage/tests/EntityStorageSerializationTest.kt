@@ -402,6 +402,37 @@ class EntityStorageSerializationTest {
     assertEquals("1", (withSealedEntity.interfaces.first() as MySealedInterfaceOne).info)
     assertEquals("2", (withSealedEntity.interfaces.last() as MySealedInterfaceTwo).info)
   }
+
+  @Test
+  fun `duplicate final value objects are interned on deserialization`() {
+    val builder = createEmptyBuilder()
+
+    val source1 = SampleEntitySource("shared-source")
+    val source2 = SampleEntitySource("shared-source")
+    Assertions.assertNotSame(source1, source2)
+
+    builder addEntity SampleEntity(false, "First", ArrayList(), HashMap(), virtualFileManager.storeAndGet("file:///tmp/1"), source1)
+    builder addEntity SampleEntity(true, "Second", ArrayList(), HashMap(), virtualFileManager.storeAndGet("file:///tmp/2"), source2)
+
+    val sharedRef = MySealedClassTwo("shared")
+    builder addEntity WithSealedEntity(
+      listOf(MySealedClassOne("dup"), MySealedClassOne("dup"), MySealedClassTwo("shared"), sharedRef, sharedRef),
+      listOf(MySealedInterfaceOne("iface"), MySealedInterfaceOne("iface")),
+      MySource,
+    )
+
+    val (_, deserialized) = SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), virtualFileManager)
+
+    val deserializedSources = deserialized.entities<SampleEntity>().map { it.entitySource }.toList()
+    assertEquals(2, deserializedSources.size)
+    Assertions.assertSame(deserializedSources[0], deserializedSources[1])
+
+    val withSealed = deserialized.entities<WithSealedEntity>().single()
+    Assertions.assertSame(withSealed.classes[0], withSealed.classes[1])
+    Assertions.assertSame(withSealed.classes[2], withSealed.classes[3])
+    Assertions.assertSame(withSealed.classes[3], withSealed.classes[4])
+    Assertions.assertSame(withSealed.interfaces[0], withSealed.interfaces[1])
+  }
 }
 
 /**
