@@ -215,6 +215,23 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testIndentGuideInNarrowClip() {
+    myFixture.runTest(() -> {
+      myFixture.initText("  parent\n    child\n    child\n  next");
+      myFixture.getEditor().getColorsScheme().setColor(EditorColors.INDENT_GUIDE_COLOR, Color.red);
+      int guideEnd = myFixture.getEditor().getDocument().getLineStartOffset(3);
+      RangeHighlighter guide = addRangeHighlighter(0, guideEnd, 0, null);
+      guide.setCustomRenderer(new IndentGuideRenderer());
+      BufferedImage image = paintEditor(false, null, null);
+      int guideX = firstColumnWithColor(image, Color.red);
+      assertNotEquals(-1, guideX);
+      for (int x = guideX - 2; x <= guideX + 2; x++) {
+        checkPartialRepaint(new Rectangle(x, 0, 1, image.getHeight()));
+      }
+    });
+  }
+
+  @Test
   public void testEraseMarker() {
     myFixture.runTest(() -> {
       myFixture.initText("abc");
@@ -1815,13 +1832,20 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private static boolean containsRed(BufferedImage image) {
-    int rgb = Color.red.getRGB();
+    return firstColumnWithColor(image, Color.red) >= 0;
+  }
+
+  /**
+   * Returns the smallest x with a pixel of {@code color}, or -1 when the image has no such pixel.
+   */
+  private static int firstColumnWithColor(BufferedImage image, Color color) {
+    int rgb = color.getRGB();
     for (int x = 0; x < image.getWidth(); x++) {
       for (int y = 0; y < image.getHeight(); y++) {
-        if (image.getRGB(x, y) == rgb) return true;
+        if (image.getRGB(x, y) == rgb) return x;
       }
     }
-    return false;
+    return -1;
   }
 
   private static void setSeverity(RangeHighlighter highlighter, HighlightSeverity severity) {

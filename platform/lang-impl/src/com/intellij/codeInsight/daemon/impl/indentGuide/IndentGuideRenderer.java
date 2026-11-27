@@ -27,6 +27,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -35,7 +36,6 @@ import java.awt.Rectangle;
 import java.util.List;
 
 public class IndentGuideRenderer implements CustomHighlighterRenderer {
-
   @Override
   public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
     int startOffset = highlighter.getStartOffset();
@@ -95,13 +95,6 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     var vfmtRightShift = VirtualFormattingInlaysInfo
       .measureVirtualFormattingInlineInlays(vfmtInlaysInfo, editor, startOffset, startOffset);
 
-    final boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
-    final boolean stickyPainting = editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting();
-    Color color = getIndentColor(editor, startOffset, selected, stickyPainting);
-    if (color == null) {
-      return;
-    }
-
     final int lineHeight = editor.getLineHeight();
     Point start = editor.visualPositionToXY(lineStartPosition);
     start.x += vfmtRightShift;
@@ -112,9 +105,13 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
       maxY += lineHeight;
     }
 
+    int targetX = Math.max(0, start.x + EditorPainter.getIndentGuideShift(editor));
     Rectangle clip = g.getClipBounds();
     if (clip != null) {
       if (clip.y >= maxY || clip.y + clip.height <= start.y) {
+        return;
+      }
+      if (isLineOutsideClip(g, targetX, clip)) {
         return;
       }
       maxY = Math.min(maxY, clip.y + clip.height);
@@ -122,7 +119,13 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
     if (start.y >= maxY) return;
 
-    int targetX = Math.max(0, start.x + EditorPainter.getIndentGuideShift(editor));
+    final boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
+    final boolean stickyPainting = editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting();
+    Color color = getIndentColor(editor, startOffset, selected, stickyPainting);
+    if (color == null) {
+      return;
+    }
+
     g.setColor(color);
     // There is a possible case that indent line intersects soft wrap-introduced text. Example:
     //     this is a long line <soft-wrap>
@@ -172,6 +175,22 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     }
   }
 
+  /**
+   * Tells whether the line of a guide at {@code x} paints no pixel of {@code clip}. The line of {@link #drawLine} stays
+   * within its stroke width and one more pixel on either side of {@code x}.
+   */
+  private static boolean isLineOutsideClip(@NotNull Graphics g, int x, @NotNull Rectangle clip) {
+    if (!(g instanceof Graphics2D graphics) || !(graphics.getStroke() instanceof BasicStroke stroke)) {
+      return false;
+    }
+    int reach = (int)Math.ceil(stroke.getLineWidth()) + 1;
+    return x + reach <= clip.x || x - reach >= clip.x + clip.width;
+  }
+
+  /**
+   * Paints the line of a guide. A subclass keeps the line within the stroke width and one more pixel on either side of
+   * the x coordinate. The paint skips a guide farther from the clip.
+   */
   protected void drawLine(@NotNull Graphics2D g, int x1, int y1, int x2, int y2) {
     LinePainter2D.paint(g, x1, y1, x2, y2);
   }
