@@ -75,6 +75,7 @@ jvm_library(
     ),
     associates = ["//platform/platform-util-io-native:ide-util-io-native"],
     visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:slf4j-api"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
