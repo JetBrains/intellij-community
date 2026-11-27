@@ -312,6 +312,10 @@ public final class EditorPainter implements TextDrawingCallback {
      * Gives the background of the selection, or null when the selection sets no background.
      */
     private final @Nullable BackgroundLayer mySelectionLayer;
+    /**
+     * Holds the layers of one custom fold region while {@link #paintHuggingRegion} paints it.
+     */
+    private final List<BackgroundLayer> myRegionLayers = new ArrayList<>();
     private boolean myBrokenFragmentRangeReported;
 
     Session(EditorView view, EditorPainterCache cache, EditorCaretPainter caretPainter, Graphics2D g) {
@@ -844,15 +848,17 @@ public final class EditorPainter implements TextDrawingCallback {
       TextAttributes backgroundAttributes,
       Rectangle2D region
     ) {
-      List<BackgroundLayer> regionLayers = new ArrayList<>(layers);
+      List<BackgroundLayer> regionLayers = myRegionLayers;
+      regionLayers.clear();
       if (mySelectionLayer != null && isSelected(cfr)) {
         regionLayers.add(mySelectionLayer);
       }
       collectHuggingLayers(cfr, myDocMarkup, regionLayers);
       collectHuggingLayers(cfr, myEditorMarkup, regionLayers);
-      if (regionLayers.size() == layers.size()) {
+      if (regionLayers.isEmpty()) {
         return;
       }
+      regionLayers.addAll(layers);
       regionLayers.sort(Comparator.reverseOrder());
       int count = myDefaultBackgrounds.visibleCount(regionLayers);
       if (count > 0 && regionLayers.getFirst().getHugs()) {
@@ -870,7 +876,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private void collectHuggingLayers(CustomFoldRegion cfr, MarkupModelEx markupModel, List<BackgroundLayer> result) {
       int start = cfr.getStartOffset();
       int end = cfr.getEndOffset();
-      markupModel.processRangeHighlightersOverlappingWith(start, end, highlighter -> {
+      markupModel.processRangeHighlightersOverlappingWith(start, start, highlighter -> {
         if (highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE &&
             highlighter.getAffectedAreaStartOffset() <= start &&
             highlighter.getAffectedAreaEndOffset() >= end) {
