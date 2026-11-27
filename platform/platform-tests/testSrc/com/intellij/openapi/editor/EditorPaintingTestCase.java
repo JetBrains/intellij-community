@@ -96,9 +96,15 @@ public abstract class EditorPaintingTestCase {
   }
 
   /**
-   * The rounding option, the Islands theme and the registry key {@link #OLD_SELECTION_KEY} before {@link #setSelectionLook}.
+   * The rounding option, the hugging option, the Islands theme and the registry key {@link #OLD_SELECTION_KEY} before
+   * {@link #setSelectionLook}.
    */
-  protected record SelectionState(@Nullable Boolean rounded, boolean islands, boolean oldSelection) {}
+  protected record SelectionState(
+    @Nullable Boolean rounded,
+    @Nullable Boolean hugging,
+    boolean islands,
+    boolean oldSelection
+  ) {}
 
   /**
    * Sets the look of Islands with {@code enabled}: the rounded corners and the hugging selection. Without it, both are off.
@@ -108,8 +114,8 @@ public abstract class EditorPaintingTestCase {
   }
 
   /**
-   * Sets the rounding option, and makes the selection hug or fill.
-   * The selection hugs under Islands while the registry key {@link #OLD_SELECTION_KEY} is off.
+   * Sets the rounding option, and makes the selection and the highlighting hug or fill.
+   * Without a hugging option, they hug under Islands while the registry key {@link #OLD_SELECTION_KEY} is off.
    * {@link #restoreSelectionState} puts the returned state back.
    */
   protected static @NotNull SelectionState setSelectionLook(boolean rounded, boolean hugging) {
@@ -117,19 +123,23 @@ public abstract class EditorPaintingTestCase {
     var oldSelection = Registry.get(OLD_SELECTION_KEY);
     var state = new SelectionState(
       settings.getRoundedHighlightingOption(),
+      settings.getHuggingHighlightingOption(),
       IslandsState.Companion.isEnabled(),
       oldSelection.asBoolean()
     );
     IslandsState.Companion.setEnabled(hugging, false);
     oldSelection.setValue(!hugging);
     settings.setRoundedHighlightingOption(rounded);
+    settings.setHuggingHighlightingOption(null);
     return state;
   }
 
   protected static void restoreSelectionState(@NotNull SelectionState state) {
     IslandsState.Companion.setEnabled(state.islands(), false);
     Registry.get(OLD_SELECTION_KEY).setValue(state.oldSelection());
-    EditorSettingsExternalizable.getInstance().setRoundedHighlightingOption(state.rounded());
+    var settings = EditorSettingsExternalizable.getInstance();
+    settings.setRoundedHighlightingOption(state.rounded());
+    settings.setHuggingHighlightingOption(state.hugging());
   }
 
   protected @NotNull String getName() {
@@ -490,9 +500,6 @@ public abstract class EditorPaintingTestCase {
     }
   }
 
-  /**
-   * The highlighter of {@link #setTokenEditorHighlighter}.
-   */
   private static final class OurCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
     private static final int WIDTH = 25;
     private static final int HEIGHT = 15;
@@ -525,6 +532,9 @@ public abstract class EditorPaintingTestCase {
     }
   }
 
+  /**
+   * The highlighter of {@link #setTokenEditorHighlighter}.
+   */
   private static final class TokenHighlighter implements EditorHighlighter {
     private final int[] tokenStarts;
     private final TextAttributes[] tokenAttributes;
