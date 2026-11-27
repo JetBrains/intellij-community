@@ -74,6 +74,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -605,11 +606,13 @@ public final class EditorPainter implements TextDrawingCallback {
               return;
             }
             if (visualLine == 0) xEnd -= myView.getPrefixTextWidthInPixels();
-            paintLayeredBackground(backgroundLayers, myFillStartX, y, xEnd - myFillStartX);
-            if (myHuggingHighlighting
-                && it.isInSelection(true)
-                && myEditor.isRightAligned()) {
-              paintSelectionBlock(withStub(xEnd, xEnd, y, myLineHeight));
+            if (myEditor.isRightAligned()) {
+              paintLayeredBackground(IterationState.getFillingLayers(backgroundLayers), myFillStartX, y, xEnd - myFillStartX);
+              if (myHuggingHighlighting) {
+                paintStub(backgroundLayers, withStub(xEnd, xEnd, y, myLineHeight));
+              }
+            } else {
+              paintLayeredBackground(backgroundLayers, myFillStartX, y, xEnd - myFillStartX);
             }
             if (softWrap == null) {
               return;
@@ -691,7 +694,7 @@ public final class EditorPainter implements TextDrawingCallback {
             List<BackgroundLayer> layers = it.getPastLineEndBackgroundLayers();
             CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
             if (cfr != null) {
-              paintCustomFoldRegion(cfr, backgroundAttributes, layers, x, y, dryRun);
+              paintCustomFoldRegion(cfr, backgroundAttributes, layers, it.getLineBreakLayers(), x, y, dryRun);
               return;
             }
             paintLayeredBackground(layers, x, y, myFillEndX - x);
@@ -755,13 +758,16 @@ public final class EditorPainter implements TextDrawingCallback {
       TextAttributes attributes = new TextAttributes();
       attributes.setBackgroundColor(betweenLinesLayer == null ? null : betweenLinesLayer.getColor());
       myBetweenLinesAttributes.put(visualLine, attributes);
-      if (selection && myHuggingHighlighting) {
+      if (betweenLinesLayer != null && betweenLinesLayer.getHugs()) {
+        if (isDefaultBackground(betweenLinesLayer.getColor())) {
+          return;
+        }
         for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
           Rectangle bounds = blockInlay.getBounds();
           if (bounds == null) {
             continue;
           }
-          paintSelectionBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height));
+          myBackgroundFill.fillBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height), betweenLinesLayer);
         }
       } else {
         paintBackgroundLayer(betweenLinesLayer, myFillStartX, top, myFillEndX - myFillStartX, bottom - top);
@@ -770,21 +776,27 @@ public final class EditorPainter implements TextDrawingCallback {
 
     /**
      * Paints the background of a custom fold region at {@code x}.
+     * The filling layers fill the row, and a hugging layer of {@code breakLayers} covers the region and the stub.
      * Unless the row is a dry run, it queues the region for {@link #paintTextWithEffects()}.
      */
     private void paintCustomFoldRegion(
       CustomFoldRegion cfr,
       TextAttributes backgroundAttributes,
       List<BackgroundLayer> layers,
+      List<BackgroundLayer> breakLayers,
       float x,
       int y,
       boolean dryRun
     ) {
+      Rectangle2D regionWithStub = withStub(x, x + cfr.getWidthInPixels(), y, cfr.getHeightInPixels());
       if (myHuggingHighlighting && isSelected(cfr)) {
         backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
-        paintSelectionBlock(withStub(x, x + cfr.getWidthInPixels(), y, cfr.getHeightInPixels()));
+        paintSelectionBlock(regionWithStub);
       } else {
         paintLayeredBackground(layers, myFillStartX, y, myFillEndX - myFillStartX, cfr.getHeightInPixels());
+        if (myHuggingHighlighting) {
+          paintStub(breakLayers, regionWithStub);
+        }
       }
       if (dryRun) {
         return;
@@ -896,12 +908,23 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     /**
-     * Paints the stub past the line end, where the selection of a left-aligned editor continues past the line end.
+     * Paints the stub past the line end of a left-aligned editor, where a hugging background covers the line break.
      * The caller paints it after the backgrounds of the line extensions, so the stub covers them.
      */
     private void paintStubPastLineEnd(IterationState it, float x, int y) {
-      if (it.isSelectionPastLineEnd() && myHuggingHighlighting && !myEditor.isRightAligned()) {
-        paintSelectionBlock(withStub(x, x, y, myLineHeight));
+      if (myHuggingHighlighting && !myEditor.isRightAligned()) {
+        paintStub(it.getLineBreakLayers(), withStub(x, x, y, myLineHeight));
+      }
+    }
+
+    /**
+     * Paints the {@code stub} with these layers of a line break, when one of them hugs.
+     */
+    private void paintStub(List<BackgroundLayer> breakLayers, Rectangle2D stub) {
+      int count = visibleLayerCount(breakLayers);
+      List<BackgroundLayer> layers = breakLayers.subList(0, count);
+      if (ContainerUtil.exists(layers, BackgroundLayer::getHugs)) {
+        myBackgroundFill.fillStub(stub, layers);
       }
     }
 
@@ -983,14 +1006,22 @@ public final class EditorPainter implements TextDrawingCallback {
       if (width <= 0) {
         return;
       }
-      int count = layers.size();
-      while (count > 0 && isDefaultBackground(layers.get(count - 1).getColor())) {
-        count--;
-      }
+      int count = visibleLayerCount(layers);
       if (count == 0) {
         return;
       }
       myBackgroundFill.fillLayeredBlock(new Rectangle2D.Float(x, y, width, height), layers.subList(0, count));
+    }
+
+    /**
+     * Gives the number of layers that the user can see: the layers without the tail of the default background.
+     */
+    private int visibleLayerCount(List<BackgroundLayer> layers) {
+      int count = layers.size();
+      while (count > 0 && isDefaultBackground(layers.get(count - 1).getColor())) {
+        count--;
+      }
+      return count;
     }
 
     private void paintBackgroundLayer(@Nullable BackgroundLayer layer, float x, int y, float width, int height) {
@@ -1374,7 +1405,7 @@ public final class EditorPainter implements TextDrawingCallback {
       Color color = attributes.getBackgroundColor();
       if (color == null || isDefaultBackground(color)) return;
       float width = myViewSnapshot.plainSpaceWidth();
-      BackgroundLayer layer = BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting);
+      BackgroundLayer layer = BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting, myHuggingHighlighting);
       myBackgroundFill.fillAfterLineEndBox(new Rectangle2D.Float(x, y, width, myLineHeight), layer);
     }
 
@@ -1757,7 +1788,7 @@ public final class EditorPainter implements TextDrawingCallback {
             TextAttributes attributes = highlighterEx.getTextAttributes(myColorsScheme);
             Color backgroundColor = attributes == null ? null : attributes.getBackgroundColor();
             if (backgroundColor != null) {
-              result = BackgroundLayer.highlighter(highlighterEx, backgroundColor, myRoundedHighlighting);
+              result = BackgroundLayer.highlighter(highlighterEx, backgroundColor, myRoundedHighlighting, myHuggingHighlighting);
             }
           }
           return true;
@@ -1808,9 +1839,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (x >= visitStartX) {
               List<BackgroundLayer> layers;
               if (it.getStartOffset() == offset) {
-                layers = it.getBeforeLineStartBackgroundLayers();
-              } else if (softWrap == null || myEditor.isRightAligned()) {
-                layers = IterationState.getFillingLayers(it.getBackgroundLayers());
+                layers = it.getBreakBackgroundLayers(false);
               } else {
                 layers = it.getBackgroundLayers();
               }
@@ -1895,7 +1924,7 @@ public final class EditorPainter implements TextDrawingCallback {
         if (it.getEndOffset() <= offset) {
           it.advance();
         }
-        painter.paintBeforeLineStart(it, it.getBeforeLineStartBackgroundLayers(), null, maxColumn, x, y);
+        painter.paintBeforeLineStart(it, it.getBreakBackgroundLayers(false), null, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
         it = new IterationState(
@@ -1996,7 +2025,7 @@ public final class EditorPainter implements TextDrawingCallback {
         TextAttributes focusModeAttributes = myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES);
         Color color = focusModeAttributes == null ? null : focusModeAttributes.getBackgroundColor();
         if (color == null) return List.of();
-        return List.of(BackgroundLayer.syntax(color, rounded));
+        return List.of(BackgroundLayer.syntax(color, rounded, false));
       }
       List<BackgroundLayer> layers = new ArrayList<>(2);
       boolean selected = isSelected(foldRegion);

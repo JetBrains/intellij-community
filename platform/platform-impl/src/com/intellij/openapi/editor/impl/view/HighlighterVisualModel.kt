@@ -69,6 +69,13 @@ internal class HighlighterVisualModel(
     }
   }
 
+  /**
+   * Adds the stub as one block with all [layers]. A style of a filling layer covers the stub already, so its shape keeps.
+   */
+  override fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>) {
+    fillLayeredBlock(block, layers)
+  }
+
   override fun fillBlock(block: Rectangle2D, layer: BackgroundLayer) {
     addRow(rows, block, styleIdOf(layer))
   }

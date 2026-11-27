@@ -15,6 +15,11 @@ import java.awt.Color
  * These backgrounds stay straight: a [HighlighterTargetArea.LINES_IN_RANGE] highlighter and the caret row.
  * Column mode follows the same rule.
  *
+ * While the editor ends the highlighting at the text, these backgrounds hug the text: the selection, an
+ * [HighlighterTargetArea.EXACT_RANGE] highlighter, the guarded block and the syntax.
+ * These backgrounds fill the line: a [HighlighterTargetArea.LINES_IN_RANGE] highlighter, the caret row and the fold
+ * placeholder.
+ *
  * @property isRounded the paint rounds the corners of this background.
  * @property hugs the background stops at the text. It does not fill the line after the line end.
  */
@@ -99,12 +104,12 @@ data class BackgroundLayer(
      * Gives the background of a guarded block. It wins over every other background.
      */
     @JvmStatic
-    fun guardedBlock(color: Color, rounded: Boolean): BackgroundLayer {
+    fun guardedBlock(color: Color, rounded: Boolean, hugs: Boolean): BackgroundLayer {
       return BackgroundLayer(
         color = color,
         layer = HighlighterLayer.GUARDED_BLOCKS,
         isRounded = rounded,
-        hugs = false,
+        hugs = hugs,
         forcesBackground = true,
         span = Int.MAX_VALUE,
       )
@@ -129,12 +134,12 @@ data class BackgroundLayer(
      * Gives the background of a syntax token.
      */
     @JvmStatic
-    fun syntax(color: Color, rounded: Boolean): BackgroundLayer {
+    fun syntax(color: Color, rounded: Boolean, hugs: Boolean): BackgroundLayer {
       return BackgroundLayer(
         color = color,
         layer = HighlighterLayer.SYNTAX,
         isRounded = rounded,
-        hugs = false,
+        hugs = hugs,
         forcesBackground = false,
         span = Int.MAX_VALUE,
       )
@@ -142,15 +147,21 @@ data class BackgroundLayer(
 
     /**
      * Gives the background of a range highlighter, with its layer and the length of its affected area.
-     * The editor decides with [roundedAllowed] whether it rounds at all.
+     * The editor decides with [roundedAllowed] whether it rounds at all, and with [huggingAllowed] whether it hugs.
      */
     @JvmStatic
-    fun highlighter(highlighter: RangeHighlighterEx, color: Color, roundedAllowed: Boolean): BackgroundLayer {
+    fun highlighter(
+      highlighter: RangeHighlighterEx,
+      color: Color,
+      roundedAllowed: Boolean,
+      huggingAllowed: Boolean,
+    ): BackgroundLayer {
+      val exactRange = highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE
       return BackgroundLayer(
         color = color,
         layer = highlighter.layer,
-        isRounded = roundedAllowed && highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE,
-        hugs = false,
+        isRounded = roundedAllowed && exactRange,
+        hugs = huggingAllowed && exactRange,
         forcesBackground = false,
         span = highlighter.affectedAreaEndOffset - highlighter.affectedAreaStartOffset,
       )

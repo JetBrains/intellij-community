@@ -32,6 +32,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -573,6 +574,152 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
         restoreSelectionState(state);
       }
     });
+  }
+
+  @Test
+  public void testGuardedBlockFilling() {
+    runWithLook(true, false, this::runTestGuardedBlock);
+  }
+
+  /**
+   * Runs {@code test} with the rounding option {@code rounded} and the hugging look {@code hugging}.
+   */
+  private void runWithLook(boolean rounded, boolean hugging, ThrowableRunnable<Exception> test) {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(rounded, hugging);
+      try {
+        test.run();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  private void runTestHuggingHighlighterAcrossLineBreak() throws IOException {
+    myFixture.initText("ab\ncdef\nghijklmnop");
+    addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
+    checkResult();
+  }
+
+  @Test
+  public void testHuggingHighlighterAcrossLineBreakRounded() {
+    runWithLook(true, true, this::runTestHuggingHighlighterAcrossLineBreak);
+  }
+
+  @Test
+  public void testHuggingHighlighterAcrossLineBreakStraight() {
+    runWithLook(false, true, this::runTestHuggingHighlighterAcrossLineBreak);
+  }
+
+  @Test
+  public void testPartialRepaintOfHuggingStub() {
+    runWithLook(true, true, () -> {
+      myFixture.initText("ab\ncdef\nghijklmnop");
+      addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
+      checkPartialRepaint(0);
+    });
+  }
+
+  private void runTestHuggingHighlighterOverEmptyLine() throws IOException {
+    myFixture.initText("ab\n\ncd\nghijklmnop");
+    addRangeHighlighter(1, 6, HighlighterLayer.WARNING, null, Color.red);
+    checkResult();
+  }
+
+  @Test
+  public void testHuggingHighlighterOverEmptyLineRounded() {
+    runWithLook(true, true, this::runTestHuggingHighlighterOverEmptyLine);
+  }
+
+  @Test
+  public void testHuggingHighlighterOverEmptyLineStraight() {
+    runWithLook(false, true, this::runTestHuggingHighlighterOverEmptyLine);
+  }
+
+  private void runTestHuggingHighlighterAcrossSoftWrap() throws IOException {
+    myFixture.initText("ab cdefghij");
+    configureSoftWraps(8);
+    addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
+    checkResult();
+  }
+
+  @Test
+  public void testHuggingHighlighterAcrossSoftWrapRounded() {
+    runWithLook(true, true, this::runTestHuggingHighlighterAcrossSoftWrap);
+  }
+
+  @Test
+  public void testHuggingHighlighterAcrossSoftWrapStraight() {
+    runWithLook(false, true, this::runTestHuggingHighlighterAcrossSoftWrap);
+  }
+
+  private void runTestHuggingHighlighterOverBlockInlays() throws IOException {
+    myFixture.initText("line 1\nline 2\na");
+    Document document = myFixture.getEditor().getDocument();
+    myFixture.addBlockInlay(document.getLineStartOffset(0));
+    myFixture.addBlockInlay(document.getLineStartOffset(1));
+    addRangeHighlighter(7, 15, HighlighterLayer.WARNING, null, Color.red);
+    checkResult();
+  }
+
+  @Test
+  public void testHuggingHighlighterOverBlockInlaysRounded() {
+    runWithLook(true, true, this::runTestHuggingHighlighterOverBlockInlays);
+  }
+
+  @Test
+  public void testHuggingHighlighterOverBlockInlaysStraight() {
+    runWithLook(false, true, this::runTestHuggingHighlighterOverBlockInlays);
+  }
+
+  private void runTestHuggingHighlighterOverCustomFold() throws IOException {
+    myFixture.initText("\ntext\n");
+    addCustomLinesFolding(1, 1);
+    addRangeHighlighter(0, 6, HighlighterLayer.WARNING, null, Color.red);
+    checkResult();
+  }
+
+  @Test
+  public void testHuggingHighlighterOverCustomFoldRounded() {
+    runWithLook(true, true, this::runTestHuggingHighlighterOverCustomFold);
+  }
+
+  @Test
+  public void testHuggingHighlighterOverCustomFoldStraight() {
+    runWithLook(false, true, this::runTestHuggingHighlighterOverCustomFold);
+  }
+
+  @Test
+  public void testHuggingMultiLineSyntaxToken() {
+    runWithLook(true, true, () -> {
+      myFixture.initText("ab\ncdef\nghijklmnop\n<caret>q");
+      setTokenEditorHighlighter(
+        new int[]{0, 1, 10},
+        new TextAttributes[]{
+          new TextAttributes(),
+          new TextAttributes(null, Color.red, null, null, Font.PLAIN),
+          new TextAttributes(),
+        }
+      );
+      checkResult();
+    });
+  }
+
+  private void runTestFillingHighlighterOverHuggingStub() throws IOException {
+    myFixture.initText("ab\ncdef\nghijklmnop");
+    addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
+    addLineHighlighter(0, 2, HighlighterLayer.ERROR, null, Color.green);
+    checkResult();
+  }
+
+  @Test
+  public void testFillingHighlighterOverHuggingStubRounded() {
+    runWithLook(true, true, this::runTestFillingHighlighterOverHuggingStub);
+  }
+
+  @Test
+  public void testFillingHighlighterOverHuggingStubStraight() {
+    runWithLook(false, true, this::runTestFillingHighlighterOverHuggingStub);
   }
 
   @Test

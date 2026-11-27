@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.view.CaretData;
+import com.intellij.openapi.editor.impl.view.BackgroundLayer;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -35,6 +36,8 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.ui.IslandsState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -232,6 +235,28 @@ public class IterationStateTest {
   }
 
   @Test
+  public void testHuggingHighlighterIsOnlyInTheLayersOfTheLineBreak() {
+    myFixture.runTest(() -> {
+      Registry.get(OLD_SELECTION_KEY).setValue(false);
+      boolean oldIslands = IslandsState.Companion.isEnabled();
+      IslandsState.Companion.setEnabled(true, false);
+      try {
+        init("ab\ncd");
+        addRangeHighlighter(1, 4, 0, Color.red);
+        IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 1, 2, null, false, false, false, false);
+        it.advance();
+        assertTrue(it.atEnd());
+        BackgroundLayer breakLayer = ContainerUtil.find(it.getLineBreakLayers(), layer -> layer.getColor() == Color.red);
+        assertNotNull(breakLayer);
+        assertTrue(breakLayer.getHugs());
+        assertFalse(ContainerUtil.exists(it.getPastLineEndBackgroundLayers(), layer -> layer.getColor() == Color.red));
+      } finally {
+        IslandsState.Companion.setEnabled(oldIslands, false);
+      }
+    });
+  }
+
+  @Test
   public void testBreakAttributesAtSoftWrap() {
     myFixture.runTest(() -> {
       init("a bc");
@@ -246,7 +271,7 @@ public class IterationStateTest {
       assertEquals(2, it.getStartOffset());
       assertEquals(3, it.getEndOffset());
       assertEquals(Color.red, it.getPastLineEndBackgroundAttributes().getBackgroundColor());
-      assertEquals(Color.red, it.getBeforeLineStartBackgroundLayers().get(0).getColor());
+      assertEquals(Color.red, it.getBreakBackgroundLayers(false).get(0).getColor());
     });
   }
 

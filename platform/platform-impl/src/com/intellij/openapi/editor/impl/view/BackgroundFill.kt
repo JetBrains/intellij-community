@@ -28,6 +28,12 @@ internal interface BackgroundFill {
   fun fillSelectionBlock(block: Rectangle2D)
 
   /**
+   * Fills the stub of a line break with these [layers] of the line break. The list starts at the top layer.
+   * The stub shows a hugging layer that the fill of the line leaves out. A filling layer above it stays on top.
+   */
+  fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>)
+
+  /**
    * Fills the background of a line extension.
    */
   fun fillLineExtensionBackground(block: Rectangle2D, color: Color)

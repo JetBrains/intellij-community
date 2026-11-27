@@ -244,6 +244,29 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
     });
   }
 
+  private void runTestHuggingHighlighter(boolean rounded) {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(rounded, true);
+      try {
+        initText("first longer line\nsecond line");
+        addRangeHighlighter(13, 19, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testHuggingHighlighterRounded() {
+    runTestHuggingHighlighter(true);
+  }
+
+  @Test
+  public void testHuggingHighlighterStraight() {
+    runTestHuggingHighlighter(false);
+  }
+
   @Test
   public void testHuggingSelectionOverBlockInlays() {
     myFixture.runTest(() -> {

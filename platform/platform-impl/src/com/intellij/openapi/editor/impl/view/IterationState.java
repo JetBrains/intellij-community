@@ -394,37 +394,22 @@ public final class IterationState {
    */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getPastLineEndBackgroundLayers() {
-    List<BackgroundLayer> layers;
+    return getFillingLayers(getLineBreakLayers());
+  }
+
+  /**
+   * Gives every layer of the line break at the end of the visual line, the hugging ones included.
+   * At a soft wrap, the break is the soft wrap.
+   */
+  @ApiStatus.Internal
+  public @NotNull List<BackgroundLayer> getLineBreakLayers() {
     if (hasSoftWrap()) {
-      layers = getBreakBackgroundLayers(true);
+      return getBreakBackgroundLayers(true);
+    } else if (myEditorRightAligned && myLastBackgroundLayers != null) {
+      return myLastBackgroundLayers;
+    } else {
+      return myBackgroundLayers;
     }
-    else if (myEditorRightAligned && myLastBackgroundLayers != null) {
-      layers = myLastBackgroundLayers;
-    }
-    else {
-      layers = myBackgroundLayers;
-    }
-    return getFillingLayers(layers);
-  }
-
-  /**
-   * Says that the selection continues past the line end, or past the soft wrap at the end of the visual line.
-   */
-  @ApiStatus.Internal
-  public boolean isSelectionPastLineEnd() {
-    return isInSelection(hasSoftWrap());
-  }
-
-  /**
-   * Gives the layers that fill the editor before the line start.
-   * In a right-aligned editor, this area is the empty left side of the line, also at a soft wrap. A hugging layer is
-   * absent there. In a left-aligned editor, this area is the indent after a soft wrap. A hugging layer stays there,
-   * because the hugging selection covers that indent.
-   */
-  @ApiStatus.Internal
-  public @NotNull List<BackgroundLayer> getBeforeLineStartBackgroundLayers() {
-    List<BackgroundLayer> layers = getBreakBackgroundLayers(false);
-    return myEditorRightAligned ? getFillingLayers(layers) : layers;
   }
 
   /**
@@ -787,7 +772,7 @@ public final class IterationState {
     if (myGuardLayer == null) {
       Color color = layerColor(myReadOnlyColor);
       if (color != null) {
-        myGuardLayer = BackgroundLayer.guardedBlock(color, myRoundedHighlighting);
+        myGuardLayer = BackgroundLayer.guardedBlock(color, myRoundedHighlighting, myHuggingHighlighting);
       }
     }
     return myGuardLayer;
@@ -814,7 +799,7 @@ public final class IterationState {
       mySyntaxAttributes = syntax;
       Color color = layerColor(syntax.getBackgroundColor());
       if (color != null) {
-        mySyntaxLayer = BackgroundLayer.syntax(color, myRoundedHighlighting);
+        mySyntaxLayer = BackgroundLayer.syntax(color, myRoundedHighlighting, myHuggingHighlighting);
       } else {
         mySyntaxLayer = null;
       }
@@ -830,7 +815,7 @@ public final class IterationState {
     if (color == null) {
       return null;
     }
-    return BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting);
+    return BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting, myHuggingHighlighting);
   }
 
   /**
