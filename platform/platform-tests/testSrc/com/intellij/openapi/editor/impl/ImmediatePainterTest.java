@@ -217,6 +217,36 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
   }
 
   @Test
+  public void testHuggingHighlighterOverLineBreakTurnsImmediatePaintingOff() {
+    myFixture.runTest(() -> {
+      enableHuggingHighlighting();
+      init("a\nb");
+      addRangeHighlighter(0, 3, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertNotRenderedImmediately(1, 'c');
+    });
+  }
+
+  @Test
+  public void testHuggingKeepsImmediatePaintingOnHighlighterBeforeLineBreak() {
+    myFixture.runTest(() -> {
+      enableHuggingHighlighting();
+      init("a\nb");
+      addRangeHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertRenderedCorrectly(1, 'c');
+    });
+  }
+
+  @Test
+  public void testHuggingKeepsImmediatePaintingOnLineHighlighter() {
+    myFixture.runTest(() -> {
+      enableHuggingHighlighting();
+      init("a\nb");
+      addLineHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertRenderedCorrectly(1, 'c');
+    });
+  }
+
+  @Test
   public void testThinLineCursor() {
     myFixture.runTest(() -> {
       init("");

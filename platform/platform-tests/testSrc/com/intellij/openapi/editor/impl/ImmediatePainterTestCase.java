@@ -65,6 +65,7 @@ public abstract class ImmediatePainterTestCase {
   private boolean myDefaultSmoothCaretBlinking;
   private boolean myDefaultSmoothCaretMovement;
   private Boolean myDefaultRoundedHighlighting;
+  private Boolean myDefaultHuggingHighlighting;
 
   @BeforeEach
   void setUpImmediatePainterTestCase(TestInfo testInfo) {
@@ -84,6 +85,7 @@ public abstract class ImmediatePainterTestCase {
       myDefaultSmoothCaretBlinking = settings.isSmoothBlinkCaret();
       myDefaultSmoothCaretMovement = settings.isSmoothCaretMovement();
       myDefaultRoundedHighlighting = settings.getRoundedHighlightingOption();
+      myDefaultHuggingHighlighting = settings.getHuggingHighlightingOption();
 
       FontLayoutService.setInstance(null);
 
@@ -115,6 +117,7 @@ public abstract class ImmediatePainterTestCase {
       settings.setSmoothBlinkCaret(myDefaultSmoothCaretBlinking);
       settings.setSmoothCaretMovement(myDefaultSmoothCaretMovement);
       settings.setRoundedHighlightingOption(myDefaultRoundedHighlighting);
+      settings.setHuggingHighlightingOption(myDefaultHuggingHighlighting);
     });
   }
 
@@ -283,6 +286,10 @@ public abstract class ImmediatePainterTestCase {
 
   protected static void enableRoundedHighlighting() {
     EditorSettingsExternalizable.getInstance().setRoundedHighlightingOption(true);
+  }
+
+  protected static void enableHuggingHighlighting() {
+    EditorSettingsExternalizable.getInstance().setHuggingHighlightingOption(true);
   }
 
   protected static void setDoubleBufferingEnabled(boolean enabled) {
