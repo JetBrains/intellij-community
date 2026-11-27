@@ -21,131 +21,163 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new LambdaCanBeReplacedWithAnonymousInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class LambdaCanBeReplacedWithAnonymousFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new LambdaCanBeReplacedWithAnonymousInspection()), "style/lambda2anonymous",
+                        InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix"));
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
+  @Test
   public void testSimpleRunnable() {
     doTest();
   }
 
+  @Test
   public void testSimpleRunnableOnArrow() {
     doTest();
   }
 
+  @Test
   public void testWithSubstitution() {
     doTest();
   }
   
+  @Test
   public void testSimpleWildcard() {
     doTest();
   }
 
+  @Test
   public void testRenameParams() {
     doTest();
   }
 
+  @Test
   public void testSuperExpr() {
     doTest();
   }
 
+  @Test
   public void testInsertFinal() {
     doTest();
   }
 
+  @Test
   public void testInnerClass() {
     doTest();
   }
 
+  @Test
   public void testInnerClassWithGenericOuter() {
     doTest();
   }
 
+  @Test
   public void testCyclicInference() {
     doTest();
   }
 
+  @Test
   public void testLocalClasses() {
     doTest();
   }
 
+  @Test
   public void testNoFunctionalInterfaceFound() {
-    assertQuickfixNotAvailable();
+    ig.get().assertQuickfixNotAvailable();
   }
 
+  @Test
   public void testAmbiguity() {
-    assertQuickfixNotAvailable();
+    ig.get().assertQuickfixNotAvailable();
   }
   
+  @Test
   public void testInsideAnonymous() {
-    assertQuickfixNotAvailable();
+    ig.get().assertQuickfixNotAvailable();
   }
 
+  @Test
   public void testEffectivelyFinal() {
     doTest();
   }
 
+  @Test
   public void testQualifyThis() {
     doTest();
   }
 
+  @Test
   public void testQualifyThis1() {
     doTest();
   }
 
+  @Test
   public void testQualifyThisAndSuperInside() {
     doTest();
   }
 
+  @Test
   public void testStaticCalls() {
     doTest();
   }
 
+  @Test
   public void testCaretAtBody() {
-    assertQuickfixNotAvailable();
+    ig.get().assertQuickfixNotAvailable();
   }
 
+  @Test
   public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() {
     doTest();
   }
 
+  @Test
   public void testForbidReplacementWhenParamsOrReturnWouldBeNotDenotableTypes1() {
-    assertQuickfixNotAvailable();
+    ig.get().assertQuickfixNotAvailable();
   }
 
+  @Test
   public void testRemoveRedundantCast() {
     doTest();
   }
   
+  @Test
   public void testMalformedPackageName() {
     doTest();
   }
 
-  @Override
-  protected void doTest() {
-    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+  private void doTest() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     boolean oldSetting = javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE;
     try {
       javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-      super.doTest();
+      ig.get().doTest();
     }
     finally {
       javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = oldSetting;
     }
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "style/lambda2anonymous";
-  }
 }

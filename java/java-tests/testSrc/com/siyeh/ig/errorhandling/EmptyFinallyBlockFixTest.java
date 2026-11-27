@@ -1,21 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class EmptyFinallyBlockFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new EmptyFinallyBlockInspection();
-  }
+@TestApplication
+public class EmptyFinallyBlockFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new EmptyFinallyBlockInspection()));
 
+  @Test
   public void testRemoveTry() {
-    doMemberTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"),
                  """
                    void m() throws Exception {
                      try { throw new Exception(); }
@@ -28,8 +34,9 @@ public class EmptyFinallyBlockFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testWithResource() {
-    doMemberTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"),
                  """
                    void m() throws Exception {
                      try (AutoCloseable r = null) { throw new Exception(); }
@@ -42,8 +49,9 @@ public class EmptyFinallyBlockFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testWithCatch() {
-    doMemberTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"),
                  """
                    void m() throws Exception {
                      try { throw new Exception(); }
@@ -58,8 +66,9 @@ public class EmptyFinallyBlockFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotCleanupWithFilledFinally() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.finally.block.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.finally.block.quickfix"),
                                """
                                  class X {
                                  void m() throws Exception {

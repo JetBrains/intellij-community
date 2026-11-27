@@ -15,22 +15,31 @@
  */
 package com.siyeh.ig.fixes.exceptions;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.exceptions.MultiCatchCanBeSplitInspection;
+import org.junit.jupiter.api.Test;
 
-public class MultiCatchCanBeSplitFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new MultiCatchCanBeSplitInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix");
-    myRelativePath = "exceptions/split_multi_catch";
-  }
+import java.util.List;
 
-  public void testSimple() { doTest(); }
-  public void testTypeAnno() { doTest(); }
-  public void testAtParameter() { doTest(); }
-  public void testAtFinalKeyword() { doTest(); }
-  public void testAtCodeBlock() { assertQuickfixNotAvailable(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class MultiCatchCanBeSplitFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new MultiCatchCanBeSplitInspection()), "exceptions/split_multi_catch",
+                        InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix"));
+
+  @Test
+  public void testSimple() { ig.get().doTest(); }
+  @Test
+  public void testTypeAnno() { ig.get().doTest(); }
+  @Test
+  public void testAtParameter() { ig.get().doTest(); }
+  @Test
+  public void testAtFinalKeyword() { ig.get().doTest(); }
+  @Test
+  public void testAtCodeBlock() { ig.get().assertQuickfixNotAvailable(); }
 }

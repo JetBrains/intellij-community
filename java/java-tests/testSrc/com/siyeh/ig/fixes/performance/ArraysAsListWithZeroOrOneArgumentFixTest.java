@@ -2,17 +2,27 @@
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.ArraysAsListWithZeroOrOneArgumentInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class ArraysAsListWithZeroOrOneArgumentFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ArraysAsListWithZeroOrOneArgumentInspection()));
 
+  @Test
   public void testZeroArguments() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
            """
              import java.util.*;
              class X {{
@@ -25,9 +35,10 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
              }}""");
   }
 
+  @Test
   @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
            """
              import java.util.*;
              class X {{
@@ -40,8 +51,9 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
              }}""");
   }
 
+  @Test
   public void testOneArgument() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
            "import java.util.*;" +
            "class X {{\n" +
            "  List<Map<String, String>> list = Arrays./**/asList(new HashMap<>());" +
@@ -52,8 +64,4 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
            "}}");
   }
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new ArraysAsListWithZeroOrOneArgumentInspection();
-  }
 }

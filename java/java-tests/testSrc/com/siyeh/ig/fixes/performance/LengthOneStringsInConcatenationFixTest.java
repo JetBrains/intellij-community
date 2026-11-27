@@ -1,58 +1,77 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.LengthOneStringsInConcatenationInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
 @SuppressWarnings("SingleCharacterStringConcatenation")
-public class LengthOneStringsInConcatenationFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class LengthOneStringsInConcatenationFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new LengthOneStringsInConcatenationInspection()));
+
+  @Test
   public void testFirstConcatenationOperand() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"f\"/**/ + \"bar\"", "'f' + \"bar\"");
   }
 
+  @Test
   public void testSecondConcatenationOperand() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"foo\" + /**/\"b\"", "\"foo\" + 'b'");
   }
 
+  @Test
   public void testThirdConcatenationOperand() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"foo\" + 1 + /**/\"c\"", "\"foo\" + 1 + 'c'");
   }
 
+  @Test
   public void testAppendMethodParameter() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "new StringBuilder().append(/**/\"c\")", "new StringBuilder().append('c')");
   }
 
+  @Test
   public void testNewLine() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"\\n\"/**/ + \"bar\"", "'\\n' + \"bar\"");
   }
 
+  @Test
   public void testTextBlock() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"string\" + /**/\"\"\"\n    !\"\"\"", "\"string\" + '!'");
   }
 
+  @Test
   public void testQuote() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"\\'\"/**/ + \"bar\"", "'\\'' + \"bar\"");
   }
 
+  @Test
   public void testDoubleQuote() {
-    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"\\\"\"/**/ + \"bar\"", "'\"' + \"bar\"");
   }
 
+  @Test
   public void testDoNotFixWrongType() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                                """
                                  class X {
                                    String field = /**/"a";
@@ -60,8 +79,9 @@ public class LengthOneStringsInConcatenationFixTest extends IGQuickFixesTestCase
                                  """);
   }
 
+  @Test
   public void testDoNotFixIfConcatenationTurnsIntoAddition() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                                """
                                  class X {
                                    String field = /**/"a" + 'b';
@@ -69,8 +89,9 @@ public class LengthOneStringsInConcatenationFixTest extends IGQuickFixesTestCase
                                  """);
   }
 
+  @Test
   public void testDoNotFixIfSecondOperandTurnsConcatenationIntoAddition() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                                """
                                  class X {
                                    String field = 'a' + /**/"b";
@@ -78,8 +99,4 @@ public class LengthOneStringsInConcatenationFixTest extends IGQuickFixesTestCase
                                  """);
   }
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new LengthOneStringsInConcatenationInspection();
-  }
 }

@@ -1,22 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.classlayout;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.classlayout.FinalPrivateMethodInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class FinalPrivateMethodFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new FinalPrivateMethodInspection();
-  }
+@TestApplication
+public class FinalPrivateMethodFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new FinalPrivateMethodInspection()));
 
+  @Test
   public void testSimple() {
-    doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
                  """
                    private final/**/ boolean isPositive(int number) {
                        return number > 0;
@@ -28,8 +34,9 @@ public class FinalPrivateMethodFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixOnPackageMethod() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
                                """
                                  class X {
                                    final boolean isPositive(int number) {
@@ -39,8 +46,9 @@ public class FinalPrivateMethodFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotFixOnProtectedMethod() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
                                """
                                  class X {
                                    protected final boolean isPositive(int number) {
@@ -50,8 +58,9 @@ public class FinalPrivateMethodFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotFixOnPublicMethod() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
                                """
                                  class X {
                                    public final boolean isPositive(int number) {

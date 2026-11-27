@@ -2,40 +2,53 @@
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.MultipleVariablesInDeclarationInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MultipleVariablesInDeclarationFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class MultipleVariablesInDeclarationFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new MultipleVariablesInDeclarationInspection()), "style/multiple_declaration",
+                        InspectionGadgetsBundle.message("normalize.declaration.quickfix"), null, getEnvironmentClasses());
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new MultipleVariablesInDeclarationInspection());
-    myRelativePath = "style/multiple_declaration";
-    myDefaultHint = InspectionGadgetsBundle.message("normalize.declaration.quickfix");
-  }
-
-  public void testLocalVariable() { doTest(); }
-  public void testField() { doTest(); }
-  public void testMultipleDeclarationsLocalWithComments() { doTest(); }
-  public void testMutuallyDependentForDeclarations() { doTest(); }
-  public void testOptimizedForLoop() { doTest(); }
-  public void testAnnotatedArrayField() { doTest(); }
-  public void testAnnotatedArrayLocalVariable() { doTest(); }
-  public void testAnnotatedVariableInForLoop() { doTest(); }
+  @Test
+  public void testLocalVariable() { ig.get().doTest(); }
+  @Test
+  public void testField() { ig.get().doTest(); }
+  @Test
+  public void testMultipleDeclarationsLocalWithComments() { ig.get().doTest(); }
+  @Test
+  public void testMutuallyDependentForDeclarations() { ig.get().doTest(); }
+  @Test
+  public void testOptimizedForLoop() { ig.get().doTest(); }
+  @Test
+  public void testAnnotatedArrayField() { ig.get().doTest(); }
+  @Test
+  public void testAnnotatedArrayLocalVariable() { ig.get().doTest(); }
+  @Test
+  public void testAnnotatedVariableInForLoop() { ig.get().doTest(); }
   
+  @Test
   public void testForLoopInitializer() {
-    JavaCodeStyleSettings customSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    JavaCodeStyleSettings customSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     customSettings.GENERATE_FINAL_LOCALS = true;
-    doTest();
+    ig.get().doTest();
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       """
         import java.lang.annotation.ElementType;

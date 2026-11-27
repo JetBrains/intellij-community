@@ -15,22 +15,27 @@
  */
 package com.siyeh.ig.fixes.inheritance;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.inheritance.TypeParameterExtendsFinalClassInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TypeParameterExtendsFinalClassFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class TypeParameterExtendsFinalClassFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new TypeParameterExtendsFinalClassInspection()), "inheritance/type_parameter_extends_final_class",
+                        InspectionGadgetsBundle.message("type.parameter.extends.final.class.quickfix"));
 
-  public void testFinalClassWithTypeParameter() { doTest(); }
+  @Test
+  public void testFinalClassWithTypeParameter() { ig.get().doTest(); }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new TypeParameterExtendsFinalClassInspection());
-    myRelativePath = "inheritance/type_parameter_extends_final_class";
-    myDefaultHint = InspectionGadgetsBundle.message("type.parameter.extends.final.class.quickfix");
-  }
 }

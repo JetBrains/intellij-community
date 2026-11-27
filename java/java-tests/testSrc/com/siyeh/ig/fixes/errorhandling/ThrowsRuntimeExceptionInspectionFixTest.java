@@ -15,35 +15,39 @@
  */
 package com.siyeh.ig.fixes.errorhandling;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.errorhandling.ThrowsRuntimeExceptionInspection;
+import org.junit.jupiter.api.Test;
 
-public class ThrowsRuntimeExceptionInspectionFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ThrowsRuntimeExceptionInspection());
-  }
+import java.util.List;
 
-  @Override
-  protected String getRelativePath() {
-    return "errorhandling/throws_runtime_exception";
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
+@TestApplication
+public class ThrowsRuntimeExceptionInspectionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ThrowsRuntimeExceptionInspection()), "errorhandling/throws_runtime_exception");
+
+  @Test
   public void testMoveThrows() {
-    doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
+    ig.get().doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
   }
 
+  @Test
   public void testMoveThrowsExistingComment() {
-    doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
+    ig.get().doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
   }
 
+  @Test
   public void testMoveThrowsExistingCommentMarkdown() {
-    doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
+    ig.get().doTest(InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", "RuntimeException"));
   }
 
+  @Test
   public void testRemoveThrows() {
-    doTest(InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", "RuntimeException"));
+    ig.get().doTest(InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", "RuntimeException"));
   }
 }

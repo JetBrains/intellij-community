@@ -2,20 +2,31 @@
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class UnnecessaryFullyQualifiedNameFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryFullyQualifiedNameInspection()), null, null, null, getEnvironmentClasses());
 
+  @Test
   public void testLeaveFQNamesInJavadoc() {
     doTest(
       """
@@ -35,6 +46,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testReplaceFQNamesInJavadoc() {
     doTest(
       """
@@ -54,6 +66,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testReplaceFQNamesInJavadoc2() {
     doTest(
       """
@@ -73,6 +86,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testPackageInfo() {
     doTest(
       """
@@ -94,8 +108,9 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
       JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, "package-info.java");
   }
 
+  @Test
   public void testAlreadyImported() {
-    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
            "import java.util.List;" +
            "class X {" +
            "  /**/java.util.List l;" +
@@ -107,8 +122,9 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
            "}");
   }
 
+  @Test
   public void testJavaLang() {
-    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
            "class X {" +
            "  /**/java.lang.String s;" +
            "}",
@@ -118,8 +134,9 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
            "}");
   }
 
+  @Test
   public void testCaretOnClassName() {
-    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
            "class X {" +
            "  java.lang.St/**/ring s;" +
            "}",
@@ -135,7 +152,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
                         JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED,
                         JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
                       }) int classNamesInJavadoc) {
-    doTest(before, after, classNamesInJavadoc, getClass().getName() + "_" + getTestName(false) + ".java");
+    doTest(before, after, classNamesInJavadoc, getClass().getName() + "_" + ig.get().getTestName(false) + ".java");
   }
 
   private void doTest(@Language("JAVA") @NotNull @NonNls String before,
@@ -146,18 +163,13 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
                         JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
                       }) int classNamesInJavadoc,
                       String fileName) {
-    final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.CLASS_NAMES_IN_JAVADOC = classNamesInJavadoc;
-    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix"), before, after, fileName);
+    ig.get().doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix"), before, after, fileName);
   }
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryFullyQualifiedNameInspection();
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package javax.annotation; public @interface Nonnull {}"
     };

@@ -6,31 +6,40 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.IfCanBeSwitchInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class IfCanBePrimitivePatternSwitchTightenedFixTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class IfCanBePrimitivePatternSwitchTightenedFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig = igQuickFixesFixture(() -> {
+    IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
     inspection.minimumBranches = 2;
-    myFixture.enableInspections(inspection);
-    myRelativePath = "migration/if_can_be_switch";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.IF, JavaKeywords.SWITCH);
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
+    return List.of(inspection);
+  },
+    "migration/if_can_be_switch",
+    CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.IF, JavaKeywords.SWITCH),
+    builder -> { builder.setLanguageLevel(JavaFeature.PATTERNS_WITH_TIGHTENED_DOMINANCE.getMinimumLevel()); builder.addJdkVersion(LanguageLevel.JDK_1_8); });
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.setLanguageLevel(JavaFeature.PATTERNS_WITH_TIGHTENED_DOMINANCE.getMinimumLevel());
-    builder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
-
-  public void testEnumDomination() { assertQuickfixNotAvailable(); }
-  public void testPrimitiveNonExactlyDomination() { assertQuickfixNotAvailable(); }
-  public void testInterfaceDomination() { assertQuickfixNotAvailable(); }
+  @Test
+  public void testEnumDomination() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testPrimitiveNonExactlyDomination() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testInterfaceDomination() { ig.get().assertQuickfixNotAvailable(); }
 }

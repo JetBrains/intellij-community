@@ -16,17 +16,17 @@
 package com.siyeh.ig.fixes.equality;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
+import org.junit.jupiter.api.Test;
 
 public class EqualityOperatorComparesObjectsInspectionJdk6Test extends EqualityOperatorComparesObjectsInspectionTestBase {
-
-  public void testSimpleObjectOldSafeComparison() { doTest(InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix")); }
-  public void testNegatedObjectOldSafeComparison() { doTest(InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")); }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.addJdkVersion(LanguageLevel.JDK_1_7)
-      .setLanguageLevel(LanguageLevel.JDK_1_6);
+  public EqualityOperatorComparesObjectsInspectionJdk6Test() {
+    super(builder -> builder.addJdkVersion(LanguageLevel.JDK_1_7)
+      .setLanguageLevel(LanguageLevel.JDK_1_6));
   }
+
+  @Test
+  public void testSimpleObjectOldSafeComparison() { ig.get().doTest(InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix")); }
+  @Test
+  public void testNegatedObjectOldSafeComparison() { ig.get().doTest(InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")); }
 }

@@ -2,29 +2,30 @@
 package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.UnnecessaryBreakInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
 @SuppressWarnings("UnnecessaryBreak")
-public class UnnecessaryBreakFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_16);
-  }
+@TestApplication
+public class UnnecessaryBreakFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryBreakInspection()), null, null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_16));
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryBreakInspection();
-  }
-
+  @Test
   public void testRemoveBreakOnCase() {
-    doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
                  """
                      public void printName(String name) {
                        switch (name) {
@@ -56,8 +57,9 @@ public class UnnecessaryBreakFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testRemoveBreakOnDefault() {
-    doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
                  """
                      public void printName(String name) {
                        switch (name) {
@@ -89,8 +91,9 @@ public class UnnecessaryBreakFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixClassicSwitch() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
                                """
                                  class X {
                                    public void printName(String name) {
@@ -109,8 +112,9 @@ public class UnnecessaryBreakFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotFixLabelledBreak() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "break"),
                                """
                                  class X {
                                    public void printName(String[] names) {

@@ -1,18 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.ExpressionMayBeFactorizedInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class ExpressionMayBeFactorizedFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ExpressionMayBeFactorizedInspection()));
 
+  @Test
   public void testSimple() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    boolean test(boolean duplicateExpression, boolean thenExpression, boolean elseExpression) {
                        return (duplicateExpression &&/**/ thenExpression) || (duplicateExpression && elseExpression);
@@ -24,8 +34,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testFactorInControlWorkflow() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    char test(boolean duplicateExpression, boolean thenExpression, boolean elseExpression) {
                        if ((duplicateExpression &&/**/ thenExpression) || (duplicateExpression && elseExpression)) {
@@ -45,8 +56,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testFactorLast() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    boolean test(int duplicateExpression, int thenExpression, int elseExpression) {
                        return (thenExpression == 2 &&/**/ duplicateExpression == 1) || (elseExpression == 3 && duplicateExpression == 1);
@@ -58,8 +70,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testFactorInMiddle() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    boolean test(boolean duplicateExpression, boolean payload) {
                        boolean reassigned = false;
@@ -73,8 +86,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testOrInsideAnd() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    boolean test(boolean duplicateExpression, boolean thenExpression, boolean elseExpression) {
                        return (duplicateExpression ||/**/ thenExpression) && (duplicateExpression || elseExpression);
@@ -86,8 +100,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testEagerOperators() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    boolean test(boolean duplicateExpression, boolean payload) {
                        boolean reassigned = false;
@@ -101,8 +116,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testNumericExpression() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    int test(int duplicateExpression, int payload) {
                        int reassigned = 1;
@@ -116,8 +132,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testNumericOperation() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    int fullHeight(int rowHeight, int rowCount, int rowMargin) {
                      return rowHeight * rowCount + /**/rowMargin * rowCount;
@@ -128,8 +145,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                    }""");
   }
 
+  @Test
   public void testNumericOperation2() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    int fullHeight(int rowHeight, int rowCount, int rowMargin) {
@@ -137,8 +155,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                    }}""");
   }
 
+  @Test
   public void testFinalEagerActiveExpression() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                  """
                    boolean test(int x, int y, int updatedState, int newState) {
                        return (x > y & updatedState == -1) | /**/(y < x & (updatedState = newState) == 0);
@@ -149,8 +168,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                      }""");
   }
 
+  @Test
   public void testComparison() {
-    doTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
            """
              class X {
                boolean test(int x, int y, int z) {
@@ -165,8 +185,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
              }""");
   }
 
+  @Test
   public void testDoNotCleanupOnExpressionWithSideEffects() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean elseExpression = true;
@@ -181,8 +202,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupWithXOrOperator() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test() {
@@ -195,8 +217,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupWithFinalLazyActiveExpression() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test() {
@@ -211,8 +234,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupWithNotFinalEagerActiveExpression() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test() {
@@ -225,8 +249,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupWithTrailingOperands() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test(boolean evilExpression) {
@@ -239,8 +264,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupOnIncrementedDuplicateExpression() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    int test() {
@@ -254,8 +280,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupOperandWithSideEffect() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test() {
@@ -269,8 +296,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupOperandWithSideEffectAtTheEnd() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test() {
@@ -284,8 +312,9 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotCleanupWithSkippedThrowingExceptionOperand() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.factorized.quickfix"),
                                """
                                  class X {
                                    boolean test() {
@@ -300,8 +329,4 @@ public class ExpressionMayBeFactorizedFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new ExpressionMayBeFactorizedInspection();
-  }
 }

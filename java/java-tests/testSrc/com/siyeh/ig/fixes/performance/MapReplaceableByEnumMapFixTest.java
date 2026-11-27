@@ -2,17 +2,27 @@
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.MapReplaceableByEnumMapInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MapReplaceableByEnumMapFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new MapReplaceableByEnumMapInspection());
-    myRelativePath = "performance/map_replaceable_with_enum_map";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "EnumMap");
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class MapReplaceableByEnumMapFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new MapReplaceableByEnumMapInspection()), "performance/map_replaceable_with_enum_map",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "EnumMap"));
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass("""
                          package java.util;
 
@@ -23,16 +33,15 @@ public class MapReplaceableByEnumMapFixTest extends IGQuickFixesTestCase {
                             \s
                            }
                          }""");
-
   }
 
 
+  @Test
   public void testSimple() {
-    doTest();
+    ig.get().doTest();
   }
+  @Test
   public void testParentheses() {
-    doTest();
+    ig.get().doTest();
   }
-
-
 }

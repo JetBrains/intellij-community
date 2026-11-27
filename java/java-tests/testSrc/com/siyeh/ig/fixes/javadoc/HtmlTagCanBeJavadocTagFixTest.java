@@ -1,22 +1,30 @@
 package com.siyeh.ig.fixes.javadoc;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection;
+import org.junit.jupiter.api.Test;
 
-public class HtmlTagCanBeJavadocTagFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new HtmlTagCanBeJavadocTagInspection());
-    myRelativePath = "javadoc/html_tag_can_be_javadoc_tag";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}");
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testBraces() { doTest(); }
-  public void testBraces2() { doTest(); }
-  public void testSecond() { doTest(); }
-  public void testMultiline() { doTest(); }
-  public void testLt() { doTest(); }
+@TestApplication
+public class HtmlTagCanBeJavadocTagFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new HtmlTagCanBeJavadocTagInspection()), "javadoc/html_tag_can_be_javadoc_tag",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}"));
+
+  @Test
+  public void testBraces() { ig.get().doTest(); }
+  @Test
+  public void testBraces2() { ig.get().doTest(); }
+  @Test
+  public void testSecond() { ig.get().doTest(); }
+  @Test
+  public void testMultiline() { ig.get().doTest(); }
+  @Test
+  public void testLt() { ig.get().doTest(); }
 }

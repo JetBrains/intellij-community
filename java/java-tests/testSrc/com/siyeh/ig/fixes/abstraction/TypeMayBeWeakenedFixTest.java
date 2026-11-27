@@ -4,50 +4,60 @@ package com.siyeh.ig.fixes.abstraction;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TypeMayBeWeakenedFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_10);
-  }
+@TestApplication
+public class TypeMayBeWeakenedFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(), "abstraction/type_may_be_weakened", null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_10));
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     final TypeMayBeWeakenedInspection inspection = new TypeMayBeWeakenedInspection();
     inspection.onlyWeakentoInterface = false;
     inspection.doNotWeakenReturnType = false;
     inspection.doNotWeakenInferredVariableType = false;
     inspection.myStopClassSet = new OrderedSet<>(Collections.singletonList("com.siyeh.igfixes.abstraction.type_may_be_weakened.Stop"));
     myFixture.enableInspections(inspection);
-    myRelativePath = "abstraction/type_may_be_weakened";
     ImplicitUsageProvider.EP_NAME.getExtensionList();
     EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
   }
 
-  public void testShorten() { doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "java.util.Collection")); }
-  public void testLocalClass() { doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "A")); }
+  @Test
+  public void testShorten() { ig.get().doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "java.util.Collection")); }
+  @Test
+  public void testLocalClass() { ig.get().doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "A")); }
 
+  @Test
   public void testGeneric() {
-    doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.C"));
+    ig.get().doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.C"));
   }
 
+  @Test
   public void testStopClass() {
-    doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.Stop"));
+    ig.get().doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.Stop"));
   }
 
+  @Test
   public void testJava10() {
-    doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.B"));
+    ig.get().doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.B"));
   }
 }

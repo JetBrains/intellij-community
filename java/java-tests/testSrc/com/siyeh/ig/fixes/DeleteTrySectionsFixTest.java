@@ -16,48 +16,55 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.errorhandling.CaughtExceptionImmediatelyRethrownInspection;
 import com.siyeh.ig.errorhandling.EmptyFinallyBlockInspection;
+import org.junit.jupiter.api.Test;
 
-public class DeleteTrySectionsFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new CaughtExceptionImmediatelyRethrownInspection(), new EmptyFinallyBlockInspection());
-  }
+import java.util.List;
 
-  @Override
-  protected String getRelativePath() {
-    return "tryCatch";
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
+@TestApplication
+public class DeleteTrySectionsFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new CaughtExceptionImmediatelyRethrownInspection(), new EmptyFinallyBlockInspection()), "tryCatch");
+
+  @Test
   public void testDeleteTryStatement() {
-    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
+  @Test
   public void testDeleteEmptyTryStatement() {
-    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
+  @Test
   public void testKeepComments() {
-    doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.remove.statement", "try-catch"));
   }
 
+  @Test
   public void testDeleteEmptyFinally() {
-    doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
   }
 
+  @Test
   public void testDeleteTryWithEmptyFinally() {
-    doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.finally.block.quickfix"));
   }
 
+  @Test
   public void testDeleteTryWithResources() {
-    doTest(InspectionGadgetsBundle.message("delete.catch.section.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("delete.catch.section.quickfix"));
   }
 
+  @Test
   public void testDeleteTryWithEmptyFinallyNoOuterBlock() {
-    doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
 }

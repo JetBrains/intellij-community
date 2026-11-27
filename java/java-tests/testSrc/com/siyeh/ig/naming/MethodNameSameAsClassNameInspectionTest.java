@@ -3,35 +3,40 @@ package com.siyeh.ig.naming;
 
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
+import org.junit.jupiter.api.Test;
 
-public class MethodNameSameAsClassNameInspectionTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myDefaultHint = "Make method constructor";
-  }
+import java.util.List;
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new MethodNameSameAsClassNameInspection();
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testSimple() { doTest(); }
-  public void testModifiers() { doTest(); }
-  public void testAbstract() { assertQuickfixNotAvailable(); }
-  public void testInterface() { assertQuickfixNotAvailable(); }
-  public void testConflictingCtor() { assertQuickfixNotAvailable(); }
-  public void testConflictingCtorErasure() { assertQuickfixNotAvailable(); }
+@TestApplication
+public class MethodNameSameAsClassNameInspectionTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new MethodNameSameAsClassNameInspection()), "naming/method_name_same_as_class_name",
+                        "Make method constructor");
 
+  @Test
+  public void testSimple() { ig.get().doTest(); }
+  @Test
+  public void testModifiers() { ig.get().doTest(); }
+  @Test
+  public void testAbstract() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testInterface() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testConflictingCtor() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testConflictingCtorErasure() { ig.get().assertQuickfixNotAvailable(); }
+
+  @Test
   @SuppressWarnings("SpellCheckingInspection")
   public void testmain() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> assertQuickfixNotAvailable());
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> ig.get().assertQuickfixNotAvailable());
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "naming/method_name_same_as_class_name";
-  }
 }

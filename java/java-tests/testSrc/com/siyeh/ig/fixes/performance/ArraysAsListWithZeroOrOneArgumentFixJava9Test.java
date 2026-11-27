@@ -3,19 +3,29 @@ package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.ArraysAsListWithZeroOrOneArgumentInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings({"ClassInitializerMayBeStatic", "ArraysAsListWithZeroOrOneArgument"})
-public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesTestCase {
+@TestApplication
+public class ArraysAsListWithZeroOrOneArgumentFixJava9Test {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ArraysAsListWithZeroOrOneArgumentInspection()), null, null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_1_9));
 
+  @Test
   public void testZeroArguments() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
            """
              import java.util.*;
              class X {{
@@ -28,9 +38,10 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
              }}""");
   }
 
+  @Test
   @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
            """
              import java.util.*;
              class X {{
@@ -43,8 +54,9 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
              }}""");
   }
 
+  @Test
   public void testOneArgument() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
            "import java.util.*;" +
            "class X {{\n" +
            "  List<Map<String, String>> list = Arrays./**/asList(new HashMap<>());" +
@@ -55,8 +67,9 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
            "}}");
   }
 
+  @Test
   public void testOneArgumentNullable() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
            "import java.util.*;" +
            "class X {{\n" +
            "  List<?> list = Arrays./**/asList((String)null);" +
@@ -67,13 +80,4 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
            "}}");
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_1_9);
-  }
-
-  @Override
-  protected BaseInspection getInspection() {
-    return new ArraysAsListWithZeroOrOneArgumentInspection();
-  }
 }

@@ -1,58 +1,70 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.ArrayCanBeReplacedWithEnumValuesInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 
-public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class ArrayCanBeReplacedWithEnumValuesFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ArrayCanBeReplacedWithEnumValuesInspection()), "style/array_replaced_enum_values", null, null,
+                        getEnvironmentClasses());
 
+  @Test
   public void testClassWithEnum() { doTest("TestEnum"); }
 
+  @Test
   public void testEnumWithField() {doTest("TestEnum");}
 
+  @Test
   public void testNotEnumInit() { assertQuickfixNotAvailable(); }
 
+  @Test
   public void testNotEnumMulti() { assertQuickfixNotAvailable(); }
 
+  @Test
   public void testEnumRevOrder() { assertQuickfixNotAvailable();}
 
+  @Test
   public void testErrorInMultiDArray() { assertQuickfixNotAvailable();}
 
+  @Test
   public void testMultiDArrayNoError() {assertQuickfixNotAvailable();}
 
+  @Test
   public void testInnerEnum() {doTest("Inner");}
 
+  @Test
   public void testFooInit() {assertQuickfixNotAvailable();}
 
+  @Test
   public void testOuterEnumUse() {doTest("TestEnum");}
   
+  @Test
   public void testParentheses() {doTest("X");}
 
 
 
-  @Override
-  protected void doTest(String hint) {
-    super.doTest(InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.quickfix", hint));
+  private void doTest(String hint) {
+    ig.get().doTest(InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.quickfix", hint));
   }
 
-  @Override
-  protected void assertQuickfixNotAvailable() {
+  private void assertQuickfixNotAvailable() {
     String message = InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.quickfix", "@");
-    super.assertQuickfixNotAvailable(message.substring(0, message.indexOf('@')));
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ArrayCanBeReplacedWithEnumValuesInspection());
-    myRelativePath = "style/array_replaced_enum_values";
+    ig.get().assertQuickfixNotAvailable(message.substring(0, message.indexOf('@')));
   }
 
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       """
 public class OuterEnum {

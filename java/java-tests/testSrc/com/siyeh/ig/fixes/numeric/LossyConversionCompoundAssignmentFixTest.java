@@ -2,31 +2,38 @@
 package com.siyeh.ig.fixes.numeric;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.numeric.LossyConversionCompoundAssignmentInspection;
+import org.junit.jupiter.api.Test;
 
-public class LossyConversionCompoundAssignmentFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class LossyConversionCompoundAssignmentFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new LossyConversionCompoundAssignmentInspection()), "numeric/lossy_conversion_compound_assignment");
+
+  @Test
   public void testLongTimesDouble() {
-    doTest(InspectionGadgetsBundle.message(
+    ig.get().doTest(InspectionGadgetsBundle.message(
       "inspection.lossy.conversion.compound.assignment.expand.fix.name", "long"));
   }
 
+  @Test
   public void testLongMultiplyDouble() {
-    doTest(QuickFixBundle.message("add.typecast.cast.text", "long",
+    ig.get().doTest(QuickFixBundle.message("add.typecast.cast.text", "long",
                                   QuickFixBundle.message("fix.expression.role.expression")));
   }
 
+  @Test
   public void testBytePlusShortNotExpected() {
-    assertQuickfixNotAvailable(QuickFixBundle.message("add.typecast.cast.text", "byte",
+    ig.get().assertQuickfixNotAvailable(QuickFixBundle.message("add.typecast.cast.text", "byte",
                                   QuickFixBundle.message("fix.expression.role.expression")));
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new LossyConversionCompoundAssignmentInspection());
-    myRelativePath = "numeric/lossy_conversion_compound_assignment";
-  }
 }

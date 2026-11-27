@@ -1,22 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.imports;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.imports.JavaLangImportInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class JavaLangImportFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new JavaLangImportInspection();
-  }
+@TestApplication
+public class JavaLangImportFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new JavaLangImportInspection()));
 
+  @Test
   public void testRemoveJavaLangImport() {
-    doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
            """
              import/**/ java.lang.String;
 
@@ -34,8 +40,9 @@ public class JavaLangImportFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testRemoveJavaLangImportOnDemand() {
-    doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
            """
              import/**/ java.lang.*;
 
@@ -53,8 +60,9 @@ public class JavaLangImportFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testRemoveJavaLangImportAmongOther() {
-    doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("delete.import.quickfix"),
            """
              import/**/ java.lang.String;
              import java.util.Date;

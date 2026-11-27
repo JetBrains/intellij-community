@@ -1,22 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.UnnecessaryContinueInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class UnnecessaryContinueFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryContinueInspection();
-  }
+@TestApplication
+public class UnnecessaryContinueFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryContinueInspection()));
 
+  @Test
   public void testRemoveContinue() {
-    doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
                  """
                      public void printName(String[] names) {
                        for (String name : names) {
@@ -35,8 +41,9 @@ public class UnnecessaryContinueFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testRemoveContinueIntoIf() {
-    doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
                  """
                      public void printName(String[] names) {
                        for (String name : names) {
@@ -59,8 +66,9 @@ public class UnnecessaryContinueFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixFollowedContinue() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
                                """
                                  class X {
                                    public void printName(String[] names) {

@@ -2,17 +2,27 @@
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.SetReplaceableByEnumSetInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class SetReplaceableByEnumSetFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new SetReplaceableByEnumSetInspection());
-    myRelativePath = "performance/set_replaceable_with_enum_set";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "EnumSet");
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class SetReplaceableByEnumSetFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new SetReplaceableByEnumSetInspection()), "performance/set_replaceable_with_enum_set",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "EnumSet"));
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass("""
                          package java.util;
 
@@ -33,13 +43,11 @@ public class SetReplaceableByEnumSetFixTest extends IGQuickFixesTestCase {
                            public HashSet() {
                            }
                          }""");
-
   }
 
 
+  @Test
   public void testSimple() {
-    doTest();
+    ig.get().doTest();
   }
-
-
 }

@@ -2,31 +2,42 @@
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.CStyleArrayDeclarationInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class CStyleArrayDeclarationFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new CStyleArrayDeclarationInspection()), "style/cstyle_array_declaration",
+                        "Fix all 'C-style array declaration' problems in file", builder -> builder.setLanguageLevel(LanguageLevel.HIGHEST),
+                        getEnvironmentClasses());
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.HIGHEST);
-  }
+  @Test
+  public void testMethod() { ig.get().doTest(); }
+  @Test
+  public void testLocalVariable() { ig.get().doTest(); }
+  @Test
+  public void testField() { ig.get().doTest(); }
+  @Test
+  public void testInForLoop() { ig.get().doTest(); }
+  @Test
+  public void testMultipleVariablesSingleDeclaration() { ig.get().doTest(); }
+  @Test
+  public void testMultipleFieldsSingleDeclaration() { ig.get().doTest(); }
+  @Test
+  public void testParameter() { ig.get().doTest(); }
 
-  public void testMethod() { doTest(); }
-  public void testLocalVariable() { doTest(); }
-  public void testField() { doTest(); }
-  public void testInForLoop() { doTest(); }
-  public void testMultipleVariablesSingleDeclaration() { doTest(); }
-  public void testMultipleFieldsSingleDeclaration() { doTest(); }
-  public void testParameter() { doTest(); }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       """
       import java.lang.annotation.ElementType;
@@ -54,11 +65,4 @@ public class CStyleArrayDeclarationFixTest extends IGQuickFixesTestCase {
     };
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new CStyleArrayDeclarationInspection());
-    myRelativePath = "style/cstyle_array_declaration";
-    myDefaultHint = "Fix all 'C-style array declaration' problems in file";
-  }
 }

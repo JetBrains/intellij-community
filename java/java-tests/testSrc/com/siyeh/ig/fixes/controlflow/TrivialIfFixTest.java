@@ -16,45 +16,66 @@
 package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.TrivialIfInspection;
+import org.junit.jupiter.api.Test;
 
-public class TrivialIfFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder builder) {
-    builder.setLanguageLevel(LanguageLevel.JDK_14);
-  }
-  
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new TrivialIfInspection());
-    myRelativePath = "controlflow/trivialIf";
-    myDefaultHint = "Simplify 'if else'";
-  }
+import java.util.List;
 
-  public void testComments() { doTest(); }
-  public void testCommentsInAssignment() { doTest(); }
-  public void testAssignmentNegated() { doTest(); }
-  public void testImplicitAssignment() { doTest(); }
-  public void testImplicitAssignmentAnd() { assertQuickfixNotAvailable(); }
-  public void testNegatedConditional() { doTest(); }
-  public void testNegatedConditional1() { doTest(); }
-  public void testAssert1() { doTest(); }
-  public void testAssert2() { doTest(); }
-  public void testParentheses() { doTest(); }
-  public void testNested() { doTest(); }
-  public void testInCodeBlock() { doTest(); }
-  public void testInSwitch() { doTest(); }
-  public void testRedundantComparison1() { doTest(); }
-  public void testRedundantComparison2() { doTest(); }
-  public void testRedundantComparisonNested() { doTest(); }
-  public void testRedundantComparisonNested2() { doTest(); }
-  public void testRedundantComparisonNested3() { doTest(); }
-  public void testRedundantComparisonDouble() { assertQuickfixNotAvailable(); }
-  public void testMethodCall() { doTest(); }
-  public void testMethodCall2() { doTest(); }
-  public void testYield() { doTest(); }
-  public void testOverwrittenDeclaration() { doTest(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class TrivialIfFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new TrivialIfInspection()), "controlflow/trivialIf", "Simplify 'if else'",
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_14));
+
+  @Test
+  public void testComments() { ig.get().doTest(); }
+  @Test
+  public void testCommentsInAssignment() { ig.get().doTest(); }
+  @Test
+  public void testAssignmentNegated() { ig.get().doTest(); }
+  @Test
+  public void testImplicitAssignment() { ig.get().doTest(); }
+  @Test
+  public void testImplicitAssignmentAnd() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testNegatedConditional() { ig.get().doTest(); }
+  @Test
+  public void testNegatedConditional1() { ig.get().doTest(); }
+  @Test
+  public void testAssert1() { ig.get().doTest(); }
+  @Test
+  public void testAssert2() { ig.get().doTest(); }
+  @Test
+  public void testParentheses() { ig.get().doTest(); }
+  @Test
+  public void testNested() { ig.get().doTest(); }
+  @Test
+  public void testInCodeBlock() { ig.get().doTest(); }
+  @Test
+  public void testInSwitch() { ig.get().doTest(); }
+  @Test
+  public void testRedundantComparison1() { ig.get().doTest(); }
+  @Test
+  public void testRedundantComparison2() { ig.get().doTest(); }
+  @Test
+  public void testRedundantComparisonNested() { ig.get().doTest(); }
+  @Test
+  public void testRedundantComparisonNested2() { ig.get().doTest(); }
+  @Test
+  public void testRedundantComparisonNested3() { ig.get().doTest(); }
+  @Test
+  public void testRedundantComparisonDouble() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testMethodCall() { ig.get().doTest(); }
+  @Test
+  public void testMethodCall2() { ig.get().doTest(); }
+  @Test
+  public void testYield() { ig.get().doTest(); }
+  @Test
+  public void testOverwrittenDeclaration() { ig.get().doTest(); }
 }

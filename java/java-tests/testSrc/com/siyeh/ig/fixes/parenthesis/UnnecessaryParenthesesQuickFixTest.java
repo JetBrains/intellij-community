@@ -1,44 +1,64 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.parenthesis;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.UnnecessaryParenthesesInspection;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myDefaultHint = InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
-    myRelativePath = "parentheses";
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testPolyadic() { doTest(); }
-  public void testPolyadic2() { doTest(); }
-  public void testPolyadic3() { doTest(); }
-  public void testPolyadic4() { doTest(); }
-  public void testCommutative() { doTest(); }
-  public void testWrapping() { doTest(); }
-  public void testNotCommutative() { assertQuickfixNotAvailable(); }
-  public void testStringParentheses() { assertQuickfixNotAvailable(); }
-  public void testComparisonParentheses() { assertQuickfixNotAvailable(); }
-  public void testNotCommutative2() { doTest(); }
-  public void testArrayInitializer() { doTest(); }
-  public void testArrayAccessExpression() { doTest(); }
-  public void testArrayAccessExpression2() { doTest(); }
-  public void testSimplePrecedence() { assertQuickfixNotAvailable(); }
-  public void testLambdaQualifier() { assertQuickfixNotAvailable(); }
-  public void testLambdaInTernary() { doTest(); }
-  public void testLambdaCast() { doTest(); }
-  public void testLambdaBody() { doTest(); }
-  public void testDivision() { doTest(); }
-  public void testDivision2() { doTest(); }
-  public void testSwitchExpression() { doTest(); }
+@TestApplication
+public class UnnecessaryParenthesesQuickFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryParenthesesInspection()), "parentheses",
+                        InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix"));
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryParenthesesInspection();
-  }
+  @Test
+  public void testPolyadic() { ig.get().doTest(); }
+  @Test
+  public void testPolyadic2() { ig.get().doTest(); }
+  @Test
+  public void testPolyadic3() { ig.get().doTest(); }
+  @Test
+  public void testPolyadic4() { ig.get().doTest(); }
+  @Test
+  public void testCommutative() { ig.get().doTest(); }
+  @Test
+  public void testWrapping() { ig.get().doTest(); }
+  @Test
+  public void testNotCommutative() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testStringParentheses() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testComparisonParentheses() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testNotCommutative2() { ig.get().doTest(); }
+  @Test
+  public void testArrayInitializer() { ig.get().doTest(); }
+  @Test
+  public void testArrayAccessExpression() { ig.get().doTest(); }
+  @Test
+  public void testArrayAccessExpression2() { ig.get().doTest(); }
+  @Test
+  public void testSimplePrecedence() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testLambdaQualifier() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testLambdaInTernary() { ig.get().doTest(); }
+  @Test
+  public void testLambdaCast() { ig.get().doTest(); }
+  @Test
+  public void testLambdaBody() { ig.get().doTest(); }
+  @Test
+  public void testDivision() { ig.get().doTest(); }
+  @Test
+  public void testDivision2() { ig.get().doTest(); }
+  @Test
+  public void testSwitchExpression() { ig.get().doTest(); }
+
 }

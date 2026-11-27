@@ -16,47 +16,74 @@
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.TryFinallyCanBeTryWithResourcesInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  public void testComments() { doTest(); }
-  public void testMultiple() { doTest(); }
-  public void testKeepResourceCallInBlock() { doTest(); }
-  public void testTryInCatchBlock() { doTest(); }
-  public void testJava9() { doTest(); }
-  public void testJava9WithParameter() { doTest(); }
-  public void testCatch() { doTest(); }
-  public void testTryWithResource() { doTest(); }
-  public void testFirstNotInitialized() { doTest(); }
-  public void testIDEA209231() { doTest(); }
-  public void testIDEA243497() { doTest(); }
-  public void testUseCloseAfterTry() { doTest(); }
-  public void testUseCloseBeforeTry() { doTest(); }
-  public void testCatchInFinallyNoOuterCatchBlock() { doTest(); }
-  public void testCatchInFinallyWithOuterCatchBlock() { doTest(); }
-  public void testCatchWithSuffixInFinallyNoOuterCatchBlock() { doTest(); }
-  public void testCatchWithSuffixInFinallyWithOuterCatchBlock() { doTest(); }
-  public void testCatchInFinallyPreserveComments() { doTest(); }
-  public void testDisjointCatchInFinally() { doTest(); }
-  public void testDisjointCatchInOuterTry() { doTest(); }
-  public void testSideEffectsFromOuterCatch() { doTest();}
-  public void testSideEffectsFromInnerCatch() { doTest();}
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_1_9);
-  }
+@TestApplication
+public class TryFinallyCanBeTryWithResourcesFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new TryFinallyCanBeTryWithResourcesInspection()), "migration/try_finally_can_be_try_with_resources",
+                        InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix"),
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_1_9));
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new TryFinallyCanBeTryWithResourcesInspection());
-    myRelativePath = "migration/try_finally_can_be_try_with_resources";
-    myDefaultHint = InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
+  @Test
+  public void testComments() { ig.get().doTest(); }
+  @Test
+  public void testMultiple() { ig.get().doTest(); }
+  @Test
+  public void testKeepResourceCallInBlock() { ig.get().doTest(); }
+  @Test
+  public void testTryInCatchBlock() { ig.get().doTest(); }
+  @Test
+  public void testJava9() { ig.get().doTest(); }
+  @Test
+  public void testJava9WithParameter() { ig.get().doTest(); }
+  @Test
+  public void testCatch() { ig.get().doTest(); }
+  @Test
+  public void testTryWithResource() { ig.get().doTest(); }
+  @Test
+  public void testFirstNotInitialized() { ig.get().doTest(); }
+  @Test
+  public void testIDEA209231() { ig.get().doTest(); }
+  @Test
+  public void testIDEA243497() { ig.get().doTest(); }
+  @Test
+  public void testUseCloseAfterTry() { ig.get().doTest(); }
+  @Test
+  public void testUseCloseBeforeTry() { ig.get().doTest(); }
+  @Test
+  public void testCatchInFinallyNoOuterCatchBlock() { ig.get().doTest(); }
+  @Test
+  public void testCatchInFinallyWithOuterCatchBlock() { ig.get().doTest(); }
+  @Test
+  public void testCatchWithSuffixInFinallyNoOuterCatchBlock() { ig.get().doTest(); }
+  @Test
+  public void testCatchWithSuffixInFinallyWithOuterCatchBlock() { ig.get().doTest(); }
+  @Test
+  public void testCatchInFinallyPreserveComments() { ig.get().doTest(); }
+  @Test
+  public void testDisjointCatchInFinally() { ig.get().doTest(); }
+  @Test
+  public void testDisjointCatchInOuterTry() { ig.get().doTest(); }
+  @Test
+  public void testSideEffectsFromOuterCatch() { ig.get().doTest();}
+  @Test
+  public void testSideEffectsFromInnerCatch() { ig.get().doTest();}
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass("package test;" +
                        "public class MyBufferedInputStream implements java.io.Closeable {" +
                        "  public BufferedInputStream(InputStream in) {}" +

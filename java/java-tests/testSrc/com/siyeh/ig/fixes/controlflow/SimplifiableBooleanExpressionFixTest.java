@@ -15,18 +15,28 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.SimplifiableBooleanExpressionInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class SimplifiableBooleanExpressionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new SimplifiableBooleanExpressionInspection()));
 
+  @Test
   public void testSimple() {
-    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "void test(boolean foo, boolean bar) {" +
                  "    boolean d = !(foo ^ /**/(bar != true));" +
                  "}",
@@ -35,8 +45,9 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  @Test
   public void testAndOrExpression() {
-    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "boolean fff(boolean a, boolean b) {" +
                  "    return a && b /**/|| !a;" +
                  "}",
@@ -45,8 +56,9 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  @Test
   public void testAndOrExpression3() {
-    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "boolean fff(boolean a, boolean b, boolean c) {" +
                  "    return a && b && c/**/|| !a;" +
                  "}",
@@ -55,11 +67,12 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  @Test
   public void testAndOrExpression3Middle() {
     // While this particular case could be safely transformed to "a && c || !b", the order of execution is changed which may
     // affect dereferencing (e.g. "a != null && b != null && a.foo(b.bar()) || b == null") is safe, but replacement is not.
     // Proper replacement would be "(a || !b) && (!b || c)", but it's not shorter than the original code
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                                """
                                  class X {
                                    boolean fff(boolean a, boolean b, boolean c) {\s
@@ -68,8 +81,9 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                                  }""");
   }
 
+  @Test
   public void testIncomplete() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                                """
                                  class X {
                                    boolean fff(boolean a) {\s
@@ -79,8 +93,9 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                                  }""");
   }
 
+  @Test
   public void testAndOrExpression3Parentheses() {
-    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "boolean fff(boolean a, boolean b, boolean c) {" +
                  "    return (a && b && !c)/**/|| c;" +
                  "}",
@@ -89,8 +104,9 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  @Test
   public void testAndOrExpressionComparisons() {
-    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "boolean fff(int a, int b, int c) {" +
                  "    return a > b && b > c /**/|| a <= b;" +
                  "}",
@@ -99,8 +115,9 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  @Test
   public void testAndOrNonNegated() {
-    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "boolean fff(int a, int b, int c) {" +
                  "    return a > b && b > c && b > 0 /**/|| (b > c);" +
                  "}",
@@ -109,8 +126,4 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new SimplifiableBooleanExpressionInspection();
-  }
 }

@@ -3,32 +3,35 @@ package com.siyeh.ig.fixes.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.bugs.ClassNewInstanceInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas
  */
-public class ClassNewInstanceFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class ClassNewInstanceFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ClassNewInstanceInspection()), "bugs/class_new_instance",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "Class.getConstructor().newInstance()"),
+                        builder -> builder.addJdkVersion(LanguageLevel.JDK_1_8));
 
-  public void testLambda() { doTest(); }
-  public void testCreateCatchBlocks() { doTest(); }
-  public void testSkipCatchBlocks() { doTest(); }
-  public void testAddThrows() { doTest(); }
-  public void testBrokenCode() { doTest(); }
+  @Test
+  public void testLambda() { ig.get().doTest(); }
+  @Test
+  public void testCreateCatchBlocks() { ig.get().doTest(); }
+  @Test
+  public void testSkipCatchBlocks() { ig.get().doTest(); }
+  @Test
+  public void testAddThrows() { ig.get().doTest(); }
+  @Test
+  public void testBrokenCode() { ig.get().doTest(); }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ClassNewInstanceInspection());
-    myRelativePath = "bugs/class_new_instance";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "Class.getConstructor().newInstance()");
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
 }

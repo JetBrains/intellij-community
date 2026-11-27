@@ -2,33 +2,37 @@
 package com.siyeh.ig.fixes.numeric;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.numeric.IntegerDivisionInFloatingPointContextInspection;
+import org.junit.jupiter.api.Test;
 
-public class IntegerDivisionInFloatingPointContextFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  public void testSimpleFloat() { doTest(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testSimpleDouble() { doTest(); }
+@TestApplication
+public class IntegerDivisionInFloatingPointContextFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new IntegerDivisionInFloatingPointContextInspection()),
+                        "numeric/integer_division_in_floating_point_context",
+                        InspectionsBundle.message("fix.all.inspection.problems.in.file", InspectionGadgetsBundle.message("integer.division.in.floating.point.context.display.name")));
 
-  public void testExpectedParenthesizedExpr() { doTest(); }
+  @Test
+  public void testSimpleFloat() { ig.get().doTest(); }
 
-  public void testComplexPolyadicExpression() { doTest(); }
+  @Test
+  public void testSimpleDouble() { ig.get().doTest(); }
 
-  public void testPolyadicExpression() { doTest(); }
+  @Test
+  public void testExpectedParenthesizedExpr() { ig.get().doTest(); }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final IntegerDivisionInFloatingPointContextInspection inspection = new IntegerDivisionInFloatingPointContextInspection();
-    myFixture.enableInspections(inspection);
-    myDefaultHint = InspectionsBundle.message("fix.all.inspection.problems.in.file",
-                                              InspectionGadgetsBundle.message("integer.division.in.floating.point.context.display.name"));
-  }
+  @Test
+  public void testComplexPolyadicExpression() { ig.get().doTest(); }
 
-  @Override
-  protected String getRelativePath() {
-    return "numeric/integer_division_in_floating_point_context";
-  }
+  @Test
+  public void testPolyadicExpression() { ig.get().doTest(); }
+
 }

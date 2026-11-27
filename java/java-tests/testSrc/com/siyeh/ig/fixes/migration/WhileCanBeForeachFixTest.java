@@ -2,37 +2,43 @@
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.WhileCanBeForeachInspection;
+import org.junit.jupiter.api.Test;
 
-public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new WhileCanBeForeachInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("foreach.replace.quickfix");
-  }
+import java.util.List;
 
-  public void testThis() { doTest(); }
-  public void testCast() { doTest(); }
-  public void testNakedNext() { doTest(); }
-  public void testUnboundWildcard() { doTest(); }
-  public void testVarWithoutValidInitializer() { doTest(); }
-  public void testVarWithValidInitializer() { doTest(); }
-  public void testRawIterator() { doTest(); }
-  public void testUnboxing() { doTest(); }
-  public void testParentheses() { doTest(); }
-  public void testEmptyLoop() { doTest(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.setLanguageLevel(LanguageLevel.HIGHEST);
-  }
+@TestApplication
+public class WhileCanBeForeachFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new WhileCanBeForeachInspection()), "migration/while_can_be_foreach",
+                        InspectionGadgetsBundle.message("foreach.replace.quickfix"),
+                        builder -> builder.setLanguageLevel(LanguageLevel.HIGHEST));
 
-  @Override
-  protected String getRelativePath() {
-    return "migration/while_can_be_foreach";
-  }
+  @Test
+  public void testThis() { ig.get().doTest(); }
+  @Test
+  public void testCast() { ig.get().doTest(); }
+  @Test
+  public void testNakedNext() { ig.get().doTest(); }
+  @Test
+  public void testUnboundWildcard() { ig.get().doTest(); }
+  @Test
+  public void testVarWithoutValidInitializer() { ig.get().doTest(); }
+  @Test
+  public void testVarWithValidInitializer() { ig.get().doTest(); }
+  @Test
+  public void testRawIterator() { ig.get().doTest(); }
+  @Test
+  public void testUnboxing() { ig.get().doTest(); }
+  @Test
+  public void testParentheses() { ig.get().doTest(); }
+  @Test
+  public void testEmptyLoop() { ig.get().doTest(); }
+
 }

@@ -6,67 +6,107 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.IfCanBeSwitchInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class IfCanBePrimitivePatternSwitchFixTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class IfCanBePrimitivePatternSwitchFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig = igQuickFixesFixture(() -> {
+    IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
     inspection.minimumBranches = 2;
-    myFixture.enableInspections(inspection);
-    myRelativePath = "migration/if_can_be_switch";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.IF, JavaKeywords.SWITCH);
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
+    return List.of(inspection);
+  },
+    "migration/if_can_be_switch",
+    CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.IF, JavaKeywords.SWITCH),
+    builder -> { builder.setLanguageLevel(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()); builder.addJdkVersion(LanguageLevel.JDK_1_8); });
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.setLanguageLevel(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel());
-    builder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
+  @Test
+  public void testPrimitiveIntType() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntTypeWithDifferent() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testPrimitiveIntTypeWithDifferentRevert() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testPrimitiveIntTypeRevert() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntTypeRevertComparison() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntTypeComparison() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongIntType() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testPrimitiveLongType() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongType2() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongType3() { ig.get().doTest(); }
 
-  public void testPrimitiveIntType() { doTest(); }
-  public void testPrimitiveIntTypeWithDifferent() { assertQuickfixNotAvailable(); }
-  public void testPrimitiveIntTypeWithDifferentRevert() { assertQuickfixNotAvailable(); }
-  public void testPrimitiveIntTypeRevert() { doTest(); }
-  public void testPrimitiveIntTypeRevertComparison() { doTest(); }
-  public void testPrimitiveIntTypeComparison() { doTest(); }
-  public void testPrimitiveLongIntType() { assertQuickfixNotAvailable(); }
-  public void testPrimitiveLongType() { doTest(); }
-  public void testPrimitiveLongType2() { doTest(); }
-  public void testPrimitiveLongType3() { doTest(); }
+  @Test
+  public void testPrimitiveIntegerNullType() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntegerNullType2() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntegerNullType3() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntegerNotNullType() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntegerNotNullType2() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveIntegerNotNullType3() { ig.get().doTest(); }
 
-  public void testPrimitiveIntegerNullType() { doTest(); }
-  public void testPrimitiveIntegerNullType2() { doTest(); }
-  public void testPrimitiveIntegerNullType3() { doTest(); }
-  public void testPrimitiveIntegerNotNullType() { doTest(); }
-  public void testPrimitiveIntegerNotNullType2() { doTest(); }
-  public void testPrimitiveIntegerNotNullType3() { doTest(); }
+  @Test
+  public void testPrimitiveLongObjectNullType() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongObjectNullType2() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongObjectNullType3() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongObjectNotNullType() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongObjectNotNullType2() { ig.get().doTest(); }
+  @Test
+  public void testPrimitiveLongObjectNotNullType3() { ig.get().doTest(); }
 
-  public void testPrimitiveLongObjectNullType() { doTest(); }
-  public void testPrimitiveLongObjectNullType2() { doTest(); }
-  public void testPrimitiveLongObjectNullType3() { doTest(); }
-  public void testPrimitiveLongObjectNotNullType() { doTest(); }
-  public void testPrimitiveLongObjectNotNullType2() { doTest(); }
-  public void testPrimitiveLongObjectNotNullType3() { doTest(); }
+  @Test
+  public void testComparisonWithPrimitives1() { ig.get().doTest(); }
+  @Test
+  public void testComparisonWithPrimitives2() { ig.get().doTest(); }
+  @Test
+  public void testComparisonWithPrimitives3() { ig.get().doTest(); }
+  @Test
+  public void testComparisonWithPrimitivesUsedTwice() { ig.get().doTest(); }
 
-  public void testComparisonWithPrimitives1() { doTest(); }
-  public void testComparisonWithPrimitives2() { doTest(); }
-  public void testComparisonWithPrimitives3() { doTest(); }
-  public void testComparisonWithPrimitivesUsedTwice() { doTest(); }
+  @Test
+  public void testComparisonWithFloatingPoint() { ig.get().doTest(); }
+  @Test
+  public void testComparisonWithNaN() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testComparisonWithZero() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testComparisonWithNegativeZero() { ig.get().assertQuickfixNotAvailable(); }
 
-  public void testComparisonWithFloatingPoint() { doTest(); }
-  public void testComparisonWithNaN() { assertQuickfixNotAvailable(); }
-  public void testComparisonWithZero() { assertQuickfixNotAvailable(); }
-  public void testComparisonWithNegativeZero() { assertQuickfixNotAvailable(); }
-
-  public void testComparisonNonPrimitive() { assertQuickfixNotAvailable(); }
-  public void testDoubleComparison() { assertQuickfixNotAvailable(); }
-  public void testPrimitiveDominates() { assertQuickfixNotAvailable(); }
-  public void testVariableAssigned() { assertQuickfixNotAvailable(); }
+  @Test
+  public void testComparisonNonPrimitive() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testDoubleComparison() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testPrimitiveDominates() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testVariableAssigned() { ig.get().assertQuickfixNotAvailable(); }
 }

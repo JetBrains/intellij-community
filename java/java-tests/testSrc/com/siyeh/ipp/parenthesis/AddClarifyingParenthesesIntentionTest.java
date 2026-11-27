@@ -15,37 +15,41 @@
  */
 package com.siyeh.ipp.parenthesis;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.UnclearBinaryExpressionInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AddClarifyingParenthesesIntentionTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myDefaultHint = InspectionGadgetsBundle.message("unclear.binary.expression.quickfix");
-  }
+@TestApplication
+public class AddClarifyingParenthesesIntentionTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnclearBinaryExpressionInspection()), "style/add_clarifying_parentheses",
+                        InspectionGadgetsBundle.message("unclear.binary.expression.quickfix"));
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnclearBinaryExpressionInspection();
-  }
+  @Test
+  public void testCommentsInAssignment() { ig.get().doTest(); }
+  @Test
+  public void testCommentsInConditional() { ig.get().doTest(); }
+  @Test
+  public void testCommentsInInstanceof() { ig.get().doTest(); }
+  @Test
+  public void testCommentsInParentheses() { ig.get().doTest(); }
+  @Test
+  public void testCommentsInPolyadicExpression() { ig.get().doTest(); }
+  @Test
+  public void testNotTooManyParentheses() { ig.get().doTest(); }
+  @Test
+  public void testSimpleAssignment() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testUnclearAssignment() { ig.get().doTest(); }
 
-  public void testCommentsInAssignment() { doTest(); }
-  public void testCommentsInConditional() { doTest(); }
-  public void testCommentsInInstanceof() { doTest(); }
-  public void testCommentsInParentheses() { doTest(); }
-  public void testCommentsInPolyadicExpression() { doTest(); }
-  public void testNotTooManyParentheses() { doTest(); }
-  public void testSimpleAssignment() { assertQuickfixNotAvailable(); }
-  public void testUnclearAssignment() { doTest(); }
-
-  @Override
-  protected String getRelativePath() {
-    return "style/add_clarifying_parentheses";
-  }
 }

@@ -15,22 +15,26 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.UnqualifiedInnerClassAccessInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnqualifiedInnerClassAccessFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class UnqualifiedInnerClassAccessFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnqualifiedInnerClassAccessInspection()), "style/unqualified_inner_class_access",
+                        InspectionGadgetsBundle.message("unqualified.inner.class.access.quickfix"));
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new UnqualifiedInnerClassAccessInspection());
-    myRelativePath = "style/unqualified_inner_class_access";
-    myDefaultHint = InspectionGadgetsBundle.message("unqualified.inner.class.access.quickfix");
-  }
-
-  public void testDeep() { doTest(); }
+  @Test
+  public void testDeep() { ig.get().doTest(); }
 }

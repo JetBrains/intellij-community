@@ -6,43 +6,77 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.ForCanBeForeachInspection;
+import org.junit.jupiter.api.Test;
 
-public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  public void testParenthesis() { doTest(); }
-  public void testParenthesisArrayLoop() { doTest(); }
-  public void testParenthesisArrayLoop2() { doTest(); }
-  public void testParenthesisIteratorLoop() { doTest(); }
-  public void testInstanceofAndWhitespace() { doTest(); }
-  public void testQualifyWithThis1() { doTest(); }
-  public void testQualifyWithThis2() { doTest(); }
-  public void testQualifyWithThisInner() { doTest(); }
-  public void testNoQualifier() { doTest(); }
-  public void testForThisClass() { doTest(); }
-  public void testForOuterClass() { doTest(); }
-  public void testForOuterClassIterator() { doTest(); }
-  public void testForQualifiedArray() { doTest(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class ForCanBeForeachFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ForCanBeForeachInspection()), "migration/for_can_be_foreach",
+                        InspectionGadgetsBundle.message("foreach.replace.quickfix"));
+
+  @Test
+  public void testParenthesis() { ig.get().doTest(); }
+  @Test
+  public void testParenthesisArrayLoop() { ig.get().doTest(); }
+  @Test
+  public void testParenthesisArrayLoop2() { ig.get().doTest(); }
+  @Test
+  public void testParenthesisIteratorLoop() { ig.get().doTest(); }
+  @Test
+  public void testInstanceofAndWhitespace() { ig.get().doTest(); }
+  @Test
+  public void testQualifyWithThis1() { ig.get().doTest(); }
+  @Test
+  public void testQualifyWithThis2() { ig.get().doTest(); }
+  @Test
+  public void testQualifyWithThisInner() { ig.get().doTest(); }
+  @Test
+  public void testNoQualifier() { ig.get().doTest(); }
+  @Test
+  public void testForThisClass() { ig.get().doTest(); }
+  @Test
+  public void testForOuterClass() { ig.get().doTest(); }
+  @Test
+  public void testForOuterClassIterator() { ig.get().doTest(); }
+  @Test
+  public void testForQualifiedArray() { ig.get().doTest(); }
+  @Test
   public void testForFieldName() {
-    JavaCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    JavaCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
     try {
-      doTest();
+      ig.get().doTest();
     }
     finally {
       settings.FIELD_NAME_PREFIX = oldPrefix;
     }
   }
-  public void testRawCollection() { doTest(); }
-  public void testArrayUnboxing() { doTest(); }
-  public void testListUnboxing() { doTest(); }
-  public void testIteratorUnboxing() { doTest(); }
+  @Test
+  public void testRawCollection() { ig.get().doTest(); }
+  @Test
+  public void testArrayUnboxing() { ig.get().doTest(); }
+  @Test
+  public void testListUnboxing() { ig.get().doTest(); }
+  @Test
+  public void testIteratorUnboxing() { ig.get().doTest(); }
 
   /// Regression test for IDEA-386737.
+  @Test
   public void testUpdateInspectionOptionFixHasNoFixAll() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     ForCanBeForeachInspection inspection = new ForCanBeForeachInspection();
     myFixture.enableInspections(inspection);
     myFixture.configureByText("Test.java", """
@@ -63,11 +97,4 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
     assertNull(fixAll);
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ForCanBeForeachInspection());
-    myRelativePath = "migration/for_can_be_foreach";
-    myDefaultHint = InspectionGadgetsBundle.message("foreach.replace.quickfix");
-  }
 }

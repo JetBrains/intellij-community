@@ -3,31 +3,40 @@ package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.DynamicRegexReplaceableByCompiledPatternInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class DynamicRegexReplaceableByCompiledPatternFixTest extends IGQuickFixesTestCase {
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class DynamicRegexReplaceableByCompiledPatternFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(), "performance/replace_with_compiled_pattern",
+                        InspectionGadgetsBundle.message("dynamic.regex.replaceable.by.compiled.pattern.quickfix"),
+                        builder -> builder.addJdkVersion(LanguageLevel.JDK_1_8));
 
   private DynamicRegexReplaceableByCompiledPatternInspection myInspection;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myInspection = new DynamicRegexReplaceableByCompiledPatternInspection();
     myFixture.enableInspections(myInspection);
-    myRelativePath = "performance/replace_with_compiled_pattern";
-    myDefaultHint = InspectionGadgetsBundle.message("dynamic.regex.replaceable.by.compiled.pattern.quickfix");
   }
 
-  public void testLiteral() { doTest(); }
-  public void testLiteralLiteral() { doTest(); }
-  public void testReplaceAll() { doTest(InspectionsBundle.message("fix.all.inspection.problems.in.file", myInspection.getDisplayName())); }
+  @Test
+  public void testLiteral() { ig.get().doTest(); }
+  @Test
+  public void testLiteralLiteral() { ig.get().doTest(); }
+  @Test
+  public void testReplaceAll() { ig.get().doTest(InspectionsBundle.message("fix.all.inspection.problems.in.file", myInspection.getDisplayName())); }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
 }

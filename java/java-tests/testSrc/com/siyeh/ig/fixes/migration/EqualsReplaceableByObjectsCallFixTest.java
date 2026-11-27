@@ -17,53 +17,72 @@ package com.siyeh.ig.fixes.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.EqualsReplaceableByObjectsCallInspection;
+import org.junit.jupiter.api.Test;
 
-public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  public void testSimpleEquals() { doTest(); }
-  public void testSimpleNotEquals() { doTest(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testQualifiedArgument() { doTest(); }
-  public void testQualifiedReciever() { doTest(); }
+@TestApplication
+public class EqualsReplaceableByObjectsCallFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new EqualsReplaceableByObjectsCallInspection()), "migration/equals_replaceable_by_objects_call",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "Objects.equals()"),
+                        builder -> builder.addJdkVersion(LanguageLevel.JDK_1_8) .setLanguageLevel(LanguageLevel.JDK_1_7));
 
-  public void testExpressionReciever() { doTest(); }
-  public void testExpressionArgument() { doTest(); }
-  public void testExpressionArgument2() { doTest(); }
+  @Test
+  public void testSimpleEquals() { ig.get().doTest(); }
+  @Test
+  public void testSimpleNotEquals() { ig.get().doTest(); }
 
-  public void testLongEquals() { doTest(); }
-  public void testLongNotEquals() { doTest(); }
-  public void testShortEquals() { doTest(); }
-  public void testShortNotEquals() { doTest(); }
+  @Test
+  public void testQualifiedArgument() { ig.get().doTest(); }
+  @Test
+  public void testQualifiedReciever() { ig.get().doTest(); }
 
-  public void testSuperEquals() { doTest(); }
-  public void testThisEquals() { doTest(); }
+  @Test
+  public void testExpressionReciever() { ig.get().doTest(); }
+  @Test
+  public void testExpressionArgument() { ig.get().doTest(); }
+  @Test
+  public void testExpressionArgument2() { ig.get().doTest(); }
 
-  public void testQualifiedThisNotEqual() { doTest(); }
-  public void testQualifiedSuperEqual() { doTest(); }
+  @Test
+  public void testLongEquals() { ig.get().doTest(); }
+  @Test
+  public void testLongNotEquals() { ig.get().doTest(); }
+  @Test
+  public void testShortEquals() { ig.get().doTest(); }
+  @Test
+  public void testShortNotEquals() { ig.get().doTest(); }
 
-  public void testTernaryEquals() { doTest(); }
-  public void testTernaryNotEquals() { doTest(); }
+  @Test
+  public void testSuperEquals() { ig.get().doTest(); }
+  @Test
+  public void testThisEquals() { ig.get().doTest(); }
 
-  public void testStaticField() { doTest(); }
-  public void testStaticField2() { doTest(); }
+  @Test
+  public void testQualifiedThisNotEqual() { ig.get().doTest(); }
+  @Test
+  public void testQualifiedSuperEqual() { ig.get().doTest(); }
 
-  public void testArrayAccessEquals() { doTest(); }
-  public void testArrayAccessTernaryEquals() { doTest(); }
+  @Test
+  public void testTernaryEquals() { ig.get().doTest(); }
+  @Test
+  public void testTernaryNotEquals() { ig.get().doTest(); }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.addJdkVersion(LanguageLevel.JDK_1_8)
-      .setLanguageLevel(LanguageLevel.JDK_1_7);
-  }
+  @Test
+  public void testStaticField() { ig.get().doTest(); }
+  @Test
+  public void testStaticField2() { ig.get().doTest(); }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new EqualsReplaceableByObjectsCallInspection());
-    myRelativePath = "migration/equals_replaceable_by_objects_call";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "Objects.equals()");
-  }
+  @Test
+  public void testArrayAccessEquals() { ig.get().doTest(); }
+  @Test
+  public void testArrayAccessTernaryEquals() { ig.get().doTest(); }
+
 }

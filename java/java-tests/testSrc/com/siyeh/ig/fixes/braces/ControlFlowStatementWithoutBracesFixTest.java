@@ -3,63 +3,88 @@ package com.siyeh.ig.fixes.braces;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.ControlFlowStatementWithoutBracesInspection;
+import org.junit.jupiter.api.Test;
 
-public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class ControlFlowStatementWithoutBracesFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ControlFlowStatementWithoutBracesInspection()), "statement_without_braces");
+
+  @Test
   public void testSimpleIfBody() { doTest("if"); }
+  @Test
   public void testSimpleIfExpression() { doTest("if"); }
+  @Test
   public void testSimpleIfKeyword() { doTest("if"); }
 
+  @Test
   public void testFullIfBody() { doTest("if"); }
+  @Test
   public void testFullIfKeyword() { doTest("if"); }
+  @Test
   public void testFullIfElseBody() { doTest("else"); }
+  @Test
   public void testFullIfElseKeyword() { doTest("else"); }
-  public void testFullIfMiddle() { assertQuickfixNotAvailable(getMessagePrefix()); }
+  @Test
+  public void testFullIfMiddle() { ig.get().assertQuickfixNotAvailable(getMessagePrefix()); }
 
+  @Test
   public void testDoBody() { doTest("do"); }
+  @Test
   public void testDoExpression() { doTest("do"); }
+  @Test
   public void testDoMiddle() { doTest("do"); }
 
+  @Test
   public void testForEachBody() { doTest("for"); }
+  @Test
   public void testForEachExpression() { doTest("for"); }
+  @Test
   public void testForEachKeyword() { doTest("for"); }
+  @Test
   public void testForIndex() { doTest("for"); }
 
+  @Test
   public void testWhile() { doTest("while"); }
-  public void testWhileOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
+  @Test
+  public void testWhileOutside() { ig.get().assertQuickfixNotAvailable(getMessagePrefix()); }
 
+  @Test
   public void testElseWithForStatementBody() { doTest("else"); }
+  @Test
   public void testLadderInnerElse() { doTest("else"); }
+  @Test
   public void testLadderInnerFor() { doTest("for"); }
+  @Test
   public void testLadderInnerIf() { doTest("if"); }
+  @Test
   public void testLadderOuterElse() { doTest("else"); }
+  @Test
   public void testLadderOuterFor() { doTest("for"); }
+  @Test
   public void testLadderOuterIf() { doTest("if"); }
-  public void testLadderOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
+  @Test
+  public void testLadderOutside() { ig.get().assertQuickfixNotAvailable(getMessagePrefix()); }
 
+  @Test
   public void testNewlineInBlock() {
-    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     doTest("if");
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myRelativePath = "statement_without_braces";
-  }
-
-  @Override
-  protected BaseInspection getInspection() {
-    return new ControlFlowStatementWithoutBracesInspection();
-  }
-
-  @Override
-  protected void doTest(String keyword) {
-    super.doTest(getMessage(keyword));
+  private void doTest(String keyword) {
+    ig.get().doTest(getMessage(keyword));
   }
 
   private static String getMessage(String keyword) {

@@ -1,29 +1,30 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
+import org.junit.jupiter.api.Test;
 
-public class AddThisQualifierFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new UnqualifiedFieldAccessInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("add.this.qualifier.quickfix");
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  @Override
-  protected String getRelativePath() {
-    return "style/add_this_qualifier";
-  }
+@TestApplication
+public class AddThisQualifierFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnqualifiedFieldAccessInspection()), "style/add_this_qualifier",
+                        InspectionGadgetsBundle.message("add.this.qualifier.quickfix"));
 
+  @Test
   public void testSimple() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testStaticClass() {
-    doTest();
+    ig.get().doTest();
   }
 }

@@ -15,38 +15,44 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
+import org.junit.jupiter.api.Test;
 
-public class OctalLiteralFixesTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new OctalLiteralInspection());
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class OctalLiteralFixesTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new OctalLiteralInspection()), "numeric/octal");
+
+  @Test
   public void testConvertToDecimal1() {
-    doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
   }
 
+  @Test
   public void testConvertToDecimal2() {
-    doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
   }
 
+  @Test
   public void testConvertOctalToDecimalLong() {
-    doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
   }
 
+  @Test
   public void testRemoveLeadingZero() {
-    doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
   }
 
+  @Test
   public void testRemoveLeadingZeroLong() {
-    doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "numeric/octal";
-  }
 }

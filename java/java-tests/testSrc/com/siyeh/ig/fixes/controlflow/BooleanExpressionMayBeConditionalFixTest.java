@@ -15,18 +15,28 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.BooleanExpressionMayBeConditionalInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class BooleanExpressionMayBeConditionalFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new BooleanExpressionMayBeConditionalInspection()));
 
+  @Test
   public void testSimple() {
-    doMemberTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
                  """
                    void test(boolean foo, boolean bar) {
                        boolean c = false;
@@ -38,8 +48,9 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
                  );
   }
 
+  @Test
   public void testSideEffects1() {
-    doTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
            "class X {" +
            "  boolean b = true;" +
            "  void test(boolean foo) {" +
@@ -62,8 +73,9 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
            "}");
   }
 
+  @Test
   public void testSideEffects2() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
            "class X {" +
            "  boolean b = true;" +
            "  void test(boolean foo) {" +
@@ -76,8 +88,9 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
            "}");
   }
 
+  @Test
   public void testComparison() {
-    doTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
            """
              class X {
                boolean test(int x, int y, int z) {
@@ -92,8 +105,4 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
              }""");
   }
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new BooleanExpressionMayBeConditionalInspection();
-  }
 }

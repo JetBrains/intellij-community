@@ -2,30 +2,37 @@
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.UnnecessaryConstantArrayCreationExpressionInspection;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessaryConstantArrayCreationExpressionFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class UnnecessaryConstantArrayCreationExpressionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryConstantArrayCreationExpressionInspection()),
+                        "style/unnecessary_constant_array_creation_expression");
+
+  @Test
   public void testPrimitive() { doTest("int[]"); }
+  @Test
   public void testParenthesized() { doTest("int[]"); }
+  @Test
   public void testTwoDimension() { doTest("Map[][]"); }
+  @Test
   public void testInitializerWithoutNew() { assertQuickfixNotAvailable(); }
 
-  @Override
-  protected void doTest(String hint) {
-    super.doTest(CommonQuickFixBundle.message("fix.remove", "new " + hint));
+  private void doTest(String hint) {
+    ig.get().doTest(CommonQuickFixBundle.message("fix.remove", "new " + hint));
   }
 
-  @Override
-  protected void assertQuickfixNotAvailable() {
-    super.assertQuickfixNotAvailable(CommonQuickFixBundle.message("fix.remove", ""));
+  private void assertQuickfixNotAvailable() {
+    ig.get().assertQuickfixNotAvailable(CommonQuickFixBundle.message("fix.remove", ""));
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new UnnecessaryConstantArrayCreationExpressionInspection());
-    myRelativePath = "style/unnecessary_constant_array_creation_expression";
-  }
 }

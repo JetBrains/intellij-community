@@ -15,31 +15,35 @@
  */
 package com.siyeh.ig.fixes.bugs;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
+import org.junit.jupiter.api.Test;
 
-public class StaticCallOnSubclassTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new StaticCallOnSubclassInspection());
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class StaticCallOnSubclassTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new StaticCallOnSubclassInspection()), "bugs/staticCallOnSubclass");
+
+  @Test
   public void testPreserveTypeArgs() {
-    doTest("preserveTypeArgs", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
+    ig.get().doTest("preserveTypeArgs", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
   }
 
+  @Test
   public void testMethodReference() {
-    doTest("methodRef", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
+    ig.get().doTest("methodRef", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
   }
   
+  @Test
   public void testOnInterface() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "bugs/staticCallOnSubclass";
-  }
 }

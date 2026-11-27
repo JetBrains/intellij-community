@@ -2,22 +2,30 @@
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.ManualArrayCopyInspection;
+import org.junit.jupiter.api.Test;
 
-public class ManualArrayCopyFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ManualArrayCopyInspection());
-    myRelativePath = "performance/replace_with_system_arraycopy";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()");
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testSimple() { doTest(); }
-  public void testDecrement() { doTest(); }
-  public void testLengthSmallerThanOffset() { doTest(); }
-  public void testInitializerContainsSubtraction() { doTest(); }
-  public void testNotEqual() { doTest(); }
+@TestApplication
+public class ManualArrayCopyFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ManualArrayCopyInspection()), "performance/replace_with_system_arraycopy",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()"));
+
+  @Test
+  public void testSimple() { ig.get().doTest(); }
+  @Test
+  public void testDecrement() { ig.get().doTest(); }
+  @Test
+  public void testLengthSmallerThanOffset() { ig.get().doTest(); }
+  @Test
+  public void testInitializerContainsSubtraction() { ig.get().doTest(); }
+  @Test
+  public void testNotEqual() { ig.get().doTest(); }
 }

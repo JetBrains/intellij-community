@@ -2,34 +2,42 @@
 package com.siyeh.ig.fixes.dataflow;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.dataflow.TooBroadScopeInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TooBroadScopeInspectionFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new TooBroadScopeInspection());
-    myRelativePath = "dataflow/too_broad_scope";
-  }
+@TestApplication
+public class TooBroadScopeInspectionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new TooBroadScopeInspection()), "dataflow/too_broad_scope", null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_10));
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.setLanguageLevel(LanguageLevel.JDK_10);
-  }
-
-  public void testForStatement() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
-  public void testForStatement2() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
-  public void testForStatement3() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
-  public void testTryResourceReference() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "t")); }
-  public void testComments() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "s")); }
-  public void testComments2() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "alpha")); }
-  public void testVarDeclarationUntouched() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
-  public void testMayChangeSemantics() { doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.may.change.semantics.quickfix", "value")); }
-  public void testUnmovableStringBuilder() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "sb"));}
+  @Test
+  public void testForStatement() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
+  @Test
+  public void testForStatement2() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
+  @Test
+  public void testForStatement3() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
+  @Test
+  public void testTryResourceReference() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "t")); }
+  @Test
+  public void testComments() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "s")); }
+  @Test
+  public void testComments2() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "alpha")); }
+  @Test
+  public void testVarDeclarationUntouched() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "i")); }
+  @Test
+  public void testMayChangeSemantics() { ig.get().doTest(InspectionGadgetsBundle.message("too.broad.scope.narrow.may.change.semantics.quickfix", "value")); }
+  @Test
+  public void testUnmovableStringBuilder() { ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", "sb"));}
 }

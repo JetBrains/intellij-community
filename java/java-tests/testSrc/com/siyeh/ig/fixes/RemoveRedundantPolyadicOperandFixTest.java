@@ -16,27 +16,34 @@
 
 package com.siyeh.ig.fixes;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection;
+import org.junit.jupiter.api.Test;
 
-public class RemoveRedundantPolyadicOperandFixTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ConditionCoveredByFurtherConditionInspection());
-    myRelativePath = "pointlessnullcheck";
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class RemoveRedundantPolyadicOperandFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ConditionCoveredByFurtherConditionInspection()), "pointlessnullcheck");
+
+  @Test
   public void testScenario1() {
-    doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
   }
 
+  @Test
   public void testPolyadicExpression() {
-    doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
   }
 
+  @Test
   public void testPolyadicExpression2() {
-    doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
+    ig.get().doTest(InspectionGadgetsBundle.message("remove.redundant.polyadic.operand.fix.name", "arg != null"));
   }
 }

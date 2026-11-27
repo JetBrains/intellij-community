@@ -16,25 +16,27 @@
 package com.siyeh.ig.fixes.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.numeric.CachedNumberConstructorCallInspection;
+import org.junit.jupiter.api.Test;
 
-public class CachedNumberConstructorCallTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final CachedNumberConstructorCallInspection inspection = new CachedNumberConstructorCallInspection();
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class CachedNumberConstructorCallTest {
+  private final TestFixture<IGQuickFixesFixture> ig = igQuickFixesFixture(() -> {
+    CachedNumberConstructorCallInspection inspection = new CachedNumberConstructorCallInspection();
     inspection.reportOnlyWhenDeprecated = false;
-    myFixture.enableInspections(inspection);
-  }
+    return List.of(inspection);
+  }, "numeric/cached");
 
-  @Override
-  protected String getRelativePath() {
-    return "numeric/cached";
-  }
-
+  @Test
   public void testSimple() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.valueOf()"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.valueOf()"));
   }
 
 }

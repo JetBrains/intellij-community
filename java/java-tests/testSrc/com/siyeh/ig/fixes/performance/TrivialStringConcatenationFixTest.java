@@ -1,50 +1,71 @@
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.TrivialStringConcatenationInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TrivialStringConcatenationFixTest extends IGQuickFixesTestCase {
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class TrivialStringConcatenationFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(), "performance/trivial_string_concatenation",
+                        InspectionGadgetsBundle.message("string.replace.quickfix"));
 
   private String fixAll;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     TrivialStringConcatenationInspection inspection = new TrivialStringConcatenationInspection();
     inspection.skipIfNecessary = false;
-    if (getTestName(true).contains("SkipIfNecessary")) {
+    if (ig.get().getTestName(true).contains("SkipIfNecessary")) {
       inspection.skipIfNecessary = true;
     }
     myFixture.enableInspections(inspection);
-    myRelativePath = "performance/trivial_string_concatenation";
-    myDefaultHint = InspectionGadgetsBundle.message("string.replace.quickfix");
     fixAll = InspectionsBundle.message("fix.all.inspection.problems.in.file",
                                        InspectionGadgetsBundle.message("trivial.string.concatenation.display.name"));
   }
 
-  public void testParentheses() { doTest(); }
-  public void testParentheses2() { doTest(); }
-  public void testBinaryNull() { doTest(); }
-  public void testAtTheEnd() { doTest(); }
+  @Test
+  public void testParentheses() { ig.get().doTest(); }
+  @Test
+  public void testParentheses2() { ig.get().doTest(); }
+  @Test
+  public void testBinaryNull() { ig.get().doTest(); }
+  @Test
+  public void testAtTheEnd() { ig.get().doTest(); }
+  @Test
   public void testSeveralEmptyString() {
-    doTest(fixAll);
+    ig.get().doTest(fixAll);
   }
+  @Test
   public void testStartComments() {
-    doTest();
+    ig.get().doTest();
   }
+  @Test
   public void testMiddleComments() {
-    doTest();
+    ig.get().doTest();
   }
+  @Test
   public void testEndComments() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testNotSeenString() {
-    doTest(fixAll);
+    ig.get().doTest(fixAll);
   }
+  @Test
   public void testNotSeenString_SkipIfNecessary() {
-    doTest(fixAll);
+    ig.get().doTest(fixAll);
   }
 }

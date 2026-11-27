@@ -4,59 +4,73 @@ package com.siyeh.ig.fixes.dataflow;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new DataFlowInspection());
-    myRelativePath = "dataflow/create_null_branch";
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class CreateNullBranchFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new DataFlowInspection()), "dataflow/create_null_branch", null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_21));
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_21);
-  }
-
+  @Test
   public void testNoDefault() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testDefaultExists() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testPrevStatementCompletesNormally() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testRuleWithNoDefault() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testRuleWithDefaultExists() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testNullAlreadyExists() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testUnconditionalPatternExists() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
+  @Test
   public void testUnconditionalPatternNotExist() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
   
+  @Test
   public void testEmptyBody() {
-    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+    ig.get().doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 }

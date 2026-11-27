@@ -15,19 +15,24 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection;
+import org.junit.jupiter.api.Test;
 
-public class SimplifiableEqualsExpressionFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new SimplifiableEqualsExpressionInspection());
-    myRelativePath = "controlflow/simplifiable_equals_expression";
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testNormal() { doTest(InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", "equals")); }
-  public void testNegated() { doTest(InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", "equalsIgnoreCase")); }
+@TestApplication
+public class SimplifiableEqualsExpressionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new SimplifiableEqualsExpressionInspection()), "controlflow/simplifiable_equals_expression");
+
+  @Test
+  public void testNormal() { ig.get().doTest(InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", "equals")); }
+  @Test
+  public void testNegated() { ig.get().doTest(InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", "equalsIgnoreCase")); }
 }

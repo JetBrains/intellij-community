@@ -2,33 +2,45 @@
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection;
+import org.junit.jupiter.api.Test;
 
-public class LambdaBodyCanBeCodeBlockFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new LambdaBodyCanBeCodeBlockInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix");
-    myRelativePath = "style/expr2block";
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class LambdaBodyCanBeCodeBlockFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new LambdaBodyCanBeCodeBlockInspection()), "style/expr2block",
+                        InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix"));
+
+  @Test
   public void testSimple() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testVoidCompatibleInExpr() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testLambdaWithInvalidCodeInside() {
-    myFixture.configureByFile(myRelativePath + "/" + getTestName(false) + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention(myDefaultHint));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    PsiTestUtil.checkFileStructure(myFixture.getFile());
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
+    myFixture.configureByFile(ig.get().getRelativePath() + "/" + ig.get().getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(myFixture.findSingleIntention(ig.get().getDefaultHint()));
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      PsiTestUtil.checkFileStructure(myFixture.getFile());
+    });
   }
 
 }

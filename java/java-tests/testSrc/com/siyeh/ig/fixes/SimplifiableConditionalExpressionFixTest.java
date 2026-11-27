@@ -16,40 +16,50 @@
 
 package com.siyeh.ig.fixes;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspection;
+import org.junit.jupiter.api.Test;
 
-public class SimplifiableConditionalExpressionFixTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new SimplifiableConditionalExpressionInspection());
-    myRelativePath = "simple_condition";
-    myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class SimplifiableConditionalExpressionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new SimplifiableConditionalExpressionInspection()), "simple_condition",
+                        InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"));
+
+  @Test
   public void testPrecedence1() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testInverted() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testBinary() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testBooleanStringTernary() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testBooleanStringTernaryParen() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testBooleanStringTernaryDuplicateClass() {
-    doTest();
+    ig.get().doTest();
   }
 }

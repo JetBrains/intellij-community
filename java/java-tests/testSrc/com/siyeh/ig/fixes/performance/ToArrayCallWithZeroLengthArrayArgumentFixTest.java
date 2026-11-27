@@ -15,39 +15,51 @@
  */
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection;
 import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection.PreferEmptyArray;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesTestCase {
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class ToArrayCallWithZeroLengthArrayArgumentFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(), "performance/to_array_call_with_zero_length_array_argument");
+
   private final ToArrayCallWithZeroLengthArrayArgumentInspection myInspection = new ToArrayCallWithZeroLengthArrayArgumentInspection();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.enableInspections(myInspection);
   }
 
+  @Test
   public void testIntroduceVariable() {
     doFixTest(PreferEmptyArray.NEVER, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.presized"));
   }
 
+  @Test
   public void testPresizedToZero() {
     doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
   }
 
+  @Test
   public void testPresizedToZeroMap() {
     doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
   }
 
   private void doFixTest(PreferEmptyArray mode, String message) {
     myInspection.myMode = mode;
-    doTest(getTestName(false), message);
+    ig.get().doTest(ig.get().getTestName(false), message);
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "performance/to_array_call_with_zero_length_array_argument";
-  }
 }

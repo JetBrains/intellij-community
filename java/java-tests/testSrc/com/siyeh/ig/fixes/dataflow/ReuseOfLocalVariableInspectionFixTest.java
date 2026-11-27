@@ -2,20 +2,28 @@
 
 package com.siyeh.ig.fixes.dataflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection;
+import org.junit.jupiter.api.Test;
 
-public class ReuseOfLocalVariableInspectionFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ReuseOfLocalVariableInspection());
-    myRelativePath = "dataflow/reuse_of_local";
-  }
+import java.util.List;
 
-  public void testSimple() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
-  public void testParentheses() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
-  public void testSwitchExpression() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
-  public void testIfNoBlock() { doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class ReuseOfLocalVariableInspectionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ReuseOfLocalVariableInspection()), "dataflow/reuse_of_local");
+
+  @Test
+  public void testSimple() { ig.get().doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
+  @Test
+  public void testParentheses() { ig.get().doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
+  @Test
+  public void testSwitchExpression() { ig.get().doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
+  @Test
+  public void testIfNoBlock() { ig.get().doTest(InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix")); }
 }

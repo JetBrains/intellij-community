@@ -1,42 +1,47 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.assignment.AssignmentToCatchBlockParameterInspection;
 import com.siyeh.ig.assignment.AssignmentToForLoopParameterInspection;
 import com.siyeh.ig.assignment.AssignmentToLambdaParameterInspection;
 import com.siyeh.ig.assignment.AssignmentToMethodParameterInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ALL")
-public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase {
-
-  @Override
-  protected BaseInspection[] getInspections() {
+@TestApplication
+public class ExtractParameterAsLocalVariableFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig = igQuickFixesFixture(() -> {
     final AssignmentToForLoopParameterInspection inspection2 = new AssignmentToForLoopParameterInspection();
     inspection2.m_checkForeachParameters = true;
-    return new BaseInspection[] {
+    return List.of(
       new AssignmentToMethodParameterInspection(),
       inspection2,
       new AssignmentToCatchBlockParameterInspection(),
       new AssignmentToLambdaParameterInspection()
-    };
-  }
+    );
+  }, null, null, null, getEnvironmentClasses());
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {"class A {}",
       "public interface Function<T, R> {\n" +
       "    R apply(T t);" +
       "}"};
   }
 
+  @Test
   public void testLambdaWithExpressionBody() {
-    doTest(
+    ig.get().doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "class X {" +
       "  Function<A, A> f = (a) -> a/**/ = null;" +
@@ -49,8 +54,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
+  @Test
   public void testSimpleMethod() {
-    doTest(
+    ig.get().doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "class X {\n" +
       "    void m(String s) {\n" +
@@ -67,8 +73,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
+  @Test
   public void testParenthesizedExpression() {
-    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
            "class X {\n" +
            "    void m(int i) {\n" +
            "        (/**/i)++;\n" +
@@ -84,8 +91,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "}");
   }
 
+  @Test
   public void testSimpleForeach() {
-    doTest(
+    ig.get().doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "class X {\n" +
       "    void m() {\n" +
@@ -105,8 +113,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
+  @Test
   public void testSimpleCatchBlock() {
-    doTest(
+    ig.get().doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "import java.io.*;\n" +
       "class X {\n" +
@@ -132,8 +141,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
+  @Test
   public void testMultiCatchBlock() {
-    assertQuickfixNotAvailable(
+    ig.get().assertQuickfixNotAvailable(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "import java.io.*;\n" +
       "class X {\n" +
@@ -147,8 +157,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
       "}");
   }
 
+    @Test
     public void testJavaDoccedParameter() {
-    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
            "class Foo {\n" +
            "    /**\n" +
            "     * @param customEnumElement name of custom element of the enumeration (attribute or method) whose values should be used to match equivalent {@code String}s.\n" +
@@ -173,8 +184,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "}");
   }
 
+  @Test
   public void testSuperCall() {
-    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
            "class Foo {\n" +
            "    Foo(Object o ) {\n" +
            "        super();\n" +
@@ -195,8 +207,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "}");
   }
 
+  @Test
   public void testCorrectVariableScope() {
-    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
            "class Foo {\n" +
            "    public final void setValue(String label, Object value) {\n" +
            "        if (false) {\n" +
@@ -219,8 +232,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "}");
   }
 
+  @Test
   public void testVarargs() {
-    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
            "class RecordImpl<C> {\n" +
            "    public <T extends Enum<T>> Map<T, Object> fillEnumObjectMap(Map<T, Object> map, T... selectedColumns) {\n" +
            "        /**/selectedColumns = null;\n" +

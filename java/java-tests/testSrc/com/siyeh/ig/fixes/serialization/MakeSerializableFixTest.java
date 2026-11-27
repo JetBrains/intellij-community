@@ -16,21 +16,26 @@
 package com.siyeh.ig.fixes.serialization;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.serialization.ComparatorNotSerializableInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MakeSerializableFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class MakeSerializableFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ComparatorNotSerializableInspection()), "serialization/comparator");
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ComparatorNotSerializableInspection());
-    myRelativePath = "serialization/comparator";
-  }
-
-  public void testExtendsInterface() { doTest(QuickFixBundle.message("add.class.to.extends.list", "ExtendsInterface", "java.io.Serializable")); }
-  public void testImplementsClass() { doTest(QuickFixBundle.message("add.interface.to.implements.list", "ImplementsClass", "java.io.Serializable")); }
+  @Test
+  public void testExtendsInterface() { ig.get().doTest(QuickFixBundle.message("add.class.to.extends.list", "ExtendsInterface", "java.io.Serializable")); }
+  @Test
+  public void testImplementsClass() { ig.get().doTest(QuickFixBundle.message("add.interface.to.implements.list", "ImplementsClass", "java.io.Serializable")); }
 }

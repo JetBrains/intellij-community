@@ -15,31 +15,36 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.ArrayCreationWithoutNewKeywordInspection;
+import org.junit.jupiter.api.Test;
 
-public class ArrayCreationWithoutNewKeywordFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class ArrayCreationWithoutNewKeywordFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ArrayCreationWithoutNewKeywordInspection()), "style/array_creation_expression");
+
+    @Test
     public void testPrimitive() { doTest("int[]"); }
+    @Test
     public void testGeneric() { doTest("java.util.Map[][]"); }
+    @Test
     public void testNotAnArray() { assertQuickfixNotAvailable(); }
 
-  @Override
-  protected void doTest(String hint) {
-    super.doTest(InspectionGadgetsBundle.message("array.creation.without.new.keyword.quickfix", hint));
+  private void doTest(String hint) {
+    ig.get().doTest(InspectionGadgetsBundle.message("array.creation.without.new.keyword.quickfix", hint));
   }
 
-  @Override
-  protected void assertQuickfixNotAvailable() {
+  private void assertQuickfixNotAvailable() {
     String message = InspectionGadgetsBundle.message("array.creation.without.new.keyword.quickfix", "@");
-    super.assertQuickfixNotAvailable(message.substring(0, message.indexOf('@')));
+    ig.get().assertQuickfixNotAvailable(message.substring(0, message.indexOf('@')));
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ArrayCreationWithoutNewKeywordInspection());
-    myRelativePath = "style/array_creation_expression";
-  }
 }

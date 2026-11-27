@@ -15,40 +15,46 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.DiamondCanBeReplacedWithExplicitTypeArgumentsInspection;
+import org.junit.jupiter.api.Test;
 
-public class DiamondCanBeReplacedWithExplicitTypeArgumentsFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new DiamondCanBeReplacedWithExplicitTypeArgumentsInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class DiamondCanBeReplacedWithExplicitTypeArgumentsFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new DiamondCanBeReplacedWithExplicitTypeArgumentsInspection()), "style/diamond2explicit",
+                        InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix"));
+
+  @Test
   public void testAnonymousClass() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testApplicableDiamond() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testApplicableDiamondCheckFormatting() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testExplicitTypeArgs() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testFailedInference() {
-    assertQuickfixNotAvailable();
+    ig.get().assertQuickfixNotAvailable();
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "style/diamond2explicit";
-  }
 }

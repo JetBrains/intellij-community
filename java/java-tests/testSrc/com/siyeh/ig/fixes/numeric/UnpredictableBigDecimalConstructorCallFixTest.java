@@ -2,20 +2,32 @@
 package com.siyeh.ig.fixes.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.numeric.UnpredictableBigDecimalConstructorCallInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnpredictableBigDecimalConstructorCallFixTest extends IGQuickFixesTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final UnpredictableBigDecimalConstructorCallInspection inspection = new UnpredictableBigDecimalConstructorCallInspection();
+@TestApplication
+public class UnpredictableBigDecimalConstructorCallFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig = igQuickFixesFixture(() -> {
+    UnpredictableBigDecimalConstructorCallInspection inspection = new UnpredictableBigDecimalConstructorCallInspection();
     inspection.ignoreReferences = false;
-    myFixture.enableInspections(inspection);
+    return List.of(inspection);
+  }, "numeric/unpredictable_big_decimal");
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass(
       "package java.math;" +
       "public class BigDecimal {" +
@@ -24,24 +36,23 @@ public class UnpredictableBigDecimalConstructorCallFixTest extends IGQuickFixesT
     );
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "numeric/unpredictable_big_decimal";
-  }
-
+  @Test
   public void testFactory() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "BigDecimal.valueOf(val)"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "BigDecimal.valueOf(val)"));
   }
 
+  @Test
   public void testConstructor() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"0.1\")"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"0.1\")"));
   }
 
+  @Test
   public void testLiteral() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"2\")"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"2\")"));
   }
 
+  @Test
   public void testUnderscores() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"1000.1\")"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"1000.1\")"));
   }
 }

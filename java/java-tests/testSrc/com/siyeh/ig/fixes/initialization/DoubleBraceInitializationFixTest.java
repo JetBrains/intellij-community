@@ -15,27 +15,37 @@
  */
 package com.siyeh.ig.fixes.initialization;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.initialization.DoubleBraceInitializationInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleBraceInitializationFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class DoubleBraceInitializationFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new DoubleBraceInitializationInspection()), "initialization/double_brace_initialization",
+                        InspectionGadgetsBundle.message("double.brace.initialization.quickfix"));
 
-  public void testLocalVariable() { doTest(); }
-  public void testField() { doTest(); }
-  public void testParentheses() { doTest(); }
-  public void testLinked() { doTest(); }
-  public void testInterface() { assertQuickfixNotAvailable(); }
-  public void testArgument() { assertQuickfixNotAvailable(); }
+  @Test
+  public void testLocalVariable() { ig.get().doTest(); }
+  @Test
+  public void testField() { ig.get().doTest(); }
+  @Test
+  public void testParentheses() { ig.get().doTest(); }
+  @Test
+  public void testLinked() { ig.get().doTest(); }
+  @Test
+  public void testInterface() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testArgument() { ig.get().assertQuickfixNotAvailable(); }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new DoubleBraceInitializationInspection());
-    myRelativePath = "initialization/double_brace_initialization";
-    myDefaultHint = InspectionGadgetsBundle.message("double.brace.initialization.quickfix");
-  }
 }

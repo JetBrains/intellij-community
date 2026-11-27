@@ -2,115 +2,133 @@
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.migration.UnnecessaryBoxingInspection;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new UnnecessaryBoxingInspection());
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class UnnecessaryBoxingFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryBoxingInspection()), "migration/unnecessary_boxing");
+
+  @Test
   public void testLiteral1() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                      "Long l = new /**/Long(1);",
                      "Long l = 1L;");
   }
 
+  @Test
   public void testLiteral2() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Float l = new /**/Float(1);",
                  "Float l = 1F;");
   }
 
+  @Test
   public void testLiteral3() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Float l = new /**/Float(1.0);",
                  "Float l = 1.0F;");
   }
 
+  @Test
   public void testLiteral4() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Float l = new /**/Float(1d);",
                  "Float l = 1F;");
   }
 
+  @Test
   public void testLiteral5() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "Double l = new /**/Double(1);",
                  "Double l = 1.0;");
   }
 
+  @Test
   public void testBooleanLiteral() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "final Boolean aBoolean = Boolean.valueOf/**/(true);",
                  "final Boolean aBoolean = Boolean.TRUE;");
   }
 
+  @Test
   public void testStringConcatenation() {
-    doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                      "\"a\" + Long./**/valueOf(1L + 2L) + \"b\"",
                      "\"a\" + (1L + 2L) + \"b\"");
   }
 
+  @Test
   public void testStringConcatenation2() {
-    doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                      "\"a\" + Long./**/valueOf(1L - 2L) + \"b\"",
                      "\"a\" + (1L - 2L) + \"b\"");
   }
 
+  @Test
   public void testHex() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "float f = Float./**/valueOf(0x123);",
                  "float f = (float) 0x123;");
   }
 
+  @Test
   public void testHexDouble() {
     //noinspection RedundantCast
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "double f = Double./**/valueOf(0x123);",
                  "double f = (double) 0x123;");
   }
 
+  @Test
   @SuppressWarnings("OctalInteger")
   public void testOctal() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "float f = Float.valueOf/**/(0123);",
                  "float f = (float) 0123;");
   }
 
+  @Test
   @SuppressWarnings("OctalInteger")
   public void testOctalDouble() {
     //noinspection RedundantCast
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "double f = Double.valueOf/**/(0123);",
                  "double f = (double) 0123;");
   }
 
+  @Test
   public void testCast() {
-    doTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
+    ig.get().doTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
   }
 
+  @Test
   public void testParseInt() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.parseInt()"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.parseInt()"));
   }
 
+  @Test
   public void testStaticImport() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.parseInt()"));
+    ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.parseInt()"));
   }
 
+  @Test
   public void testShadowImport() {
-    assertQuickfixNotAvailable("Fix all 'Unnecessary boxing' problems in file");
+    ig.get().assertQuickfixNotAvailable("Fix all 'Unnecessary boxing' problems in file");
   }
 
+  @Test
   public void testConstantReference() {
-    doTest("Fix all 'Unnecessary boxing' problems in file");
+    ig.get().doTest("Fix all 'Unnecessary boxing' problems in file");
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "migration/unnecessary_boxing";
-  }
 }

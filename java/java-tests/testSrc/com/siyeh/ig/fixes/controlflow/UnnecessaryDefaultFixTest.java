@@ -2,28 +2,29 @@
 package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class UnnecessaryDefaultFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_16);
-  }
+@TestApplication
+public class UnnecessaryDefaultFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryDefaultInspection()), null, null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_16));
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryDefaultInspection();
-  }
-
+  @Test
   public void testRemoveReturn() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
                  """
                      enum E { A, B }
                      int foo(E e) {
@@ -46,8 +47,9 @@ public class UnnecessaryDefaultFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixWithMissingValues() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
                                """
                                  class X {
                                    enum E { A, B, C }
@@ -62,8 +64,9 @@ public class UnnecessaryDefaultFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotFixOnObject() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
                                """
                                  class X {
                                    int foo(Character e) {
@@ -77,8 +80,9 @@ public class UnnecessaryDefaultFixTest extends IGQuickFixesTestCase {
                                  """);
   }
 
+  @Test
   public void testDoNotFixOnPrimitive() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.default.quickfix"),
                                """
                                  class X {
                                    int foo(char e) {

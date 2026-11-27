@@ -15,37 +15,42 @@
  */
 package com.siyeh.ig.fixes.bugs;
 
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author anna
  */
-public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new CastConflictsWithInstanceofInspection());
-  }
+@TestApplication
+public class CastConflictsWithInstanceofFixesTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new CastConflictsWithInstanceofInspection()), "bugs/castConflicts");
 
+  @Test
   public void testReplaceCastInDeclaration() {
-    doTest("replaceCastInDeclaration", "Replace 'Integer' with 'String' in cast");
+    ig.get().doTest("replaceCastInDeclaration", "Replace 'Integer' with 'String' in cast");
   }
 
+  @Test
   public void testReplaceInstanceOf() {
-    doTest("replaceInstanceOf", "Replace 'String' with 'Integer' in instanceof");
+    ig.get().doTest("replaceInstanceOf", "Replace 'String' with 'Integer' in instanceof");
   }
 
+  @Test
   public void testIgnoreUncheckedCastToTypeParameter() {
-    assertQuickfixNotAvailable("Replace 'E' with 'String' in cast");
+    ig.get().assertQuickfixNotAvailable("Replace 'E' with 'String' in cast");
   }
 
+  @Test
   public void testReplaceInstanceofInFront() {
-    doTest("replaceInstanceofInFront", "Replace 'String' with 'Integer' in instanceof");
+    ig.get().doTest("replaceInstanceofInFront", "Replace 'String' with 'Integer' in instanceof");
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "bugs/castConflicts";
-  }
 }

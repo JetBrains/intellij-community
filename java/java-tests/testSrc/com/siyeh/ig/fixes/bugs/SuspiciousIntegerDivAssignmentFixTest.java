@@ -1,33 +1,41 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.bugs;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.bugs.SuspiciousIntegerDivAssignmentInspection;
+import org.junit.jupiter.api.Test;
 
-public class SuspiciousIntegerDivAssignmentFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class SuspiciousIntegerDivAssignmentFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new SuspiciousIntegerDivAssignmentInspection()), "bugs/suspicious_integer_div_assignment",
+                        InspectionGadgetsBundle.message("suspicious.integer.div.assignment.quickfix"));
+
+  @Test
   public void testDivAssignmentOperator() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testMultAssignmentOperator() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testCharacterDivision() {
-    doTest();
+    ig.get().doTest();
   }
 
+  @Test
   public void testParenthesizedRhs() {
-    doTest();
+    ig.get().doTest();
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new SuspiciousIntegerDivAssignmentInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("suspicious.integer.div.assignment.quickfix");
-    myRelativePath = "bugs/suspicious_integer_div_assignment";
-  }
 }

@@ -16,17 +16,17 @@
 package com.siyeh.ig.fixes.equality;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
+import org.junit.jupiter.api.Test;
 
 public class EqualityOperatorComparesObjectsInspectionJdk7Test extends EqualityOperatorComparesObjectsInspectionTestBase {
-
-  public void testSimpleObjectSafeComparison() { doTest(InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix")); }
-  public void testNegatedObjectSafeComparison() { doTest(InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")); }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
-    builder.addJdkVersion(LanguageLevel.JDK_1_8)
-      .setLanguageLevel(LanguageLevel.JDK_1_7);
+  public EqualityOperatorComparesObjectsInspectionJdk7Test() {
+    super(builder -> builder.addJdkVersion(LanguageLevel.JDK_1_8)
+      .setLanguageLevel(LanguageLevel.JDK_1_7));
   }
+
+  @Test
+  public void testSimpleObjectSafeComparison() { ig.get().doTest(InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix")); }
+  @Test
+  public void testNegatedObjectSafeComparison() { ig.get().doTest(InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")); }
 }

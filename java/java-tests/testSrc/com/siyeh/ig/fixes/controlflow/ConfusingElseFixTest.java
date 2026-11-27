@@ -1,22 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.ConfusingElseInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class ConfusingElseFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new ConfusingElseInspection();
-  }
+@TestApplication
+public class ConfusingElseFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ConfusingElseInspection()));
 
+  @Test
   public void testRemoveElse() {
-    doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
                  """
                      public void printName(String name) {
                        if (name == null) {
@@ -37,8 +43,9 @@ public class ConfusingElseFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testReturnStatement() {
-    doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
                  """
                      public int printName(String name) {
                        if (name == null) {
@@ -61,8 +68,9 @@ public class ConfusingElseFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testBreakStatement() {
-    doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
                  """
                      public void printName(String[] texts) {
                        for (String text : texts) {
@@ -87,8 +95,9 @@ public class ConfusingElseFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testContinueStatement() {
-    doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
                  """
                      public void printName(String[] texts) {
                        for (String text : texts) {
@@ -113,8 +122,9 @@ public class ConfusingElseFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixElseWithoutJump() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix"),
                                """
                                  class X {
                                    public void printName(String name) {

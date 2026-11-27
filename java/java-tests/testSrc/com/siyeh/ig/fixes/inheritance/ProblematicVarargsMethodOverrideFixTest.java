@@ -15,24 +15,29 @@
  */
 package com.siyeh.ig.fixes.inheritance;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.inheritance.ProblematicVarargsMethodOverrideInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ProblematicVarargsMethodOverrideFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class ProblematicVarargsMethodOverrideFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new ProblematicVarargsMethodOverrideInspection()), "inheritance/problematic_varargs_method_override",
+                        InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix"));
 
-  public void testOne() { doTest(); }
-  public void testOldStyleArray() { doTest(); }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new ProblematicVarargsMethodOverrideInspection());
-    myRelativePath = "inheritance/problematic_varargs_method_override";
-    myDefaultHint = InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix");
-  }
+  @Test
+  public void testOne() { ig.get().doTest(); }
+  @Test
+  public void testOldStyleArray() { ig.get().doTest(); }
 
 }

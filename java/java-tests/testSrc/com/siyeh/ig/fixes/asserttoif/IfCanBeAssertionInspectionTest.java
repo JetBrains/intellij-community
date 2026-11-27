@@ -1,19 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.asserttoif;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.asserttoif.IfCanBeAssertionInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IfCanBeAssertionInspectionTest extends IGQuickFixesTestCase {
+@TestApplication
+public class IfCanBeAssertionInspectionTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new IfCanBeAssertionInspection()), "asserttoif/if_to_assert",
+                        InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.assertion.quickfix"));
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new IfCanBeAssertionInspection());
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass("""
                          package java.util;
                          public class Objects {
@@ -42,18 +54,26 @@ public class IfCanBeAssertionInspectionTest extends IGQuickFixesTestCase {
                                  return obj;
                              }
                          }""");
-    myRelativePath = "asserttoif/if_to_assert";
-    myDefaultHint = InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.assertion.quickfix");
   }
 
-  public void testRandomThrowable() { doTest(); }
-  public void testParentheses() { doTest(); }
-  public void testParenthesesRequireNonNull() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
-  public void testPreconditions1() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
-  public void testPreconditions2() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
-  public void testPreconditions3() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
-  public void testObjectsRequireNonNull() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
-  public void testObjectsRequireNonNullNoMessage() { doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
-  public void testNoCondition() { assertQuickfixNotAvailable(); }
-  public void testInequalityCondition() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testRandomThrowable() { ig.get().doTest(); }
+  @Test
+  public void testParentheses() { ig.get().doTest(); }
+  @Test
+  public void testParenthesesRequireNonNull() { ig.get().doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testPreconditions1() { ig.get().doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testPreconditions2() { ig.get().doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testPreconditions3() { ig.get().doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testObjectsRequireNonNull() { ig.get().doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testObjectsRequireNonNullNoMessage() { ig.get().doTest(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
+  @Test
+  public void testNoCondition() { ig.get().assertQuickfixNotAvailable(); }
+  @Test
+  public void testInequalityCondition() { ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix")); }
 }

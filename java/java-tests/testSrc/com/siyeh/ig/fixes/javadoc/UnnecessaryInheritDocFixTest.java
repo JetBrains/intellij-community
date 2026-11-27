@@ -2,28 +2,29 @@
 package com.siyeh.ig.fixes.javadoc;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.javadoc.UnnecessaryInheritDocInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class UnnecessaryInheritDocFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_1_9);
-  }
+@TestApplication
+public class UnnecessaryInheritDocFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryInheritDocInspection()), null, null,
+                        builder -> builder.setLanguageLevel(LanguageLevel.JDK_1_9));
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryInheritDocInspection();
-  }
-
+  @Test
   public void testRemoveJavaLangImport() {
-    doTest(InspectionGadgetsBundle.message("unnecessary.inherit.doc.quickfix"),
+    ig.get().doTest(InspectionGadgetsBundle.message("unnecessary.inherit.doc.quickfix"),
            """
                class Example implements Comparable<Example> {
                  /**
@@ -47,8 +48,9 @@ public class UnnecessaryInheritDocFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixCompletedDoc() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.inherit.doc.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.inherit.doc.quickfix"),
                                """
                                    class Example implements Comparable<Example> {
                                      /**

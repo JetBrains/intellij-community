@@ -15,59 +15,69 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.style.LambdaParameterTypeCanBeSpecifiedInspection;
+import org.junit.jupiter.api.Test;
 
-public class LambdaParameterTypeCanBeSpecifiedFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new LambdaParameterTypeCanBeSpecifiedInspection());
-  }
+import java.util.List;
 
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
+
+@TestApplication
+public class LambdaParameterTypeCanBeSpecifiedFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new LambdaParameterTypeCanBeSpecifiedInspection()), "style/inferLambdaParameterType");
+
+  @Test
   public void testSimple() {
-    doTest(getHintName("(String o)"));
+    ig.get().doTest(getHintName("(String o)"));
   }
 
+  @Test
   public void testFile() {
-    doTest(getHintName("(File o)"));
+    ig.get().doTest(getHintName("(File o)"));
   }
 
+  @Test
   public void testFileOutOfFixRange() {
-    assertQuickfixNotAvailable(getHintName("(File o)"));
+    ig.get().assertQuickfixNotAvailable(getHintName("(File o)"));
   }
 
+  @Test
   public void testTwoParams() {
-    doTest(getHintName("(String o1, String o2)"));
+    ig.get().doTest(getHintName("(String o1, String o2)"));
   }
 
+  @Test
   public void testSimpleWildcard() {
-    doTest(getHintName("(Integer o)"));
+    ig.get().doTest(getHintName("(Integer o)"));
   }
 
+  @Test
   public void testAlreadyExist() {
-    assertQuickfixNotAvailable(getHintName("(String o)"));
+    ig.get().assertQuickfixNotAvailable(getHintName("(String o)"));
   }
 
+  @Test
   public void testCyclicInference() {
-    assertQuickfixNotAvailable(getHintName("(Object x)"));
+    ig.get().assertQuickfixNotAvailable(getHintName("(Object x)"));
   }
 
+  @Test
   public void testNoParams() {
-    assertQuickfixNotAvailable(getHintName("()"));
+    ig.get().assertQuickfixNotAvailable(getHintName("()"));
   }
 
+  @Test
   public void testCapturedWildcardParams() {
-    assertQuickfixNotAvailable(getHintName("(capture of ?)"));
+    ig.get().assertQuickfixNotAvailable(getHintName("(capture of ?)"));
   }
 
   private static String getHintName(String paramList) {
     return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", paramList);
   }
 
-  @Override
-  protected String getRelativePath() {
-    return "style/inferLambdaParameterType";
-  }
 }

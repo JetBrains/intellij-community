@@ -1,22 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.threading;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.threading.EmptySynchronizedStatementInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class EmptySynchronizedStatementFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new EmptySynchronizedStatementInspection();
-  }
+@TestApplication
+public class EmptySynchronizedStatementFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new EmptySynchronizedStatementInspection()));
 
+  @Test
   public void testRemoveSynchronizedStatement() {
-    doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "synchronized"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "synchronized"),
                  """
                      public void printName(String lock) {
                        synchronized/**/(lock) {}
@@ -29,8 +35,9 @@ public class EmptySynchronizedStatementFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @Test
   public void testDoNotFixUsedSynchronizedStatement() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "synchronized"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "synchronized"),
                                """
                                  class X {
                                    public void printName(String lock) {

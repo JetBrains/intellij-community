@@ -1,22 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.controlflow.UnnecessaryLabelOnBreakStatementInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Fabrice TIERCELIN
  */
-public class UnnecessaryLabelOnBreakStatementFixTest extends IGQuickFixesTestCase {
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessaryLabelOnBreakStatementInspection();
-  }
+@TestApplication
+public class UnnecessaryLabelOnBreakStatementFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new UnnecessaryLabelOnBreakStatementInspection()));
 
+  @Test
   public void testRemoveBreakLabel() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
                  """
                      public void printName(String name) {
                        label:
@@ -44,8 +50,9 @@ public class UnnecessaryLabelOnBreakStatementFixTest extends IGQuickFixesTestCas
     );
   }
 
+  @Test
   public void testRemoveBreakLabelOnWhile() {
-    doMemberTest(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
                  """
                      public void printName(int i) {
                        label:
@@ -75,8 +82,9 @@ public class UnnecessaryLabelOnBreakStatementFixTest extends IGQuickFixesTestCas
     );
   }
 
+  @Test
   public void testDoNotFixMeaningfulLabel() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
+    ig.get().assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
                                """
                                  class X {
                                    public void printName(String[] names) {

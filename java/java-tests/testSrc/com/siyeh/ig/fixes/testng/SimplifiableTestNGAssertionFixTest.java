@@ -15,29 +15,47 @@
  */
 package com.siyeh.ig.fixes.testng;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class SimplifiableTestNGAssertionFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  public void testTrueToNullable() { doTest(); }
-  public void testTrueToNullableWithMessage() { doTest(); }
-  public void testTrueToSameWithMessage() { doTest(); }
-  public void testTrueToNotSameWithMessage() { doTest(); }
-  public void testTrueToNotNull() { doTest(); }
-  public void testTrueToNotNullWithMessage() { doTest(); }
-  public void testTrueToEquals() { doTest(); }
-  public void testTrueToEqualsConst() { doTest(); }
-  public void testTrueToFail() { doTest(); }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new SimplifiableAssertionInspection());
-    myRelativePath = "testng/simplifiable_testng_assertion";
-    myDefaultHint = InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix");
+@TestApplication
+public class SimplifiableTestNGAssertionFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new SimplifiableAssertionInspection()), "testng/simplifiable_testng_assertion",
+                        InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix"));
 
+  @Test
+  public void testTrueToNullable() { ig.get().doTest(); }
+  @Test
+  public void testTrueToNullableWithMessage() { ig.get().doTest(); }
+  @Test
+  public void testTrueToSameWithMessage() { ig.get().doTest(); }
+  @Test
+  public void testTrueToNotSameWithMessage() { ig.get().doTest(); }
+  @Test
+  public void testTrueToNotNull() { ig.get().doTest(); }
+  @Test
+  public void testTrueToNotNullWithMessage() { ig.get().doTest(); }
+  @Test
+  public void testTrueToEquals() { ig.get().doTest(); }
+  @Test
+  public void testTrueToEqualsConst() { ig.get().doTest(); }
+  @Test
+  public void testTrueToFail() { ig.get().doTest(); }
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass("package org.testng;" +
                        "public class Assert {" +
                        "    public static void assertTrue(boolean condition, String message) {}" +

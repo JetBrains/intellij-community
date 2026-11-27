@@ -15,28 +15,34 @@
  */
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.BooleanConstructorInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BooleanConstructorFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class BooleanConstructorFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new BooleanConstructorInspection()));
 
-  @Override
-  protected BaseInspection getInspection() {
-    return new BooleanConstructorInspection();
-  }
-
+  @Test
   public void testSimple() {
-    doExpressionTest(InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix"),
+    ig.get().doExpressionTest(InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix"),
                      "new Boolean/**/(true)", "Boolean.TRUE");
   }
 
+  @Test
   public void testSimple2() {
-    doMemberTest(InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix"),
+    ig.get().doMemberTest(InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix"),
                  "void m(boolean b) { Boolean c = new /**/Boolean(b); }",
                  "void m(boolean b) { Boolean c = Boolean.valueOf(b); }");
   }

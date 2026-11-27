@@ -5,54 +5,54 @@ package com.intellij.java.codeInsight.javadoc
 import com.intellij.codeInspection.javaDoc.ReplaceWithJavadocInspection
 import com.intellij.java.JavaBundle
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.siyeh.ig.IGQuickFixesTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.siyeh.ig.igQuickFixesFixture
+import org.junit.jupiter.api.Test
 
 /** Variant for [ReplaceWithJavadocInspectionFixTest] for Markdown comments */
-class ReplaceWithJavadocInspectionFixMarkdownTest : IGQuickFixesTestCase() {
+@TestApplication
+class ReplaceWithJavadocInspectionFixMarkdownTest {
 
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(ReplaceWithJavadocInspection())
-    myRelativePath = "javadoc/replace_with_javadoc_markdown"
-    myDefaultHint = JavaBundle.message("inspection.replace.with.javadoc")
-  }
-  
-  override fun tuneFixture(builder: JavaModuleFixtureBuilder<*>){
-      builder.setLanguageLevel(LanguageLevel.JDK_23)
-  }
+  private val ig by igQuickFixesFixture({ listOf(ReplaceWithJavadocInspection()) }, "javadoc/replace_with_javadoc_markdown",
+                                        JavaBundle.message("inspection.replace.with.javadoc"), { it.setLanguageLevel(LanguageLevel.JDK_23) })
 
+  @Test
   fun testJavadocWithTags() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testMergeJavadocWIthEndOfLineAndBlock() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testEndOfLine() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testEmptyEndOfLine() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testEmptyBlockComment() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testCommentsBeforeAndAfterModifierListTypeAndParams() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testBlockComment() {
-    doTest()
+    ig.doTest()
   }
 
+  @Test
   fun testJavadoc() {
-    assertQuickfixNotAvailable()
+    ig.assertQuickfixNotAvailable()
   }
 }

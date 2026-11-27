@@ -15,27 +15,36 @@
  */
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.StringConcatenationInsideStringBufferAppendInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithChainedAppendFixTest extends IGQuickFixesTestCase {
+@TestApplication
+public class ReplaceWithChainedAppendFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new StringConcatenationInsideStringBufferAppendInspection()),
+                        "performance/concatenation_inside_append",
+                        InspectionGadgetsBundle.message("string.concatenation.inside.string.buffer.append.replace.quickfix"));
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new StringConcatenationInsideStringBufferAppendInspection());
-    myRelativePath = "performance/concatenation_inside_append";
-    myDefaultHint = InspectionGadgetsBundle.message("string.concatenation.inside.string.buffer.append.replace.quickfix");
-  }
+  @Test
+  public void testUnresolvedMethod() { ig.get().doTest(); }
+  @Test
+  public void testWithComments() { ig.get().doTest(); }
 
-  public void testUnresolvedMethod() { doTest(); }
-  public void testWithComments() { doTest(); }
-
+  @Test
   public void testPrintWriterAppend() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture();
     myFixture.addClass("package java.lang;" +
                        "public interface Appendable {}");
     myFixture.addClass("package java.io;" +
@@ -44,7 +53,7 @@ public class ReplaceWithChainedAppendFixTest extends IGQuickFixesTestCase {
                        "public PrintWriter append(CharSequence csq) throws IOException {" +
                        " return null;" +
                        "}}");
-    doTest();
+    ig.get().doTest();
   }
 
 }

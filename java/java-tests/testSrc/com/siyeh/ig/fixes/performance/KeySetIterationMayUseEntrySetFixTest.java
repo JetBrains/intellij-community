@@ -17,40 +17,50 @@ package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.performance.KeySetIterationMayUseEntrySetInspection;
+import org.junit.jupiter.api.Test;
 
-public class KeySetIterationMayUseEntrySetFixTest extends IGQuickFixesTestCase {
+import java.util.List;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new KeySetIterationMayUseEntrySetInspection());
-    myRelativePath = "performance/key_set_with_entry_set";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "entrySet()");
-  }
-  
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    super.tuneFixture(builder);
-    builder.addJdkVersion(LanguageLevel.JDK_1_8);
-    builder.setLanguageLevel(LanguageLevel.JDK_1_8);
-  }
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
-  public void testSimple() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
-  public void testParentheses() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
-  public void testParenthesesAroundGetKey() { doTest(); }
-  public void testCastNeeded1() { doTest(); }
-  public void testCastNeeded2() { doTest(); }
-  public void testReference() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
-  public void testValues() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
-  public void testSeveralKeys() { doTest(); }
-  public void testWrongType() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
-  public void testEntryIterationBug() { doTest(); }
-  public void testLambda() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
-  public void testLambdaNoVar() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
-  public void testWildcardType() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
-  public void testNestedLambdaNameConflict() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "entrySet()")); }
+@TestApplication
+public class KeySetIterationMayUseEntrySetFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig =
+    igQuickFixesFixture(() -> List.of(new KeySetIterationMayUseEntrySetInspection()), "performance/key_set_with_entry_set",
+                        CommonQuickFixBundle.message("fix.replace.with.x", "entrySet()"),
+                        builder -> { builder.addJdkVersion(LanguageLevel.JDK_1_8); builder.setLanguageLevel(LanguageLevel.JDK_1_8); });
+
+  @Test
+  public void testSimple() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  @Test
+  public void testParentheses() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  @Test
+  public void testParenthesesAroundGetKey() { ig.get().doTest(); }
+  @Test
+  public void testCastNeeded1() { ig.get().doTest(); }
+  @Test
+  public void testCastNeeded2() { ig.get().doTest(); }
+  @Test
+  public void testReference() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  @Test
+  public void testValues() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  @Test
+  public void testSeveralKeys() { ig.get().doTest(); }
+  @Test
+  public void testWrongType() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  @Test
+  public void testEntryIterationBug() { ig.get().doTest(); }
+  @Test
+  public void testLambda() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
+  @Test
+  public void testLambdaNoVar() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
+  @Test
+  public void testWildcardType() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  @Test
+  public void testNestedLambdaNameConflict() { ig.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "entrySet()")); }
 
 }

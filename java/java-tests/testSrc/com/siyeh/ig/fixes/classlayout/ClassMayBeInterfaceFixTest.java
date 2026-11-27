@@ -3,32 +3,43 @@ package com.siyeh.ig.fixes.classlayout;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.IGQuickFixesFixture;
 import com.siyeh.ig.classlayout.ClassMayBeInterfaceInspection;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static com.siyeh.ig.IGQuickFixesFixtureKt.igQuickFixesFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassMayBeInterfaceFixTest extends IGQuickFixesTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final ClassMayBeInterfaceInspection inspection = new ClassMayBeInterfaceInspection();
+@TestApplication
+public class ClassMayBeInterfaceFixTest {
+  private final TestFixture<IGQuickFixesFixture> ig = igQuickFixesFixture(() -> {
+    ClassMayBeInterfaceInspection inspection = new ClassMayBeInterfaceInspection();
     inspection.reportClassesWithNonAbstractMethods = true;
-    myFixture.enableInspections(inspection);
-    myRelativePath = "classlayout/class_may_be_interface";
-    myDefaultHint = InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix");
-  }
+    return List.of(inspection);
+  }, "classlayout/class_may_be_interface", InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix"));
 
-  public void testConvertMe() { doTest(); }
-  public void testObjectMethods() { doTest(); }
-  public void testDefaultConstructor() { doTest(); }
-  public void testLocalClass() { 
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, this::assertQuickfixNotAvailable); 
+  @Test
+  public void testConvertMe() { ig.get().doTest(); }
+  @Test
+  public void testObjectMethods() { ig.get().doTest(); }
+  @Test
+  public void testDefaultConstructor() { ig.get().doTest(); }
+  @Test
+  public void testLocalClass() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture(); 
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14, ig.get()::assertQuickfixNotAvailable); 
   }
-  public void testLocalClassJava15() { 
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.HIGHEST, this::doTest); 
+  @Test
+  public void testLocalClassJava15() {
+    JavaCodeInsightTestFixture myFixture = ig.get().getFixture(); 
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.HIGHEST, ig.get()::doTest); 
   }
 }
