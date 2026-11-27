@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+﻿// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -93,10 +93,16 @@ public class IdeProxyAuthenticator extends Authenticator {
 
     var hostName = requireNonNull(ProxyUtils.getHostNameReliably(host, addr, url), "");
 
+    var configurable = HttpConfigurable.getInstance();
+    if (configurable != null && !configurable.PROXY_AUTHENTICATION) {
+      return null;
+    }
+
     var credentials = proxyAuth.getKnownAuthentication(hostName, port);
     if (credentials == null || credentials.getUserName() == null || credentials.getPassword() == null) {
-      // TODO condition for password exists because HttpConfigurable does not drop PROXY_AUTHENTICATION flag when it erases the password...
-      //  Historically empty passwords were not supported anyway...
+      if (proxyAuth.isPromptedAuthenticationCancelled(hostName, port)) {
+        return null;
+      }
       credentials = proxyAuth.getPromptedAuthentication(prompt, hostName, port);
     }
     if (credentials != null && credentials.getUserName() != null) {
@@ -108,3 +114,5 @@ public class IdeProxyAuthenticator extends Authenticator {
     return null;
   }
 }
+
+
