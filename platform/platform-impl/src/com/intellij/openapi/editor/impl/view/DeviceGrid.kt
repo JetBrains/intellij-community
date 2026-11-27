@@ -17,6 +17,11 @@ class DeviceGrid(
   private val translateY: Double,
 ) {
   /**
+   * The width of one device pixel.
+   */
+  val pixelWidth: Double = 1.0 / scaleX
+
+  /**
    * The height of one device pixel.
    */
   val pixelHeight: Double = 1.0 / scaleY

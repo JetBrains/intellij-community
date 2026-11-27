@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.geom.Path2D
 import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
 import java.util.Arrays
 import kotlin.math.abs
 import kotlin.math.max
@@ -41,13 +42,14 @@ object BackgroundOutline {
    * Gives the background of [styleId] as rectangles to fill at the device pixels and corner pieces to fill with
    * antialiasing.
    *
-   * The coordinates are aligned to the pixels of [device]. Together the pieces cover the shape of [build] for the aligned
-   * rows, with the same corners. An edge too short for two corner squares of whole device pixels can change a pixel in
-   * part.
+   * The coordinates are aligned to the pixels of [device]. Inside [clip], the pieces cover the shape of [build] for the
+   * aligned rows, with the same corners. An edge too short for two corner squares of whole device pixels can change a
+   * pixel in part. A corner piece more than one device pixel outside [clip] is left out, because it paints no pixel of
+   * the clip. The rectangles still leave out its square.
    */
   @JvmStatic
-  fun split(rows: BackgroundRows, styleId: Int, radius: Double, device: DeviceGrid): BackgroundPieces {
-    return OutlineGrid(rows, styleId, device).split(radius, device)
+  fun split(rows: BackgroundRows, styleId: Int, radius: Double, device: DeviceGrid, clip: Rectangle2D): BackgroundPieces {
+    return OutlineGrid(rows, styleId, device).split(radius, device, clip)
   }
 
   /**
@@ -327,8 +329,9 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int, private val device
    * Splits the shape into rectangles at the device pixels of [device] and antialiased corner pieces.
    * A convex corner leaves a square of whole device pixels out of the rectangles, at most one half of each of its edges.
    * A concave corner adds its fillet outside the rectangles.
+   * Only the corner pieces near [clip] get a path.
    */
-  fun split(radius: Double, device: DeviceGrid): BackgroundPieces {
+  fun split(radius: Double, device: DeviceGrid, clip: Rectangle2D): BackgroundPieces {
     val pieces = ArrayList<CornerPiece>()
     for (cycle in trace()) {
       if (cycle.size < 3) {
@@ -341,7 +344,10 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int, private val device
         }
       }
     }
-    return BackgroundPieces(rectanglesWithout(pieces), cornerPaths(pieces, device))
+    val visiblePieces = pieces.filter { piece ->
+      piece.isNear(clip, device)
+    }
+    return BackgroundPieces(rectanglesWithout(pieces), cornerPaths(visiblePieces, device))
   }
 
   /**
@@ -679,6 +685,18 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int, private val device
     val squareBottom: Double get() = max(y, innerY)
     val top: Double = min(min(y, innerY), min(startY, endY))
     val bottom: Double = max(max(y, innerY), max(startY, endY))
+    private val left: Double = min(min(x, innerX), min(startX, endX))
+    private val right: Double = max(max(x, innerX), max(startX, endX))
+
+    /**
+     * Tells whether the piece comes within one device pixel of [clip].
+     */
+    fun isNear(clip: Rectangle2D, device: DeviceGrid): Boolean {
+      return right >= clip.minX - device.pixelWidth &&
+             left <= clip.maxX + device.pixelWidth &&
+             bottom >= clip.minY - device.pixelHeight &&
+             top <= clip.maxY + device.pixelHeight
+    }
 
     fun appendTo(path: Path2D.Double) {
       path.moveTo(x - back * dx(incoming), y - back * dy(incoming))

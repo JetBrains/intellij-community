@@ -333,6 +333,7 @@ internal class HighlighterVisualModel(private val yShift: Int) : BackgroundFill 
 
   /**
    * Fills the shape of [styleId] with its straight parts at the device pixels and its corners with antialiasing.
+   * A corner far from the clip is not filled.
    */
   private fun fillRounded(
     graphics: Graphics2D,
@@ -346,7 +347,8 @@ internal class HighlighterVisualModel(private val yShift: Int) : BackgroundFill 
       graphics.fill(BackgroundOutline.build(source, styleId, radius))
       return
     }
-    val pieces = BackgroundOutline.split(source, styleId, radius, device)
+    val clip = graphics.clipBounds ?: UNCLIPPED
+    val pieces = BackgroundOutline.split(source, styleId, radius, device, clip)
     val rectangles = pieces.rectangles
     val rectangle = Rectangle2D.Double()
     for (index in rectangles.indices step 4) {
@@ -420,5 +422,15 @@ internal class HighlighterVisualModel(private val yShift: Int) : BackgroundFill 
      * Two rectangles that share a strip thinner than this do not overlap.
      */
     private const val MIN_OVERLAP: Double = 1e-2
+
+    /**
+     * The clip of a graphics without a clip. It holds every corner.
+     */
+    private val UNCLIPPED: Rectangle2D = Rectangle2D.Double(
+      -Double.MAX_VALUE / 2,
+      -Double.MAX_VALUE / 2,
+      Double.MAX_VALUE,
+      Double.MAX_VALUE,
+    )
   }
 }
