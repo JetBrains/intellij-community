@@ -11,9 +11,13 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvi
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.util.execution.ParametersListUtil
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import javax.swing.Icon
 
@@ -52,7 +56,19 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
     }
   }
 
+  override fun findMatchingValue(dataContext: DataContext, pattern: String): String? {
+    super.findMatchingValue(dataContext, pattern)?.let { return it }
+    val (_, command) = splitEnvironment(pattern) ?: return null
+    return super.findMatchingValue(dataContext, command)?.let { getCommand(pattern) }
+  }
+
+  override fun run(dataContext: DataContext, value: String): Boolean {
+    val (environment, command) = splitEnvironment(value) ?: return super.run(dataContext, value)
+    return super.run(SimpleDataContext.getSimpleContext(ENVIRONMENT, environment, dataContext), command)
+  }
+
   override fun run(dataContext: DataContext, commandLine: CommandLine): Boolean {
+    val environment = dataContext.getData(ENVIRONMENT).orEmpty()
     val project = fetchProject(dataContext)
     val context = dataContext.getData(EXECUTING_CONTEXT) ?: ProjectContext(project)
     val projectsManager = MavenProjectsManager.getInstance(project)
@@ -65,7 +81,9 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
     val goals = commandLine.parameters
     val params = MavenRunnerParameters(true, workingDirPath, pomFileName, goals, enabledProfiles, disabledProfiles)
     val mavenRunner = MavenRunner.getInstance(project)
-    mavenRunner.run(params, mavenRunner.settings, null)
+    val settings = if (environment.isEmpty()) mavenRunner.settings
+    else mavenRunner.settings.clone().apply { environmentProperties = environmentProperties + environment }
+    mavenRunner.run(params, settings, null)
     return true
   }
 
@@ -100,7 +118,33 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
       .filter { it !in commandLine }
   }
 
+  @ApiStatus.Internal
+  data class CommandWithEnvironment(val environment: Map<String, String>, val command: String)
+
   companion object {
     const val HELP_COMMAND = "mvn"
+
+    private val ENVIRONMENT = DataKey.create<Map<String, String>>("MavenRunAnythingProvider.environment")
+    private val ENVIRONMENT_NAME = Regex("[A-Za-z_][A-Za-z0-9_]*")
+    private const val SHELL_EXPANSION_CHARS = $$"$`~"
+
+    @ApiStatus.Internal
+    fun splitEnvironment(line: String): CommandWithEnvironment? {
+      val trimmedLine = line.trimStart()
+      val firstEquals = trimmedLine.indexOf('=')
+      if (firstEquals < 0 || !ENVIRONMENT_NAME.matches(trimmedLine.subSequence(0, firstEquals))) return null
+
+      val tokens = ParametersListUtil.parse(line, true, true)
+      val environment = LinkedHashMap<String, String>()
+      var commandStart = 0
+      for (token in tokens) {
+        val name = token.substringBefore('=', missingDelimiterValue = "")
+        if (!ENVIRONMENT_NAME.matches(name)) break
+        if (token.any { it in SHELL_EXPANSION_CHARS }) return null
+        commandStart = line.indexOf(token, commandStart) + token.length
+        environment[name] = ParametersListUtil.parse(token, false, true).singleOrNull()?.substringAfter('=') ?: return null
+      }
+      return CommandWithEnvironment(environment, line.substring(commandStart).trim())
+    }
   }
 }
