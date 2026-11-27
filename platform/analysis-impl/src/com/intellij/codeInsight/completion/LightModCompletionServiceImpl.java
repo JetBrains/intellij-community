@@ -24,9 +24,12 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -34,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -99,7 +103,7 @@ public final class LightModCompletionServiceImpl {
       () -> false, file, caretOffset, original, element, matcher, invocationCount, type, null);
     ProcessingContext processingContext = createContext(matcher);
     Map<CompletionSorterImpl, Classifier<LookupElement>> sortMap = new LinkedHashMap<>();
-    Map<CompletionSorterImpl, Set<LookupElement>> allItems = new LinkedHashMap<>();
+    Map<CompletionSorterImpl, Set<CompletionItemLookupElement>> allItems = new LinkedHashMap<>();
     for (ModCompletionItemProvider provider : providers) {
       CompletionSorterImpl sorter = (CompletionSorterImpl)provider.getSorter(context);
       List<Predicate<ModCompletionItem>> itemFilters = ContainerUtil.mapNotNull(filters, f -> f.createFilter(provider, context));
@@ -121,11 +125,19 @@ public final class LightModCompletionServiceImpl {
         }
       });
     }
-    Map<LookupElement, LookupElementPresentation> presentations = new HashMap<>();
     for (Map.Entry<CompletionSorterImpl, Classifier<LookupElement>> entry : sortMap.entrySet()) {
-      List<LookupElement> sorted = BaseCompletionLookupArranger.sortByPresentation(
-        allItems.getOrDefault(entry.getKey(), Set.of()), matcher::isStartMatch,
-        le -> presentations.computeIfAbsent(le, LookupElementPresentation::renderElement));
+      Iterable<CompletionItemLookupElement> source = allItems.getOrDefault(entry.getKey(), Set.of());
+      List<CompletionItemLookupElement> sorted = new ArrayList<>();
+      List<CompletionItemLookupElement> middleMatches = new ArrayList<>();
+      for (CompletionItemLookupElement item : source) {
+        List<CompletionItemLookupElement> list = matcher.isStartMatch(item) ? sorted : middleMatches;
+        list.add(item);
+      }
+      Comparator<CompletionItemLookupElement> comparator = Comparator.comparing(
+        item -> item.item().presentation());
+      ContainerUtil.sort(sorted, comparator);
+      ContainerUtil.sort(middleMatches, comparator);
+      sorted.addAll(middleMatches);
       Iterable<LookupElement> items = entry.getValue().classify(sorted, processingContext);
       for (LookupElement item : items) {
         sink.accept(((CompletionItemLookupElement)item).item());

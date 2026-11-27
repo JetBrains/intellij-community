@@ -29,10 +29,12 @@ import java.util.stream.Stream;
 
 /**
  * A wrapper around {@link ModCompletionItem} that adapts it to {@link LookupElement}.
+ * The natural order is comparison by presentation. It's not completely compatible with equals/hashCode contract!
  */
 @NotNullByDefault
 @ApiStatus.Internal
-public final class CompletionItemLookupElement extends LookupElement implements ReportingClassSubstitutor {
+public final class CompletionItemLookupElement extends LookupElement implements ReportingClassSubstitutor,
+                                                                                Comparable<CompletionItemLookupElement> {
   private final ModCompletionItem myItem;
   private volatile @Nullable ModCommand myCachedCommand;
   private final AutoCompletionPolicy myPolicy;
@@ -111,6 +113,11 @@ public final class CompletionItemLookupElement extends LookupElement implements 
   @Override
   public Class<?> getSubstitutedClass() {
     return myItem.getClass();
+  }
+
+  @Override
+  public int compareTo(CompletionItemLookupElement o) {
+    return item().presentation().compareTo(o.item().presentation());
   }
 
   private static boolean isApplicableToContext(ModCommand command, ActionContext context) {

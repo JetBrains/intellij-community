@@ -12,9 +12,10 @@ import java.util.function.Supplier;
 /**
  * Visual representation of {@link ModCompletionItem}.
  * Icons are lazy, so if a client doesn't use them, the supplier will not be called.
+ * The natural order is comparison by mainText, then by detailText (icons are ignored).
  */
 @NotNullByDefault
-public final class ModCompletionItemPresentation {
+public final class ModCompletionItemPresentation implements Comparable<ModCompletionItemPresentation> {
   private static final Supplier<@Nullable Icon> NO_ICON = () -> null;
   private final MarkupText mainText;
   private final Supplier<@Nullable Icon> mainIcon;
@@ -113,5 +114,11 @@ public final class ModCompletionItemPresentation {
            "mainIcon=" + mainIcon + ", " +
            "detailText=" + detailText + ", " +
            "detailIcon=" + detailIcon + ']';
+  }
+
+  @Override
+  public int compareTo(ModCompletionItemPresentation o) {
+    int res = mainText.compareTo(o.mainText);
+    return res == 0 ? detailText.compareTo(o.detailText) : res;
   }
 }

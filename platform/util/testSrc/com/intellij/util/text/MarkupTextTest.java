@@ -37,6 +37,22 @@ public final class MarkupTextTest {
   }
   
   @Test
+  public void testCompareTo() {
+    assertEquals(0, buildLong().compareTo(buildLong()));
+    assertTrue(MarkupText.empty().compareTo(MarkupText.plainText("a")) < 0);
+    assertTrue(MarkupText.plainText("b").compareTo(MarkupText.plainText("a")) > 0);
+    // The kind is compared only when the text is equal
+    assertTrue(MarkupText.plainText("a").compareTo(MarkupText.plainText("b").highlightAll(MarkupText.Kind.GRAYED)) < 0);
+    assertTrue(MarkupText.plainText("a").compareTo(MarkupText.plainText("a").highlightAll(MarkupText.Kind.GRAYED)) < 0);
+    // The first fragment is compared completely before the second one
+    MarkupText longFirst = MarkupText.builder().append("ab").append("c", MarkupText.Kind.GRAYED).build();
+    MarkupText shortFirst = MarkupText.builder().append("a").append("z", MarkupText.Kind.GRAYED).build();
+    assertTrue(longFirst.compareTo(shortFirst) > 0);
+    // With equal common fragments, more fragments is greater
+    assertTrue(buildLong().concat("x", MarkupText.Kind.NORMAL).compareTo(buildLong()) > 0);
+  }
+
+  @Test
   public void testConcat() {
     MarkupText markupText = buildLong();
     assertEquals("Hello !!!error!!! **bold** *italic* _underlined_ ~~strikeout~~ [grayed]", markupText.concat("", MarkupText.Kind.NORMAL).toString());

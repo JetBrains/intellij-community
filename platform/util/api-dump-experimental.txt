@@ -78,7 +78,9 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildHtmlChunk(kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk
 - *sf:plus(com.intellij.openapi.util.text.HtmlChunk,com.intellij.openapi.util.text.HtmlChunk):com.intellij.openapi.util.text.HtmlChunk
 *f:com.intellij.openapi.util.text.MarkupText
+- java.lang.Comparable
 - s:builder():com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- compareTo(com.intellij.openapi.util.text.MarkupText):I
 - concat(com.intellij.openapi.util.text.MarkupText):com.intellij.openapi.util.text.MarkupText
 - concat(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
 - s:empty():com.intellij.openapi.util.text.MarkupText
@@ -93,7 +95,9 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - toHtmlChunk():com.intellij.openapi.util.text.HtmlChunk
 - toText():java.lang.String
 *f:com.intellij.openapi.util.text.MarkupText$Fragment
+- java.lang.Comparable
 - <init>(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):V
+- compareTo(com.intellij.openapi.util.text.MarkupText$Fragment):I
 - equals(java.lang.Object):Z
 - hashCode():I
 - kind():com.intellij.openapi.util.text.MarkupText$Kind

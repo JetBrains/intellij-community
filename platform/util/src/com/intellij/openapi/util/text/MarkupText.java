@@ -18,7 +18,7 @@ import java.util.Objects;
  */
 @ApiStatus.Experimental
 @NotNullByDefault
-public final class MarkupText {
+public final class MarkupText implements Comparable<MarkupText> {
   private static final MarkupText EMPTY = new MarkupText(Collections.emptyList());
   
   private final List<Fragment> fragments;
@@ -44,6 +44,20 @@ public final class MarkupText {
   @Override
   public int hashCode() {
     return fragments.hashCode();
+  }
+
+  /**
+   * Compares the fragments one by one, in order.
+   * When all the common fragments are equal, the MarkupText with more fragments is greater.
+   */
+  @Override
+  public int compareTo(MarkupText other) {
+    int size = Math.min(fragments.size(), other.fragments.size());
+    for (int i = 0; i < size; i++) {
+      int result = fragments.get(i).compareTo(other.fragments.get(i));
+      if (result != 0) return result;
+    }
+    return Integer.compare(fragments.size(), other.fragments.size());
   }
 
   /**
@@ -315,7 +329,7 @@ public final class MarkupText {
   /**
    * A single fragment of the MarkupText. Fragments are concatenated one after another.
    */
-  public static final class Fragment {
+  public static final class Fragment implements Comparable<Fragment> {
     @Nls private final String text;
     private final Kind kind;
 
@@ -352,6 +366,15 @@ public final class MarkupText {
     @Override
     public int hashCode() {
       return Objects.hash(text, kind);
+    }
+
+    /**
+     * Compares the text first, then the kind.
+     */
+    @Override
+    public int compareTo(Fragment other) {
+      int result = text.compareTo(other.text);
+      return result != 0 ? result : kind.compareTo(other.kind);
     }
 
     /**

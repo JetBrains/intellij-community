@@ -355,7 +355,9 @@ com.intellij.modcommand.ModTemplateBuilder
 - sf:EP_NAME:com.intellij.lang.LanguageExtension
 - a:createFilter(com.intellij.modcompletion.ModCompletionItemProvider,com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext):java.util.function.Predicate
 *f:com.intellij.modcompletion.ModCompletionItemPresentation
+- java.lang.Comparable
 - <init>(com.intellij.openapi.util.text.MarkupText):V
+- compareTo(com.intellij.modcompletion.ModCompletionItemPresentation):I
 - detailIcon():javax.swing.Icon
 - detailText():com.intellij.openapi.util.text.MarkupText
 - equals(java.lang.Object):Z
