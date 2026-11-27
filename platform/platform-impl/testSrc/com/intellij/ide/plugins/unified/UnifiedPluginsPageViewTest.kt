@@ -404,7 +404,7 @@ internal class UnifiedPluginsPageViewTest {
       val list = sectionList(view, title)
       val headerButton = componentsOfType(sectionHeader(view, title), JToggleButton::class.java).single()
       val footerButton = componentsOfType(list.parent, JToggleButton::class.java).single { it !== headerButton }
-      val footerRow = footerButton.parent as JComponent
+      val footerRow = footerButton.parent as SelectablePanel
       val showMoreText = IdeBundle.message("plugins.configurable.show.hidden.row", 2)
       val label = componentsOfType(footerButton, JBLabel::class.java).single()
       assertThat(footerRow.isVisible).isTrue()
@@ -415,6 +415,11 @@ internal class UnifiedPluginsPageViewTest {
       assertThat(label.icon).isSameAs(AllIcons.General.ChevronDown)
       assertThat(label.horizontalTextPosition).isEqualTo(SwingConstants.LEADING)
 
+      val hoverColor = ColorUtil.alphaBlending(ListPluginComponent.HOVER_COLOR, PluginManagerConfigurable.MAIN_BG_COLOR)
+      footerButton.focusListeners.forEach { it.focusGained(FocusEvent(footerButton, FocusEvent.FOCUS_GAINED)) }
+      assertThat(footerRow.selectionColor).isEqualTo(hoverColor)
+      assertThat(footerButton.isBorderPainted).isFalse()
+
       footerButton.doClick()
 
       assertThat(list.model.size).isEqualTo(5)
@@ -422,6 +427,10 @@ internal class UnifiedPluginsPageViewTest {
       assertThat(footerButton.accessibleContext.accessibleName).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
       assertThat(footerButton.accessibleContext.accessibleStateSet.contains(AccessibleState.EXPANDED)).isTrue()
       assertThat(label.icon).isSameAs(AllIcons.General.ChevronUp)
+      assertThat(footerRow.selectionColor).isEqualTo(hoverColor)
+
+      footerButton.focusListeners.forEach { it.focusLost(FocusEvent(footerButton, FocusEvent.FOCUS_LOST)) }
+      assertThat(footerRow.selectionColor).isNull()
 
       footerButton.doClick()
 
@@ -589,10 +598,11 @@ internal class UnifiedPluginsPageViewTest {
         link.dispatchEvent(MouseEvent(link, MouseEvent.MOUSE_RELEASED, 0, 0, x, y, 1, false, MouseEvent.BUTTON1))
         assertThat(openedUrls).containsExactly(DEFAULT_PLUGINS_HOST)
 
+        link.model.isRollover = false
         link.focusListeners.forEach { it.focusGained(FocusEvent(link, FocusEvent.FOCUS_GAINED)) }
-        val focusY = footer.selectionInsets.top + JBUI.scale(1)
-        assertThat(footer.selectionColor).isNull()
-        assertThat(paintedPixel(footer, x, focusY)).isEqualTo(JBUI.CurrentTheme.ActionButton.focusedBorder().rgb)
+        assertThat(footer.selectionColor).isEqualTo(hoverColor)
+        assertThat(paintedPixel(footer, x, y)).isEqualTo(hoverColor.rgb)
+        assertThat(link.isBorderPainted).isFalse()
 
         val enterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
         val enterActionKey = link.getInputMap(JComponent.WHEN_FOCUSED).get(enterKey)

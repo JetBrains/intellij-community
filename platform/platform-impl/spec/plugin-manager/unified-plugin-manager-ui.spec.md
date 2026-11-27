@@ -826,7 +826,7 @@ Untested: No focused test verifies Shift-selection across sections.
 - Enter and Space on the focused link must open the Marketplace home page.
 - The link must use muted text.
 - The link must match the expansion row's height and spacing above it.
-- The link and the expansion row must use a rounded highlight on hover and a rounded outline on keyboard focus.
+- The link and the expansion row must use the same rounded highlight for hover and keyboard focus.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageRealRowsTest.kt (
     `Marketplace link follows Suggested rows in arrow order and stays outside Tab order`;
     `Marketplace link requires all Suggested results to be visible and loaded`

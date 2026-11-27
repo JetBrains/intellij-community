@@ -1732,16 +1732,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         if (isFooter) 0 else SECTION_HEADER_BOTTOM_INSET,
         SECTION_HEADER_RIGHT_INSET,
       )
-      val focusBorder = if (isFooter) createUnifiedPluginFocusBorder(button, contentBorder, panel.selectionInsets, panel.selectionArc)
-                        else contentBorder
       var focusVisible = false
 
       fun updatePresentation() {
         val showFocus = button.isEnabled && focusVisible
-        val showOutline = isFooter && showFocus
-        button.isBorderPainted = showOutline
-        button.border = if (showOutline) focusBorder else contentBorder
-        val showHighlight = button.isEnabled && !showOutline && (showFocus || button.model.isRollover)
+        val showHighlight = button.isEnabled && (showFocus || button.model.isRollover)
         panel.selectionColor = if (showHighlight) sectionHighlightColor() else null
         val cursor = if (button.isEnabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
         panel.cursor = cursor
@@ -1754,6 +1749,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         isOpaque = false
         isContentAreaFilled = false
         isFocusPainted = false
+        isBorderPainted = false
+        border = contentBorder
         isRolloverEnabled = true
         getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTIVATE_SECTION_BUTTON)
         actionMap.put(ACTIVATE_SECTION_BUTTON, object : AbstractAction() {
