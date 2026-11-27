@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -31,13 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @see DumbAware
  */
 public interface FileEditorProvider extends PossiblyDumbAware {
-  /**
-   * @deprecated use {@link com.intellij.openapi.fileEditor.ex.FileEditorProviderManager#getProvider(String)} to locate a specific instance
-   * or {@link com.intellij.openapi.fileEditor.ex.FileEditorProviderManager#getProviderList(Project, VirtualFile)} to get all providers for
-   * a given file
-   */
-  @Deprecated(forRemoval = true)
-  ExtensionPointName<FileEditorProviderBean> EP_FILE_EDITOR_PROVIDER = FileEditorProviderBean.EP_NAME;
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
   FileEditorProvider[] EMPTY_ARRAY = {};

@@ -16,10 +16,11 @@ import org.jetbrains.annotations.TestOnly
  * The file editor provider manager reads the attributes without loading [implementation],
  * so a provider that does not match the file is never created.
  */
-@ApiStatus.Internal
 class FileEditorProviderBean : BaseKeyedLazyInstance<FileEditorProvider> {
+  @ApiStatus.Internal
   companion object {
     @JvmField
+    @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<FileEditorProviderBean> = ExtensionPointName("com.intellij.fileEditorProvider")
   }
 
@@ -48,9 +49,11 @@ class FileEditorProviderBean : BaseKeyedLazyInstance<FileEditorProvider> {
   var allowedInUntrustedFiles: Boolean = false
 
   @Suppress("unused") // the platform creates the bean by reflection
+  @ApiStatus.Internal
   constructor()
 
   /** Registers [provider] without a declaration. The attributes keep their defaults. */
+  @ApiStatus.Internal
   @TestOnly
   constructor(provider: FileEditorProvider) : super(provider) {
     implementation = provider.javaClass.name
