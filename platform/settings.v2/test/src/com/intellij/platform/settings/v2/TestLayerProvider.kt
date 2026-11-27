@@ -4,9 +4,11 @@ package com.intellij.platform.settings.v2
 import com.intellij.platform.settings.v2.SettingsValue.MapValue
 import com.intellij.platform.settings.v2.impl.with
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Holds the layers of a test in memory. By default it offers every locality at every context, so a `key[ctx] = v`
@@ -83,6 +85,31 @@ internal class TestLayerProvider(
 
     /** Lets the held save return [result] when completed. */
     val release: CompletableDeferred<Unit> = CompletableDeferred()
+  }
+
+  /**
+   * Writes [pending] to [key] at [context] while a debounced save of an earlier value is held, then runs [save].
+   *
+   * Only a flush in [save] brings [pending] to this provider before [save] returns. The debounced save of [pending]
+   * waits for the held save. A flush calls [storageContext] when it collects its storage units, and that call
+   * releases the held save. With no flush, the held save stays held until [save] returns.
+   *
+   * @return the value of [key] in the saved `LOCAL` layer of [context] right after [save]
+   */
+  suspend fun valueSavedBy(context: SettingsContext, key: SettingsKey<String>, pending: String, save: suspend () -> Unit): SettingsValue? {
+    val heldSave = holdNextSave(SaveResult.SAVED)
+    try {
+      key[context] = "before $pending"
+      withTimeout(10.seconds) { heldSave.started.await() }
+      key[context] = pending
+      onStorageContext = { heldSave.release.complete(Unit) }
+      save()
+      return saved(context, LayerLocality.LOCAL)?.get(key)
+    }
+    finally {
+      onStorageContext = null
+      heldSave.release.complete(Unit)
+    }
   }
 
   /**

@@ -16,21 +16,16 @@ import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.unregisterService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Checks the shutdown save of `SettingsAppLifecycleListener`. The test publishes
  * [AppLifecycleListener.beforeAppWillBeClosed] on the EDT under the write-intent lock, as the platform does.
  *
  * The debounced save must not reach the provider before the check, or a broken shutdown save also passes. So the
- * test holds a first debounced save in [TestLayerProvider.writeData], and then writes the pending value. The save of
- * the pending value waits for the held save. The flush of the shutdown save releases the held save when it collects
- * its storage units through [TestLayerProvider.onStorageContext]. With no flush, the held save stays held, and the
- * provider never receives the pending value.
+ * test writes the pending value through [TestLayerProvider.valueSavedBy], which holds the debounced save until a flush.
  *
  * The production [ShutdownSaver] comes from `intellij.platform.settings.v2.shared.essential`, which the test module
  * has on its classpath.
@@ -80,7 +75,7 @@ class SettingsShutdownSaveTest {
   }
 
   /**
-   * Writes [pending] while a debounced save of [written] is held, then closes the application.
+   * Writes [pending] to [written] while a debounced save is held, then closes the application.
    *
    * @param pending the value that only the shutdown save can bring to the provider before the check
    * @return the value of [written] that the provider holds right after the close
@@ -88,20 +83,10 @@ class SettingsShutdownSaveTest {
   private suspend fun valueSavedByClose(pending: String): SettingsValue? {
     ExtensionTestUtil.maskExtensions(LayerProvider.EP_NAME, listOf(provider), disposable)
     app.awaitReady()
-    val heldSave = provider.holdNextSave(SaveResult.SAVED)
-    try {
-      written[app] = "before $pending"
-      withTimeout(10.seconds) { heldSave.started.await() }
-      written[app] = pending
-      provider.onStorageContext = { heldSave.release.complete(Unit) }
+    return provider.valueSavedBy(app, written, pending) {
       withContext(Dispatchers.EDT) {
         application.messageBus.syncPublisher(AppLifecycleListener.TOPIC).beforeAppWillBeClosed(false)
       }
-      return provider.saved(app, LayerLocality.LOCAL)?.get(written)
-    }
-    finally {
-      provider.onStorageContext = null
-      heldSave.release.complete(Unit)
     }
   }
 }
