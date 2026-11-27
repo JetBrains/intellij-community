@@ -20,5 +20,6 @@ internal class LspCommandProvider : CommandProvider {
     LspHoverCommand.PREFIX to CreateCommand(::LspHoverCommand),
     LspContextActionsCommand.PREFIX to CreateCommand(::LspContextActionsCommand),
     LspSearchEverywhereCommand.PREFIX to CreateCommand(::LspSearchEverywhereCommand),
+    LspParameterInfoCommand.PREFIX to CreateCommand(::LspParameterInfoCommand),
   )
 }
