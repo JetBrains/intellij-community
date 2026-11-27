@@ -59,15 +59,13 @@ internal data class PyProjectImpl private constructor(
      */
     fun baseDirOfRoots(moduleEntity: ModuleEntity): Path? {
       val roots = moduleEntity.contentRoots
-      val root = when (val n = roots.size) {
+      val root = when (roots.size) {
         0 -> return null
         1 -> roots.first()
         else -> {
           // Several content roots are legitimate: a build system may root a module per source file rather than per
           // directory, which is what Bazel does for a target declaring no `imports` (see BazelPythonWorkspaceImporter).
-          // Hence a warning and not an error report -- every root belongs to the same module, so the deterministic
-          // first one is a safe base dir, and reporting an error here would fail the sync of any such project.
-          log.warn("Python module has more than one content root, falling back to the first one: module=${moduleEntity.name}, roots=$n")
+          // Every root belongs to the same module, so the deterministic first one is a safe base dir.
           // By the whole URL and not by the file name: two roots can share a name (`/a/src` and `/b/src`), and the
           // whole URL is unique, so the pick stays the same between runs.
           roots.minBy { it.url.url }
