@@ -8,10 +8,8 @@ import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFil
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-open class VirtualFileUrlBridge(
+internal class VirtualFileUrlBridge(
   name: String,
   managerImpl: VirtualFileUrlManagerImpl,
   parent: VirtualFileUrl?,
