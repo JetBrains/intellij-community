@@ -14,6 +14,7 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.features.intention.isEnabledAndPreferred
 import com.intellij.platform.lsp.impl.features.intention.toCodeAction
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.PsiManager
@@ -24,7 +25,7 @@ import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.CodeActionTriggerKind
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 
-private data class ClientCodeAction(val lspClient: LspClientImpl, val intentionAction: LspIntentionAction)
+private data class ClientCodeAction(val lspClient: LspClientImpl, val intentionAction: LspIntentionAction, val isPreferred: Boolean)
 
 /**
  * Requests the code actions of the given [kinds] from every client of [lspClients] for [offset] and [length],
@@ -67,7 +68,9 @@ internal fun requestAndApplyCodeActions(
         val (disabled, enabled) = received.partition { it.disabled != null }
         if (firstDisabledReason == null) firstDisabledReason = disabled.firstOrNull()?.disabled?.reason?.takeIf { it.isNotBlank() }
         enabled.mapNotNull { codeAction ->
-          codeActionsSupport.createIntentionAction(lspClient as LspClient, codeAction)?.let { ClientCodeAction(lspClient, it) }
+          codeActionsSupport.createIntentionAction(lspClient as LspClient, codeAction)?.let {
+            ClientCodeAction(lspClient, it, codeAction.isEnabledAndPreferred)
+          }
         }
       }.takeIf { it.isNotEmpty() }
     } ?: emptyList()
@@ -77,7 +80,7 @@ internal fun requestAndApplyCodeActions(
     codeActions.isEmpty() -> showErrorHint(editor, firstDisabledReason ?: firstError?.responseError?.message ?: noActionsMessage)
     codeActions.size == 1 -> applyCodeAction(codeActions.single(), editor, virtualFile, progressTitle, noActionsMessage)
     else -> JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(codeActions)
+      .createPopupChooserBuilder(codeActions.sortedByDescending { it.isPreferred })
       .setTitle(popupTitle)
       .setRenderer(textListCellRenderer { it?.intentionAction?.text })
       .setItemChosenCallback { applyCodeAction(it, editor, virtualFile, progressTitle, noActionsMessage) }

@@ -27,6 +27,8 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.ui.ChooserInterceptor
+import com.intellij.ui.UiInterceptors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.CodeAction
@@ -113,6 +115,32 @@ internal class LspInlineTest {
 
       serverSession.awaitExpected()
       codeInsightFixture.checkResult("inlined bar")
+    }
+
+    @Test
+    fun `inline offers the preferred action first in the chooser`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("preferredInline.txt", "foo bar").virtualFile
+      awaitFileOpenedByLspServer(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.expectRequest(serverSession.CODE_ACTION, {
+        it.textDocument.uri == fileUri && it.context.only == listOf(CodeActionKind.RefactorInline)
+      }) {
+        listOf("ordinary", "preferred").map { replacement ->
+          Either.forRight(CodeAction(replacement).apply {
+            kind = CodeActionKind.RefactorInline
+            isPreferred = replacement == "preferred"
+            edit = WorkspaceEdit(mapOf(fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 3)), replacement))))
+          })
+        }
+      }
+
+      withContext(Dispatchers.EDT) {
+        UiInterceptors.register(ChooserInterceptor(null, ".*") { choices -> choices.first() })
+        codeInsightFixture.testAction(InlineAction())
+      }
+      serverSession.awaitExpected()
+      codeInsightFixture.checkResult("preferred bar")
     }
 
     // a server may answer with a bare Command instead of a CodeAction; the kind filter must keep it

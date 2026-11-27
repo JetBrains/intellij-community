@@ -240,6 +240,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
             )
         )
       }
+      isPreferredSupport = true
       disabledSupport = true
       dataSupport = true
       resolveSupport = CodeActionResolveSupportCapabilities().apply {

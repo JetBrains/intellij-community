@@ -21,6 +21,6 @@ internal abstract class LspIntentionActionWrapperBase(protected val index: Int) 
   // Some intention actions must be called without a write action (e.g., they only apply Command)
   override fun startInWriteAction(): Boolean = false
 
-  // Implementing `Comparable` interface is needed to preserve the order as returned by the LSP server
+  // Keep the order in which the client assigned the actions to the wrappers.
   override fun compareTo(other: IntentionAction): Int = (other as? LspIntentionActionWrapperBase)?.let { index - other.index } ?: 0
 }

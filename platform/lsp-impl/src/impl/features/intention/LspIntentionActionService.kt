@@ -82,7 +82,8 @@ internal class LspIntentionActionService(private val project: Project) {
     offset: Int,
     length: Int,
   ): List<LspIntentionAction> {
-    val result = mutableListOf<LspIntentionAction>()
+    val preferred = mutableListOf<LspIntentionAction>()
+    val other = mutableListOf<LspIntentionAction>()
 
     for (lspClient in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
       ProgressManager.checkCanceled()
@@ -113,14 +114,18 @@ internal class LspIntentionActionService(private val project: Project) {
         // filter out quick fixes when asking for intentions, otherwise quick fixes are added twice
         val kind = codeAction.kind
         if (kind == null || !kind.startsWith(CodeActionKind.QuickFix)) {
-          codeActionsSupport.createIntentionAction(lspClient as LspClient, codeAction)?.let { result.add(it) }
+          val intention = codeActionsSupport.createIntentionAction(lspClient as LspClient, codeAction) ?: return@forEach
+          if (codeAction.isEnabledAndPreferred) preferred.add(intention) else other.add(intention)
         }
       }
     }
-    return result
+    return preferred + other
   }
 }
 
+
+internal val CodeAction.isEnabledAndPreferred: Boolean
+  get() = isPreferred == true && disabled == null
 
 internal fun Either<Command, CodeAction>.toCodeAction(): CodeAction =
   if (isLeft) {

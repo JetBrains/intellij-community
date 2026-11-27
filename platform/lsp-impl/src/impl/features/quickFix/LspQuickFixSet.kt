@@ -13,6 +13,7 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.features.intention.isEnabledAndPreferred
 import com.intellij.platform.lsp.impl.features.intention.toCodeAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -106,7 +107,7 @@ internal class LspQuickFixSet(
   private fun codeActionsReceived(codeActions: List<CodeAction>) {
     val codeActionsSupport = lspClient.descriptor.lspCustomization.codeActionsCustomizer as? LspCodeActionsSupport ?: return
     var i = 0
-    for (codeAction in codeActions) {
+    for (codeAction in codeActions.sortedByDescending { it.isEnabledAndPreferred }) {
       if (i == quickFixes.size) {
         thisLogger().info("Received ${codeActions.size} quick fixes from server, only ${quickFixes.size} will be handled")
         break
