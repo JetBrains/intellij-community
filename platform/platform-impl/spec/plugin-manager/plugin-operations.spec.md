@@ -365,6 +365,15 @@ Untested: No focused test covers every management edit and refresh path.
     `Update All excludes prepared and applied individual updates`
   )
 
+- Update All must exclude a plugin that the user removed or marked for removal.
+- Update All must hide when removal leaves no eligible updates.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Update All excludes uninstalled plugins with cached updates`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginUpdateAllControllerTest.kt (
+    `button hides when the last update leaves the enabled snapshot`
+  )
+
 - The captured total must stay fixed while that request runs.
 - A successful prepared update must advance the prepared count.
 - A failed or cancelled update must not advance the prepared count.

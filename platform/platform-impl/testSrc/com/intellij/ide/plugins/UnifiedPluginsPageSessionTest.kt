@@ -911,6 +911,31 @@ internal class UnifiedPluginsPageSessionTest {
   }
 
   @Test
+  fun `Update All excludes uninstalled plugins with cached updates`(): Unit = uiTest {
+    val pendingRemoval = inventoryItem("pending.removal", "Pending Removal").apply { model.isDeleted = true }
+    val removed = inventoryItem("removed.plugin", "Removed Plugin")
+    val installed = inventoryItem("installed.plugin", "Installed Plugin")
+    val plugins = listOf(pendingRemoval, removed, installed)
+    val updates = plugins.map { PluginDto(it.model.name, it.model.pluginId) }
+    val provider = FixedLocalDataProvider(
+      UnifiedPluginInventory(plugins, emptyList()),
+      installationStates = mapOf(removed.model.pluginId to PluginInstallationState(false, PluginStatus.UNINSTALLED_WITHOUT_RESTART)),
+    )
+    val executor = RecordingUpdateAllExecutor()
+    val session = createSession(null, provider, pluginUpdates = flowOf(PluginUpdatesEvent(updates, emptyList(), emptyList())),
+                                updateAllExecutor = executor)
+    try {
+      val button = updateAllButton(session.getCenterComponent(Configurable.TopComponentController.EMPTY))
+      waitForButton(button, "Update All", enabled = true)
+      button.doClick()
+      assertThat(executor.requests.single().pluginIds).containsExactly(installed.model.pluginId)
+    }
+    finally {
+      Disposer.dispose(session)
+    }
+  }
+
+  @Test
   fun `Update All follows session enablement with cached disabled updates`(): Unit =
     uiTest {
       val update = PluginDto("Plugin Update", PluginId.getId("disabled.update.plugin"))

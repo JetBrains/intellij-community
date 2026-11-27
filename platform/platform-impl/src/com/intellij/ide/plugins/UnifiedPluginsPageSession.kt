@@ -387,10 +387,12 @@ internal class UnifiedPluginsPageSession @RequiresEdt constructor(
           .flatMap { it.items.asSequence() }
           .filter { item ->
             val input = item.rowInput ?: return@filter false
-            val status = input.installationState.status
-            val applied = input.installedPlugin?.source != PluginSource.BOTH &&
-                          (status == PluginStatus.UPDATED || status == PluginStatus.UPDATED_WITH_RESTART)
-            input.enabled && item.pluginId !in localState.manualUpdates && !applied
+            val installedPlugin = input.installedPlugin
+            val unavailable = installedPlugin?.source != PluginSource.BOTH && when (input.installationState.status) {
+              PluginStatus.UPDATED, PluginStatus.UPDATED_WITH_RESTART, PluginStatus.UNINSTALLED_WITHOUT_RESTART -> true
+              PluginStatus.INSTALLED_AND_REQUIRED_RESTART, PluginStatus.INSTALLED_WITHOUT_RESTART, null -> false
+            }
+            input.enabled && item.pluginId !in localState.manualUpdates && installedPlugin?.isDeleted != true && !unavailable
           }
           .map { it.pluginId }
           .toHashSet()
