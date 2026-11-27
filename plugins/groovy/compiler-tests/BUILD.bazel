@@ -11,7 +11,7 @@ jps_test(
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],
-    tags = ["community-compiler-test"],
+    tags = ["groovy-compiler-test"],
     runtime_deps = [":compiler-tests_test_lib"],
 )
 ### skip generation section `test intellij.groovy.compiler.tests`

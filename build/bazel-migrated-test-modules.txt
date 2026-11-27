@@ -15,6 +15,7 @@ intellij.gradle.tests.integration.eel
 intellij.gradle.toolingExtension.tests
 intellij.gradle.toolingExtension.tests.integration
 intellij.gradle.toolingProxy.tests
+intellij.groovy.compiler.tests
 intellij.html.tools.tests
 intellij.java.compiler.tests
 intellij.javaee.gradle.tests
