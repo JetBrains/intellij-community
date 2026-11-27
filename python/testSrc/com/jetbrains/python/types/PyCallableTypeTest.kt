@@ -3902,7 +3902,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       x: Derived = f
       y: Derived = g
-      #            └ WARNING Expected type 'Derived', got 'def g(arg: str) -> int' instead
+      #            └ WARNING Expected type 'Derived', got '(arg: str) -> int' instead
       """.trimIndent())
 
     @Test
@@ -3928,9 +3928,9 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f(arg: int) -> int: ...
 
       x: Derived = f
-      #            └ WARNING Expected type 'Derived', got 'def f(arg: int) -> int' instead
+      #            └ WARNING Expected type 'Derived', got '(arg: int) -> int' instead
       y: Callback = f
-      #             └ WARNING Expected type 'Callback', got 'def f(arg: int) -> int' instead
+      #             └ WARNING Expected type 'Callback', got '(arg: int) -> int' instead
       """.trimIndent())
   }
 

@@ -415,7 +415,7 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
   fun `module-level variable links resolve`() {
     myFixture.configureByText("links.py", "from typing import TypeVar\nT = TypeVar(\"T\")\n")
     val typeVariable = runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("links.T", myFixture.project) }
-    assertEquals("T", assertInstanceOf<PyTargetExpression>(typeVariable).name)
+    assertEquals("T", runReadActionBlocking { assertInstanceOf<PyTargetExpression>(typeVariable).name })
     assertNotNull(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("typing.Any", myFixture.project) })
   }
 

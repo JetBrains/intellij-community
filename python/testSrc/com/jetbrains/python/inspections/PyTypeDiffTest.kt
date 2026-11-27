@@ -465,9 +465,9 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       add_node(1, respond)
     """)
     assertEquals(listOf(
-      "(      1,                      def respond(state: State) -> State                                    )",
-      "(node: (State) -> Any,                                         , defer: bool,     name: str | None   )",
-      "(node: str,            action: (State) -> Any,                   defer: bool, **kwargs: Unpack[Extra])",
+      "(      1,                      (state: State) -> State                                    )",
+      "(node: (State) -> Any,                              , defer: bool,     name: str | None   )",
+      "(node: str,            action: (State) -> Any,        defer: bool, **kwargs: Unpack[Extra])",
     ), codeLineTexts(tooltip), tooltip)
   }
 
@@ -610,11 +610,11 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       g(r)
     """)
     assertEquals(listOf(
-      "(    def r(x: str) -> int)",
-      "(cb: (str) -> str        )",
-      "(cb: (str, int) -> str   )",
+      "(    (x: str) -> int  )",
+      "(cb: (str) -> str     )",
+      "(cb: (str, int) -> str)",
     ), codeLineTexts(tooltip), tooltip)
-    assertProvided(tooltip, "def r(x: str) -&gt; int")
+    assertProvided(tooltip, "(x: str) -&gt; int")
   }
 
   // A callback protocol, a protocol whose only member is `__call__`, is shown as its signature, not as its name.
