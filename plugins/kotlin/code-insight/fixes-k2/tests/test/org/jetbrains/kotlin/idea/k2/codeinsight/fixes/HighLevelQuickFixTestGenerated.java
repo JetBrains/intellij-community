@@ -13111,6 +13111,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisImplicitLambdaLabel.kt");
         }
 
+        @TestMetadata("labeledThisQuotedFunctionName.kt")
+        public void testLabeledThisQuotedFunctionName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisQuotedFunctionName.kt");
+        }
+
         @TestMetadata("labeledThisUnavailableAnonymousObject.kt")
         public void testLabeledThisUnavailableAnonymousObject() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/labeledThisUnavailableAnonymousObject.kt");
@@ -13139,6 +13144,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("memberExtensionLabeledThis.kt")
         public void testMemberExtensionLabeledThis() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionLabeledThis.kt");
+        }
+
+        @TestMetadata("memberExtensionQuotedContextParameterName.kt")
+        public void testMemberExtensionQuotedContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionQuotedContextParameterName.kt");
         }
 
         @TestMetadata("operatorAugmentedAssignmentAddThis.kt")
@@ -13214,6 +13224,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("propertyWithoutOuterCall.kt")
         public void testPropertyWithoutOuterCall() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/propertyWithoutOuterCall.kt");
+        }
+
+        @TestMetadata("quotedContextParameterName.kt")
+        public void testQuotedContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/quotedContextParameterName.kt");
+        }
+
+        @TestMetadata("quotedKeywordContextParameterName.kt")
+        public void testQuotedKeywordContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/quotedKeywordContextParameterName.kt");
         }
 
         @TestMetadata("simpleAddContextOf.kt")

@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.idea.util.withShortNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -76,7 +78,7 @@ internal object ReceiverShadowedByContextParameterFactory {
                         val renderedType = KaRenderer.withShortNames.renderToString(approximatedType)
                         "contextOf<$renderedType>()"
                     } else {
-                        symbol.name.identifier
+                        symbol.name.render()
                     }
                     add(AddExplicitReceiverFix(expression, surroundWithWith, nameOrContextOfCall))
                 }
@@ -131,7 +133,7 @@ private fun thisTextForShadowedReceiver(
 
     if (shadowed == implicitReceivers.first()) return "this"
     val label = shadowed.thisLabelName(position) ?: return null   // can't name it -> don't offer a broken fix
-    return "this@$label"
+    return "this@${Name.identifier(label).render()}"
 }
 
 private fun KaImplicitReceiver.thisLabelName(position: KtElement): String? {
