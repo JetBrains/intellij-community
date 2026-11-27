@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -28,6 +30,9 @@ class AdjustFontSizeAction : DumbAwareAction() {
     val preview = MarkdownActionUtil.findPreviewBrowserActions(event) ?: return
     val hintComponent = HintComponent(preview)
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent).setRequestFocus(true).createPopup()
+    popup.addListener(object : JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) = hintComponent.saveFontSize()
+    })
     val point = event.dataContext.getData(PREVIEW_POPUP_POINT)
     if (point != null) {
       popup.show(point)
@@ -40,6 +45,15 @@ class AdjustFontSizeAction : DumbAwareAction() {
   private class HintComponent(preview: MarkdownPreviewBrowserActions) : JPanel(FlowLayout(FlowLayout.LEFT, 10, 5)) {
     private val settings
       get() = MarkdownSettings.getInstance()
+
+    private var pendingFontSize: Int? = null
+
+    fun saveFontSize() {
+      val size = pendingFontSize ?: return
+      if (size != settings.fontSize) {
+        settings.update { it.fontSize = size }
+      }
+    }
 
     init {
       val fontSizeLabel = JBLabel(settings.fontSize.toString(), SwingConstants.CENTER).apply {
@@ -63,9 +77,9 @@ class AdjustFontSizeAction : DumbAwareAction() {
       }
 
       fun updateFontSize(transform: (Int) -> Int?) {
-        val currentSize = preview.getCurrentFontSize()
+        val currentSize = pendingFontSize ?: preview.getCurrentFontSize()
         val newSize = transform(currentSize) ?: currentSize
-        settings.fontSize = newSize
+        pendingFontSize = newSize
         preview.changeFontSize(newSize)
 
         fontSizeLabel.text = newSize.toString()
