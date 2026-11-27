@@ -340,7 +340,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myCaretModel = view.getCaretModel();
       mySoftWrapModel = view.getSoftWrapModel();
       myFocusModeModel = view.getFocusModel();
-      myInsets = myView.getInsets();
+      myInsets = myViewSnapshot.insets().toInsets();
       myCorrector = XCorrector.create(myView, myViewSnapshot, myInsets, mySettings, myRegistry);
       myGraphics = g;
       myClip = myGraphics.getClipBounds();

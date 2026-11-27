@@ -14,8 +14,14 @@ internal data class EditorViewSnapshot(
   private val prefix: EditorPrefix?,
   private val paintCallback: Runnable?,
   private val gridSpec: CharacterGridSpec?,
+  private val insets: EditorInsets,
 ) {
-  constructor(fontRenderContext: FontRenderContext, tabSize: Int, rtlEnabled: Boolean) : this(
+  constructor(
+    fontRenderContext: FontRenderContext,
+    tabSize: Int,
+    rtlEnabled: Boolean,
+    insets: EditorInsets,
+  ) : this(
     fontRenderContext = fontRenderContext,
     metrics = EditorViewMetrics.UNINITIALIZED,
     fontResolver = EditorFontResolver.UNINITIALIZED,
@@ -25,6 +31,7 @@ internal data class EditorViewSnapshot(
     prefix = null,
     paintCallback = null,
     gridSpec = null,
+    insets = insets,
   )
 
   fun fontRenderContext(): FontRenderContext = fontRenderContext
@@ -46,6 +53,7 @@ internal data class EditorViewSnapshot(
   fun prefix(): EditorPrefix? = prefix
   fun metrics(): EditorViewMetrics = metrics
   fun fontResolver(): EditorFontResolver = fontResolver
+  fun insets(): EditorInsets = insets
 
   /**
    * Returns the setup of the character grid mode, or null when the editor lays out its text without a grid.
@@ -159,6 +167,14 @@ internal data class EditorViewSnapshot(
       this
     } else {
       copy(gridSpec = gridSpec)
+    }
+  }
+
+  fun withInsets(insets: EditorInsets): EditorViewSnapshot {
+    return if (insets == this.insets) {
+      this
+    } else {
+      copy(insets = insets)
     }
   }
 }

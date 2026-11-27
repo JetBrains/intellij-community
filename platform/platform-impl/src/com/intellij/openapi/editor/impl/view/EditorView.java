@@ -68,6 +68,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeListener;
 import java.text.Bidi;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,8 +90,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private static final LineLayout NOT_INITIALIZED_PREFIX = new SingleChunkLayout(null);
   private static final AtomicReferenceFieldUpdater<EditorView, EditorViewSnapshot> SNAPSHOT_UPDATER
     = AtomicReferenceFieldUpdater.newUpdater(EditorView.class, EditorViewSnapshot.class, "mySnapshot");
+  private static final String BORDER_PROPERTY = "border";
+  private static final String UI_PROPERTY = "UI";
 
   private volatile EditorViewSnapshot mySnapshot;
+  private final PropertyChangeListener myInsetsListener = e -> updateInsets();
   private final AtomicInteger myFoldRegionLayoutGeneration = new AtomicInteger();
   private final EditorImpl myEditor;
   private final EditorModel myEditorModel;
@@ -112,7 +116,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     mySnapshot = new EditorViewSnapshot(
       normalizeFontRenderContext(readFontRenderContext(), true),
       readTabSize(settings),
-      settings.isRtlEnabled()
+      settings.isRtlEnabled(),
+      readInsets()
     );
     myEditorModel = editorModel;
     myDocument = myEditorModel.getDocument();
@@ -124,6 +129,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myTabFragment = new TabFragment(this);
 
     myEditor.getContentComponent().addHierarchyListener(this);
+    myEditor.getContentComponent().addPropertyChangeListener(BORDER_PROPERTY, myInsetsListener);
+    myEditor.getContentComponent().addPropertyChangeListener(UI_PROPERTY, myInsetsListener);
     getScrollingModel().addVisibleAreaListener(this);
 
     Disposer.register(this, myLogicalPositionCache);
@@ -497,6 +504,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @Override
   public void dispose() {
     getScrollingModel().removeVisibleAreaListener(this);
+    myEditor.getContentComponent().removePropertyChangeListener(UI_PROPERTY, myInsetsListener);
+    myEditor.getContentComponent().removePropertyChangeListener(BORDER_PROPERTY, myInsetsListener);
     myEditor.getContentComponent().removeHierarchyListener(this);
   }
 
@@ -504,6 +513,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public void hierarchyChanged(@NotNull HierarchyEvent e) {
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getComponent().isShowing()) {
       checkFontRenderContext(null);
+      updateInsets();
     }
   }
 
@@ -532,6 +542,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
            ", char height: " + charHeight +
            ", max char width: " + charWidth +
            ", tab size: " + snapshot.tabSize() +
+           ", insets: " + snapshot.insets() +
            " ,size manager: " + mySizeManager.dumpState() +
            " ,logical position cache: " + myLogicalPositionCache.dumpState() +
            "]";
@@ -766,8 +777,21 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return result;
   }
 
+  /**
+   * Returns the content component insets from the snapshot. The caller owns the result.
+   */
   Insets getInsets() {
-    return myEditor.getContentComponent().getInsets();
+    return mySnapshot.insets().toInsets();
+  }
+
+  private @NotNull EditorInsets readInsets() {
+    Insets insets = myEditor.getContentComponent().getInsets();
+    return new EditorInsets(insets.top, insets.left, insets.bottom, insets.right);
+  }
+
+  private void updateInsets() {
+    EditorInsets insets = readInsets();
+    SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> snapshot.withInsets(insets));
   }
 
   private void runPaintCallback() {

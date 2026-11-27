@@ -11,17 +11,23 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.awt.Font
+import java.awt.Point
+import java.awt.event.HierarchyEvent
 import java.text.Bidi
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.BorderFactory
+import javax.swing.JComponent
 
 @TestApplication
 class EditorViewSnapshotTest {
@@ -181,6 +187,94 @@ class EditorViewSnapshotTest {
       width,
       editorEx.prefixTextWidthInPixels,
       "A rejected prefix leaves the previous one in place",
+    )
+  }
+
+  @Test
+  fun `test a border set after the first read moves the text`(): Unit = fixture.runTest {
+    initText("text")
+    assertEquals(
+      Point(0, 0),
+      editor.offsetToXY(0),
+      "Without a border the text starts at the origin",
+    )
+    editor.contentComponent.border = BorderFactory.createEmptyBorder(3, 7, 0, 0)
+    assertEquals(
+      Point(7, 3),
+      editor.offsetToXY(0),
+      "The text starts at the insets of the new border",
+    )
+  }
+
+  @Test
+  fun `test a UI update takes the insets of a border at the new scale`(): Unit = fixture.runTest {
+    initText("text")
+    val originalScale = JBUIScale.scale(1f)
+    try {
+      JBUIScale.setUserScaleFactorForTest(1f)
+      editor.contentComponent.border = JBUI.Borders.empty(3, 7, 0, 0)
+      assertEquals(
+        Point(7, 3),
+        editor.offsetToXY(0),
+        "The text starts at the insets of the border at the scale 1",
+      )
+      JBUIScale.setUserScaleFactorForTest(2f)
+      editor.contentComponent.updateUI()
+      assertEquals(
+        Point(14, 6),
+        editor.offsetToXY(0),
+        "After the UI update the text starts at the insets of the border at the scale 2",
+      )
+    } finally {
+      JBUIScale.setUserScaleFactorForTest(originalScale)
+    }
+  }
+
+  @Test
+  fun `test an editor that becomes showing takes the insets of a border at the new scale`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val originalScale = JBUIScale.scale(1f)
+    try {
+      JBUIScale.setUserScaleFactorForTest(1f)
+      editor.contentComponent.border = JBUI.Borders.empty(3, 7, 0, 0)
+      JBUIScale.setUserScaleFactorForTest(2f)
+      view.hierarchyChanged(showingEvent())
+      assertEquals(
+        Point(14, 6),
+        editor.offsetToXY(0),
+        "An editor that becomes showing takes the insets of the border at the scale 2",
+      )
+    } finally {
+      JBUIScale.setUserScaleFactorForTest(originalScale)
+    }
+  }
+
+  @Test
+  fun `test a change of the returned insets leaves the view alone`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    editor.contentComponent.border = BorderFactory.createEmptyBorder(3, 7, 0, 0)
+    view.insets.left = 100
+    assertEquals(
+      Point(7, 3),
+      editor.offsetToXY(0),
+      "The caller owns the returned insets, so the text stays at the insets of the border",
+    )
+  }
+
+  private fun showingEvent(): HierarchyEvent {
+    val shownComponent = object : JComponent() {
+      override fun isShowing(): Boolean {
+        return true
+      }
+    }
+    return HierarchyEvent(
+      shownComponent,
+      HierarchyEvent.HIERARCHY_CHANGED,
+      shownComponent,
+      null,
+      HierarchyEvent.SHOWING_CHANGED.toLong(),
     )
   }
 
