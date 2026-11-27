@@ -26,10 +26,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -207,9 +207,12 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     PsiFile psiFileFromDoc = documentManager.getPsiFile(document, context);
     if (!(psiFileFromDoc instanceof PsiCompiledElement)) {
       assert psiFileFromDoc == psiFile : "Files are different: " + psiFile + ";" + psiFileFromDoc;
-      Document documentFromFile = documentManager.getDocument(psiFile);
-      assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
-                                            PsiUtilCore.getVirtualFile(psiFile);
+      FileViewProvider viewProvider = psiFile.getViewProvider();
+      Document documentFromFile = viewProvider.supportsSendingPsiEvents()
+                                  ? documentManager.getDocument(psiFile)
+                                  : viewProvider.getDocument();
+      assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +
+                                            "; File: " + psiFile + "; Virtual file: " + viewProvider.getVirtualFile();
     }
     CodeInsightContext psiFileContext = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     if (!psiFileContext.equals(context)) {

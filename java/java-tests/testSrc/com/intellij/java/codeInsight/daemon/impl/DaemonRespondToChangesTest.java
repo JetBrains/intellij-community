@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -14,6 +15,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
@@ -21,6 +23,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoUpdater;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoUpdaterImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.PassExecutorService;
 import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass;
@@ -125,9 +128,12 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -213,6 +219,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -2418,6 +2425,30 @@ public class DaemonRespondToChangesTest {
         assertSame(dumbFac, f2);
       }));
     });
+  }
+
+  @Test
+  @TestFor(issues = "IJPL-263223")
+  public void testHighlightingDecompiledMirrorDocumentAndNoDocumentsAreDifferentExceptionThrown() {
+    Project project = daemonFixture.get().getProject();
+    PsiFile mirror = read(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Runnable", GlobalSearchScope.allScope(project));
+      assertNotNull(psiClass);
+      PsiCompiledFile compiledFile = assertInstanceOf(PsiCompiledFile.class, psiClass.getContainingFile());
+      return compiledFile.getDecompiledPsiFile();
+    });
+    Editor editor = createEditor(read(() -> mirror.getViewProvider().getVirtualFile()));
+    BackgroundEditorHighlighter highlighter = new PsiAwareTextEditorProvider().getTextEditor(editor).getBackgroundHighlighter();
+    assertNotNull(highlighter);
+
+    ProgressManager.getInstance().runProcess(() -> ReadAction.runBlocking(() -> {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      assertSame(mirror, documentManager.getPsiFile(editor.getDocument()));
+      assertNull(documentManager.getDocument(mirror));
+      HighlightingSessionImpl.runInsideHighlightingSession(mirror, editor.getColorsScheme(),
+                                                           ProperTextRange.create(mirror.getTextRange()), false,
+                                                           _ -> assertThat(highlighter.createPassesForEditor()).isNotEmpty());
+    }), new DaemonProgressIndicator());
   }
 
   @Test
