@@ -111,7 +111,8 @@ This table maps each layer and locality to its file. The requirements below defi
   project open in its own coroutine, and indexing does not wait for it.
 - The file layer must be absent in the light mode. A write at a file context then lands in the project layer, and
   a read at a file context sees the project value. After the move to the full mode, the file layer loads, and a
-  write at a file context lands in the directory config. See
+  write at a file context lands in the directory config. A directory config on the disk must stay invisible in
+  the light mode, load after the move to the full mode, and be invisible again after the move back. See
   [ADR 0164](../adr/0164-file-settings-are-off-in-the-light-mode-until-the-move-to-the-full-mode.md).
   [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
 - The file layer must find only the configs in the project content. A config in an excluded directory never loads.
