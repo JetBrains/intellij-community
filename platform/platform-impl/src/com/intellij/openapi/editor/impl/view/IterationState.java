@@ -742,20 +742,13 @@ public final class IterationState {
   }
 
   /**
-   * Gives a background layer of this color, or null when the color is absent or the iteration reads no background.
+   * Gives the color of a background layer, or null when the color is absent or the iteration reads no background.
    */
-  private @Nullable BackgroundLayer createLayer(
-    @Nullable Color color,
-    int layer,
-    boolean rounded,
-    boolean hugs,
-    boolean forcesBackground,
-    int span
-  ) {
-    if (color == null || myUseOnlyFontOrForegroundAffectingHighlighters) {
+  private @Nullable Color layerColor(@Nullable Color color) {
+    if (myUseOnlyFontOrForegroundAffectingHighlighters) {
       return null;
     }
-    return new BackgroundLayer(color, layer, rounded, hugs, forcesBackground, span);
+    return color;
   }
 
   /**
@@ -763,14 +756,10 @@ public final class IterationState {
    */
   private @Nullable BackgroundLayer selectionLayer(@NotNull TextAttributes selection) {
     if (mySelectionLayer == null) {
-      mySelectionLayer = createLayer(
-        selection.getBackgroundColor(),
-        HighlighterLayer.SELECTION,
-        myRoundedHighlighting,
-        myHuggingHighlighting,
-        false,
-        Integer.MAX_VALUE
-      );
+      Color color = layerColor(selection.getBackgroundColor());
+      if (color != null) {
+        mySelectionLayer = BackgroundLayer.selection(color, myRoundedHighlighting, myHuggingHighlighting);
+      }
     }
     return mySelectionLayer;
   }
@@ -780,14 +769,10 @@ public final class IterationState {
    */
   private @Nullable BackgroundLayer foldLayer(@NotNull TextAttributes fold) {
     if (myFoldLayer == null) {
-      myFoldLayer = createLayer(
-        fold.getBackgroundColor(),
-        HighlighterLayer.GUARDED_BLOCKS,
-        myRoundedHighlighting,
-        false,
-        false,
-        Integer.MAX_VALUE
-      );
+      Color color = layerColor(fold.getBackgroundColor());
+      if (color != null) {
+        myFoldLayer = BackgroundLayer.foldPlaceholder(color, myRoundedHighlighting);
+      }
     }
     return myFoldLayer;
   }
@@ -797,14 +782,10 @@ public final class IterationState {
    */
   private @Nullable BackgroundLayer guardLayer() {
     if (myGuardLayer == null) {
-      myGuardLayer = createLayer(
-        myReadOnlyColor,
-        HighlighterLayer.GUARDED_BLOCKS,
-        myRoundedHighlighting,
-        false,
-        true,
-        Integer.MAX_VALUE
-      );
+      Color color = layerColor(myReadOnlyColor);
+      if (color != null) {
+        myGuardLayer = BackgroundLayer.guardedBlock(color, myRoundedHighlighting);
+      }
     }
     return myGuardLayer;
   }
@@ -814,14 +795,10 @@ public final class IterationState {
    */
   private @Nullable BackgroundLayer caretRowLayer(@NotNull TextAttributes caret) {
     if (myCaretRowLayer == null) {
-      myCaretRowLayer = createLayer(
-        caret.getBackgroundColor(),
-        HighlighterLayer.CARET_ROW,
-        false,
-        false,
-        false,
-        Integer.MAX_VALUE
-      );
+      Color color = layerColor(caret.getBackgroundColor());
+      if (color != null) {
+        myCaretRowLayer = BackgroundLayer.caretRow(color);
+      }
     }
     return myCaretRowLayer;
   }
@@ -832,16 +809,25 @@ public final class IterationState {
   private @Nullable BackgroundLayer syntaxLayer(@NotNull TextAttributes syntax) {
     if (mySyntaxAttributes != syntax) {
       mySyntaxAttributes = syntax;
-      mySyntaxLayer = createLayer(
-        syntax.getBackgroundColor(),
-        HighlighterLayer.SYNTAX,
-        myRoundedHighlighting,
-        false,
-        false,
-        Integer.MAX_VALUE
-      );
+      Color color = layerColor(syntax.getBackgroundColor());
+      if (color != null) {
+        mySyntaxLayer = BackgroundLayer.syntax(color, myRoundedHighlighting);
+      } else {
+        mySyntaxLayer = null;
+      }
     }
     return mySyntaxLayer;
+  }
+
+  /**
+   * Gives the layer of this highlighter, or null when its attributes set no background.
+   */
+  private @Nullable BackgroundLayer highlighterLayer(@NotNull RangeHighlighterEx highlighter, @NotNull TextAttributes attributes) {
+    Color color = layerColor(attributes.getBackgroundColor());
+    if (color == null) {
+      return null;
+    }
+    return BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting);
   }
 
   /**
@@ -929,15 +915,7 @@ public final class IterationState {
 
       TextAttributes textAttributes = highlighter.getTextAttributes(myColorsScheme);
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
-        BackgroundLayer layer = createLayer(
-          textAttributes.getBackgroundColor(),
-          highlighter.getLayer(),
-          BackgroundLayer.isRounded(highlighter.getTargetArea(), myRoundedHighlighting),
-          false,
-          false,
-          highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset()
-        );
-        addAttributes(layers, textAttributes, layer);
+        addAttributes(layers, textAttributes, highlighterLayer(highlighter, textAttributes));
       }
     }
 

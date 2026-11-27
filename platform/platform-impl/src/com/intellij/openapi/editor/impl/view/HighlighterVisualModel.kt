@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.util.ui.GraphicsUtil
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
@@ -47,15 +46,7 @@ internal class HighlighterVisualModel(
 
   fun paintSelectionBlock(block: Rectangle2D) {
     val color = editor.editorModel.selectionModel.textAttributes.backgroundColor ?: return
-    val layer = BackgroundLayer(
-      color,
-      HighlighterLayer.SELECTION,
-      true,
-      huggingHighlighting,
-      false,
-      Int.MAX_VALUE,
-    )
-    paintBackgroundBlock(block, layer)
+    paintBackgroundBlock(block, BackgroundLayer.selection(color, true, huggingHighlighting))
   }
 
   /**

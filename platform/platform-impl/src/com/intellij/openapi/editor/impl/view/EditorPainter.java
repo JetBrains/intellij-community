@@ -49,7 +49,6 @@ import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.FontFamilies;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -803,7 +802,7 @@ public final class EditorPainter implements TextDrawingCallback {
     ) {
       Color background = innerAttributes.getBackgroundColor();
       if (background != null && !isSelected(foldRegion)) {
-        BackgroundLayer layer = new BackgroundLayer(background, HighlighterLayer.GUARDED_BLOCKS, false, false, false, Integer.MAX_VALUE);
+        BackgroundLayer layer = BackgroundLayer.foldPlaceholder(background, false);
         paintBackgroundLayer(layer, x, y, width, myLineHeight);
         Color borderColor = dryRun ? null : myColorsScheme.getColor(EditorColors.FOLDED_TEXT_BORDER_COLOR);
         if (borderColor != null) {
@@ -1385,9 +1384,7 @@ public final class EditorPainter implements TextDrawingCallback {
         paintBackground(color, x, y, width, myLineHeight);
         return;
       }
-      boolean rounded = BackgroundLayer.isRounded(highlighter.getTargetArea(), myRoundedHighlighting);
-      int span = highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset();
-      BackgroundLayer layer = new BackgroundLayer(color, highlighter.getLayer(), rounded, false, false, span);
+      BackgroundLayer layer = BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting);
       myHighlighterVisualModel.addAfterLineEndBox(new Rectangle2D.Float(x, y, width, myLineHeight), layer);
     }
 
@@ -1750,34 +1747,27 @@ public final class EditorPainter implements TextDrawingCallback {
      */
     private @Nullable BackgroundLayer getBetweenLinesBackgroundLayer(boolean selection, int bottomVisualLineStartOffset) {
       final class MyProcessor implements Processor<RangeHighlighterEx> {
-        private int layer;
-        private int span = Integer.MAX_VALUE;
-        private Color backgroundColor;
-        private boolean rounded;
-        private boolean hugs;
+        private @Nullable BackgroundLayer result;
 
         private MyProcessor(boolean selection) {
-          backgroundColor = selection ? selectionBackgroundColor() : null;
-          layer = backgroundColor == null ? Integer.MIN_VALUE : HighlighterLayer.SELECTION;
-          rounded = myRoundedHighlighting;
-          hugs = myHuggingHighlighting;
+          Color selectionColor = selection ? selectionBackgroundColor() : null;
+          if (selectionColor != null) {
+            result = BackgroundLayer.selection(selectionColor, myRoundedHighlighting, myHuggingHighlighting);
+          }
         }
 
         @Override
         public boolean process(RangeHighlighterEx highlighterEx) {
           int layer = highlighterEx.getLayer();
-          if (layer > this.layer &&
+          int topLayer = result == null ? Integer.MIN_VALUE : result.getLayer();
+          if (layer > topLayer &&
               highlighterEx.getAffectedAreaStartOffset() < bottomVisualLineStartOffset &&
               highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset -
                                                          (highlighterEx.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? 0 : 1)) {
             TextAttributes attributes = highlighterEx.getTextAttributes(myColorsScheme);
             Color backgroundColor = attributes == null ? null : attributes.getBackgroundColor();
             if (backgroundColor != null) {
-              this.layer = layer;
-              this.span = highlighterEx.getAffectedAreaEndOffset() - highlighterEx.getAffectedAreaStartOffset();
-              this.backgroundColor = backgroundColor;
-              this.rounded = BackgroundLayer.isRounded(highlighterEx.getTargetArea(), myRoundedHighlighting);
-              this.hugs = false;
+              result = BackgroundLayer.highlighter(highlighterEx, backgroundColor, myRoundedHighlighting);
             }
           }
           return true;
@@ -1786,17 +1776,7 @@ public final class EditorPainter implements TextDrawingCallback {
       MyProcessor processor = new MyProcessor(selection);
       myDocMarkup.processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
       myEditorMarkup.processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
-      if (processor.backgroundColor == null) {
-        return null;
-      }
-      return new BackgroundLayer(
-        processor.backgroundColor,
-        processor.layer,
-        processor.rounded,
-        processor.hugs,
-        false,
-        processor.span
-      );
+      return processor.result;
     }
 
     private interface MarginWidthConsumer {
@@ -2026,23 +2006,14 @@ public final class EditorPainter implements TextDrawingCallback {
         TextAttributes focusModeAttributes = myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES);
         Color color = focusModeAttributes == null ? null : focusModeAttributes.getBackgroundColor();
         if (color == null) return List.of();
-        BackgroundLayer layer = new BackgroundLayer(color, HighlighterLayer.SYNTAX, rounded, false, false, Integer.MAX_VALUE);
-        return List.of(layer);
+        return List.of(BackgroundLayer.syntax(color, rounded));
       }
       List<BackgroundLayer> layers = new ArrayList<>(2);
       boolean selected = isSelected(foldRegion);
       if (selected) {
         Color selectionColor = selectionBackgroundColor();
         if (selectionColor != null) {
-          BackgroundLayer layer = new BackgroundLayer(
-            selectionColor,
-            HighlighterLayer.SELECTION,
-            rounded,
-            myHuggingHighlighting,
-            false,
-            Integer.MAX_VALUE
-          );
-          layers.add(layer);
+          layers.add(BackgroundLayer.selection(selectionColor, rounded, myHuggingHighlighting));
         }
       }
       Color placeholderColor;
@@ -2054,8 +2025,7 @@ public final class EditorPainter implements TextDrawingCallback {
         placeholderColor = placeholderAttributes == null ? null : placeholderAttributes.getBackgroundColor();
       }
       if (placeholderColor != null) {
-        BackgroundLayer layer = new BackgroundLayer(placeholderColor, HighlighterLayer.GUARDED_BLOCKS, rounded, false, false, Integer.MAX_VALUE);
-        layers.add(layer);
+        layers.add(BackgroundLayer.foldPlaceholder(placeholderColor, rounded));
       }
       return layers;
     }

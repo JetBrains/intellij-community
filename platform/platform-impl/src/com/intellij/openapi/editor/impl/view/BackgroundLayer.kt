@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view
 
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -64,12 +66,94 @@ data class BackgroundLayer(
     }
 
     /**
-     * Says that the paint rounds the corners of a highlighter background of this target area.
+     * Gives the background of the selection.
+     */
+    @JvmStatic
+    fun selection(color: Color, rounded: Boolean, hugs: Boolean): BackgroundLayer {
+      return BackgroundLayer(
+        color = color,
+        layer = HighlighterLayer.SELECTION,
+        isRounded = rounded,
+        hugs = hugs,
+        forcesBackground = false,
+        span = Int.MAX_VALUE,
+      )
+    }
+
+    /**
+     * Gives the background of a fold placeholder.
+     */
+    @JvmStatic
+    fun foldPlaceholder(color: Color, rounded: Boolean): BackgroundLayer {
+      return BackgroundLayer(
+        color = color,
+        layer = HighlighterLayer.GUARDED_BLOCKS,
+        isRounded = rounded,
+        hugs = false,
+        forcesBackground = false,
+        span = Int.MAX_VALUE,
+      )
+    }
+
+    /**
+     * Gives the background of a guarded block. It wins over every other background.
+     */
+    @JvmStatic
+    fun guardedBlock(color: Color, rounded: Boolean): BackgroundLayer {
+      return BackgroundLayer(
+        color = color,
+        layer = HighlighterLayer.GUARDED_BLOCKS,
+        isRounded = rounded,
+        hugs = false,
+        forcesBackground = true,
+        span = Int.MAX_VALUE,
+      )
+    }
+
+    /**
+     * Gives the background of the caret row. It is always straight.
+     */
+    @JvmStatic
+    fun caretRow(color: Color): BackgroundLayer {
+      return BackgroundLayer(
+        color = color,
+        layer = HighlighterLayer.CARET_ROW,
+        isRounded = false,
+        hugs = false,
+        forcesBackground = false,
+        span = Int.MAX_VALUE,
+      )
+    }
+
+    /**
+     * Gives the background of a syntax token.
+     */
+    @JvmStatic
+    fun syntax(color: Color, rounded: Boolean): BackgroundLayer {
+      return BackgroundLayer(
+        color = color,
+        layer = HighlighterLayer.SYNTAX,
+        isRounded = rounded,
+        hugs = false,
+        forcesBackground = false,
+        span = Int.MAX_VALUE,
+      )
+    }
+
+    /**
+     * Gives the background of a range highlighter, with its layer and the length of its affected area.
      * The editor decides with [roundedAllowed] whether it rounds at all.
      */
     @JvmStatic
-    fun isRounded(targetArea: HighlighterTargetArea, roundedAllowed: Boolean): Boolean {
-      return roundedAllowed && targetArea == HighlighterTargetArea.EXACT_RANGE
+    fun highlighter(highlighter: RangeHighlighterEx, color: Color, roundedAllowed: Boolean): BackgroundLayer {
+      return BackgroundLayer(
+        color = color,
+        layer = highlighter.layer,
+        isRounded = roundedAllowed && highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE,
+        hugs = false,
+        forcesBackground = false,
+        span = highlighter.affectedAreaEndOffset - highlighter.affectedAreaStartOffset,
+      )
     }
   }
 }
