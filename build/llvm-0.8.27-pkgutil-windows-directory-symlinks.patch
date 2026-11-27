@@ -1,0 +1,64 @@
+Replace the directory symlinks of an extracted pkg with copies on Windows.
+
+cpio has no symlink type, so libarchive in pkgutil creates each symlink of the macOS SDK as a file symlink on Windows.
+Windows cannot traverse a file symlink into a directory, so a header under `Foo.framework/Headers` is not found.
+https://github.com/hermeticbuild/pkgutil/pull/8 fixes pkgutil, but the prebuilt extras do not contain it yet. Until
+then, the rule replaces each symlink that points to a directory with a copy of that directory, in Starlark only.
+diff --git a/http_pkg_archive.bzl b/http_pkg_archive.bzl
+index 8724ec5..6fee98a 100644
+--- a/http_pkg_archive.bzl
++++ b/http_pkg_archive.bzl
+@@ -1,6 +1,43 @@
+ load("@bazel_lib//lib:repo_utils.bzl", "repo_utils")
+ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
+ 
++# A bound above the directory count of a macOS SDK, because Starlark has no unbounded loop.
++_MAX_WALK_STEPS = 1000000
++
++def _copy_tree(rctx, src, dst):
++    pending = [(src, dst)]
++    for _ in range(_MAX_WALK_STEPS):
++        if not pending:
++            return
++        src_dir, dst_dir = pending.pop()
++        for entry in src_dir.readdir():
++            target = entry.realpath
++            if target.is_dir:
++                pending.append((target, dst_dir.get_child(entry.basename)))
++            else:
++                rctx.file(dst_dir.get_child(entry.basename), rctx.read(target), executable = False, legacy_utf8 = False)
++    fail("The directory tree {} has more than {} directories".format(src, _MAX_WALK_STEPS))
++
++# cpio has no symlink type, so libarchive in pkgutil creates each symlink as a file symlink on Windows. Windows cannot
++# traverse a file symlink into a directory. The path API of Bazel resolves each link itself, so this function finds
++# each symlink that points to a directory and replaces it with a copy of that directory.
++# TODO: remove that once https://github.com/hermeticbuild/pkgutil/pull/8 is in the prebuilt extras.
++def _replace_directory_symlinks_with_copies(rctx, root):
++    pending = [(root, root.realpath)]
++    for _ in range(_MAX_WALK_STEPS):
++        if not pending:
++            return
++        directory, real_directory = pending.pop()
++        for entry in directory.readdir():
++            target = entry.realpath
++            if str(target) != str(real_directory.get_child(entry.basename)):
++                if target.is_dir:
++                    rctx.delete(entry)
++                    _copy_tree(rctx, target, entry)
++            elif target.is_dir:
++                pending.append((entry, target))
++    fail("The directory tree {} has more than {} directories".format(root, _MAX_WALK_STEPS))
++
+ def _http_pkg_archive_impl(rctx):
+     rctx.download(
+         url = rctx.attr.urls,
+@@ -32,6 +69,9 @@ def _http_pkg_archive_impl(rctx):
+     if res.return_code != 0:
+         fail("Failed to extract package: {}".format(res.stderr))
+ 
++    if repo_utils.is_windows(rctx):
++        _replace_directory_symlinks_with_copies(rctx, rctx.path(rctx.attr.dst))
++
+     rctx.delete(".downloaded.pkg")
+ 
+     for file, label in rctx.attr.files.items():

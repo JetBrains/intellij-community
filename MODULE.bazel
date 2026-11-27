@@ -118,6 +118,7 @@ single_version_override(
         "//:build/llvm-0.8.27-clang-cl-quote-includes.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/807
         "//:build/llvm-0.8.27-msvc-windows-subsystem.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/817
         "//:build/llvm-0.8.27-msvc-setargv.patch",  # TODO: report to upstream https://github.com/hermeticbuild/hermetic-llvm/issues
+        "//:build/llvm-0.8.27-pkgutil-windows-directory-symlinks.patch",  # TODO: remove that once https://github.com/hermeticbuild/pkgutil/pull/8 is in the prebuilt extras of hermetic-llvm
     ],
 )
 
