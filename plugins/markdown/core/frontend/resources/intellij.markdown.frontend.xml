@@ -48,6 +48,7 @@
                     serviceImplementation="com.intellij.markdown.frontend.preview.jcef.zoomIndicator.MarkdownPreviewZoomIndicatorImpl"/>
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+    <editorNotificationProvider implementation="com.intellij.markdown.frontend.preview.MarkdownPreviewUnavailableBannerProvider"/>
     <registryKey key="markdown.live.preview.opening.timeout.ms"
                  defaultValue="300"
                  description="Time in milliseconds that an opening Markdown editor waits for live preview before it shows the source."/>
