@@ -5,7 +5,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Alexander Lobas
+ * @deprecated Register a change listener on {@link com.intellij.ui.components.JBTabbedPane}.
  */
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public interface TabHeaderListener {
   void selectionChanged(int index, boolean userInitiated);

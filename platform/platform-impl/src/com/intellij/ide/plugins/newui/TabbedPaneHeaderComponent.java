@@ -48,7 +48,9 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
+ * @deprecated Use {@link JBTabbedPane} for tabs and {@link com.intellij.openapi.actionSystem.ActionToolbar} for actions.
  */
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public class TabbedPaneHeaderComponent extends JPanel implements UiDataProvider {
   private final JBValue myHeight = new JBValue.Float(30);
