@@ -440,18 +440,7 @@ public final class EditorPainter implements TextDrawingCallback {
       Color color = JBColor.namedColor("Component.infoForeground", myColorsScheme.getDefaultForeground());
       TextAttributes attributes = myEditor.getPlaceholderAttributes();
       if (attributes != null) {
-        int type = attributes.getFontType();
-        if (type == Font.ITALIC) {
-          fontType = EditorFontType.ITALIC;
-        } else {
-          if (type == Font.BOLD) {
-            fontType = EditorFontType.BOLD;
-          } else {
-            if (type == (Font.ITALIC | Font.BOLD)) {
-              fontType = EditorFontType.BOLD_ITALIC;
-            }
-          }
-        }
+        fontType = EditorFontType.forJavaStyle(attributes.getFontType());
         Color attColor = attributes.getForegroundColor();
         if (attColor != null) {
           color = attColor;
