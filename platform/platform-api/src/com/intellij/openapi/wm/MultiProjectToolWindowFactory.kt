@@ -9,6 +9,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  * The frame owner registers the tool window once. A tool window without the marker gets one instance for each project
  * of the frame, and the frame shows the instance of the project that the user selects in the tool window.
+ *
+ * [ToolWindowManager.getToolWindow] of each project of the frame gives the tool window of the frame owner, so
+ * [ToolWindow.getProject] is the frame owner also for the code of another project of the frame.
  */
 @ApiStatus.Internal
 interface MultiProjectToolWindowFactory : ToolWindowFactory

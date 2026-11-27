@@ -68,7 +68,8 @@ internal class LibraryDependentToolWindowManager : ProjectActivity {
             }
 
             override fun extensionRemoved(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
-              ToolWindowManager.getInstance(project).getToolWindow(extension.id)?.remove()
+              // only a tool window of this project: a frame guest gets the tool window of the whole frame of its frame owner
+              ToolWindowManager.getInstance(project).getToolWindow(extension.id)?.takeIf { it.project === project }?.remove()
             }
           }, project)
       }
@@ -132,7 +133,8 @@ private suspend fun checkToolWindowStatuses(project: Project, extensionId: Strin
 private suspend fun applyWindowsState(state: LibraryWindowsState) {
   val toolWindowManager = ToolWindowManager.getInstance(state.project) as ToolWindowManagerImpl
   for (libraryToolWindow in state.extensions) {
-    var toolWindow = toolWindowManager.getToolWindow(libraryToolWindow.id)
+    // only a tool window of this manager: a frame guest gets the tool window of the whole frame of its frame owner
+    val toolWindow = toolWindowManager.getEntry(libraryToolWindow.id)?.toolWindow
     if (state.existing.contains(libraryToolWindow)) {
       if (toolWindow == null) {
         toolWindowManager.initToolWindow(libraryToolWindow, libraryToolWindow.pluginDescriptor)

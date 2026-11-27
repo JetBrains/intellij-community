@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.IdeFrameGuests
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerPresentation
@@ -503,7 +502,8 @@ private fun updateToolWindowsOfTechs(manager: ToolWindowManagerImpl) {
       continue
     }
     val isApplicable = TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, manager.project)
-    val registered = manager.getToolWindow(bean.id) as? ToolWindowImpl
+    // only a tool window of this manager: the techs of a frame guest do not decide for the tool window of its frame owner
+    val registered = manager.getEntry(bean.id)?.toolWindow
     if (registered != null) {
       registered.setDisabledByTech(!isApplicable)
     }

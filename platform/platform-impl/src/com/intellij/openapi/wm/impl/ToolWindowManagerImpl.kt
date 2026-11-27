@@ -1127,7 +1127,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   // cannot be ToolWindowEx because of backward compatibility
   override fun getToolWindow(id: String?): ToolWindow? {
-    return idToEntry.get(id ?: return null)?.toolWindow
+    // A frame guest gets the tool window of the whole frame from the frame owner, as from `registerToolWindow`.
+    // The id lists of this manager have only its own tool windows.
+    return ownOrFrameToolWindow(id ?: return null)
   }
 
   open fun showToolWindow(id: String) {
