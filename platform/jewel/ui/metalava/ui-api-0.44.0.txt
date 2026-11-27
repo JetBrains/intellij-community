@@ -587,6 +587,12 @@ package org.jetbrains.jewel.ui.component {
     property public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.ui.component.MenuController> LocalMenuController;
   }
 
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum MenuItemAccessibilityRole {
+    enum_constant public static final org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole Checkbox;
+    enum_constant public static final org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole Item;
+    enum_constant public static final org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole RadioButton;
+  }
+
   public final class MenuKt {
     method @androidx.compose.runtime.Composable public static void PopupMenu(kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.InputMode,java.lang.Boolean> onDismissRequest, androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.ui.Modifier modifier, optional float maxHeight, optional org.jetbrains.jewel.ui.component.styling.MenuStyle menuStyle, optional org.jetbrains.jewel.ui.component.styling.PopupContainerStyle popupContainerStyle, optional androidx.compose.ui.window.PopupProperties popupProperties, optional kotlin.jvm.functions.Function0<kotlin.Unit>? adContent, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.MenuScope,kotlin.Unit> content);
     method @Deprecated @androidx.compose.runtime.Composable public static void PopupMenu(kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.InputMode,java.lang.Boolean> onDismissRequest, androidx.compose.ui.Alignment.Horizontal horizontalAlignment, optional androidx.compose.ui.Modifier modifier, optional org.jetbrains.jewel.ui.component.styling.MenuStyle style, optional androidx.compose.ui.window.PopupProperties popupProperties, optional kotlin.jvm.functions.Function0<kotlin.Unit>? adContent, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.ui.component.MenuScope,kotlin.Unit> content);
@@ -601,6 +607,7 @@ package org.jetbrains.jewel.ui.component {
   }
 
   public interface MenuScope {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public default void actionItem(boolean selected, optional org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole role, optional org.jetbrains.jewel.ui.icon.IconKey? iconKey, optional com.intellij.platform.icons.IconDescriptor? icon, optional java.util.Set<java.lang.String>? keybinding, optional boolean keepMenuOpenOnClick, kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional boolean enabled, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method public void passiveItem(kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method public void selectableItem(boolean selected, optional org.jetbrains.jewel.ui.icon.IconKey? iconKey, optional java.util.Set<java.lang.String>? keybinding, kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional boolean enabled, kotlin.jvm.functions.Function0<kotlin.Unit> content);
     method public void selectableItemWithActionType(boolean selected, optional org.jetbrains.jewel.ui.icon.IconKey? iconKey, optional org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction? actionType, kotlin.jvm.functions.Function0<kotlin.Unit> onClick, optional boolean enabled, kotlin.jvm.functions.Function0<kotlin.Unit> content);

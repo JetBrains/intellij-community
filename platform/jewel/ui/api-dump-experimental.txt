@@ -54,6 +54,17 @@ f:org.jetbrains.jewel.ui.component.ListComboBoxKt
 - *bsf:ListComboBox-xKBSf-U(java.util.List,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,kotlin.jvm.functions.Function1,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.MenuComboBoxKt
 - *sf:MenuComboBox-Bvae7ek(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
+*e:org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole
+- java.lang.Enum
+- sf:Checkbox:org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole
+- sf:Item:org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole
+- sf:RadioButton:org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole
+- s:values():org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole[]
+org.jetbrains.jewel.ui.component.MenuScope
+- *:actionItem(Z,org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole,org.jetbrains.jewel.ui.icon.IconKey,com.intellij.platform.icons.IconDescriptor,java.util.Set,Z,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
+- *bs:actionItem$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.component.MenuItemAccessibilityRole,org.jetbrains.jewel.ui.icon.IconKey,com.intellij.platform.icons.IconDescriptor,java.util.Set,Z,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 *:org.jetbrains.jewel.ui.component.NodeSearchMatchState
 - a:getMatchResult():org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - a:getStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle

@@ -1,7 +1,9 @@
 f:org.jetbrains.jewel.foundation.CompatibilityKt
 - *sf:enableNewSwingCompositing():V
 f:org.jetbrains.jewel.foundation.JewelFlags
+- *f:getStrictMode():Z
 - *f:getUseCustomPopupRenderer():Z
+- *f:setStrictMode(Z):V
 - *f:setUseCustomPopupRenderer(Z):V
 f:org.jetbrains.jewel.foundation.LocalComponentKt
 - *sf:getLocalComponent():androidx.compose.runtime.ProvidableCompositionLocal
@@ -17,3 +19,485 @@ f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
 - sf:INSTANCE:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 - highlight(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 - highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+*e:org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- java.lang.Enum
+- sf:Disabled:org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- sf:HostUnavailable:org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- sf:NoFocusedBinding:org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- sf:RejectedByHost:org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- sf:Unregistered:org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- s:values():org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection[]
+*:org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult
+*f:org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult$Dispatched
+- org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult$Dispatched
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult$Rejected
+- org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection):V
+- f:component1():org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- f:copy(org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection):org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult$Rejected
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult$Rejected,org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult$Rejected
+- equals(java.lang.Object):Z
+- f:getReason():org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection
+- hashCode():I
+*:org.jetbrains.jewel.foundation.shortcut.ActionEventSource
+- a:getInvocations():kotlinx.coroutines.flow.SharedFlow
+*f:org.jetbrains.jewel.foundation.shortcut.ActionInvocation
+- sf:$stable:I
+- f:component1-iG3PMSQ():java.lang.String
+- f:component2():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- f:component3():org.jetbrains.jewel.foundation.shortcut.ActionTrigger
+- f:copy-gQU0D6k(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,org.jetbrains.jewel.foundation.shortcut.ActionTrigger):org.jetbrains.jewel.foundation.shortcut.ActionInvocation
+- bs:copy-gQU0D6k$default(org.jetbrains.jewel.foundation.shortcut.ActionInvocation,java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,org.jetbrains.jewel.foundation.shortcut.ActionTrigger,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionInvocation
+- equals(java.lang.Object):Z
+- f:getActionId-iG3PMSQ():java.lang.String
+- f:getSequence():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- f:getTrigger():org.jetbrains.jewel.foundation.shortcut.ActionTrigger
+- hashCode():I
+*:org.jetbrains.jewel.foundation.shortcut.ActionInvoker
+- a:invoke(org.jetbrains.jewel.foundation.shortcut.JewelAction,org.jetbrains.jewel.foundation.shortcut.ActionTrigger):org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult
+- bs:invoke$default(org.jetbrains.jewel.foundation.shortcut.ActionInvoker,org.jetbrains.jewel.foundation.shortcut.JewelAction,org.jetbrains.jewel.foundation.shortcut.ActionTrigger,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult
+*f:org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.foundation.shortcut.ActionPresentation$Companion
+- <init>(java.lang.String,java.lang.String,Z,Z,com.intellij.platform.icons.IconDescriptor,org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy,java.util.Map,org.jetbrains.jewel.foundation.shortcut.ActionResolution):V
+- b:<init>(java.lang.String,java.lang.String,Z,Z,com.intellij.platform.icons.IconDescriptor,org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy,java.util.Map,org.jetbrains.jewel.foundation.shortcut.ActionResolution,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():Z
+- f:component4():Z
+- f:component5():com.intellij.platform.icons.IconDescriptor
+- f:component6():org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- f:component7():java.util.Map
+- f:component8():org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- f:copy(java.lang.String,java.lang.String,Z,Z,com.intellij.platform.icons.IconDescriptor,org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy,java.util.Map,org.jetbrains.jewel.foundation.shortcut.ActionResolution):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.ActionPresentation,java.lang.String,java.lang.String,Z,Z,com.intellij.platform.icons.IconDescriptor,org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy,java.util.Map,org.jetbrains.jewel.foundation.shortcut.ActionResolution,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+- equals(java.lang.Object):Z
+- f:getDescription():java.lang.String
+- f:getEnabled():Z
+- f:getIcon():com.intellij.platform.icons.IconDescriptor
+- f:getMenuDismissPolicy():org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- f:getProperties():java.util.Map
+- f:getResolution():org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- f:getText():java.lang.String
+- f:getVisible():Z
+- hashCode():I
+- f:isFlagSet(java.lang.String):Z
+- f:withProperty(java.lang.String,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+*f:org.jetbrains.jewel.foundation.shortcut.ActionPresentation$Companion
+- f:hostUnavailable(org.jetbrains.jewel.foundation.shortcut.JewelAction):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationKt
+- *sf:getHidesDropdownIcon(org.jetbrains.jewel.foundation.shortcut.ActionPresentation):Z
+- *sf:getSelected(org.jetbrains.jewel.foundation.shortcut.ActionPresentation):Z
+- *sf:getShowsTextInToolbar(org.jetbrains.jewel.foundation.shortcut.ActionPresentation):Z
+- *sf:sampled(org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation,Z,org.jetbrains.jewel.foundation.shortcut.ActionResolution):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+*f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride$Companion
+- <init>():V
+- <init>(org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,java.util.Map):V
+- b:<init>(org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:component2():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:component3():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:component4():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:component5():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:component6():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:component7():java.util.Map
+- f:copy(org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,java.util.Map):org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,org.jetbrains.jewel.foundation.shortcut.PresentationValue,java.util.Map,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride
+- equals(java.lang.Object):Z
+- f:getDescription():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:getIcon():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:getMenuDismissPolicy():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:getProperties():java.util.Map
+- f:getSelected():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:getText():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- f:getVisible():org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- hashCode():I
+- f:mergeOver(org.jetbrains.jewel.foundation.shortcut.ActionPresentation):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+*f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride$Companion
+- f:getEmpty():org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride
+*f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler
+- sf:$stable:I
+- <init>(kotlin.jvm.functions.Function1):V
+- f:acquire-ffnWhyY(java.lang.String):kotlinx.coroutines.flow.StateFlow
+- f:activeDemandCount():I
+- f:invalidate-J59Bxg4(java.lang.String):V
+- bs:invalidate-J59Bxg4$default(org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler,java.lang.String,I,java.lang.Object):V
+- f:release-ffnWhyY(java.lang.String):V
+f:org.jetbrains.jewel.foundation.shortcut.ActionPresentationSchedulerKt
+- *sf:collectPresentationAsState(org.jetbrains.jewel.foundation.shortcut.JewelAction,org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
+- *sf:collectPresentationAsState(org.jetbrains.jewel.foundation.shortcut.JewelAction,org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
+*f:org.jetbrains.jewel.foundation.shortcut.ActionPropertyNames
+- sf:$stable:I
+- sf:HideDropdownIcon:java.lang.String
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.ActionPropertyNames
+- sf:Selected:java.lang.String
+- sf:ShowTextInToolbar:java.lang.String
+*:org.jetbrains.jewel.foundation.shortcut.ActionRegistration
+- java.lang.AutoCloseable
+- a:close():V
+- a:getAction():org.jetbrains.jewel.foundation.shortcut.JewelAction
+*e:org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- java.lang.Enum
+- sf:HostUnavailable:org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- sf:NoFocusedBinding:org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- sf:Resolved:org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- sf:Unregistered:org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.shortcut.ActionResolution
+- s:values():org.jetbrains.jewel.foundation.shortcut.ActionResolution[]
+*f:org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation
+- sf:$stable:I
+- <init>(java.lang.String,java.lang.String,com.intellij.platform.icons.IconDescriptor,java.util.Map):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.platform.icons.IconDescriptor,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():com.intellij.platform.icons.IconDescriptor
+- f:component4():java.util.Map
+- f:copy(java.lang.String,java.lang.String,com.intellij.platform.icons.IconDescriptor,java.util.Map):org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation,java.lang.String,java.lang.String,com.intellij.platform.icons.IconDescriptor,java.util.Map,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation
+- equals(java.lang.Object):Z
+- f:getDescription():java.lang.String
+- f:getIcon():com.intellij.platform.icons.IconDescriptor
+- f:getProperties():java.util.Map
+- f:getText():java.lang.String
+- hashCode():I
+*:org.jetbrains.jewel.foundation.shortcut.ActionTrigger
+*f:org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Keyboard
+- org.jetbrains.jewel.foundation.shortcut.ActionTrigger
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+- f:component1():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- f:copy(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Keyboard
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Keyboard,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Keyboard
+- equals(java.lang.Object):Z
+- f:getSequence():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Pointer
+- org.jetbrains.jewel.foundation.shortcut.ActionTrigger
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Pointer
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Programmatic
+- org.jetbrains.jewel.foundation.shortcut.ActionTrigger
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.ActionTrigger$Programmatic
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.DefaultJewelActionRegistry
+- org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry
+- sf:$stable:I
+- <init>():V
+- definition-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition
+- definitions():java.util.List
+- register(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition):org.jetbrains.jewel.foundation.shortcut.ActionRegistration
+*f:org.jetbrains.jewel.foundation.shortcut.DefaultJewelKeymapManager
+- org.jetbrains.jewel.foundation.shortcut.JewelKeymapManager
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelKeymap):V
+- addKeymap(org.jetbrains.jewel.foundation.shortcut.JewelKeymap):V
+- getActiveKeymap():kotlinx.coroutines.flow.StateFlow
+- getKeymaps():kotlinx.coroutines.flow.StateFlow
+- removeKeymap(java.lang.String):V
+- setActiveKeymap(java.lang.String):V
+*:org.jetbrains.jewel.foundation.shortcut.DispatchDecision
+*f:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed
+- org.jetbrains.jewel.foundation.shortcut.DispatchDecision
+- sf:$stable:I
+- f:component1-iG3PMSQ():java.lang.String
+- f:component2():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- f:component3():org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- f:copy-gQU0D6k(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route):org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed
+- bs:copy-gQU0D6k$default(org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed,java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed
+- equals(java.lang.Object):Z
+- f:getInvokedActionId-iG3PMSQ():java.lang.String
+- f:getInvokedSequence():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- f:getRoute():org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- hashCode():I
+*e:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- java.lang.Enum
+- sf:ChordCancelled:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- sf:ChordPrefix:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- sf:Claim:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- sf:Keymap:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- sf:RepeatSuppressed:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- sf:TypedSuppressed:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route
+- s:values():org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Consumed$Route[]
+*f:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Pass
+- org.jetbrains.jewel.foundation.shortcut.DispatchDecision
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.DispatchDecision$Pass
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.EngineBinding
+- sf:$stable:I
+- b:<init>(java.lang.String,Z,Z,java.lang.String,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getActionId-cSYvQVQ():java.lang.String
+- f:getBlocksOuterBindings():Z
+- f:getEnabled():Z
+- f:getOnInvoke():kotlin.jvm.functions.Function0
+- f:getOrigin():java.lang.String
+- f:getPresentationOverride():org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride
+- f:getRepeatPolicy():org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy
+*f:org.jetbrains.jewel.foundation.shortcut.EngineClaim
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,Z,Z,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,kotlin.jvm.functions.Function0):V
+- b:<init>(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,Z,Z,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getBlocksOuterClaims():Z
+- f:getEnabled():Z
+- f:getOnInvoke():kotlin.jvm.functions.Function0
+- f:getRepeatPolicy():org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy
+- f:getSequence():org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+*f:org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap
+- org.jetbrains.jewel.foundation.shortcut.MutableJewelKeymap
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap$Companion
+- <init>(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeymap):V
+- b:<init>(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeymap,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- actionIds():java.util.Set
+- actionIdsFor(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):java.util.List
+- actionIdsForPrefix(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):java.util.List
+- bind-nwx-PhA(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+- getModificationCount():kotlinx.coroutines.flow.StateFlow
+- getName():java.lang.String
+- getParent():org.jetbrains.jewel.foundation.shortcut.JewelKeymap
+- hideInherited-nwx-PhA(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+- removeAllBindings-ffnWhyY(java.lang.String):V
+- replaceBindings-nwx-PhA(java.lang.String,java.util.List):V
+- shortcutsFor-ffnWhyY(java.lang.String):java.util.List
+- unbind-nwx-PhA(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+*f:org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap$Companion
+- f:fromDefaults(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry):org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap
+*f:org.jetbrains.jewel.foundation.shortcut.JewelAction
+- sf:$stable:I
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelActionKind,com.intellij.platform.icons.IconDescriptor,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- b:<init>(java.lang.String,org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation,java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelActionKind,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1-cSYvQVQ():java.lang.String
+- f:component2():org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation
+- f:component3():java.lang.String
+- f:component4():org.jetbrains.jewel.foundation.shortcut.JewelActionKind
+- f:copy-Cn80G-A(java.lang.String,org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation,java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelActionKind):org.jetbrains.jewel.foundation.shortcut.JewelAction
+- bs:copy-Cn80G-A$default(org.jetbrains.jewel.foundation.shortcut.JewelAction,java.lang.String,org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation,java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelActionKind,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.JewelAction
+- equals(java.lang.Object):Z
+- f:getCategory():java.lang.String
+- f:getId-cSYvQVQ():java.lang.String
+- f:getKind():org.jetbrains.jewel.foundation.shortcut.JewelActionKind
+- f:getTemplate():org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation
+- f:getTitle():java.lang.String
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelAction,java.util.List):V
+- b:<init>(org.jetbrains.jewel.foundation.shortcut.JewelAction,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:component2():java.util.List
+- f:copy(org.jetbrains.jewel.foundation.shortcut.JewelAction,java.util.List):org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition,org.jetbrains.jewel.foundation.shortcut.JewelAction,java.util.List,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition
+- equals(java.lang.Object):Z
+- f:getAction():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getDefaultShortcuts():java.util.List
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.JewelActionId
+- bsf:box-impl(java.lang.String):org.jetbrains.jewel.foundation.shortcut.JewelActionId
+- s:constructor-impl(java.lang.String):java.lang.String
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.String,java.lang.Object):Z
+- sf:equals-impl0(java.lang.String,java.lang.String):Z
+- f:getValue():java.lang.String
+- hashCode():I
+- s:hashCode-impl(java.lang.String):I
+- s:toString-impl(java.lang.String):java.lang.String
+- bf:unbox-impl():java.lang.String
+*e:org.jetbrains.jewel.foundation.shortcut.JewelActionKind
+- java.lang.Enum
+- sf:Command:org.jetbrains.jewel.foundation.shortcut.JewelActionKind
+- sf:Toggle:org.jetbrains.jewel.foundation.shortcut.JewelActionKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.shortcut.JewelActionKind
+- s:values():org.jetbrains.jewel.foundation.shortcut.JewelActionKind[]
+*:org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry
+- a:definition-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition
+- a:definitions():java.util.List
+- a:register(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition):org.jetbrains.jewel.foundation.shortcut.ActionRegistration
+- sampledPresentation-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+- shortcutsFor-ffnWhyY(java.lang.String):java.util.List
+*f:org.jetbrains.jewel.foundation.shortcut.JewelActions
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.JewelActions
+- f:all():java.util.List
+- f:defaultDefinitions(Z):java.util.List
+- f:getCopy():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getCut():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getPaste():org.jetbrains.jewel.foundation.shortcut.JewelAction
+- f:getSelectAll():org.jetbrains.jewel.foundation.shortcut.JewelAction
+*f:org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):V
+- b:<init>(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- f:component2():org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- f:copy(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.JewelKeySequence
+- f:displayText():java.lang.String
+- equals(java.lang.Object):Z
+- f:getFirst():org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- f:getSecond():org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke$Companion
+- b:<init>(J,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1-EK5gGoQ():J
+- f:component2():Z
+- f:component3():Z
+- f:component4():Z
+- f:component5():Z
+- f:copy-yzqMiHI(J,Z,Z,Z,Z):org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- bs:copy-yzqMiHI$default(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,J,Z,Z,Z,Z,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+- f:displayText():java.lang.String
+- equals(java.lang.Object):Z
+- f:getAlt():Z
+- f:getCtrl():Z
+- f:getKey-EK5gGoQ():J
+- f:getMeta():Z
+- f:getShift():Z
+- hashCode():I
+- f:matches-ZmokQxo(java.lang.Object):Z
+*f:org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke$Companion
+- f:fromKeyDownOrNull-ZmokQxo(java.lang.Object):org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke
+*:org.jetbrains.jewel.foundation.shortcut.JewelKeymap
+- a:actionIds():java.util.Set
+- a:actionIdsFor(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):java.util.List
+- a:actionIdsForPrefix(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):java.util.List
+- conflicts(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):java.util.List
+- a:getModificationCount():kotlinx.coroutines.flow.StateFlow
+- a:getName():java.lang.String
+- a:getParent():org.jetbrains.jewel.foundation.shortcut.JewelKeymap
+- a:shortcutsFor-ffnWhyY(java.lang.String):java.util.List
+*:org.jetbrains.jewel.foundation.shortcut.JewelKeymapManager
+- a:addKeymap(org.jetbrains.jewel.foundation.shortcut.JewelKeymap):V
+- a:getActiveKeymap():kotlinx.coroutines.flow.StateFlow
+- a:getKeymaps():kotlinx.coroutines.flow.StateFlow
+- a:removeKeymap(java.lang.String):V
+- a:setActiveKeymap(java.lang.String):V
+f:org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostKt
+- *sf:rememberJewelShortcutHostState(org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry,kotlin.jvm.functions.Function0,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState
+*f:org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry,J,kotlin.jvm.functions.Function0):V
+- b:<init>(org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry,J,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry,kotlin.jvm.functions.Function0):V
+- b:<init>(org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:cancelPendingChord():Z
+- f:claimsKeyDown-ZmokQxo(java.lang.Object):Z
+- f:getEvents():org.jetbrains.jewel.foundation.shortcut.ActionEventSource
+- f:getInvoker():org.jetbrains.jewel.foundation.shortcut.ActionInvoker
+- f:getOnDispatch():kotlin.jvm.functions.Function1
+- f:getPresentations():org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler
+- f:getResolverRootModifier():androidx.compose.ui.Modifier
+- f:isAwaitingSecondStroke():Z
+- f:onPreviewKeyEvent-ZmokQxo(java.lang.Object):Z
+- f:openMenuShortcutScope():org.jetbrains.jewel.foundation.shortcut.MenuShortcutScope
+- f:presentationFor-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.ActionPresentation
+- f:reset():V
+- f:resolveFocusedHandler-ffnWhyY(java.lang.String):kotlin.jvm.functions.Function0
+- f:runResolvedInvocation-ITNSzaE(java.lang.String,org.jetbrains.jewel.foundation.shortcut.ActionTrigger,kotlin.jvm.functions.Function0):V
+- f:setInvoker(org.jetbrains.jewel.foundation.shortcut.ActionInvoker):V
+- f:setOnDispatch(kotlin.jvm.functions.Function1):V
+- f:shortcutsFor-ffnWhyY(java.lang.String):java.util.List
+f:org.jetbrains.jewel.foundation.shortcut.JewelShortcutLocalsKt
+- *sf:ProvideJewelShortcutHost(org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+- *sf:getLocalJewelShortcutHost():androidx.compose.runtime.ProvidableCompositionLocal
+*e:org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- java.lang.Enum
+- sf:Dismiss:org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- sf:KeepAlways:org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- sf:KeepIfPreferred:org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- sf:KeepIfRequested:org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy
+- s:values():org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy[]
+*f:org.jetbrains.jewel.foundation.shortcut.MenuShortcutScope
+- java.lang.AutoCloseable
+- sf:$stable:I
+- close():V
+- f:register(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,kotlin.jvm.functions.Function0):V
+- f:replaceAll(java.util.Map):V
+*f:org.jetbrains.jewel.foundation.shortcut.MutableActionEventSource
+- org.jetbrains.jewel.foundation.shortcut.ActionEventSource
+- sf:$stable:I
+- <init>():V
+- f:emit(org.jetbrains.jewel.foundation.shortcut.ActionInvocation):V
+- getInvocations():kotlinx.coroutines.flow.SharedFlow
+*:org.jetbrains.jewel.foundation.shortcut.MutableJewelKeymap
+- org.jetbrains.jewel.foundation.shortcut.JewelKeymap
+- a:bind-nwx-PhA(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+- a:hideInherited-nwx-PhA(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+- a:removeAllBindings-ffnWhyY(java.lang.String):V
+- a:replaceBindings-nwx-PhA(java.lang.String,java.util.List):V
+- a:unbind-nwx-PhA(java.lang.String,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence):V
+*:org.jetbrains.jewel.foundation.shortcut.PresentationValue
+*f:org.jetbrains.jewel.foundation.shortcut.PresentationValue$Inherit
+- org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.shortcut.PresentationValue$Inherit
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.PresentationValue$Set
+- org.jetbrains.jewel.foundation.shortcut.PresentationValue
+- sf:$stable:I
+- <init>(java.lang.Object):V
+- f:component1():java.lang.Object
+- f:copy(java.lang.Object):org.jetbrains.jewel.foundation.shortcut.PresentationValue$Set
+- bs:copy$default(org.jetbrains.jewel.foundation.shortcut.PresentationValue$Set,java.lang.Object,I,java.lang.Object):org.jetbrains.jewel.foundation.shortcut.PresentationValue$Set
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.Object
+- hashCode():I
+*f:org.jetbrains.jewel.foundation.shortcut.ShortcutDispatchEngine
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.foundation.shortcut.ShortcutDispatchEngine$Companion
+- sf:DEFAULT_CHORD_TIMEOUT_MILLIS:J
+- <init>(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,J,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):V
+- b:<init>(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,J,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:armTypedSuppression():V
+- f:cancelPendingChord():Z
+- f:claimsStroke(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):Z
+- f:expirePendingChordIfTimedOut():Z
+- f:isAwaitingSecondStroke():Z
+- f:onKeyDown(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):org.jetbrains.jewel.foundation.shortcut.DispatchDecision
+- f:onKeyUp(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke):V
+- f:onKeyUp-YVgTNJs(J):V
+- f:onTypedEvent():Z
+- f:reset():V
+- f:resolveFocusedBinding-ffnWhyY(java.lang.String):org.jetbrains.jewel.foundation.shortcut.EngineBinding
+*f:org.jetbrains.jewel.foundation.shortcut.ShortcutDispatchEngine$Companion
+f:org.jetbrains.jewel.foundation.shortcut.ShortcutModifiersKt
+- *sf:claimKeyEvent(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+- *bs:claimKeyEvent$default(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):androidx.compose.ui.Modifier
+- *sf:claimShortcut(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,Z,Z,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,kotlin.jvm.functions.Function0):androidx.compose.ui.Modifier
+- *bs:claimShortcut$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.shortcut.JewelKeySequence,Z,Z,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,kotlin.jvm.functions.Function0,I,java.lang.Object):androidx.compose.ui.Modifier
+- *sf:shortcut(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.shortcut.JewelAction,Z,Z,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride,kotlin.jvm.functions.Function0):androidx.compose.ui.Modifier
+- *bs:shortcut$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.shortcut.JewelAction,Z,Z,org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy,org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride,kotlin.jvm.functions.Function0,I,java.lang.Object):androidx.compose.ui.Modifier
+*e:org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy
+- java.lang.Enum
+- sf:OnceUntilRelease:org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy
+- sf:RepeatWhileHeld:org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy
+- s:values():org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy[]
+f:org.jetbrains.jewel.foundation.shortcut.ShortcutSemanticsKt
+- *sf:getJewelClaimedShortcuts():androidx.compose.ui.semantics.SemanticsPropertyKey
+- *sf:getJewelShortcutActions():androidx.compose.ui.semantics.SemanticsPropertyKey
+- *sf:jewelClaimedShortcuts(androidx.compose.ui.semantics.SemanticsPropertyReceiver,java.util.List):V
+- *sf:jewelShortcutActions(androidx.compose.ui.semantics.SemanticsPropertyReceiver,java.util.List):V

@@ -11,4 +11,7 @@ dependencies {
     compileOnly(projects.markdown.core)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
+    testImplementation(project(":foundation"))
+    testImplementation(project(":ui"))
+    testImplementation(project(":int-ui:int-ui-standalone"))
 }

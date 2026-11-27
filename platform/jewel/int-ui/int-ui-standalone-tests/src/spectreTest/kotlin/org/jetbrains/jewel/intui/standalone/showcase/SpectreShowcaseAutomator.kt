@@ -33,8 +33,34 @@ internal class SpectreShowcaseAutomator(private val automator: ComposeAutomator)
         automator.scrollWheel(node, wheelClicks)
     }
 
-    override suspend fun pressKey(keyCode: Int) {
-        automator.pressKey(keyCode)
+    override suspend fun pressKey(keyCode: Int, modifiers: Int) {
+        automator.pressKey(keyCode, modifiers)
+    }
+
+    override suspend fun typeText(text: String) {
+        automator.typeText(text)
+    }
+
+    override suspend fun textOf(tag: String): String? {
+        automator.refreshWindows()
+        val node = automator.findByTestTag(tag).firstOrNull() ?: return null
+        return node.texts.joinToString(" ").ifEmpty { null }
+    }
+
+    override suspend fun editableTextOf(tag: String): String? {
+        automator.refreshWindows()
+        return automator.findByTestTag(tag).firstOrNull()?.editableText
+    }
+
+    override suspend fun isEnabled(tag: String): Boolean {
+        automator.refreshWindows()
+        val node = automator.findByTestTag(tag).firstOrNull() ?: return false
+        return !node.isDisabled
+    }
+
+    override suspend fun isSelected(tag: String): Boolean {
+        automator.refreshWindows()
+        return automator.findByTestTag(tag).firstOrNull()?.isSelected == true
     }
 
     override suspend fun waitForIdle() {

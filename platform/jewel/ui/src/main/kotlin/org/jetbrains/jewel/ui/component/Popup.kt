@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.ZeroCornerSize
@@ -29,6 +30,7 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import java.awt.Shape
 import org.jetbrains.jewel.foundation.JewelFlags
+import org.jetbrains.jewel.foundation.shortcut.LocalJewelShortcutHost
 
 /**
  * Displays a popup with the provided content at a position determined by the given [PopupPositionProvider].
@@ -199,6 +201,7 @@ public fun Popup(
  *   the platform supports it.
  * @param content The composable content to be displayed inside the popup.
  */
+@Suppress("ModifierMissing")
 @Composable
 public fun Popup(
     popupPositionProvider: PopupPositionProvider,
@@ -210,26 +213,40 @@ public fun Popup(
     windowShape: ((IntSize) -> Shape)? = null,
     content: @Composable () -> Unit,
 ) {
+    val shortcutHost = LocalJewelShortcutHost.current
+    val combinedOnPreviewKeyEvent: ((KeyEvent) -> Boolean)? =
+        if (shortcutHost == null || !properties.focusable) {
+            onPreviewKeyEvent
+        } else {
+            { event -> shortcutHost.onPreviewKeyEvent(event) || (onPreviewKeyEvent?.invoke(event) == true) }
+        }
+    val wrappedContent: @Composable () -> Unit =
+        if (shortcutHost == null || !properties.focusable) {
+            content
+        } else {
+            { Box(modifier = shortcutHost.resolverRootModifier, propagateMinConstraints = true) { content() } }
+        }
+
     DisableSelection {
         if (JewelFlags.useCustomPopupRenderer) {
             LocalPopupRenderer.current.Popup(
                 popupPositionProvider = popupPositionProvider,
                 properties = properties,
                 onDismissRequest = onDismissRequest,
-                onPreviewKeyEvent = onPreviewKeyEvent,
+                onPreviewKeyEvent = combinedOnPreviewKeyEvent,
                 onKeyEvent = onKeyEvent,
                 cornerSize = cornerSize,
                 windowShape = windowShape,
-                content = content,
+                content = wrappedContent,
             )
         } else {
             ComposePopup(
                 popupPositionProvider = popupPositionProvider,
                 onDismissRequest = onDismissRequest?.let { dismiss -> { dismiss(InputMode.Touch) } },
                 properties = properties,
-                onPreviewKeyEvent = onPreviewKeyEvent,
+                onPreviewKeyEvent = combinedOnPreviewKeyEvent,
                 onKeyEvent = onKeyEvent,
-                content = content,
+                content = wrappedContent,
             )
         }
     }
@@ -497,6 +514,12 @@ internal fun handlePopupMenuOnKeyEvent(
     inputModeManager: InputModeManager,
     menuController: MenuController,
 ): Boolean {
+    // When a shortcut host is installed, MenuContent registers only unrepresentable strokes (e.g. key-release
+    // or AltGraph) in menuController while representable press strokes live in the host menu scope, so this
+    // lookup is strictly disjoint and never races with host dispatch.
+    menuController.findAndExecuteShortcut(composeKeyEventToSwingKeyStroke(keyEvent))?.let {
+        return it
+    }
     return keyEvent.type == KeyEventType.KeyDown &&
         when (keyEvent.key) {
             Key.DirectionDown -> {

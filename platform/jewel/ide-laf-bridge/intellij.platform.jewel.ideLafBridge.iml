@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />

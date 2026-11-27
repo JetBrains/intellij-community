@@ -13,17 +13,20 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.awtEventOrNull
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.window.PopupProperties
@@ -82,22 +85,18 @@ internal fun ContextMenu(
 ) {
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
-    val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
     val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
+    val menuController = remember { DefaultMenuController(onDismissRequest = { currentOnDismissRequest(it) }) }
 
     PopupContainer(
         modifier = modifier,
         popupPositionProvider = rememberPopupPositionProviderAtPosition(position, style.metrics.offset),
         onDismissRequest = { inputMode -> currentOnDismissRequest(inputMode) },
-        onPreviewKeyEvent = { false },
         popupProperties = PopupProperties(focusable = focusable),
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
             val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
-            val swingKeyStroke = composeKeyEventToSwingKeyStroke(it)
-
-            menuController.findAndExecuteShortcut(swingKeyStroke)
-                ?: handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
         },
         useIntrinsicWidth = true,
         style = popupContainerStyle,
@@ -202,6 +201,9 @@ public sealed class ContextMenuItemOptionAction {
 }
 
 internal fun composeKeyEventToSwingKeyStroke(event: KeyEvent): KeyStroke? {
+    event.awtEventOrNull?.let {
+        return KeyStroke.getKeyStrokeForEvent(it)
+    }
     val awtKeyCode = event.key.nativeKeyCode
     var modifiers = 0
 
@@ -210,5 +212,5 @@ internal fun composeKeyEventToSwingKeyStroke(event: KeyEvent): KeyStroke? {
     if (event.isAltPressed) modifiers = modifiers or InputEvent.ALT_DOWN_MASK
     if (event.isShiftPressed) modifiers = modifiers or InputEvent.SHIFT_DOWN_MASK
 
-    return KeyStroke.getKeyStroke(awtKeyCode, modifiers, false)
+    return KeyStroke.getKeyStroke(awtKeyCode, modifiers, event.type == KeyEventType.KeyUp)
 }

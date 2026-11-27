@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.compose" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />

@@ -54,6 +54,20 @@ public object ShowcaseE2eTags {
 
     public const val SCROLLBARS_LAZY_COLUMN_FIRST_ITEM: String = "showcase.scrollbars.lazyColumn.firstItem"
     public const val SCROLLBARS_LAZY_COLUMN_FOURTH_ITEM: String = "showcase.scrollbars.lazyColumn.fourthItem"
+
+    public const val SHORTCUT_TESTER_OUTER: String = "ShortcutTester.Outer"
+    public const val SHORTCUT_TESTER_OUTER_COUNTER: String = "ShortcutTester.OuterCounter"
+    public const val SHORTCUT_TESTER_EDITOR: String = "ShortcutTester.Editor"
+    public const val SHORTCUT_TESTER_EDITOR_COUNTER: String = "ShortcutTester.EditorCounter"
+    public const val SHORTCUT_TESTER_PING: String = "ShortcutTester.Ping"
+    public const val SHORTCUT_TESTER_PING_COUNTER: String = "ShortcutTester.PingCounter"
+    public const val SHORTCUT_TESTER_CLAIMER: String = "ShortcutTester.Claimer"
+    public const val SHORTCUT_TESTER_CLAIMER_COUNTER: String = "ShortcutTester.ClaimerCounter"
+    public const val SHORTCUT_TESTER_CLAIM_ACTIVE: String = "ShortcutTester.ClaimActive"
+    public const val SHORTCUT_TESTER_TEXT_FIELD: String = "ShortcutTester.TextField"
+    public const val SHORTCUT_TESTER_MACRO_COUNTER: String = "ShortcutTester.MacroCounter"
+    public const val SHORTCUT_TESTER_REFORMAT: String = "ShortcutTester.Reformat"
+    public const val SHORTCUT_TESTER_REFORMAT_STATUS: String = "ShortcutTester.ReformatStatus"
 }
 
 /**

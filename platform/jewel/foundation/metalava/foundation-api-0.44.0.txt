@@ -91,8 +91,11 @@ package org.jetbrains.jewel.foundation {
   }
 
   public final class JewelFlags {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public boolean getStrictMode();
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public boolean getUseCustomPopupRenderer();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public void setStrictMode(boolean);
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public void setUseCustomPopupRenderer(boolean);
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public boolean strictMode;
     property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public boolean useCustomPopupRenderer;
     field public static final org.jetbrains.jewel.foundation.JewelFlags INSTANCE;
   }
@@ -862,6 +865,553 @@ package org.jetbrains.jewel.foundation.search {
     method public static <T extends java.lang.CharSequence> java.util.List<T> filter(Iterable<? extends T>, org.jetbrains.jewel.foundation.search.SpeedSearchMatcher matcher);
     method public static <T> java.util.List<T> filter(Iterable<? extends T>, org.jetbrains.jewel.foundation.search.SpeedSearchMatcher matcher, kotlin.jvm.functions.Function1<? super T,? extends java.lang.CharSequence> textRepresentationProvider);
     method public static boolean matches(CharSequence, org.jetbrains.jewel.foundation.search.SpeedSearchMatcher matcher);
+  }
+
+}
+
+package org.jetbrains.jewel.foundation.shortcut {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum ActionDispatchRejection {
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection Disabled;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection HostUnavailable;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection NoFocusedBinding;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection RejectedByHost;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection Unregistered;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface ActionDispatchResult {
+  }
+
+  public static final class ActionDispatchResult.Dispatched implements org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult {
+    field public static final org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult.Dispatched INSTANCE;
+  }
+
+  public static final class ActionDispatchResult.Rejected implements org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult {
+    ctor public ActionDispatchResult.Rejected(org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection reason);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection component1();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult.Rejected copy(optional org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection reason);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection getReason();
+    property public org.jetbrains.jewel.foundation.shortcut.ActionDispatchRejection reason;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface ActionEventSource {
+    method public kotlinx.coroutines.flow.SharedFlow<org.jetbrains.jewel.foundation.shortcut.ActionInvocation> getInvocations();
+    property public abstract kotlinx.coroutines.flow.SharedFlow<org.jetbrains.jewel.foundation.shortcut.ActionInvocation> invocations;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ActionInvocation {
+    ctor @KotlinOnly public ActionInvocation(org.jetbrains.jewel.foundation.shortcut.JewelActionId? actionId, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? sequence, org.jetbrains.jewel.foundation.shortcut.ActionTrigger trigger);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? component2();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionTrigger component3();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionInvocation copy-gQU0D6k(String? actionId, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? sequence, org.jetbrains.jewel.foundation.shortcut.ActionTrigger trigger);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? getSequence();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionTrigger getTrigger();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelActionId? actionId;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? sequence;
+    property public org.jetbrains.jewel.foundation.shortcut.ActionTrigger trigger;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface ActionInvoker {
+    method public org.jetbrains.jewel.foundation.shortcut.ActionDispatchResult invoke(org.jetbrains.jewel.foundation.shortcut.JewelAction action, optional org.jetbrains.jewel.foundation.shortcut.ActionTrigger trigger);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ActionPresentation {
+    ctor public ActionPresentation(String text, optional String? description, optional boolean enabled, optional boolean visible, optional com.intellij.platform.icons.IconDescriptor? icon, optional org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy? menuDismissPolicy, optional java.util.Map<java.lang.String,?> properties, optional org.jetbrains.jewel.foundation.shortcut.ActionResolution resolution);
+    method public String component1();
+    method public String? component2();
+    method public boolean component3();
+    method public boolean component4();
+    method public com.intellij.platform.icons.IconDescriptor? component5();
+    method public org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy? component6();
+    method public java.util.Map<java.lang.String,java.lang.Object> component7();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionResolution component8();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentation copy(optional String text, optional String? description, optional boolean enabled, optional boolean visible, optional com.intellij.platform.icons.IconDescriptor? icon, optional org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy? menuDismissPolicy, optional java.util.Map<java.lang.String,?> properties, optional org.jetbrains.jewel.foundation.shortcut.ActionResolution resolution);
+    method public String? getDescription();
+    method public boolean getEnabled();
+    method public com.intellij.platform.icons.IconDescriptor? getIcon();
+    method public org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy? getMenuDismissPolicy();
+    method public java.util.Map<java.lang.String,java.lang.Object> getProperties();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionResolution getResolution();
+    method public String getText();
+    method public boolean getVisible();
+    method public boolean isFlagSet(String name);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentation withProperty(String name, Object value);
+    property public String? description;
+    property public boolean enabled;
+    property public com.intellij.platform.icons.IconDescriptor? icon;
+    property public org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy? menuDismissPolicy;
+    property public java.util.Map<java.lang.String,java.lang.Object> properties;
+    property public org.jetbrains.jewel.foundation.shortcut.ActionResolution resolution;
+    property public String text;
+    property public boolean visible;
+    field public static final org.jetbrains.jewel.foundation.shortcut.ActionPresentation.Companion Companion;
+  }
+
+  public static final class ActionPresentation.Companion {
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentation hostUnavailable(org.jetbrains.jewel.foundation.shortcut.JewelAction action);
+  }
+
+  public final class ActionPresentationKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static boolean getHidesDropdownIcon(org.jetbrains.jewel.foundation.shortcut.ActionPresentation);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static boolean getSelected(org.jetbrains.jewel.foundation.shortcut.ActionPresentation);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static boolean getShowsTextInToolbar(org.jetbrains.jewel.foundation.shortcut.ActionPresentation);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.foundation.shortcut.ActionPresentation sampled(org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation, boolean enabled, org.jetbrains.jewel.foundation.shortcut.ActionResolution resolution);
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static boolean org.jetbrains.jewel.foundation.shortcut.ActionPresentation.hidesDropdownIcon;
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static boolean org.jetbrains.jewel.foundation.shortcut.ActionPresentation.selected;
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static boolean org.jetbrains.jewel.foundation.shortcut.ActionPresentation.showsTextInToolbar;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ActionPresentationOverride {
+    ctor public ActionPresentationOverride();
+    ctor public ActionPresentationOverride(optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String> text, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String?> description, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> visible, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> selected, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<? extends com.intellij.platform.icons.IconDescriptor?> icon, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<? extends org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy?> menuDismissPolicy, optional java.util.Map<java.lang.String,?> properties);
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String> component1();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String?> component2();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> component3();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> component4();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<com.intellij.platform.icons.IconDescriptor?> component5();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy?> component6();
+    method public java.util.Map<java.lang.String,java.lang.Object> component7();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride copy(optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String> text, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String?> description, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> visible, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> selected, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<? extends com.intellij.platform.icons.IconDescriptor?> icon, optional org.jetbrains.jewel.foundation.shortcut.PresentationValue<? extends org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy?> menuDismissPolicy, optional java.util.Map<java.lang.String,?> properties);
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String?> getDescription();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<com.intellij.platform.icons.IconDescriptor?> getIcon();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy?> getMenuDismissPolicy();
+    method public java.util.Map<java.lang.String,java.lang.Object> getProperties();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> getSelected();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String> getText();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> getVisible();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentation mergeOver(org.jetbrains.jewel.foundation.shortcut.ActionPresentation base);
+    property public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String?> description;
+    property public org.jetbrains.jewel.foundation.shortcut.PresentationValue<com.intellij.platform.icons.IconDescriptor?> icon;
+    property public org.jetbrains.jewel.foundation.shortcut.PresentationValue<org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy?> menuDismissPolicy;
+    property public java.util.Map<java.lang.String,java.lang.Object> properties;
+    property public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> selected;
+    property public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.String> text;
+    property public org.jetbrains.jewel.foundation.shortcut.PresentationValue<java.lang.Boolean> visible;
+    field public static final org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride.Companion Companion;
+  }
+
+  public static final class ActionPresentationOverride.Companion {
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride getEmpty();
+    property public org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride Empty;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ActionPresentationScheduler {
+    ctor public ActionPresentationScheduler(kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.shortcut.JewelActionId,org.jetbrains.jewel.foundation.shortcut.ActionPresentation> resolve);
+    method public kotlinx.coroutines.flow.StateFlow<org.jetbrains.jewel.foundation.shortcut.ActionPresentation> acquire(String actionId);
+    method public int activeDemandCount();
+    method public void invalidate(optional String? actionId);
+    method public void release(String actionId);
+  }
+
+  public final class ActionPresentationSchedulerKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.State<org.jetbrains.jewel.foundation.shortcut.ActionPresentation> collectPresentationAsState(org.jetbrains.jewel.foundation.shortcut.JewelAction, org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler scheduler);
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static <T> androidx.compose.runtime.State<T> collectPresentationAsState(org.jetbrains.jewel.foundation.shortcut.JewelAction, org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler scheduler, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.shortcut.ActionPresentation,? extends T> selector);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ActionPropertyNames {
+    property public static String HideDropdownIcon;
+    property public static String Selected;
+    property public static String ShowTextInToolbar;
+    field public static final String HideDropdownIcon = "HIDE_DROPDOWN_ICON";
+    field public static final org.jetbrains.jewel.foundation.shortcut.ActionPropertyNames INSTANCE;
+    field public static final String Selected = "selected";
+    field public static final String ShowTextInToolbar = "SHOW_TEXT_IN_TOOLBAR";
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface ActionRegistration extends java.lang.AutoCloseable {
+    method public void close();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction getAction();
+    property public abstract org.jetbrains.jewel.foundation.shortcut.JewelAction action;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum ActionResolution {
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionResolution HostUnavailable;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionResolution NoFocusedBinding;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionResolution Resolved;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ActionResolution Unregistered;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ActionTemplatePresentation {
+    ctor public ActionTemplatePresentation(String text, optional String? description, optional com.intellij.platform.icons.IconDescriptor? icon, optional java.util.Map<java.lang.String,?> properties);
+    method public String component1();
+    method public String? component2();
+    method public com.intellij.platform.icons.IconDescriptor? component3();
+    method public java.util.Map<java.lang.String,java.lang.Object> component4();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation copy(optional String text, optional String? description, optional com.intellij.platform.icons.IconDescriptor? icon, optional java.util.Map<java.lang.String,?> properties);
+    method public String? getDescription();
+    method public com.intellij.platform.icons.IconDescriptor? getIcon();
+    method public java.util.Map<java.lang.String,java.lang.Object> getProperties();
+    method public String getText();
+    property public String? description;
+    property public com.intellij.platform.icons.IconDescriptor? icon;
+    property public java.util.Map<java.lang.String,java.lang.Object> properties;
+    property public String text;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface ActionTrigger {
+  }
+
+  public static final class ActionTrigger.Keyboard implements org.jetbrains.jewel.foundation.shortcut.ActionTrigger {
+    ctor public ActionTrigger.Keyboard(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? sequence);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? component1();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionTrigger.Keyboard copy(optional org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? sequence);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? getSequence();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? sequence;
+  }
+
+  public static final class ActionTrigger.Pointer implements org.jetbrains.jewel.foundation.shortcut.ActionTrigger {
+    field public static final org.jetbrains.jewel.foundation.shortcut.ActionTrigger.Pointer INSTANCE;
+  }
+
+  public static final class ActionTrigger.Programmatic implements org.jetbrains.jewel.foundation.shortcut.ActionTrigger {
+    field public static final org.jetbrains.jewel.foundation.shortcut.ActionTrigger.Programmatic INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class DefaultJewelActionRegistry implements org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry {
+    ctor public DefaultJewelActionRegistry();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition? definition(String id);
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition> definitions();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionRegistration register(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition definition);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class DefaultJewelKeymapManager implements org.jetbrains.jewel.foundation.shortcut.JewelKeymapManager {
+    ctor public DefaultJewelKeymapManager(org.jetbrains.jewel.foundation.shortcut.JewelKeymap initial);
+    method public void addKeymap(org.jetbrains.jewel.foundation.shortcut.JewelKeymap keymap);
+    method public kotlinx.coroutines.flow.StateFlow<org.jetbrains.jewel.foundation.shortcut.JewelKeymap> getActiveKeymap();
+    method public kotlinx.coroutines.flow.StateFlow<java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeymap>> getKeymaps();
+    method public void removeKeymap(String name);
+    method public void setActiveKeymap(String name);
+    property public kotlinx.coroutines.flow.StateFlow<org.jetbrains.jewel.foundation.shortcut.JewelKeymap> activeKeymap;
+    property public kotlinx.coroutines.flow.StateFlow<java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeymap>> keymaps;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface DispatchDecision {
+  }
+
+  public static final class DispatchDecision.Consumed implements org.jetbrains.jewel.foundation.shortcut.DispatchDecision {
+    ctor @KotlinOnly public DispatchDecision.Consumed(org.jetbrains.jewel.foundation.shortcut.JewelActionId? invokedActionId, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? invokedSequence, org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.DispatchDecision.Route route);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? component2();
+    method public org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route component3();
+    method public org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed copy-gQU0D6k(String? invokedActionId, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? invokedSequence, org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route route);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? getInvokedSequence();
+    method public org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route getRoute();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelActionId? invokedActionId;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence? invokedSequence;
+    property public org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.DispatchDecision.Route route;
+  }
+
+  public enum DispatchDecision.Consumed.Route {
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route ChordCancelled;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route ChordPrefix;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route Claim;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route Keymap;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route RepeatSuppressed;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed.Route TypedSuppressed;
+  }
+
+  public static final class DispatchDecision.Pass implements org.jetbrains.jewel.foundation.shortcut.DispatchDecision {
+    field public static final org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Pass INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class EngineBinding {
+    ctor @KotlinOnly public EngineBinding(org.jetbrains.jewel.foundation.shortcut.JewelActionId actionId, boolean enabled, boolean blocksOuterBindings, String origin, optional org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy repeatPolicy, optional org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride presentationOverride, kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke);
+    method public boolean getBlocksOuterBindings();
+    method public boolean getEnabled();
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getOnInvoke();
+    method public String getOrigin();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride getPresentationOverride();
+    method public org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy getRepeatPolicy();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelActionId actionId;
+    property public boolean blocksOuterBindings;
+    property public boolean enabled;
+    property public kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke;
+    property public String origin;
+    property public org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride presentationOverride;
+    property public org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy repeatPolicy;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class EngineClaim {
+    ctor public EngineClaim(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence, boolean enabled, boolean blocksOuterClaims, optional org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy repeatPolicy, kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke);
+    method public boolean getBlocksOuterClaims();
+    method public boolean getEnabled();
+    method public kotlin.jvm.functions.Function0<kotlin.Unit> getOnInvoke();
+    method public org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy getRepeatPolicy();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence getSequence();
+    property public boolean blocksOuterClaims;
+    property public boolean enabled;
+    property public kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke;
+    property public org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy repeatPolicy;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class InMemoryJewelKeymap implements org.jetbrains.jewel.foundation.shortcut.MutableJewelKeymap {
+    ctor public InMemoryJewelKeymap(String name, optional org.jetbrains.jewel.foundation.shortcut.JewelKeymap? parent);
+    method @kotlin.jvm.Synchronized public java.util.Set<org.jetbrains.jewel.foundation.shortcut.JewelActionId> actionIds();
+    method @kotlin.jvm.Synchronized public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionId> actionIdsFor(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method @kotlin.jvm.Synchronized public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionId> actionIdsForPrefix(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke first);
+    method @kotlin.jvm.Synchronized public void bind(String action, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method public kotlinx.coroutines.flow.StateFlow<java.lang.Long> getModificationCount();
+    method public String getName();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeymap? getParent();
+    method @kotlin.jvm.Synchronized public void hideInherited(String action, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method @kotlin.jvm.Synchronized public void removeAllBindings(String action);
+    method @kotlin.jvm.Synchronized public void replaceBindings(String action, java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> sequences);
+    method @kotlin.jvm.Synchronized public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> shortcutsFor(String action);
+    method @kotlin.jvm.Synchronized public void unbind(String action, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    property public kotlinx.coroutines.flow.StateFlow<java.lang.Long> modificationCount;
+    property public String name;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeymap? parent;
+    field public static final org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap.Companion Companion;
+  }
+
+  public static final class InMemoryJewelKeymap.Companion {
+    method public org.jetbrains.jewel.foundation.shortcut.InMemoryJewelKeymap fromDefaults(String name, org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry registry);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelAction {
+    ctor @KotlinOnly public JewelAction(org.jetbrains.jewel.foundation.shortcut.JewelActionId id, String title, optional String? category, optional org.jetbrains.jewel.foundation.shortcut.JewelActionKind kind, optional com.intellij.platform.icons.IconDescriptor? icon, optional String? description);
+    ctor @KotlinOnly public JewelAction(org.jetbrains.jewel.foundation.shortcut.JewelActionId id, org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation template, optional String? category, optional org.jetbrains.jewel.foundation.shortcut.JewelActionKind kind);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation component2();
+    method public String? component3();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelActionKind component4();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction copy-Cn80G-A(String id, org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation template, String? category, org.jetbrains.jewel.foundation.shortcut.JewelActionKind kind);
+    method public String? getCategory();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelActionKind getKind();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation getTemplate();
+    method public String getTitle();
+    property public String? category;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelActionId id;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelActionKind kind;
+    property public org.jetbrains.jewel.foundation.shortcut.ActionTemplatePresentation template;
+    property public String title;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelActionDefinition {
+    ctor public JewelActionDefinition(org.jetbrains.jewel.foundation.shortcut.JewelAction action, optional java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> defaultShortcuts);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction component1();
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> component2();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition copy(optional org.jetbrains.jewel.foundation.shortcut.JewelAction action, optional java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> defaultShortcuts);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction getAction();
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> getDefaultShortcuts();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelAction action;
+    property public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> defaultShortcuts;
+  }
+
+  @SuppressCompatibility @kotlin.jvm.JvmInline @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final value class JewelActionId {
+    ctor @KotlinOnly public JewelActionId(String value);
+    method public String getValue();
+    property public String value;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum JewelActionKind {
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.JewelActionKind Command;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.JewelActionKind Toggle;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface JewelActionRegistry {
+    method public org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition? definition(String id);
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition> definitions();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionRegistration register(org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition definition);
+    method public default org.jetbrains.jewel.foundation.shortcut.ActionPresentation? sampledPresentation(String id);
+    method public default java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence>? shortcutsFor(String id);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelActions {
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelAction> all();
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionDefinition> defaultDefinitions(boolean useMacModifiers);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction getCopy();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction getCut();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction getPaste();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelAction getSelectAll();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelAction Copy;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelAction Cut;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelAction Paste;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelAction SelectAll;
+    field public static final org.jetbrains.jewel.foundation.shortcut.JewelActions INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelKeySequence {
+    ctor public JewelKeySequence(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke first, optional org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? second);
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke component1();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? component2();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeySequence copy(optional org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke first, optional org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? second);
+    method public String displayText();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke getFirst();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? getSecond();
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke first;
+    property public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? second;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelKeyStroke {
+    ctor @KotlinOnly public JewelKeyStroke(androidx.compose.ui.input.key.Key key, optional boolean ctrl, optional boolean shift, optional boolean alt, optional boolean meta);
+    method public boolean component2();
+    method public boolean component3();
+    method public boolean component4();
+    method public boolean component5();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke copy-yzqMiHI(long key, boolean ctrl, boolean shift, boolean alt, boolean meta);
+    method public String displayText();
+    method public boolean getAlt();
+    method public boolean getCtrl();
+    method public boolean getMeta();
+    method public boolean getShift();
+    method public boolean matches(Object event);
+    property public boolean alt;
+    property public boolean ctrl;
+    property public androidx.compose.ui.input.key.Key key;
+    property public boolean meta;
+    property public boolean shift;
+    field public static final org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke.Companion Companion;
+  }
+
+  public static final class JewelKeyStroke.Companion {
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? fromKeyDownOrNull(Object event);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface JewelKeymap {
+    method public java.util.Set<org.jetbrains.jewel.foundation.shortcut.JewelActionId> actionIds();
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionId> actionIdsFor(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionId> actionIdsForPrefix(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke first);
+    method public default java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelActionId> conflicts(org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method public kotlinx.coroutines.flow.StateFlow<java.lang.Long> getModificationCount();
+    method public String getName();
+    method public org.jetbrains.jewel.foundation.shortcut.JewelKeymap? getParent();
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> shortcutsFor(String action);
+    property public abstract kotlinx.coroutines.flow.StateFlow<java.lang.Long> modificationCount;
+    property public abstract String name;
+    property public abstract org.jetbrains.jewel.foundation.shortcut.JewelKeymap? parent;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface JewelKeymapManager {
+    method public void addKeymap(org.jetbrains.jewel.foundation.shortcut.JewelKeymap keymap);
+    method public kotlinx.coroutines.flow.StateFlow<org.jetbrains.jewel.foundation.shortcut.JewelKeymap> getActiveKeymap();
+    method public kotlinx.coroutines.flow.StateFlow<java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeymap>> getKeymaps();
+    method public void removeKeymap(String name);
+    method public void setActiveKeymap(String name);
+    property public abstract kotlinx.coroutines.flow.StateFlow<org.jetbrains.jewel.foundation.shortcut.JewelKeymap> activeKeymap;
+    property public abstract kotlinx.coroutines.flow.StateFlow<java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeymap>> keymaps;
+  }
+
+  public final class JewelShortcutHostKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState rememberJewelShortcutHostState(optional org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry? registry, kotlin.jvm.functions.Function0<? extends org.jetbrains.jewel.foundation.shortcut.JewelKeymap> keymap);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class JewelShortcutHostState {
+    ctor public JewelShortcutHostState(optional org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry? registry, kotlin.jvm.functions.Function0<? extends org.jetbrains.jewel.foundation.shortcut.JewelKeymap> keymapProvider);
+    ctor public JewelShortcutHostState(optional org.jetbrains.jewel.foundation.shortcut.JewelActionRegistry? registry, long chordTimeoutMillis, kotlin.jvm.functions.Function0<? extends org.jetbrains.jewel.foundation.shortcut.JewelKeymap> keymapProvider);
+    method public boolean cancelPendingChord();
+    method public boolean claimsKeyDown(Object event);
+    method public org.jetbrains.jewel.foundation.shortcut.ActionEventSource getEvents();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionInvoker getInvoker();
+    method public kotlin.jvm.functions.Function1<org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed,kotlin.Unit>? getOnDispatch();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler getPresentations();
+    method public androidx.compose.ui.Modifier getResolverRootModifier();
+    method public boolean isAwaitingSecondStroke();
+    method public boolean onPreviewKeyEvent(Object event);
+    method public org.jetbrains.jewel.foundation.shortcut.MenuShortcutScope openMenuShortcutScope();
+    method public org.jetbrains.jewel.foundation.shortcut.ActionPresentation presentationFor(String actionId);
+    method public void reset();
+    method public kotlin.jvm.functions.Function0<kotlin.Unit>? resolveFocusedHandler(String actionId);
+    method public void runResolvedInvocation(String actionId, org.jetbrains.jewel.foundation.shortcut.ActionTrigger trigger, kotlin.jvm.functions.Function0<kotlin.Unit> handler);
+    method public void setInvoker(org.jetbrains.jewel.foundation.shortcut.ActionInvoker);
+    method public void setOnDispatch(kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed,kotlin.Unit>?);
+    method public java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> shortcutsFor(String actionId);
+    property public org.jetbrains.jewel.foundation.shortcut.ActionEventSource events;
+    property public org.jetbrains.jewel.foundation.shortcut.ActionInvoker invoker;
+    property public boolean isAwaitingSecondStroke;
+    property public kotlin.jvm.functions.Function1<org.jetbrains.jewel.foundation.shortcut.DispatchDecision.Consumed,kotlin.Unit>? onDispatch;
+    property public org.jetbrains.jewel.foundation.shortcut.ActionPresentationScheduler presentations;
+    property public androidx.compose.ui.Modifier resolverRootModifier;
+  }
+
+  public final class JewelShortcutLocalsKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void ProvideJewelShortcutHost(org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState state, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState?> getLocalJewelShortcutHost();
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState?> LocalJewelShortcutHost;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum MenuDismissPolicy {
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy Dismiss;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy KeepAlways;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy KeepIfPreferred;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.MenuDismissPolicy KeepIfRequested;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class MenuShortcutScope implements java.lang.AutoCloseable {
+    method public void close();
+    method public void register(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke stroke, kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke);
+    method public void replaceAll(java.util.Map<org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke,? extends kotlin.jvm.functions.Function0<kotlin.Unit>> newEntries);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class MutableActionEventSource implements org.jetbrains.jewel.foundation.shortcut.ActionEventSource {
+    ctor public MutableActionEventSource();
+    method public void emit(org.jetbrains.jewel.foundation.shortcut.ActionInvocation invocation);
+    method public kotlinx.coroutines.flow.SharedFlow<org.jetbrains.jewel.foundation.shortcut.ActionInvocation> getInvocations();
+    property public kotlinx.coroutines.flow.SharedFlow<org.jetbrains.jewel.foundation.shortcut.ActionInvocation> invocations;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MutableJewelKeymap extends org.jetbrains.jewel.foundation.shortcut.JewelKeymap {
+    method public void bind(String action, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method public void hideInherited(String action, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+    method public void removeAllBindings(String action);
+    method public void replaceBindings(String action, java.util.List<org.jetbrains.jewel.foundation.shortcut.JewelKeySequence> sequences);
+    method public void unbind(String action, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface PresentationValue<T> {
+  }
+
+  public static final class PresentationValue.Inherit implements org.jetbrains.jewel.foundation.shortcut.PresentationValue {
+    field public static final org.jetbrains.jewel.foundation.shortcut.PresentationValue.Inherit INSTANCE;
+  }
+
+  public static final class PresentationValue.Set<T> implements org.jetbrains.jewel.foundation.shortcut.PresentationValue<T> {
+    ctor public PresentationValue.Set(T value);
+    method public T component1();
+    method public org.jetbrains.jewel.foundation.shortcut.PresentationValue.Set<T> copy(optional T value);
+    method public T getValue();
+    property public T value;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class ShortcutDispatchEngine {
+    ctor public ShortcutDispatchEngine(kotlin.jvm.functions.Function0<? extends org.jetbrains.jewel.foundation.shortcut.JewelKeymap> keymap, kotlin.jvm.functions.Function0<? extends java.util.List<org.jetbrains.jewel.foundation.shortcut.EngineBinding>> focusedBindings, kotlin.jvm.functions.Function0<? extends java.util.List<org.jetbrains.jewel.foundation.shortcut.EngineClaim>> focusedClaims, optional long chordTimeoutMillis, optional kotlin.jvm.functions.Function0<java.lang.Long> clockMillis, optional kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke?,kotlin.Unit>? onPendingChordChanged);
+    method public void armTypedSuppression();
+    method public boolean cancelPendingChord();
+    method public boolean claimsStroke(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke stroke);
+    method public boolean expirePendingChordIfTimedOut();
+    method public boolean isAwaitingSecondStroke();
+    method public org.jetbrains.jewel.foundation.shortcut.DispatchDecision onKeyDown(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? stroke);
+    method public void onKeyUp(long key);
+    method public void onKeyUp(org.jetbrains.jewel.foundation.shortcut.JewelKeyStroke? stroke);
+    method public boolean onTypedEvent();
+    method public void reset();
+    method public org.jetbrains.jewel.foundation.shortcut.EngineBinding? resolveFocusedBinding(String actionId);
+    property public boolean isAwaitingSecondStroke;
+    field public static final org.jetbrains.jewel.foundation.shortcut.ShortcutDispatchEngine.Companion Companion;
+    field public static final long DEFAULT_CHORD_TIMEOUT_MILLIS = 2000L; // 0x7d0L
+  }
+
+  public static final class ShortcutDispatchEngine.Companion {
+    property public static long DEFAULT_CHORD_TIMEOUT_MILLIS;
+  }
+
+  public final class ShortcutModifiersKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.Modifier claimKeyEvent(androidx.compose.ui.Modifier, kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.key.KeyEvent,java.lang.Boolean> matcher, optional boolean enabled, kotlin.jvm.functions.Function1<? super androidx.compose.ui.input.key.KeyEvent,kotlin.Unit> onKeyEvent);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.Modifier claimShortcut(androidx.compose.ui.Modifier, org.jetbrains.jewel.foundation.shortcut.JewelKeySequence sequence, optional boolean enabled, optional boolean blocksOuterClaims, optional org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy repeatPolicy, kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.Modifier shortcut(androidx.compose.ui.Modifier, org.jetbrains.jewel.foundation.shortcut.JewelAction action, optional boolean enabled, optional boolean blocksOuterBindings, optional org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy repeatPolicy, optional org.jetbrains.jewel.foundation.shortcut.ActionPresentationOverride presentation, kotlin.jvm.functions.Function0<kotlin.Unit> onInvoke);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum ShortcutRepeatPolicy {
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy OnceUntilRelease;
+    enum_constant public static final org.jetbrains.jewel.foundation.shortcut.ShortcutRepeatPolicy RepeatWhileHeld;
+  }
+
+  public final class ShortcutSemanticsKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.semantics.SemanticsPropertyKey<java.util.List<java.lang.String>> getJewelClaimedShortcuts();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.semantics.SemanticsPropertyKey<java.util.List<java.lang.String>> getJewelShortcutActions();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void jewelClaimedShortcuts(androidx.compose.ui.semantics.SemanticsPropertyReceiver, java.util.List<java.lang.String> displayTexts);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void jewelShortcutActions(androidx.compose.ui.semantics.SemanticsPropertyReceiver, java.util.List<java.lang.String> actionIds);
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.semantics.SemanticsPropertyKey<java.util.List<java.lang.String>> JewelClaimedShortcuts;
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.semantics.SemanticsPropertyKey<java.util.List<java.lang.String>> JewelShortcutActions;
   }
 
 }

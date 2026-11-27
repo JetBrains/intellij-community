@@ -75,8 +75,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
-import org.jetbrains.jewel.bridge.compose
+import org.jetbrains.jewel.bridge.actionSystem.findJewelComposePanelWrapper
+import org.jetbrains.jewel.bridge.composePopupPanel
+import org.jetbrains.jewel.bridge.installBridgeClaimLane
 import org.jetbrains.jewel.foundation.LocalComponent
+import org.jetbrains.jewel.foundation.shortcut.LocalJewelShortcutHost
 import org.jetbrains.jewel.ui.component.PopupRenderer
 
 private const val ATTACH_CONTENT_BEFORE_MEASURING = "AttachContentBeforeMeasuring"
@@ -156,7 +159,10 @@ private fun JBPopup(
 
     val owner = LocalComponent.current
     val rootOwner = LocalRootPopupOwner.current ?: owner
+    val ownerWrapper =
+        remember(rootOwner, owner) { findJewelComposePanelWrapper(rootOwner) ?: findJewelComposePanelWrapper(owner) }
     val compositionLocalContext = currentCompositionLocalContext
+    val parentShortcutHost = LocalJewelShortcutHost.current
 
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
     val popupRectangle = remember { mutableStateOf<Rectangle?>(null) }
@@ -178,11 +184,13 @@ private fun JBPopup(
     val jewelComposePanelWrapper = remember {
         lateinit var wrapper: JewelComposePanelWrapper
         wrapper =
-            compose(
+            composePopupPanel(
                 focusOnClickInside = false,
+                shortcutHost = if (properties.focusable) parentShortcutHost else null,
+                installShortcutBridge = properties.focusable,
                 content = {
-                    val parentBounds = parentBoundsInRoot.value ?: return@compose
-                    if (useHostLayoutFallback) return@compose
+                    val parentBounds = parentBoundsInRoot.value ?: return@composePopupPanel
+                    if (useHostLayoutFallback) return@composePopupPanel
 
                     Layout(
                         modifier =
@@ -223,9 +231,15 @@ private fun JBPopup(
                     )
                 },
             )
-                as JewelComposePanelWrapper
         wrapper.putClientProperty(ATTACH_CONTENT_BEFORE_MEASURING, true)
         wrapper
+    }
+
+    if (parentShortcutHost != null && currentProperties.focusable) {
+        DisposableEffect(jewelComposePanelWrapper, parentShortcutHost) {
+            val removeClaimLane = installBridgeClaimLane(jewelComposePanelWrapper, parentShortcutHost)
+            onDispose { removeClaimLane() }
+        }
     }
 
     val currentParentBounds = parentBoundsInRoot.value
@@ -412,6 +426,17 @@ private fun JBPopup(
         }
     }
 
+    ActivePopupWrapperEffect(
+        ownerWrapper = ownerWrapper,
+        popupWrapper = jewelComposePanelWrapper,
+        parentShortcutHost = parentShortcutHost,
+        focusable = currentProperties.focusable,
+        isPopupShown = isPopupShown,
+        isVisible = isVisible,
+        useHostLayoutFallback = useHostLayoutFallback,
+        isDisposed = popup.isDisposed,
+    )
+
     DisposableEffect(popup) {
         focusablePopupKeyRoutingOrder.remove(focusableKeyEntry)
         focusablePopupKeyRoutingOrder.add(focusableKeyEntry)
@@ -421,6 +446,42 @@ private fun JBPopup(
             if (!jewelComposePanelWrapper.composePanel.isDisplayable) {
                 jewelComposePanelWrapper.composePanel.dispose()
             }
+        }
+    }
+}
+
+@Composable
+internal fun ActivePopupWrapperEffect(
+    ownerWrapper: JewelComposePanelWrapper?,
+    popupWrapper: JewelComposePanelWrapper,
+    parentShortcutHost: org.jetbrains.jewel.foundation.shortcut.JewelShortcutHostState?,
+    focusable: Boolean,
+    isPopupShown: Boolean,
+    isVisible: Boolean?,
+    useHostLayoutFallback: Boolean,
+    isDisposed: Boolean,
+) {
+    DisposableEffect(
+        ownerWrapper,
+        popupWrapper,
+        parentShortcutHost,
+        focusable,
+        isPopupShown,
+        isVisible,
+        useHostLayoutFallback,
+        isDisposed,
+    ) {
+        val isEligible = parentShortcutHost != null && focusable && !useHostLayoutFallback
+        val isShowingPopup = isPopupShown && isVisible != false && !isDisposed
+        if (isEligible && isShowingPopup) {
+            ownerWrapper?.pushActivePopupWrapper(popupWrapper)
+        } else {
+            ownerWrapper?.popActivePopupWrapper(popupWrapper)
+        }
+        parentShortcutHost?.presentations?.invalidate()
+        onDispose {
+            ownerWrapper?.popActivePopupWrapper(popupWrapper)
+            parentShortcutHost?.presentations?.invalidate()
         }
     }
 }

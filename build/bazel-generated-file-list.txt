@@ -904,7 +904,7 @@ platform/jewel/markdown/extensions/images intellij.platform.jewel.markdown.exten
 platform/jewel/markdown/ide-laf-bridge-styling intellij.platform.jewel.markdown.ideLafBridgeStyling
 platform/jewel/markdown/int-ui-standalone-styling intellij.platform.jewel.markdown.intUiStandaloneStyling
 platform/jewel/markdown/testing intellij.platform.jewel.markdown.testing
-platform/jewel/samples/showcase intellij.platform.jewel.samples.showcase
+platform/jewel/samples/showcase intellij.platform.jewel.samples.showcase intellij.platform.jewel.samples.showcase.tests
 platform/jewel/samples/standalone intellij.platform.jewel.samples.standalone
 platform/jewel/ui intellij.platform.jewel.ui intellij.platform.jewel.ui.tests
 platform/jewel/ui-tests intellij.platform.jewel.uiTests

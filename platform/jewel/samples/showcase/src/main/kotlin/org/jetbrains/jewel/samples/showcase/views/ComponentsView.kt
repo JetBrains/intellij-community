@@ -23,7 +23,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.foundation.modifier.trackActivation
+import org.jetbrains.jewel.foundation.shortcut.shortcut
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.samples.showcase.ShowcaseShortcuts
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
@@ -50,9 +52,14 @@ public fun ComponentsView(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).semantics {
-            isTraversalGroup = true
-        }
+        modifier
+            .trackActivation()
+            .fillMaxSize()
+            .background(JewelTheme.globalColors.panelBackground)
+            // Page-wide commands: active while focus is anywhere inside the components page.
+            .shortcut(ShowcaseShortcuts.NextSection) { viewModel.selectNextView() }
+            .shortcut(ShowcaseShortcuts.PreviousSection) { viewModel.selectPreviousView() }
+            .semantics { isTraversalGroup = true }
     ) {
         ComponentsToolBar(
             buttonMetrics = toolbarButtonMetrics,

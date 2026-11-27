@@ -27,4 +27,20 @@ public object JewelFlags {
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     public var useCustomPopupRenderer: Boolean = System.getProperty("jewel.customPopupRender", "false").toBoolean()
+
+    /**
+     * Enables strict mode, modeled after Android's `StrictMode`: violations of documented Jewel contracts throw an
+     * [IllegalStateException] instead of logging an error. The default value is `false`.
+     *
+     * Currently enforced contracts: shortcut dispatch entry points and their handlers are UI-thread-synchronous.
+     *
+     * Keep this enabled in development and in tests, and disabled in production, so contract violations surface loudly
+     * where they can be fixed rather than crashing users.
+     *
+     * To set this flag, you can also set the system property `jewel.strictMode` to `true`/`false`, or pass the
+     * `-Djewel.strictMode=[true|false]` argument when running your application.
+     */
+    @ApiStatus.Experimental
+    @ExperimentalJewelApi
+    public var strictMode: Boolean = System.getProperty("jewel.strictMode", "false").toBoolean()
 }
