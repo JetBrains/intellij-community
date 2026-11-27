@@ -15,43 +15,63 @@
  */
 package com.intellij.java.psi.util;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class PropertyUtilTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class PropertyUtilTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+
+  @Test
   public void testSuggestGetterName() {
-    assertEquals("isValid", PropertyUtilBase.suggestGetterName("valid", getType("boolean")));
-    assertEquals("getValid", PropertyUtilBase.suggestGetterName("valid", getType("Object")));
-    assertEquals("isValid", PropertyUtilBase.suggestGetterName(createField("valid", "boolean")));
-    assertEquals("getValid", PropertyUtilBase.suggestGetterName(createField("valid", "Object")));
+    ReadAction.runBlocking(() -> {
+      assertEquals("isValid", PropertyUtilBase.suggestGetterName("valid", getType("boolean")));
+      assertEquals("getValid", PropertyUtilBase.suggestGetterName("valid", getType("Object")));
+      assertEquals("isValid", PropertyUtilBase.suggestGetterName(createField("valid", "boolean")));
+      assertEquals("getValid", PropertyUtilBase.suggestGetterName(createField("valid", "Object")));
 
-    assertEquals("getURL", PropertyUtilBase.suggestGetterName("URL", getType("Object")));
-    assertEquals("getURL", PropertyUtilBase.suggestGetterName(createField("URL", "Object")));
+      assertEquals("getURL", PropertyUtilBase.suggestGetterName("URL", getType("Object")));
+      assertEquals("getURL", PropertyUtilBase.suggestGetterName(createField("URL", "Object")));
 
-    assertEquals("isaURL", PropertyUtilBase.suggestGetterName(createField("aURL", "boolean")));
-    assertEquals("getaURL", PropertyUtilBase.suggestGetterName(createField("aURL", "Object")));
-    assertEquals("getBool", PropertyUtilBase.suggestGetterName(createField("bool", "java.lang.Boolean")));
+      assertEquals("isaURL", PropertyUtilBase.suggestGetterName(createField("aURL", "boolean")));
+      assertEquals("getaURL", PropertyUtilBase.suggestGetterName(createField("aURL", "Object")));
+      assertEquals("getBool", PropertyUtilBase.suggestGetterName(createField("bool", "java.lang.Boolean")));
+    });
   }
 
+  @Test
   public void testSuggestSetterName() {
-    assertEquals("setValid", PropertyUtilBase.suggestSetterName("valid"));
-    assertEquals("setValid", PropertyUtilBase.suggestSetterName(createField("valid", "Object")));
+    ReadAction.runBlocking(() -> {
+      assertEquals("setValid", PropertyUtilBase.suggestSetterName("valid"));
+      assertEquals("setValid", PropertyUtilBase.suggestSetterName(createField("valid", "Object")));
 
-    assertEquals("setURL", PropertyUtilBase.suggestSetterName("URL"));
-    assertEquals("setURL", PropertyUtilBase.suggestSetterName(createField("URL", "Object")));
+      assertEquals("setURL", PropertyUtilBase.suggestSetterName("URL"));
+      assertEquals("setURL", PropertyUtilBase.suggestSetterName(createField("URL", "Object")));
 
-    assertEquals("setaURL", PropertyUtilBase.suggestSetterName("aURL"));
-    assertEquals("setaURL", PropertyUtilBase.suggestSetterName(createField("aURL", "Object")));
-    assertEquals("setBool", PropertyUtilBase.suggestSetterName(createField("bool", "java.lang.Boolean")));
+      assertEquals("setaURL", PropertyUtilBase.suggestSetterName("aURL"));
+      assertEquals("setaURL", PropertyUtilBase.suggestSetterName(createField("aURL", "Object")));
+      assertEquals("setBool", PropertyUtilBase.suggestSetterName(createField("bool", "java.lang.Boolean")));
+    });
   }
 
+  @Test
   public void testSuggestPropertyName() {
     assertEquals("valid", PropertyUtilBase.getPropertyName("isValid"));
     assertEquals("valid", PropertyUtilBase.getPropertyName("getValid"));
@@ -66,22 +86,25 @@ public class PropertyUtilTest extends LightJavaCodeInsightTestCase {
     assertEquals("aURL", PropertyUtilBase.getPropertyName("setaURL"));
   }
 
+  @Test
   public void testBooleanPropertyGetters() {
-    assertTrue(PropertyUtilBase.hasGetterName(createMethod("isOk", "boolean")));
-    assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
-    assertTrue(PropertyUtilBase.hasGetterName(createMethod("getOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
-    assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", "int")));
+    ReadAction.runBlocking(() -> {
+      assertTrue(PropertyUtilBase.hasGetterName(createMethod("isOk", "boolean")));
+      assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
+      assertTrue(PropertyUtilBase.hasGetterName(createMethod("getOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
+      assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", "int")));
+    });
   }
 
-  private PsiType getType(@NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(getProject()).createTypeFromText(type, null);
+  private static PsiType getType(@NonNls String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(projectFixture.get().getProject()).createTypeFromText(type, null);
   }
 
-  private PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(getProject()).createField(name, getType(type));
+  private static PsiField createField(@NonNls String name, @NonNls String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(projectFixture.get().getProject()).createField(name, getType(type));
   }
 
-  private PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
-    return PsiElementFactory.getInstance(getProject()).createMethod(name, getType(type));
+  private static PsiMethod createMethod(@NonNls String name, String type) throws IncorrectOperationException {
+    return PsiElementFactory.getInstance(projectFixture.get().getProject()).createMethod(name, getType(type));
   }
 }

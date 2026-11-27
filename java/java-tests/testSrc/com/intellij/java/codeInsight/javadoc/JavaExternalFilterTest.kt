@@ -2,17 +2,35 @@
 package com.intellij.java.codeInsight.javadoc
 
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
-import com.intellij.testFramework.LightJavaCodeInsightTestCase
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.psi.PsiFileFactory
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.fixtures.lightJavaTestDescriptor
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.LocalTimeCounter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class JavaExternalFilterTest: LightJavaCodeInsightTestCase() {
+@TestApplication
+class JavaExternalFilterTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor())
+  }
 
   @OptIn(DelicateCoroutinesApi::class)
-  fun testConvertReference() {
-    val project = getProject()
-    val psiFile = createFile("Test.java", "")
+  @Test
+  fun testConvertReference(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get().project
+    val psiFile = readAction {
+      PsiFileFactory.getInstance(project)
+        .createFileFromText("Test.java", FileTypeManager.getInstance().getFileTypeByFileName("Test.java"), "", LocalTimeCounter.currentTime(),
+                            true, false)
+    }
 
     val filter = GlobalScope.future {
       val filter = JavaDocExternalFilter(project)

@@ -15,7 +15,8 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -23,76 +24,111 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExtendsBoundListTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class ExtendsBoundListTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
+  @Test
   public void testRemoveBoundFromFront() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    WriteCommandAction.runWriteCommandAction(null, () -> typeParameter.getExtendsList().getReferenceElements()[0].delete());
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> typeParameter.getExtendsList().getReferenceElements()[0].delete());
 
     check();
   }
 
+  @Test
   public void testRemoveBoundFromEnd() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    ApplicationManager.getApplication().runWriteAction(() -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
 
     check();
   }
 
+  @Test
   public void testRemoveBoundFromMiddle() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    ApplicationManager.getApplication().runWriteAction(() -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
 
     check();
   }
 
+  @Test
   public void testAddBoundInTheMiddle() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    final PsiReferenceList extendsList = typeParameter.getExtendsList();
-    final PsiClass cloneableClass = getJavaFacade().findClass("java.lang.Cloneable");
-    assertNotNull(cloneableClass);
-    final PsiJavaCodeReferenceElement reference = getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    final PsiReferenceList extendsList = ReadAction.computeBlocking(typeParameter::getExtendsList);
+    final PsiJavaCodeReferenceElement reference = ReadAction.computeBlocking(() -> {
+      final PsiClass cloneableClass = myFixture.getJavaFacade().findClass("java.lang.Cloneable");
+      assertNotNull(cloneableClass);
+      return myFixture.getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
+    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       extendsList.addAfter(reference, extendsList.getReferenceElements()[0]);
     });
 
     check();
   }
 
+  @Test
   public void testAddBoundInFront() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    final PsiReferenceList extendsList = typeParameter.getExtendsList();
-    final PsiClass cloneableClass = getJavaFacade().findClass("java.lang.Cloneable");
-    assertNotNull(cloneableClass);
-    final PsiJavaCodeReferenceElement reference = getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    final PsiReferenceList extendsList = ReadAction.computeBlocking(typeParameter::getExtendsList);
+    final PsiJavaCodeReferenceElement reference = ReadAction.computeBlocking(() -> {
+      final PsiClass cloneableClass = myFixture.getJavaFacade().findClass("java.lang.Cloneable");
+      assertNotNull(cloneableClass);
+      return myFixture.getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
+    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       extendsList.addBefore(reference, extendsList.getReferenceElements()[0]);
     });
 
     check();
   }
 
+  @Test
   public void testAddBoundInEnd() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    final PsiReferenceList extendsList = typeParameter.getExtendsList();
-    final PsiClass cloneableClass = getJavaFacade().findClass("java.lang.Cloneable");
-    assertNotNull(cloneableClass);
-    final PsiJavaCodeReferenceElement reference = getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    final PsiReferenceList extendsList = ReadAction.computeBlocking(typeParameter::getExtendsList);
+    final PsiJavaCodeReferenceElement reference = ReadAction.computeBlocking(() -> {
+      final PsiClass cloneableClass = myFixture.getJavaFacade().findClass("java.lang.Cloneable");
+      assertNotNull(cloneableClass);
+      return myFixture.getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
+    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       extendsList.addBefore(reference, null);
     });
 
     check();
   }
 
+  @Test
   public void testAddBound() {
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
     final PsiTypeParameter typeParameter = getTypeParameter();
-    final PsiReferenceList extendsList = typeParameter.getExtendsList();
-    final PsiClass cloneableClass = getJavaFacade().findClass(CommonClassNames.JAVA_LANG_RUNNABLE);
-    assertNotNull(cloneableClass);
-    final PsiJavaCodeReferenceElement reference = getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    final PsiReferenceList extendsList = ReadAction.computeBlocking(typeParameter::getExtendsList);
+    final PsiJavaCodeReferenceElement reference = ReadAction.computeBlocking(() -> {
+      final PsiClass cloneableClass = myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_LANG_RUNNABLE);
+      assertNotNull(cloneableClass);
+      return myFixture.getJavaFacade().getElementFactory().createClassReferenceElement(cloneableClass);
+    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       extendsList.add(reference);
     });
 
@@ -100,20 +136,22 @@ public class ExtendsBoundListTest extends LightJavaCodeInsightTestCase {
   }
 
   private void check() {
-    outputFile(getTestName(true) + "_after.java");
+    outputFile(daemonFixture.get().getFixture().getTestName(true) + "_after.java");
   }
 
   private PsiTypeParameter getTypeParameter() {
-    inputFile(getTestName(true) + ".java");
-    final PsiClass aClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    return aClass.getTypeParameters()[0];
+    PsiJavaFile file = inputFile(daemonFixture.get().getFixture().getTestName(true) + ".java");
+    return ReadAction.computeBlocking(() -> {
+      final PsiClass aClass = file.getClasses()[0];
+      return aClass.getTypeParameters()[0];
+    });
   }
 
   private void outputFile(String filename) {
-    checkResultByFile("/psi/impl/extendsBoundList/" + filename);
+    daemonFixture.get().getFixture().checkResultByFile("/psi/impl/extendsBoundList/" + filename);
   }
 
-  private void inputFile(String filename) {
-    configureByFile("/psi/impl/extendsBoundList/" + filename);
+  private PsiJavaFile inputFile(String filename) {
+    return (PsiJavaFile)daemonFixture.get().configureByFile("/psi/impl/extendsBoundList/" + filename);
   }
 }

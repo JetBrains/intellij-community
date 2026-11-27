@@ -2,15 +2,27 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class FinalUtilsTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+@TestApplication
+public class FinalUtilsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+
+  @Test
   public void testCanBeFinal() {
     String file = """
       class A {
@@ -42,16 +54,19 @@ public class FinalUtilsTest extends LightJavaCodeInsightTestCase {
           }
       }
       """;
-    PsiJavaFile
-      javaFile = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
-    List<String> immutableFields = List.of("field1", "field2", "field4", "field5", "field6", "field7", "field8", "field9");
-    PsiField[] fields = javaFile.getClasses()[0].getFields();
-    for (PsiField field : fields) {
-      assertEquals(immutableFields.contains(field.getName()), FinalUtils.canBeFinal(field));
-    }
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile
+        javaFile = (PsiJavaFile)PsiFileFactory.getInstance(projectFixture.get().getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
+      List<String> immutableFields = List.of("field1", "field2", "field4", "field5", "field6", "field7", "field8", "field9");
+      PsiField[] fields = javaFile.getClasses()[0].getFields();
+      for (PsiField field : fields) {
+        assertEquals(immutableFields.contains(field.getName()), FinalUtils.canBeFinal(field));
+      }
+    });
 
   }
 
+  @Test
   public void testFinalVariable() {
     String file = """
     public class Host {
@@ -62,14 +77,16 @@ public class FinalUtilsTest extends LightJavaCodeInsightTestCase {
       }
     }
       """;
-    PsiJavaFile
-      javaFile = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
-    PsiField[] fields = javaFile.getClasses()[0].getFields();
-    for (PsiField field : fields) {
-      if (field.getName().equals("name")) {
-        assertFalse(FinalUtils.canBeFinal(field));
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile
+        javaFile = (PsiJavaFile)PsiFileFactory.getInstance(projectFixture.get().getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
+      PsiField[] fields = javaFile.getClasses()[0].getFields();
+      for (PsiField field : fields) {
+        if (field.getName().equals("name")) {
+          assertFalse(FinalUtils.canBeFinal(field));
+        }
       }
-    }
+    });
 
   }
 }

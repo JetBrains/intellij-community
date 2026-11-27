@@ -16,42 +16,60 @@
  */
 package com.intellij.java.codeInsight.guess;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInsight.guess.GuessManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class GuessExprTypeTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class GuessExprTypeTest {
   private static final String BASE_PATH = "/codeInsight/guess/exprType";
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
 
+  @Test
   public void test1() {
-    configureByFile(BASE_PATH + "/Test1.java");
-    PsiType[] result = guessExprTypes();
-    assertEquals(CommonClassNames.JAVA_LANG_STRING, assertOneElement(result).getCanonicalText());
+    daemonFixture.get().configureByFile(BASE_PATH + "/Test1.java");
+    ReadAction.runBlocking(() -> {
+      PsiType[] result = guessExprTypes();
+      assertThat(result).hasSize(1);
+      assertEquals(CommonClassNames.JAVA_LANG_STRING, result[0].getCanonicalText());
+    });
   }
 
+  @Test
   public void test2() {
-    configureByFile(BASE_PATH + "/Test2.java");
-    PsiType[] result = guessExprTypes();
-    assertNotNull(result);
-    assertEquals(CommonClassNames.JAVA_LANG_STRING, assertOneElement(result).getCanonicalText());
+    daemonFixture.get().configureByFile(BASE_PATH + "/Test2.java");
+    ReadAction.runBlocking(() -> {
+      PsiType[] result = guessExprTypes();
+      assertNotNull(result);
+      assertThat(result).hasSize(1);
+      assertEquals(CommonClassNames.JAVA_LANG_STRING, result[0].getCanonicalText());
+    });
   }
 
   private PsiType[] guessExprTypes() {
-    int offset1 = getEditor().getSelectionModel().getSelectionStart();
-    int offset2 = getEditor().getSelectionModel().getSelectionEnd();
-    PsiExpression expr = CodeInsightUtil.findExpressionInRange(getFile(), offset1, offset2);
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    int offset1 = myFixture.getEditor().getSelectionModel().getSelectionStart();
+    int offset2 = myFixture.getEditor().getSelectionModel().getSelectionEnd();
+    PsiExpression expr = CodeInsightUtil.findExpressionInRange(myFixture.getFile(), offset1, offset2);
     assertNotNull(expr);
-    return GuessManager.getInstance(getProject()).guessTypeToCast(expr);
+    return GuessManager.getInstance(myFixture.getProject()).guessTypeToCast(expr);
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.hint.JavaTypeProvider;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -14,11 +15,24 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("HtmlDeprecatedAttribute")
-public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
+@TestApplication
+public class JavaTypeProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+
+  @Test
   public void testRangeHint() {
     doTest("""
                void test(int x) {
@@ -32,6 +46,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
   
+  @Test
   public void testFloatRangeHint() {
     doTest("void test(double x) {" +
            "if (x > 0.5 && x < 1.8) {" +
@@ -43,6 +58,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
   
+  @Test
   public void testFloatRangeHint2() {
     doTest("void test(double x) {" +
            "if (!(x > 0.5 && x < 1.8)) {" +
@@ -55,6 +71,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   }
 
   @TestFor(issues = "IDEA-381645")
+  @Test
   public void testGenericNoHint() {
     doTest("""
              void test(java.util.Optional<java.util.List<String>> opt) {
@@ -64,6 +81,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "Optional&lt;List&lt;String&gt;&gt;");
   }
   
+  @Test
   public void testFloatConstantHint() {
     doTest("void test(double x) {" +
            "if (x == 1.0) {" +
@@ -75,6 +93,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testOptionalHint() {
     doTest("""
                void test(java.util.Optional<String> t) {
@@ -90,6 +109,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testFunctionalType() {
     doTest("""
                void test() {
@@ -103,6 +123,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testTypeConstraint() {
     doTest("""
                void x(Object a) {
@@ -123,6 +144,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testTypeConstraint2() {
     doTest("""
                void x(Object a) {
@@ -141,6 +163,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testSpecialField() {
     doTest("""
              void x(int[] data) {
@@ -155,6 +178,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
   
+  @Test
   public void testBooleanValue() {
     doTest("""
              void test(int x) {
@@ -166,6 +190,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
   
+  @Test
   public void testStringValue() {
     doTest("""
              void test(String x) {
@@ -179,6 +204,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testNotValue() {
     doTest("""
              void test(String x) {
@@ -193,6 +219,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
   
+  @Test
   public void testNotValueEnum() {
     doTest("""
              enum X {A, B}void test(X x) {
@@ -206,6 +233,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testVarIdentifier() {
     doTest("""
              void test() {
@@ -217,6 +245,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
+  @Test
   public void testVarKeyword() {
     doTest("""
              void test() {
@@ -227,6 +256,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>1</td></tr>" +
            "</table>");
   }
+  @Test
   public void testLambdaParameter() {
     doTest("""
              void test() {
@@ -242,6 +272,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
              }""", "String", "String");
   }
 
+  @Test
   public void testLambdaParameter2() {
     doTest("""
              void test() {
@@ -256,6 +287,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
                                  new Test2().test((<selection>var a</selection>)-> System.out.println(a));
              }""", "String", "String");
   }
+  @Test
   public void testDeconstructionVariable() {
     doTest("""
              void test(Object x) {
@@ -274,6 +306,7 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
              }""", "String", "String");
   }
 
+  @Test
   public void testEscaping() {
     doTest("""
              public static void main(int i) {
@@ -287,32 +320,35 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "</table>");
   }
 
-  private void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
+  private static void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,
                              @Language("HTML") String expectedHint,
                              @Language("HTML") String expectedAdvancedHint) {
     EditorInfo info = new EditorInfo("class X{" + method + "}");
-    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, info.getNewFileText());
-    assertEquals("Single selection must be specified", 1, info.caretState.carets().size());
+    assertEquals(1, info.caretState.carets().size(), "Single selection must be specified");
     TextRange selection = info.caretState.carets().get(0).selection;
-    assertNotNull("No <selection>..</selection> in test data", selection);
-    PsiElement element =
-      PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiExpression.class);
-    if (element == null) {
-      element =
-        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiParameter.class);
-    }
-    if (element == null) {
-      element =
-        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiIdentifier.class);
-    }
-    if (element == null) {
-      element =
-        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiKeyword.class);
-    }
-    assertNotNull("Expression not found", element);
-    JavaTypeProvider provider = new JavaTypeProvider();
-    assertEquals(expectedHint, provider.getInformationHint(element));
-    assertTrue(provider.hasAdvancedInformation());
-    assertEquals(expectedAdvancedHint, provider.getAdvancedInformationHint(element));
+    assertNotNull(selection, "No <selection>..</selection> in test data");
+    ReadAction.runBlocking(() -> {
+      PsiFile file =
+        PsiFileFactory.getInstance(projectFixture.get().getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, info.getNewFileText());
+      PsiElement element =
+        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiExpression.class);
+      if (element == null) {
+        element =
+          PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiParameter.class);
+      }
+      if (element == null) {
+        element =
+          PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiIdentifier.class);
+      }
+      if (element == null) {
+        element =
+          PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiKeyword.class);
+      }
+      assertNotNull(element, "Expression not found");
+      JavaTypeProvider provider = new JavaTypeProvider();
+      assertEquals(expectedHint, provider.getInformationHint(element));
+      assertTrue(provider.hasAdvancedInformation());
+      assertEquals(expectedAdvancedHint, provider.getAdvancedInformationHint(element));
+    });
   }
 }

@@ -15,27 +15,23 @@
  */
 package com.intellij.java.psi.codeStyle.autodetect;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.formatting.engine.FormatterEngineTestsKt;
 import com.intellij.formatting.engine.TestData;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.psi.codeStyle.autodetect.FormatterBasedLineIndentInfoBuilder;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class FormatterBasedLineInfoBuilderTest {
   
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() +
-           "/psi/autodetect/";
-  }
-  
+  @Test
   public void testKotlinComment() {
     String text = """
       [i_cont]([i_norm]/**
@@ -46,6 +42,7 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     assertLinesWithNormalIndent(infos, 0);
   }
   
+  @Test
   public void testXmlContinuationWithoutFirst() {
     String text = """
       [i_none]<idea-plugin>

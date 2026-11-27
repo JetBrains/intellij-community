@@ -1,22 +1,40 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.indexing;
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
 import com.intellij.codeInsight.javadoc.JavaDocFragmentData;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocFragmentName;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
+@TestApplication
+public class JavaDocFragmentAnchorCacheTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
+  @Test
   public void testIndexes() {
     @Language("JAVA") String text = """
       package p;
@@ -49,16 +67,18 @@ public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase
         void bar() {}
       }
       """;
-    configureFromFileText("A.java", text);
+    daemonFixture.get().configureFromFileText("A.java", text);
 
-    Project project = getProject();
+    Project project = daemonFixture.get().getFixture().getProject();
 
-    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("p.A", GlobalSearchScope.projectScope(project));
-    assertNotNull(psiClass);
+    Collection<JavaDocFragmentData> anchors = ReadAction.computeBlocking(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("p.A", GlobalSearchScope.projectScope(project));
+      assertNotNull(psiClass);
 
-    Collection<JavaDocFragmentData> anchors = JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(project, psiClass);
+      return JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(project, psiClass);
+    });
     assertNotNull(anchors);
-    assertContainsElements(anchors,
+    assertThat(anchors).contains(
                            new JavaDocFragmentData("title-with-derived-heading-heading", 22),
                            new JavaDocFragmentData("equivalenceRelation", 64),
                            new JavaDocFragmentData("closing", 111),
@@ -78,6 +98,7 @@ public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase
   }
 
 
+  @Test
   public void testReferencesToPackageInfo() {
     @Language("JAVA") String text = """
       /**
@@ -92,18 +113,20 @@ public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase
        */
       package p;
       """;
-    configureFromFileText("p/package-info.java", text);
+    PsiFile file = daemonFixture.get().configureFromFileText("p/package-info.java", text);
 
-    var fragments = PsiTreeUtil.findChildrenOfType(getFile(), PsiDocFragmentName.class);
-    assertSize(4, fragments);
     var anchors = new ArrayList<JavaDocFragmentData>();
-    for (var fragment : fragments) {
-      var resolved = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(getProject(), fragment);
-      assertNotNull(fragment.getText(), resolved);
-      assertSame(getFile(), resolved.getFirst().getContainingFile());
-      anchors.add(resolved.getSecond());
-    }
-    assertSameElements(anchors,
+    ReadAction.runBlocking(() -> {
+      var fragments = PsiTreeUtil.findChildrenOfType(file, PsiDocFragmentName.class);
+      assertEquals(4, fragments.size());
+      for (var fragment : fragments) {
+        var resolved = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(file.getProject(), fragment);
+        assertNotNull(resolved, fragment.getText());
+        assertSame(file, resolved.getFirst().getContainingFile());
+        anchors.add(resolved.getSecond());
+      }
+    });
+    assertThat(anchors).containsExactlyInAnyOrder(
                        new JavaDocFragmentData("package-id", text.indexOf("package-id")),
                        new JavaDocFragmentData("package.property", text.indexOf("{@systemProperty")),
                        new JavaDocFragmentData("packageIndex", text.indexOf("{@index packageIndex")),

@@ -15,32 +15,52 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaMoveLineTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class JavaMoveLineTest {
   private static final String BASE_PATH = "/codeInsight/editorActions/moveLine/";
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_7; // to enable folding of lambdas
-  }
+  // JDK_1_7 enables the folding of lambdas
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(lightJavaTestDescriptor(LanguageLevel.JDK_1_7));
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
 
+  @Test
   public void testMoveThroughFolding() {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
-    FoldRegion lambdaStart = getEditor().getFoldingModel().getFoldRegion(140, 227);
-    assertNotNull(lambdaStart);
-    assertFalse(lambdaStart.isExpanded());
-    FoldRegion lambdaEnd = getEditor().getFoldingModel().getFoldRegion(248, 272);
-    assertNotNull(lambdaEnd);
-    assertFalse(lambdaEnd.isExpanded());
+    LightDaemonAnalyzerFixture daemon = daemonFixture.get();
+    LightJavaCodeInsightTestFixture myFixture = daemon.getFixture();
+    daemon.configureByFile(BASE_PATH + "/" + myFixture.getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Editor editor = myFixture.getEditor();
+      EditorTestUtil.buildInitialFoldingsInBackground(editor);
+      FoldRegion lambdaStart = editor.getFoldingModel().getFoldRegion(140, 227);
+      assertNotNull(lambdaStart);
+      assertFalse(lambdaStart.isExpanded());
+      FoldRegion lambdaEnd = editor.getFoldingModel().getFoldRegion(248, 272);
+      assertNotNull(lambdaEnd);
+      assertFalse(lambdaEnd.isExpanded());
+    });
 
-    executeAction(IdeActions.ACTION_MOVE_LINE_UP_ACTION);
+    daemon.executeAction(IdeActions.ACTION_MOVE_LINE_UP_ACTION);
 
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-after.java");
+    myFixture.checkResultByFile(BASE_PATH + "/" + myFixture.getTestName(false) + "-after.java");
   }
 }

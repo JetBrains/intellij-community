@@ -3,19 +3,29 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiReturnStatement;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ReorderingUtilsTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9_ANNOTATED);
   private static final String PREFIX = """
     import java.util.Optional;
     import java.util.List;
@@ -25,16 +35,19 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
   private static final String SELECTION_START = "/*<*/";
   private static final String SELECTION_END = "/*>*/";
 
+  @Test
   public void testSimple() {
     checkCanBeReordered("x > 0 && /*<*/x < 10/*>*/", ThreeState.YES);
     checkCanBeReordered("arr == null && x > 10 && /*<*/y < 5/*>*/", ThreeState.YES);
   }
 
+  @Test
   public void testTrueFirst() {
     checkCanBeReordered("x > 10 && x > 0 && /*<*/x > arr.length/*>*/", ThreeState.UNSURE);
     checkCanBeReordered("(x > 10 || x < 20) && /*<*/x > arr.length/*>*/", ThreeState.UNSURE);
   }
 
+  @Test
   public void testNpe() {
     checkCanBeReordered("obj != null && /*<*/obj.hashCode() > 10/*>*/", ThreeState.NO);
     checkCanBeReordered("obj == null || /*<*/obj.hashCode() > 10/*>*/", ThreeState.NO);
@@ -43,12 +56,14 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
     checkCanBeReordered("x != null && /*<*/x > 10/*>*/", ThreeState.YES); // compilation error at null-check actually
   }
 
+  @Test
   public void testCast() {
     checkCanBeReordered("obj instanceof String && /*<*/((String)obj).isEmpty()/*>*/", ThreeState.NO);
     checkCanBeReordered("obj instanceof String && /*<*/nullNull((String)obj) == null/*>*/", ThreeState.NO);
     checkCanBeReordered("obj instanceof Integer && /*<*/((Number)obj).intValue() == 0/*>*/", ThreeState.NO);
   }
   
+  @Test
   public void testContract() {
     checkCanBeReordered("new Object().equals(obj) && /*<*/obj.hashCode() == 0/*>*/", ThreeState.NO);
     checkCanBeReordered("nullNull(obj) != null && /*<*/obj.hashCode() == 0/*>*/", ThreeState.NO);
@@ -56,6 +71,7 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
     checkCanBeReordered("nullNull(nullNull(obj)) == null || /*<*/obj.hashCode() == 0/*>*/", ThreeState.NO);
   }
 
+  @Test
   public void testArrayBounds() {
     checkCanBeReordered("x >= 0 && /*<*/arr[x].isEmpty()/*>*/", ThreeState.NO);
     checkCanBeReordered("x < arr.length && /*<*/arr[x].isEmpty()/*>*/", ThreeState.NO);
@@ -66,6 +82,7 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
     checkCanBeReordered("x > 0 && /*<*/arr[x-1].isEmpty()/*>*/", ThreeState.UNSURE);
   }
   
+  @Test
   public void testStringBounds() {
     checkCanBeReordered("x >= 0 && /*<*/str.charAt(x) == 'a'/*>*/", ThreeState.NO);
     checkCanBeReordered("y >= 0 && /*<*/str.charAt(x) == 'a'/*>*/", ThreeState.UNSURE);
@@ -76,16 +93,19 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
     checkCanBeReordered("x < str.length() && /*<*/str.substring(x) == 'a'/*>*/", ThreeState.UNSURE);
   }
   
+  @Test
   public void testListBounds() {
     checkCanBeReordered("x >= 0 && /*<*/list.get(x).isEmpty()/*>*/", ThreeState.NO);
     checkCanBeReordered("x < list.size() && /*<*/list.get(x).isEmpty()/*>*/", ThreeState.NO);
     checkCanBeReordered("list.size() > x && /*<*/list.get(x).isEmpty()/*>*/", ThreeState.NO);
   }
 
+  @Test
   public void testOptional() {
     checkCanBeReordered("opt.isPresent() && /*<*/opt.get().isEmpty()/*>*/", ThreeState.NO);
   }
   
+  @Test
   public void testTernary() {
     checkCanBeReordered("x > y ? /*<*/y/*>*/ : x", ThreeState.YES);
     checkCanBeReordered("str == null ? \"\" : /*<*/str.trim()/*>*/", ThreeState.NO);
@@ -94,28 +114,24 @@ public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
     checkCanBeReordered("str == null ? /*<*/str.trim()/*>*/ : \"\"", ThreeState.UNSURE);
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_9_ANNOTATED;
-  }
-
-  private void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,
+  private static void checkCanBeReordered(@Language(value = "JAVA", prefix = PREFIX, suffix = SUFFIX) String expressionText,
                                    ThreeState expectedResult) {
     String file = PREFIX + expressionText + SUFFIX;
-    PsiJavaFile javaFile = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
-    PsiCodeBlock body = javaFile.getClasses()[0].getMethods()[0].getBody();
-    assertNotNull(body);
-    PsiExpression expression = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
-    assertNotNull(expression);
-    int startOffset = expressionText.indexOf(SELECTION_START);
-    assertTrue(startOffset >= 0);
-    int endOffset = expressionText.indexOf(SELECTION_END);
-    assertTrue(endOffset >= 0);
-    int expressionStart = expression.getTextRange().getStartOffset();
-    PsiExpression subExpression = CodeInsightUtil.findExpressionInRange(javaFile, startOffset + SELECTION_START.length() + expressionStart,
-                                                                        endOffset + expressionStart);
-    assertNotNull(subExpression);
-    assertSame(expressionText, expectedResult, ReorderingUtils.canExtract(expression, subExpression));
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile javaFile = (PsiJavaFile)PsiFileFactory.getInstance(projectFixture.get().getProject()).createFileFromText("X.java", JavaFileType.INSTANCE, file);
+      PsiCodeBlock body = javaFile.getClasses()[0].getMethods()[0].getBody();
+      assertNotNull(body);
+      PsiExpression expression = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
+      assertNotNull(expression);
+      int startOffset = expressionText.indexOf(SELECTION_START);
+      assertTrue(startOffset >= 0);
+      int endOffset = expressionText.indexOf(SELECTION_END);
+      assertTrue(endOffset >= 0);
+      int expressionStart = expression.getTextRange().getStartOffset();
+      PsiExpression subExpression = CodeInsightUtil.findExpressionInRange(javaFile, startOffset + SELECTION_START.length() + expressionStart,
+                                                                          endOffset + expressionStart);
+      assertNotNull(subExpression);
+      assertSame(expectedResult, ReorderingUtils.canExtract(expression, subExpression), expressionText);
+    });
   }
 }

@@ -1,24 +1,38 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl.source;
 
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @NotNullByDefault
-public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
+@TestApplication
+public class PsiTypeElementImplTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
 
+  @Test
   public void testAddAnnotationToSimpleType() {
     doTestAddingAnnotationToTypeAtCaret(
       """
@@ -28,6 +42,7 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
         """);
   }
 
+  @Test
   public void testAddAnnotationToArrayType() {
     doTestAddingAnnotationToTypeAtCaret(
       """
@@ -37,6 +52,7 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
         """);
   }
 
+  @Test
   public void testAddAnnotationToMultidimensionalArrayType() {
     doTestAddingAnnotationToTypeAtCaret(
       """
@@ -46,6 +62,7 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
         """);
   }
 
+  @Test
   public void testAddAnnotationToVarargsType() {
     doTestAddingAnnotationToTypeAtCaret(
       """
@@ -55,6 +72,7 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
         """);
   }
 
+  @Test
   public void testAddAnnotationToVarargsTypeWithArrayElement() {
     doTestAddingAnnotationToTypeAtCaret(
       """
@@ -66,11 +84,14 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
 
   private void doTestAddingAnnotationToTypeAtCaret(String classFile) {
     configureFromFileWithAnnotationsAdded(classFile);
-    PsiTypeElement typeElement = getPsiTypeElementAtCaret();
-    WriteAction.run(() -> typeElement.addAnnotation("A"));
-    assertTypeAnnotations(typeElement.getType(), "A");
+    PsiTypeElement typeElement = ReadAction.computeBlocking(this::getPsiTypeElementAtCaret);
+    WriteCommandAction.runWriteCommandAction(daemonFixture.get().getFixture().getProject(), () -> {
+      typeElement.addAnnotation("A");
+    });
+    ReadAction.runBlocking(() -> assertTypeAnnotations(typeElement.getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsSimpleTypeIsAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -78,9 +99,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>String foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsNestedTypeQualifiedWithOuterTypeIsNotAppliedToNestedType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -89,9 +111,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B AClass.<caret>Nested foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsFullyQualifiedTypeIsNotAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -99,9 +122,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B java.lang.<caret>String foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsArrayTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -109,9 +133,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>String[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsArrayTypeWithQualifiedComponentIsNotAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -119,9 +144,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B java.lang.<caret>String[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsArrayTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -129,9 +155,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B String[<caret>] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsArrayOfGenericTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -139,9 +166,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>List<String>[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsArrayOfGenericTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -149,9 +177,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B List<String>[<caret>] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsMultidimensionalArrayTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -159,9 +188,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>String[][][] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsMultidimensionalArrayTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -169,9 +199,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B String[][][<caret>] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsGenericTypeIsAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -179,9 +210,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>List<String> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsGenericTypeIsNotAppliedToThatTypeComponentType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -189,10 +221,11 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B List< <caret>String> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsNestedGenericTypeIsAppliedToOuterType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -200,9 +233,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>List<List<String>> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsNestedGenericTypeIsNotAppliedToInnerType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -210,9 +244,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B List< <caret>List<String>> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsNestedGenericTypeIsNotAppliedToInnermostType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -220,9 +255,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B List<List< <caret>String>> foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsPrimitiveTypeIsAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -230,9 +266,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>int foo() { return 0; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsPrimitiveArrayTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -240,9 +277,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B <caret>int[] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A", "B"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMethodThatReturnsPrimitiveArrayTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -250,9 +288,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           @A public <T> @B int[<caret>] foo() { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsSimpleTypeIsAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -260,9 +299,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@A <caret>String param) {}
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsNestedTypeQualifiedWithOuterTypeIsNotAppliedToNestedType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -271,9 +311,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@MyAnnotation AClass.<caret>Nested param) {}
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsFullyQualifiedIsNotAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -281,9 +322,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@MyAnnotation java.lang.<caret>String param) {}
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsArrayTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -291,9 +333,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@A <caret>String[] array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsArrayTypeWithQualifiedComponentIsNotAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -301,9 +344,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@MyAnnotation java.lang.<caret>String[] array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsArrayTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -311,9 +355,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@A String[<caret>] array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsVarargIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -321,9 +366,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@A <caret>String... array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnParameterWhichTypeIsVarargIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -331,9 +377,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           public void foo(@A String..<caret>. array) { return null; }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnFieldWhichTypeIsSimpleTypeIsAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -341,9 +388,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           private @A <caret>String field;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnFieldWhichTypeIsNestedTypeQualifiedWithOuterTypeIsNotAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -352,9 +400,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           private @MyAnnotation AClass.<caret>Nested field;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnFieldWhichTypeIsFullyQualifiedIsNotAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -362,9 +411,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           private @MyAnnotation java.lang.<caret>String field;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnFieldWhichTypeIsArrayTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -372,9 +422,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           private @A <caret>String[] array;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnFieldWhichTypeIsArrayTypeWithQualifiedComponentIsNotAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -382,9 +433,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           private @MyAnnotation java.lang.<caret>String[] array;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnFieldWhichTypeIsArrayTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -392,9 +444,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           private @A String[<caret>] array;
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnVariableWhichTypeIsSimpleTypeIsAppliedToThatType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -404,9 +457,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnVariableWhichTypeIsArrayTypeIsAppliedToArrayComponent() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -416,9 +470,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnVariableWhichTypeIsArrayTypeIsNotAppliedToArrayType() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -428,9 +483,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMultiCatchIsAppliedToFirstException() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -442,9 +498,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMultiCatchIsNotAppliedToMiddleException() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -456,9 +513,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnMultiCatchIsNotAppliedToLastException() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -470,9 +528,10 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType());
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType()));
   }
 
+  @Test
   public void testTypeUseAnnotationOnSingleCatchIsAppliedToException() {
     configureFromFileWithAnnotationsAdded(
       """
@@ -484,7 +543,7 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
           }
         }
         """);
-    assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A");
+    ReadAction.runBlocking(() -> assertTypeAnnotations(getPsiTypeElementAtCaret().getType(), "A"));
   }
 
   private static void assertTypeAnnotations(PsiType psiType, String... annotation) {
@@ -500,14 +559,15 @@ public class PsiTypeElementImplTest extends LightJavaCodeInsightTestCase {
   }
 
   private PsiElement findElementAtCaret() {
-    int offset = getEditor().getCaretModel().getOffset();
-    PsiElement psiElement = getFile().findElementAt(offset);
+    LightJavaCodeInsightTestFixture myFixture = daemonFixture.get().getFixture();
+    int offset = myFixture.getEditor().getCaretModel().getOffset();
+    PsiElement psiElement = myFixture.getFile().findElementAt(offset);
     if (psiElement == null) fail("Could not find PsiElement at caret position");
     return psiElement;
   }
 
   private void configureFromFileWithAnnotationsAdded(String classFile) {
-    configureFromFileText(
+    daemonFixture.get().configureFromFileText(
       "AClass.java",
       """
         import java.lang.annotation.ElementType;

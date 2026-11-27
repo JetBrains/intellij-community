@@ -15,15 +15,31 @@
  */
 package com.intellij.java.psi.impl;
 
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class FindLeafElementAtTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.codeInsight.daemon.LightDaemonAnalyzerFixture.lightDaemonAnalyzerFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class FindLeafElementAtTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightDaemonAnalyzerFixture> daemonFixture = lightDaemonAnalyzerFixture(projectFixture);
+
+  @Test
   public void testFindLeafElementAtEof() {
-    configureFromFileText("test.java", "class Foo {}");
-    PsiFile file = getFile();
-    ASTNode node = file.getNode().findLeafElementAt(file.getTextLength());
-    assertNull(node);
+    PsiFile file = daemonFixture.get().configureFromFileText("test.java", "class Foo {}");
+    ReadAction.runBlocking(() -> {
+      ASTNode node = file.getNode().findLeafElementAt(file.getTextLength());
+      assertNull(node);
+    });
   }
 }

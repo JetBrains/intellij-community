@@ -10,11 +10,23 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public class DfaMemoryStateImplTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class DfaMemoryStateImplTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+
   static final class MyDescriptor implements VariableDescriptor {
     private final String myName;
 
@@ -36,8 +48,9 @@ public class DfaMemoryStateImplTest extends LightJavaCodeInsightTestCase {
     }
   }
   
+  @Test
   public void testMergeLessThanRelation() {
-    DfaValueFactory factory = new DfaValueFactory(getProject());
+    DfaValueFactory factory = new DfaValueFactory(projectFixture.get().getProject());
     DfaVariableValue a = factory.getVarFactory().createVariableValue(new MyDescriptor("a"));
     DfaVariableValue b = factory.getVarFactory().createVariableValue(new MyDescriptor("b"));
     DfaMemoryState left = new JvmDfaMemoryStateImpl(factory);
@@ -63,8 +76,9 @@ public class DfaMemoryStateImplTest extends LightJavaCodeInsightTestCase {
     assertEquals(result, result2);
   }
   
+  @Test
   public void testMergeLessThanRelationConstrained() {
-    DfaValueFactory factory = new DfaValueFactory(getProject());
+    DfaValueFactory factory = new DfaValueFactory(projectFixture.get().getProject());
     DfaVariableValue a = factory.getVarFactory().createVariableValue(new MyDescriptor("a"));
     DfaVariableValue b = factory.getVarFactory().createVariableValue(new MyDescriptor("b"));
     DfaMemoryStateImpl left = new JvmDfaMemoryStateImpl(factory);
