@@ -169,17 +169,19 @@ This table maps each layer and locality to its file. The requirements below defi
 ### Changes on disk
 
 - The application, project and file layers must watch their files and reload a file after an external change.
-- The application layer must register the config `options` directory as a watch root, so the VFS reports an
-  external edit of an application config file when the IDE frame gets the focus.
+- An external edit of an application config file must reach the settings when the IDE frame gets the focus.
   See [ADR 00GVJM](../adr/00GVJM-the-application-layer-registers-the-options-directory-as-a-watch-root.md).
   [@test] ../../../../tests/remote-driver-tests/settingsSmoke/testSrc/com/intellij/driver/tests/idea/platform/settings/AppSettingsFileExternalEditTest.kt
-- A VFS event of one config file must reload and push only that file, not the files of the other localities.
+- A VFS event of one config file must refresh only that file: the layer reads and pushes that file, and not the
+  files of the other localities.
+  See [ADR 00GVJL](../adr/00GVJL-a-refresh-on-a-vfs-event-reads-the-config-file-from-the-vfs-and-every-other-read-takes-the-disk.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/LayerRefreshOrderTest.kt
-- A reload that a VFS event starts must read the content that the VFS holds for the config file, when the VFS
-  knows the file. A save from the IDE editor then reaches the settings at once. Every other read must take the
-  disk.
+- A refresh that a VFS event starts must read the content that the VFS holds for the config file, when the VFS
+  knows a valid file and can read its content. A save from the IDE editor then reaches the settings at once.
+  Every other read must take the disk.
   See [ADR 00GVJL](../adr/00GVJL-a-refresh-on-a-vfs-event-reads-the-config-file-from-the-vfs-and-every-other-read-takes-the-disk.md).
   [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/ConfigFileEditTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/JsonConfigFileVfsReadTest.kt
 - The watch start and a write must make the config file known to the VFS through an asynchronous lookup.
   Settings v2 must never run a synchronous VFS refresh or lookup, so the application load never waits for the EDT
   on its behalf.
