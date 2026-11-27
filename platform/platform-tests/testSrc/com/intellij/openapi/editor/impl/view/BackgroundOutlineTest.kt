@@ -228,6 +228,25 @@ internal class BackgroundOutlineTest {
   }
 
   @Test
+  fun `a clip deep inside the shape gives one rectangle over the clip and no corner`() {
+    val rows = BackgroundRows()
+    rows.addRow(0, 0.0, 60.0)
+    rows.addRow(1, 0.0, 40.0)
+    rows.addRow(1, 30.0, 60.0)
+    rows.addRow(2, 0.0, 60.0)
+    val device = DeviceGrid.of(AffineTransform.getScaleInstance(1.5, 1.5))!!
+
+    val inside = BackgroundOutline.split(rows, STYLE, RADIUS, device, Rectangle2D.Double(25.0, 14.0, 6.0, 8.0))
+    val nearEdge = BackgroundOutline.split(rows, STYLE, RADIUS, device, Rectangle2D.Double(2.0, 14.0, 6.0, 8.0))
+
+    assertEquals(0, pieceCount(inside.corners))
+    assertEquals(4, inside.rectangles.size)
+    assertTrue(inside.rectangles[0] <= 25.0 && inside.rectangles[1] <= 14.0, inside.rectangles.contentToString())
+    assertTrue(inside.rectangles[2] >= 31.0 && inside.rectangles[3] >= 22.0, inside.rectangles.contentToString())
+    assertTrue(nearEdge.rectangles.size > 4, nearEdge.rectangles.contentToString())
+  }
+
+  @Test
   fun `the split for a clip fills the pixels of the clip as the split for the whole shape`() {
     for (shape in shapes()) {
       for (scale in doubleArrayOf(1.0, 1.5, 2.0)) {
@@ -272,6 +291,11 @@ internal class BackgroundOutlineTest {
     val touching = BackgroundRows()
     touching.addRow(0, 0.0, 10.0)
     touching.addRow(1, 10.0, 20.0)
+    val block = BackgroundRows()
+    block.addRow(0, 0.0, 44.0)
+    block.addRow(1, 0.0, 30.0)
+    block.addRow(1, 25.0, 44.0)
+    block.addRow(2, 0.0, 44.0)
     return listOf(
       Shape("one row", oneRow),
       Shape("a step", step),
@@ -279,6 +303,7 @@ internal class BackgroundOutlineTest {
       Shape("a narrow row", narrow),
       Shape("a short edge", shortEdge),
       Shape("two shapes at one corner", touching),
+      Shape("a block of overlapping rows", block),
     )
   }
 
