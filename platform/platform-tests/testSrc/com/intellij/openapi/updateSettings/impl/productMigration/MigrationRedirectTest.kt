@@ -28,6 +28,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,7 +40,11 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
+
+// longer than the end of a test launcher on a slow machine; a launcher that ends stops the wait
+private const val LONG_WAIT_MILLIS = 30_000L
 
 class MigrationRedirectTest {
   @get:Rule
@@ -142,6 +147,30 @@ class MigrationRedirectTest {
     for (start in MigrationRedirectStart.entries) {
       val redirect = loadMigrationRedirect(start, stateFile, isMigrationDisabled = false, os = OS.Windows)
       assertEquals(start.name, windowsLauncher, redirect!!.launcher)
+    }
+    assertTrue(stateFile.exists())
+  }
+
+  @Test
+  fun `Linux application without a launcher deletes the state and the copy`() {
+    writeProductInfo(app)
+    for (start in MigrationRedirectStart.entries) {
+      writeState(MigrationStatus.MOVED)
+      writeContent()
+      assertNull(start.name, loadMigrationRedirect(start, stateFile, isMigrationDisabled = false, os = OS.Linux))
+      assertFalse(start.name, stateFile.exists())
+      assertFalse(start.name, contentFile.exists())
+    }
+  }
+
+  @Test
+  fun `Linux application with a launcher is redirected`() {
+    val linuxApp = tempDir.root.toPath().resolve("JetBrains/unified-ide-271.100")
+    val linuxLauncher = writeRootLauncher(linuxApp, osName = "Linux", launcherPath = "bin/jetbrains")
+    writeState(MigrationStatus.MOVED, app = linuxApp)
+    for (start in MigrationRedirectStart.entries) {
+      val redirect = loadMigrationRedirect(start, stateFile, isMigrationDisabled = false, os = OS.Linux)
+      assertEquals(start.name, linuxLauncher, redirect!!.launcher)
     }
     assertTrue(stateFile.exists())
   }
@@ -309,6 +338,21 @@ class MigrationRedirectTest {
   }
 
   @Test
+  fun `Linux command of a start that does not wait runs the launcher with the redirect reason first`() {
+    val app = Path.of("/home/me/.local/share/JetBrains/unified-ide-271.100")
+    val launcher = app.resolve("bin/jetbrains")
+    val command = migrationRedirectCommand(app, "GO", listOf("/home/me/my project", "/home/me/a.txt"), launcher, waits = false, os = OS.Linux)
+    assertEquals(listOf(
+      launcher.toString(),
+      "-Dide.migration.version=1",
+      "-Dide.migration.reason=redirect",
+      "-Dide.migration.source.product=GO",
+      "/home/me/my project",
+      "/home/me/a.txt",
+    ), command)
+  }
+
+  @Test
   fun `no command without a launcher, except the macOS start that does not wait`() {
     val app = Path.of("/Users/me/Applications/Unified IDE.app")
     for (os in OS.entries) {
@@ -321,10 +365,10 @@ class MigrationRedirectTest {
   }
 
   @Test
-  fun `no command of a start that does not wait on a system other than macOS and Windows`() {
+  fun `no command of a start that does not wait on a system other than macOS, Windows and Linux`() {
     val app = Path.of("/opt/unified-ide")
     val launcher = app.resolve("bin/unified")
-    for (os in OS.entries - OS.macOS - OS.Windows) {
+    for (os in OS.entries - OS.macOS - OS.Windows - OS.Linux) {
       assertNull(os.name, migrationRedirectCommand(app, "GO", listOf("/a"), launcher, waits = false, os = os))
     }
   }
@@ -366,6 +410,39 @@ class MigrationRedirectTest {
     // `open` fails for a missing application, and another OS has no command without a launcher
     val state = MigrationState(MigrationStatus.MOVED, tempDir.root.toPath().resolve("Missing.app"), "JB")
     assertNull(launch(MigrationRedirect(state, waits = false, content = null, launcher = null), emptyList()))
+  }
+
+  @Test
+  fun `Linux launch that does not wait returns 0 for a launcher that ends with 0`() {
+    assumeTrue(OS.CURRENT == OS.Linux)
+    val marker = tempDir.root.toPath().resolve("started.txt")
+    val redirect = linuxRedirect("#!/bin/sh\necho \"$@\" > '${marker}'\n")
+    assertEquals(0, launch(redirect, listOf("/a b")))
+    assertEquals("-Dide.migration.version=1 -Dide.migration.reason=redirect -Dide.migration.source.product=GO /a b", marker.readText().trim())
+  }
+
+  @Test
+  fun `Linux launch that does not wait returns null for a launcher that ends with an error`() {
+    assumeTrue(OS.CURRENT == OS.Linux)
+    assertNull(launch(linuxRedirect("#!/bin/sh\nexit 3\n"), listOf("/a")))
+  }
+
+  @Test
+  fun `Linux launch that does not wait returns 0 for a launcher that runs longer than the wait`() {
+    assumeTrue(OS.CURRENT == OS.Linux)
+    val pidFile = tempDir.root.toPath().resolve("pid.txt")
+    // `exec` keeps the process ID, so the test can end the launcher
+    val redirect = linuxRedirect("#!/bin/sh\necho $$ > '${pidFile}'\nexec sleep 600\n")
+    try {
+      assertEquals(0, launch(redirect, listOf("/a"), linuxLauncherWaitMillis = 500))
+    }
+    finally {
+      val deadline = System.currentTimeMillis() + 10_000
+      while ((!pidFile.exists() || pidFile.readText().isBlank()) && System.currentTimeMillis() < deadline) Thread.sleep(50)
+      val launcherProcess = ProcessHandle.of(pidFile.readText().trim().toLong())
+      assertTrue("the launcher runs after the wait", launcherProcess.isPresent && launcherProcess.get().isAlive)
+      launcherProcess.get().destroyForcibly()
+    }
   }
 
   @Test
@@ -442,8 +519,22 @@ class MigrationRedirectTest {
 
   private fun loadContent(): MigrationRedirectContent = load(MigrationRedirectStart.OPEN)!!.content!!
 
-  private fun launch(redirect: MigrationRedirect, arguments: List<String>, onStart: () -> Unit = {}): Int? = timeoutRunBlocking {
-    launchMigrationRedirect(redirect, "GO", arguments, onStart = { onStart() })
+  private fun launch(
+    redirect: MigrationRedirect,
+    arguments: List<String>,
+    linuxLauncherWaitMillis: Long = LONG_WAIT_MILLIS,
+    onStart: () -> Unit = {},
+  ): Int? = timeoutRunBlocking {
+    launchMigrationRedirect(redirect, "GO", arguments, linuxLauncherWaitMillis = linuxLauncherWaitMillis, onStart = { onStart() })
+  }
+
+  /** A redirect of a start that does not wait, to a Linux application with the launcher [script]. */
+  private fun linuxRedirect(script: String): MigrationRedirect {
+    val linuxApp = tempDir.root.toPath().resolve("JetBrains/unified-ide-271.100")
+    val linuxLauncher = writeRootLauncher(linuxApp, osName = "Linux", launcherPath = "bin/jetbrains")
+    linuxLauncher.writeText(script)
+    val state = writeState(MigrationStatus.MOVED, app = linuxApp)
+    return MigrationRedirect(state, waits = false, content = null, launcher = linuxLauncher)
   }
 
   private fun show(

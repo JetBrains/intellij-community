@@ -177,6 +177,25 @@ fun waitForMigrationOpen(process: Process, timeoutSeconds: Long): Boolean {
   return true
 }
 
+/**
+ * Waits up to [timeoutMillis] for [process], the launcher of the Unified IDE on Linux.
+ * Returns `false` only when the launcher ends with an exit code other than 0 in this time, and logs the exit code.
+ * The Linux launcher shows its error in a dialog of the `zenity` or the `kdialog` program. With no such program, it shows nothing and ends.
+ * A launcher that still runs is the Unified IDE. A launcher that ended with 0 gave its command to an open Unified IDE.
+ */
+@ApiStatus.Internal
+fun isMigrationLauncherStarted(process: Process, timeoutMillis: Long): Boolean {
+  if (!process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
+    return true
+  }
+  val exitCode = process.exitValue()
+  if (exitCode != 0) {
+    LOG.warn("the launcher of the Unified IDE ended with the exit code ${exitCode}")
+    return false
+  }
+  return true
+}
+
 /** Looks only in the absolute folders of `PATH`. This module does not see `PathEnvironmentVariableUtil`. */
 private fun findSetsid(): Path? {
   val setsid = System.getenv("PATH").orEmpty().split(File.pathSeparatorChar).firstNotNullOfOrNull { dir ->

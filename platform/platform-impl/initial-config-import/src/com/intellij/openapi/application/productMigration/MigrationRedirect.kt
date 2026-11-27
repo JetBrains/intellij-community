@@ -45,6 +45,8 @@ import javax.swing.KeyStroke
 private val LOG = logger<MigrationRedirect>()
 
 private const val OPEN_TIMEOUT_SECONDS = 30L
+// a launcher that cannot start the IDE ends in about a second; the time delays the exit of each redirected start
+private const val LINUX_LAUNCHER_WAIT_MILLIS = 3_000L
 private const val CONTENT_WIDTH = 420
 private const val CONTENT_INSET = 24
 private const val LOGO_SIZE = 32
@@ -176,7 +178,7 @@ fun loadMigrationRedirect(
 /**
  * The command that starts the Unified IDE [app] with the `redirect` reason and the arguments of this start, or `null` when [os] has none.
  * A start that [waits] runs [launcher], the launcher of the Unified IDE, on each OS.
- * A start that does not wait starts a new instance with `open` on macOS, and it runs [launcher] on Windows.
+ * A start that does not wait starts a new instance with `open` on macOS, and it runs [launcher] on Windows and Linux.
  * A command with the launcher needs a non-null [launcher].
  */
 @ApiStatus.Internal
@@ -194,15 +196,17 @@ fun migrationRedirectCommand(
   }
   return when (os) {
     OS.macOS -> macOpenCommand(app, launchArguments)
-    OS.Windows -> launcher?.let { migrationLauncherCommand(it, launchArguments) }
-    OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> null
+    OS.Windows, OS.Linux -> launcher?.let { migrationLauncherCommand(it, launchArguments) }
+    OS.FreeBSD, OS.OHOS, OS.Other -> null
   }
 }
 
 /**
  * Starts the Unified IDE of [redirect] with its [migrationRedirectCommand] for [os].
  * Returns the exit code for this process, or `null` when the start fails or [os] has no command.
- * A start that does not wait gives `0`. On macOS, it waits for `open`. On Windows, it is good when the process of the launcher starts.
+ * A start that does not wait gives `0`. On macOS, it waits for `open`.
+ * On Windows, it is good when the process of the launcher starts.
+ * On Linux, it waits [linuxLauncherWaitMillis] for the launcher, and it is good when [isMigrationLauncherStarted].
  * A start that waits runs the launcher as a child with the standard streams of this process, and gives the exit code of the child.
  * [onStart] runs after the start of the child.
  */
@@ -212,6 +216,7 @@ suspend fun launchMigrationRedirect(
   sourceProduct: String,
   arguments: List<String>,
   os: OS = OS.CURRENT,
+  linuxLauncherWaitMillis: Long = LINUX_LAUNCHER_WAIT_MILLIS,
   onStart: suspend () -> Unit = {},
 ): Int? {
   val app = redirect.state.app
@@ -220,7 +225,7 @@ suspend fun launchMigrationRedirect(
     return null
   }
   if (redirect.waits) {
-    val child = startMigrationProcess(command, inheritIO = true) ?: return null
+    val child = startMigrationProcess(command, inheritIO = true, os = os) ?: return null
     onStart()
     val exitCode = child.awaitExit()
     LOG.info("the Unified IDE exited with the code ${exitCode}")
@@ -234,8 +239,13 @@ suspend fun launchMigrationRedirect(
       if (isStarted) 0 else null
     }
     // no wait: a launcher that cannot start the IDE shows its own message and does not exit
-    OS.Windows -> if (startMigrationLauncher(command) == null) null else 0
-    OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> null
+    OS.Windows -> if (startMigrationLauncher(command, os) == null) null else 0
+    OS.Linux -> {
+      val process = startMigrationLauncher(command, os) ?: return null
+      val isStarted = runInterruptible(Dispatchers.IO) { isMigrationLauncherStarted(process, linuxLauncherWaitMillis) }
+      if (isStarted) 0 else null
+    }
+    OS.FreeBSD, OS.OHOS, OS.Other -> null
   }
 }
 
