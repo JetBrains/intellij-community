@@ -62,11 +62,10 @@ import java.awt.GridBagLayout
 import java.awt.KeyEventDispatcher
 import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager
+import java.awt.LayoutManager2
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.datatransfer.StringSelection
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
@@ -782,16 +781,17 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     private val model = DefaultListModel<PluginItemState>()
     private val titleLabel = JBLabel()
     private val statusLabel = JBLabel()
-    private val titleAndStatus = JPanel(HorizontalLayout(JBUI.scale(TITLE_STATUS_GAP))).apply {
+    private val titleAndStatus = JPanel().apply {
+      val horizontalLayout = HorizontalLayout(SECTION_HEADER_TEXT_GAP)
+      layout = object : LayoutManager2 by horizontalLayout {
+        override fun layoutContainer(parent: Container) {
+          updateTitlePresentation(parent.width)
+          horizontalLayout.layoutContainer(parent)
+        }
+      }
       isOpaque = false
       add(titleLabel)
       add(statusLabel)
-      addComponentListener(object : ComponentAdapter() {
-        override fun componentResized(event: ComponentEvent) {
-          updateTitlePresentation()
-          doLayout()
-        }
-      })
     }
     private val loadingIcon = AnimatedIcon.Default()
     private val errorLabel = JBLabel()
@@ -845,19 +845,9 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       horizontalAlignment = SwingConstants.CENTER
       verticalAlignment = SwingConstants.CENTER
     }
-    private val expansionControl = object : JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP, SwingConstants.CENTER)) {
-      var isHighlighted = false
-        set(value) {
-          if (field == value) return
-          field = value
-          repaint()
-        }
-
-      override fun paint(g: Graphics) {
-        if (expanded || isHighlighted) super.paint(g)
-      }
-    }.apply {
+    private val expansionControl = JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP, SwingConstants.CENTER)).apply {
       isOpaque = false
+      border = JBUI.Borders.emptyLeft(SECTION_HEADER_TEXT_GAP)
       add(expansionTextLabel)
       add(expansionChevronLabel)
     }
@@ -909,7 +899,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       }
 
       fullHeaderButton = SectionHeaderButton(
-        onHighlightChanged = { expansionControl.isHighlighted = it },
+        onExpansionVisibilityChanged = { expansionControl.isVisible = it },
       ) { onExpansionChanged(id, !expanded) }.apply {
         addContent(titleAndStatus, BorderLayout.CENTER)
         addContent(expansionControl, BorderLayout.EAST)
@@ -980,7 +970,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
           text
         }
       }
-      updateTitlePresentation()
       val error = when (val status = section.status) {
         is PluginSectionStatus.Degraded -> status.error
         is PluginSectionStatus.Failed -> status.error
@@ -1011,12 +1000,8 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         if (section.expanded) "plugins.configurable.show.less" else "plugins.configurable.show.more",
       )
       val expansionIcon = if (section.expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
-      expansionControl.isVisible = section.canExpand
       expansionTextLabel.text = expansionText
-      expansionChevronLabel.apply {
-        isVisible = section.canExpand
-        icon = expansionIcon
-      }
+      expansionChevronLabel.icon = expansionIcon
       val showExpansionRow = section.canExpand && (!section.expanded || id != PluginSectionId.Suggested)
       expansionRow.isVisible = showExpansionRow
       footerActions.isVisible = showExpansionRow || marketplaceLinkPanel?.isVisible == true
@@ -1109,7 +1094,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
 
     private class SectionHeaderButton(
       isFooter: Boolean = false,
-      onHighlightChanged: ((Boolean) -> Unit)? = null,
+      onExpansionVisibilityChanged: ((Boolean) -> Unit)? = null,
       private val onToggle: () -> Unit,
     ) : SelectablePanel() {
       private var restoringMouseFocus = false
@@ -1138,7 +1123,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       init {
         toggleButton.layout = BorderLayout()
         toggleButton.addActionListener { onToggle() }
-        configureSectionButton(this, toggleButton, isFooter, onHighlightChanged, ::consumeMouseFocusRestore) {
+        configureSectionButton(this, toggleButton, isFooter, onExpansionVisibilityChanged, ::consumeMouseFocusRestore) {
           hasKeyboardFocus = it
         }
       }
@@ -1307,24 +1292,23 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       component.doLayout()
       headerSlot.doLayout()
       header.doLayout()
-      updateTitlePresentation()
       titleAndStatus.doLayout()
       rowsPanel.doLayout()
     }
 
-    private fun updateTitlePresentation() {
-      if (titleAndStatus.width <= 0) {
+    private fun updateTitlePresentation(availableWidth: Int) {
+      if (availableWidth <= 0) {
         titleLabel.text = fullTitle
         titleLabel.toolTipText = null
         return
       }
 
-      val maxTitleWidth = (titleAndStatus.width - statusLabel.preferredSize.width - JBUI.scale(TITLE_STATUS_GAP)).coerceAtLeast(0)
+      val statusWidth = statusLabel.preferredSize.width + JBUI.scale(SECTION_HEADER_TEXT_GAP)
       val displayedTitle = shortenTextWithEllipsis(
         text = fullTitle,
         minTextSuffixLength = 0,
         maxTextPrefixRatio = 1.0f,
-        maxTextWidth = maxTitleWidth,
+        maxTextWidth = (availableWidth - statusWidth).coerceAtLeast(0),
         getTextWidth = titleLabel.getFontMetrics(titleLabel.font)::stringWidth,
       )
       titleLabel.text = displayedTitle
@@ -1712,7 +1696,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       panel: SelectablePanel,
       button: AbstractButton,
       isFooter: Boolean,
-      onHighlightChanged: ((Boolean) -> Unit)? = null,
+      onExpansionVisibilityChanged: ((Boolean) -> Unit)? = null,
       consumeMouseFocusRestore: (() -> Boolean)? = null,
       onKeyboardFocusChanged: ((Boolean) -> Unit)? = null,
     ) {
@@ -1741,7 +1725,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
         val cursor = if (button.isEnabled) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
         panel.cursor = cursor
         button.cursor = cursor
-        onHighlightChanged?.invoke(showFocus || showHighlight)
+        onExpansionVisibilityChanged?.invoke(showHighlight || (button.isEnabled && button.isSelected))
         onKeyboardFocusChanged?.invoke(showFocus)
       }
 
@@ -1826,11 +1810,11 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
     const val SECTION_HEADER_HOVER_HORIZONTAL_INSET: Int = 8
     const val SECTION_HEADER_HOVER_TOP_INSET: Int = 8
     const val SECTION_HEADER_HOVER_BOTTOM_INSET: Int = 4
+    const val SECTION_HEADER_TEXT_GAP: Int = 6
     const val PLUGIN_CARD_SELECTION_ARC: Int = 8
     const val SECTION_HEADER_TOP_INSET: Int = 8
     const val STATIC_ROW_HEIGHT: Int = 36
     const val STICKY_HEADER_GRADIENT_HEIGHT: Int = 8
-    const val TITLE_STATUS_GAP: Int = 6
 
   }
 

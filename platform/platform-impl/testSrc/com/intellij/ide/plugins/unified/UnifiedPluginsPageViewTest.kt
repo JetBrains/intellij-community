@@ -327,6 +327,7 @@ internal class UnifiedPluginsPageViewTest {
     val expansionChevronLabel = componentsOfType(headerButton, JBLabel::class.java)
       .single { it.icon === AllIcons.General.ChevronDown }
     val expansionControl = expansionTextLabel.parent as JComponent
+    headerButton.model.isRollover = true
     header.setSize(JBUI.scale(320), JBUI.scale(40))
     layoutRecursively(header)
     assertThat(installedList.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
@@ -366,27 +367,20 @@ internal class UnifiedPluginsPageViewTest {
         .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
         .parent as JComponent
 
-      fun expansionControlPainted(): Boolean {
-        header.setSize(JBUI.scale(320), JBUI.scale(40))
-        layoutRecursively(header)
-        val image = paintedImage(control)
-        return image.getRGB(0, 0, image.width, image.height, null, 0, image.width).any { it ushr 24 != 0 }
-      }
-
-      assertThat(expansionControlPainted()).isFalse()
+      assertThat(control.isVisible).isFalse()
 
       button.model.isRollover = true
-      assertThat(expansionControlPainted()).isTrue()
+      assertThat(control.isVisible).isTrue()
       button.model.isRollover = false
 
       button.focusListeners.forEach { it.focusGained(FocusEvent(button, FocusEvent.FOCUS_GAINED)) }
-      assertThat(expansionControlPainted()).isTrue()
+      assertThat(control.isVisible).isTrue()
       button.focusListeners.forEach { it.focusLost(FocusEvent(button, FocusEvent.FOCUS_LOST)) }
-      assertThat(expansionControlPainted()).isFalse()
+      assertThat(control.isVisible).isFalse()
 
       controller.setSectionExpanded(PluginSectionId.Installed, true)
       view.render(controller.state.value)
-      assertThat(expansionControlPainted()).isTrue()
+      assertThat(control.isVisible).isTrue()
     }
   }
 
@@ -669,7 +663,7 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
-  fun `long repository title truncates without hiding controls`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+  fun `repository header gives the title room until it reveals Show more`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val repositoryId = PluginSectionId.CustomRepository(
       "https://plugins.example.com/" + "a-very-long-repository-segment/".repeat(10) + "plugins.xml"
     )
@@ -688,12 +682,12 @@ internal class UnifiedPluginsPageViewTest {
 
     val titleLabel = componentsOfType(view.component, JBLabel::class.java)
       .single { it.accessibleContext.accessibleName == fullTitle }
-    val header = checkNotNull(titleLabel.parent?.parent)
+    val header = titleLabel.parent.parent as JToggleButton
     val expansionTextLabel = componentsOfType(header, JBLabel::class.java)
       .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
     val expansionControl = expansionTextLabel.parent as JComponent
     val statusLabel = componentsOfType(header, JBLabel::class.java).single { it.text == "5" }
-    val availableTitleWidth = titleLabel.parent.width - statusLabel.preferredSize.width
+    val availableTitleWidth = titleLabel.parent.width
     val fullTitleWidth = titleLabel.getFontMetrics(titleLabel.font).stringWidth(fullTitle)
     assertThat(fullTitleWidth)
       .describedAs("full title width with %s available in a %s-wide header", availableTitleWidth, header.width)
@@ -703,25 +697,50 @@ internal class UnifiedPluginsPageViewTest {
       .endsWith("...")
       .isNotEqualTo(fullTitle)
     assertThat(titleLabel.toolTipText).isEqualTo(fullTitle)
+    assertThat(expansionControl.isVisible).isFalse()
+    assertThat(statusLabel.isVisible).isTrue()
+    assertThat(statusLabel.x + statusLabel.width).isLessThanOrEqualTo(availableTitleWidth)
+    val idleTitle = titleLabel.text
+
+    header.model.isRollover = true
+    layoutRecursively(header)
+    assertThat(expansionControl.isVisible).isTrue()
+    assertThat(statusLabel.isVisible).isTrue()
+    assertThat(statusLabel.x + statusLabel.width).isLessThanOrEqualTo(titleLabel.parent.width)
+    assertThat(titleLabel.text.length).isLessThan(idleTitle.length)
     assertThat(expansionControl.x + expansionControl.width).isLessThanOrEqualTo(header.width)
     val scrollPane = componentsOfType(view.component, JBScrollPane::class.java).single()
     val actionRight = SwingUtilities.convertPoint(expansionControl, Point(expansionControl.width, 0), scrollPane.viewport).x
     assertThat(actionRight).isLessThanOrEqualTo(scrollPane.viewport.width)
 
-    val properties = PropertiesComponent.getInstance()
-    val previousProportion = properties.getValue(SPLIT_PROPORTION_PROPERTY)
-    try {
-      view.component.setSize(fullTitleWidth * 2, 320)
-      (view.component as OnePixelSplitter).proportion = 0.9f
-      layoutRecursively(view.component)
-      view.render(controller.state.value)
+    header.model.isRollover = false
+    layoutRecursively(header)
+    assertThat(statusLabel.isVisible).isTrue()
+    assertThat(titleLabel.text).isEqualTo(idleTitle)
 
-      assertThat(titleLabel.text).isEqualTo(fullTitle)
-      assertThat(titleLabel.toolTipText).isNull()
-    }
-    finally {
-      restoreProperty(properties, SPLIT_PROPORTION_PROPERTY, previousProportion)
-    }
+    val widthForTitleAndCount = fullTitleWidth + statusLabel.preferredSize.width + JBUI.scale(6) + header.insets.run { left + right }
+    header.setSize(widthForTitleAndCount, header.height)
+    layoutRecursively(header)
+    assertThat(titleLabel.text).isEqualTo(fullTitle)
+    assertThat(titleLabel.toolTipText).isNull()
+
+    header.setSize(widthForTitleAndCount + expansionControl.preferredSize.width, header.height)
+    header.model.isRollover = true
+    layoutRecursively(header)
+    assertThat(statusLabel.isVisible).isTrue()
+    val countEnd = SwingUtilities.convertPoint(statusLabel, Point(statusLabel.width, 0), header).x
+    val actionStart = SwingUtilities.convertPoint(expansionTextLabel, Point(), header).x
+    val titleToCountGap = statusLabel.x - titleLabel.x - titleLabel.width
+    assertThat(titleToCountGap).isEqualTo(JBUI.scale(6))
+    assertThat(actionStart - countEnd).isEqualTo(titleToCountGap)
+
+    header.model.isRollover = false
+    controller.setSectionExpanded(repositoryId, true)
+    view.render(controller.state.value)
+    assertThat(expansionTextLabel.text).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
+    assertThat(statusLabel.isVisible).isTrue()
+    assertThat(statusLabel.x + statusLabel.width).isLessThanOrEqualTo(titleLabel.parent.width)
+    view.close()
   }
 
   @Test
