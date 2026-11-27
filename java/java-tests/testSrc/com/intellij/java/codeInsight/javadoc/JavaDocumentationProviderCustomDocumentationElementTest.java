@@ -1,94 +1,121 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.javadoc;
 
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaDocumentedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class JavaDocumentationProviderCustomDocumentationElementTest extends JavaCodeInsightTestCase {
+@TestApplication
+public class JavaDocumentationProviderCustomDocumentationElementTest {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/documentationprovider/";
+
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
 
   private JavaDocumentationProvider myProvider;
 
-  public void testClassClassKeyword() throws Exception {
+  @Test
+  public void testClassClassKeyword() {
     doTestClass();
   }
 
-  public void testClassPublicKeyword() throws Exception {
+  @Test
+  public void testClassPublicKeyword() {
     doTestClass();
   }
 
-  public void testFieldFinalKeyword() throws Exception {
+  @Test
+  public void testFieldFinalKeyword() {
     doTestClass();
   }
 
-  public void testFieldIntType() throws Exception {
+  @Test
+  public void testFieldIntType() {
     doTestClass();
   }
 
-  public void testFieldPublicKeyword() throws Exception {
+  @Test
+  public void testFieldPublicKeyword() {
     doTestClass();
   }
 
-  public void testFieldStaticKeyword() throws Exception {
+  @Test
+  public void testFieldStaticKeyword() {
     doTestClass();
   }
 
-  public void testMethodPublicKeyword() throws Exception {
+  @Test
+  public void testMethodPublicKeyword() {
     doTestClass();
   }
 
-  public void testMethodThrowsKeyword() throws Exception {
+  @Test
+  public void testMethodThrowsKeyword() {
     doTestClass();
   }
 
-  public void testMethodVoidKeyword() throws Exception {
+  @Test
+  public void testMethodVoidKeyword() {
     doTestClass();
   }
 
-  public void testFieldStringType() throws Exception {
+  @Test
+  public void testFieldStringType() {
     configure();
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
 
-    final PsiElement fieldStringType = PsiUtilBase.getElementAtCaret(getEditor());
     final String message = "The non-primitive type 'String' on a field can't be a custom documentation element";
 
-    final PsiElement javadocCarrier = myProvider.getCustomDocumentationElement(myEditor, myFile, fieldStringType, 0);
+    final PsiElement javadocCarrier = ReadAction.computeBlocking(() -> {
+      final PsiElement fieldStringType = PsiUtilBase.getElementAtCaret(fixture.getEditor());
+      return myProvider.getCustomDocumentationElement(fixture.getEditor(), fixture.getFile(), fieldStringType, 0);
+    });
 
     assertThat(javadocCarrier).withFailMessage(message)
       .isNull();
   }
 
-  private void doTestClass() throws Exception {
+  private void doTestClass() {
     configure();
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
 
-    final PsiElement customJavadocElement = PsiUtilBase.getElementAtCaret(getEditor());
-    final PsiJavaDocumentedElement expectedJavadocCarrier = PsiTreeUtil.getParentOfType(customJavadocElement, PsiJavaDocumentedElement.class);
+    ReadAction.runBlocking(() -> {
+      final PsiElement customJavadocElement = PsiUtilBase.getElementAtCaret(fixture.getEditor());
+      final PsiJavaDocumentedElement expectedJavadocCarrier = PsiTreeUtil.getParentOfType(customJavadocElement, PsiJavaDocumentedElement.class);
 
-    final String message = String.format("'%s' should be custom documentation element", customJavadocElement.getText());
+      final String message = String.format("'%s' should be custom documentation element", customJavadocElement.getText());
 
-    doTest(message, customJavadocElement, expectedJavadocCarrier);
+      doTest(message, customJavadocElement, expectedJavadocCarrier);
+    });
   }
 
   private void doTest(String message, PsiElement customJavadocElement, PsiElement expectedJavadocCarrier) {
-    final PsiElement javadocCarrier = myProvider.getCustomDocumentationElement(myEditor, myFile, customJavadocElement, 0);
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final PsiElement javadocCarrier = myProvider.getCustomDocumentationElement(fixture.getEditor(), fixture.getFile(), customJavadocElement, 0);
 
     assertThat(javadocCarrier).withFailMessage(message)
       .isEqualTo(expectedJavadocCarrier);
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     myProvider = new JavaDocumentationProvider();
   }
 
-  private void configure() throws Exception {
-    final String name = getTestName(false);
-    configureByFile(TEST_DATA_FOLDER + name + ".java");
+  private void configure() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final String name = fixture.getTestName(false);
+    fixture.configureByFile(TEST_DATA_FOLDER + name + ".java");
   }
 }

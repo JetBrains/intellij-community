@@ -2,6 +2,7 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory;
@@ -23,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
@@ -42,6 +44,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,12 +58,14 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ProcessingContext;
@@ -70,6 +75,8 @@ import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,78 +89,109 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FindUsagesTest extends JavaPsiTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages/" + getTestName(true);
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    createTestProjectStructure(root);
+@TestApplication
+public class FindUsagesTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  private Project myProject;
+  private JavaPsiFacadeEx myJavaFacade;
+
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    myProject = fixture.getProject();
+    myJavaFacade = fixture.getJavaFacade();
+    String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages/" + fixture.getTestName(true);
+    PsiTestUtil.removeAllRoots(fixture.getModule(), IdeaTestUtil.getMockJdk17());
+    fixture.createTestProjectStructure(root);
   }
 
+  @Test
   public void testOverloadConstructors() {
-    PsiClass aClass = myJavaFacade.findClass("B", GlobalSearchScope.allScope(myProject));
-    PsiMethod constructor = aClass.findMethodsByName("B", false)[0];
-    PsiMethodCallExpression superCall = (PsiMethodCallExpression) constructor.getBody().getStatements()[0].getFirstChild();
-    PsiReferenceExpression superExpr = superCall.getMethodExpression();
-    String[] fileNames = {"B.java", "A.java", "A.java", "B.java"};
-    int[] starts = {};
-    int[] ends = {};
-    final ArrayList<PsiFile> filesList = new ArrayList<>();
-    final IntList startsList = new IntArrayList();
-    final IntList endsList = new IntArrayList();
-    PsiReference[] refs =
-      MethodReferencesSearch.search((PsiMethod)superExpr.resolve(), GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
-    for (PsiReference ref : refs) {
-      addReference(ref, filesList, startsList, endsList);
-    }
-    checkResult(fileNames, filesList, starts, startsList, ends, endsList);
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass("B", GlobalSearchScope.allScope(myProject));
+      PsiMethod constructor = aClass.findMethodsByName("B", false)[0];
+      PsiMethodCallExpression superCall = (PsiMethodCallExpression) constructor.getBody().getStatements()[0].getFirstChild();
+      PsiReferenceExpression superExpr = superCall.getMethodExpression();
+      String[] fileNames = {"B.java", "A.java", "A.java", "B.java"};
+      int[] starts = {};
+      int[] ends = {};
+      final ArrayList<PsiFile> filesList = new ArrayList<>();
+      final IntList startsList = new IntArrayList();
+      final IntList endsList = new IntArrayList();
+      PsiReference[] refs =
+        MethodReferencesSearch.search((PsiMethod)superExpr.resolve(), GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
+      for (PsiReference ref : refs) {
+        addReference(ref, filesList, startsList, endsList);
+      }
+      checkResult(fileNames, filesList, starts, startsList, ends, endsList);
+    });
   }
 
+  @Test
   public void testSiblingImplement() {
-    PsiClass anInterface = myJavaFacade.findClass("A.I", GlobalSearchScope.allScope(myProject));
-    PsiMethod method = anInterface.getMethods()[0];
-    final Collection<PsiMethod> overriders = ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(method).findAll());
-    assertEquals(1, overriders.size());
+    ReadAction.runBlocking(() -> {
+      PsiClass anInterface = myJavaFacade.findClass("A.I", GlobalSearchScope.allScope(myProject));
+      PsiMethod method = anInterface.getMethods()[0];
+      final Collection<PsiMethod> overriders = ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(method).findAll());
+      assertEquals(1, overriders.size());
+    });
   }
 
+  @Test
   public void testSiblingFindUsages() {
-    PsiClass xv = myJavaFacade.findClass("XValueContainerNode", GlobalSearchScope.allScope(myProject));
-    PsiMethod method = xv.findMethodsByName("setObsolete", false)[0];
+    ReadAction.runBlocking(() -> {
+      PsiClass xv = myJavaFacade.findClass("XValueContainerNode", GlobalSearchScope.allScope(myProject));
+      PsiMethod method = xv.findMethodsByName("setObsolete", false)[0];
 
-    FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager()
-      .getFindUsagesHandler(method, FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
+      FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager()
+        .getFindUsagesHandler(method, FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
 
-    PsiElement[] elements = handler.getPrimaryElements();
-    int[] count = {0};
-    for (PsiElement element : elements) {
-      handler.processElementUsages(element, info -> {
-        count[0]++;
-        PsiClass containing = PsiTreeUtil.getParentOfType(info.getElement(), PsiClass.class);
-        assertEquals("Use", containing.getName());
+      PsiElement[] elements = handler.getPrimaryElements();
+      int[] count = {0};
+      for (PsiElement element : elements) {
+        handler.processElementUsages(element, info -> {
+          count[0]++;
+          PsiClass containing = PsiTreeUtil.getParentOfType(info.getElement(), PsiClass.class);
+          assertEquals("Use", containing.getName());
 
-        return true;
-      }, handler.getFindUsagesOptions());
-    }
-    assertEquals(1, count[0]);
+          return true;
+        }, handler.getFindUsagesOptions());
+      }
+      assertEquals(1, count[0]);
+    });
   }
 
+  @Test
   public void testProtectedMethodInPackageLocalClass() {
-    PsiMethod method = myJavaFacade.findClass("foo.PackageLocal", GlobalSearchScope.allScope(myProject)).getMethods()[0];
-    assertEquals(1, ReadAction.computeBlocking(()->OverridingMethodsSearch.search(method).findAll()).size());
-    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(method).findAll()).size());
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = myJavaFacade.findClass("foo.PackageLocal", GlobalSearchScope.allScope(myProject)).getMethods()[0];
+      assertEquals(1, ReadAction.computeBlocking(()->OverridingMethodsSearch.search(method).findAll()).size());
+      assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(method).findAll()).size());
+    });
   }
 
+  @Test
   public void testLibraryClassUsageFromDecompiledSource() {
-    PsiElement decompiled =
-      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
-        ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror());
-    assertEquals(2, ReadAction.computeBlocking(()->ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll()).size());
+    ReadAction.runBlocking(() -> {
+      PsiElement decompiled =
+        BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() ->
+          ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror());
+      assertEquals(2, ReadAction.computeBlocking(()->ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll()).size());
+    });
   }
   
+  @Test
   public void testFindConstructorUsagesFromClass() {
-    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
+    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(myProject);
     options.isUsages = true;
     options.isConstructorUsages = true;
     doTestFindUsages("SomeClass", options, "this()");
@@ -164,59 +202,71 @@ public class FindUsagesTest extends JavaPsiTestCase {
     doTestFindUsages("SomeClass", options, "");
   }
   
+  @Test
   public void testFindDefaultConstructorUsagesFromClass() {
-    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
+    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(myProject);
     options.isUsages = false;
     options.isConstructorUsages = true;
     doTestFindUsages("HeadlessHorsewoman", options, "new HeadlessHorsewoman()");
   }
 
   private void doTestFindUsages(String className, JavaClassFindUsagesOptions options, String expected) {
-    PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-    CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
-    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
-    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(aClass, false);
-    assertNotNull(handler);
-    handler.processElementUsages(aClass, processor, options);
-    Collection<UsageInfo> usages = processor.getResults();
-    assertEquals(expected, StringUtil.join(usages, u -> u.getElement().getParent().getText() , "\n"));
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
+      CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
+      FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
+      FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(aClass, false);
+      assertNotNull(handler);
+      handler.processElementUsages(aClass, processor, options);
+      Collection<UsageInfo> usages = processor.getResults();
+      assertEquals(expected, StringUtil.join(usages, u -> u.getElement().getParent().getText() , "\n"));
+    });
   }
 
+  @Test
   public void testDefaultConstructor() {
-    PsiClass aClass = myJavaFacade.findClass("Animal", GlobalSearchScope.allScope(myProject));
-    PsiMethod main = aClass.findMethodsByName("main", false)[0];
-    PsiLocalVariable variable = (PsiLocalVariable)main.getBody().getStatements()[0].getFirstChild();
-    PsiNewExpression newExpression = (PsiNewExpression)variable.getInitializer();
-    PsiMethod defaultConstructor = newExpression.resolveMethod();
-    Collection<PsiReference> references =
-      ReadAction.computeBlocking(() -> ReferencesSearch.search(defaultConstructor, GlobalSearchScope.projectScope(myProject)).findAll());
-    List<@NotNull PsiElement> result = 
-      references.stream().map(r -> r.getElement()).sorted(PsiElementOrderComparator.getInstance()).toList();
-    assertEquals(2, references.size());
-    assertTrue(result.get(0).getParent() instanceof PsiNewExpression);
-    assertTrue(result.get(1) instanceof PsiMethod m && m.isConstructor() && "OneLeggedDog".equals(m.getName()));
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass("Animal", GlobalSearchScope.allScope(myProject));
+      PsiMethod main = aClass.findMethodsByName("main", false)[0];
+      PsiLocalVariable variable = (PsiLocalVariable)main.getBody().getStatements()[0].getFirstChild();
+      PsiNewExpression newExpression = (PsiNewExpression)variable.getInitializer();
+      PsiMethod defaultConstructor = newExpression.resolveMethod();
+      Collection<PsiReference> references =
+        ReadAction.computeBlocking(() -> ReferencesSearch.search(defaultConstructor, GlobalSearchScope.projectScope(myProject)).findAll());
+      List<@NotNull PsiElement> result = 
+        references.stream().map(r -> r.getElement()).sorted(PsiElementOrderComparator.getInstance()).toList();
+      assertEquals(2, references.size());
+      assertInstanceOf(PsiNewExpression.class, result.get(0).getParent());
+      assertTrue(result.get(1) instanceof PsiMethod m && m.isConstructor() && "OneLeggedDog".equals(m.getName()));
+    });
   }
 
+  @Test
   public void testImplicitConstructorUsage() {
-    PsiMethod[] ctrs = myJavaFacade.findClass("Foo", GlobalSearchScope.allScope(myProject)).getConstructors();
-    PsiMethod method = ctrs[0];
-    assertEquals(0, method.getParameterList().getParametersCount());
-    assertEquals(0, ReadAction.computeBlocking(()->ReferencesSearch.search(method).findAll()).size());
+    ReadAction.runBlocking(() -> {
+      PsiMethod[] ctrs = myJavaFacade.findClass("Foo", GlobalSearchScope.allScope(myProject)).getConstructors();
+      PsiMethod method = ctrs[0];
+      assertEquals(0, method.getParameterList().getParametersCount());
+      assertEquals(0, ReadAction.computeBlocking(()->ReferencesSearch.search(method).findAll()).size());
 
-    PsiMethod usedMethod = ctrs[1];
-    assertEquals(1, usedMethod.getParameterList().getParametersCount());
-    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(usedMethod).findAll()).size());
+      PsiMethod usedMethod = ctrs[1];
+      assertEquals(1, usedMethod.getParameterList().getParametersCount());
+      assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(usedMethod).findAll()).size());
+    });
   }
 
+  @Test
   public void testImplicitVarArgsConstructorsUsage() {
-    PsiMethod[] ctrs = myJavaFacade.findClass("A1", GlobalSearchScope.allScope(myProject)).getConstructors();
-    PsiMethod usedCtr = ctrs[0];
-    assertEquals("java.lang.String", ((PsiEllipsisType)usedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
-    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(usedCtr).findAll()).size());
+    ReadAction.runBlocking(() -> {
+      PsiMethod[] ctrs = myJavaFacade.findClass("A1", GlobalSearchScope.allScope(myProject)).getConstructors();
+      PsiMethod usedCtr = ctrs[0];
+      assertEquals("java.lang.String", ((PsiEllipsisType)usedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
+      assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(usedCtr).findAll()).size());
 
-    PsiMethod unusedCtr = ctrs[1];
-    assertEquals("java.lang.Object", ((PsiEllipsisType)unusedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
-    assertEquals(0, ReadAction.computeBlocking(()->ReferencesSearch.search(unusedCtr).findAll()).size());
+      PsiMethod unusedCtr = ctrs[1];
+      assertEquals("java.lang.Object", ((PsiEllipsisType)unusedCtr.getParameterList().getParameters()[0].getType()).getComponentType().getCanonicalText());
+      assertEquals(0, ReadAction.computeBlocking(()->ReferencesSearch.search(unusedCtr).findAll()).size());
+    });
   }
 
   private static void addReference(@NotNull PsiReference ref, @NotNull List<? super PsiFile> filesList, @NotNull IntList startsList, @NotNull IntList endsList) {
@@ -228,27 +278,34 @@ public class FindUsagesTest extends JavaPsiTestCase {
     endsList.add(range.getStartOffset() + rangeInElement.getEndOffset());
   }
 
+  @Test
   public void testFieldInJavadoc() {
-    PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
-    PsiField field = aClass.findFieldByName("FIELD", false);
-    doTest(field, new String[]{"A.java"}, new int[]{}, new int[]{});
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
+      PsiField field = aClass.findFieldByName("FIELD", false);
+      doTest(field, new String[]{"A.java"}, new int[]{}, new int[]{});
+    });
   }
 
+  @Test
   public void testXml() {
-    PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));
-    doTest(aClass, new String[]{"Test.xml"}, new int[]{32}, new int[]{35});
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass("com.Foo", GlobalSearchScope.allScope(myProject));
+      doTest(aClass, new String[]{"Test.xml"}, new int[]{32}, new int[]{35});
 
-    final PsiFile nonCodeUsage = PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", XmlFileType.INSTANCE, "<root action='com.Foo'/>", 0, true);
-    assertTrue(new UsageInfo(nonCodeUsage, 14, 21, true).getNavigationOffset() > 0);
+      final PsiFile nonCodeUsage = PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", XmlFileType.INSTANCE, "<root action='com.Foo'/>", 0, true);
+      assertTrue(new UsageInfo(nonCodeUsage, 14, 21, true).getNavigationOffset() > 0);
+    });
   }
 
+  @Test
   public void testNonCodeClassUsages() throws Exception {
     final TempDirTestFixture tdf = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     tdf.setUp();
 
     try {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+      WriteCommandAction.writeCommandAction(myProject).run(() -> {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
         moduleModel.newModule("independent/independent.iml", JavaModuleType.getModuleType().getId());
         moduleModel.commit();
 
@@ -259,51 +316,56 @@ public class FindUsagesTest extends JavaPsiTestCase {
             <action class="com.Foo$Bar" />
           </document>""");
 
-        PsiTestUtil.addContentRoot(ModuleManager.getInstance(getProject()).findModuleByName("independent"), tdf.getFile(""));
+        PsiTestUtil.addContentRoot(ModuleManager.getInstance(myProject).findModuleByName("independent"), tdf.getFile(""));
       });
 
-      GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-      PsiClass foo = myJavaFacade.findClass("com.Foo", scope);
-      PsiClass bar = myJavaFacade.findClass("com.Foo.Bar", scope);
+      ReadAction.runBlocking(() -> {
+        GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+        PsiClass foo = myJavaFacade.findClass("com.Foo", scope);
+        PsiClass bar = myJavaFacade.findClass("com.Foo.Bar", scope);
 
-      final int[] count = {0};
-      Processor<UsageInfo> processor = usageInfo -> {
-        int navigationOffset = usageInfo.getNavigationOffset();
-        assertTrue(navigationOffset > 0);
-        String textAfter = usageInfo.getFile().getText().substring(navigationOffset);
-        assertTrue(textAfter, textAfter.startsWith("Foo") || textAfter.startsWith("Bar") ||
-                              textAfter.startsWith("com.Foo.Bar") // sorry, can't get references with dollar-dot mismatch to work now
-        );
-        count[0]++;
-        return true;
-      };
-      JavaFindUsagesHandler handler = new JavaFindUsagesHandler(bar, JavaFindUsagesHandlerFactory.getInstance(getProject()));
+        final int[] count = {0};
+        Processor<UsageInfo> processor = usageInfo -> {
+          int navigationOffset = usageInfo.getNavigationOffset();
+          assertTrue(navigationOffset > 0);
+          String textAfter = usageInfo.getFile().getText().substring(navigationOffset);
+          assertTrue(textAfter.startsWith("Foo") || textAfter.startsWith("Bar") ||
+                                textAfter.startsWith("com.Foo.Bar") // sorry, can't get references with dollar-dot mismatch to work now, textAfter
+          );
+          count[0]++;
+          return true;
+        };
+        JavaFindUsagesHandler handler = new JavaFindUsagesHandler(bar, JavaFindUsagesHandlerFactory.getInstance(myProject));
 
-      count[0] = 0;
-      handler.processUsagesInText(foo, processor, scope);
-      assertEquals(3, count[0]);
+        count[0] = 0;
+        handler.processUsagesInText(foo, processor, scope);
+        assertEquals(3, count[0]);
 
-      count[0] = 0;
-      handler.processUsagesInText(bar, processor, scope);
-      assertEquals(2, count[0]);
+        count[0] = 0;
+        handler.processUsagesInText(bar, processor, scope);
+        assertEquals(2, count[0]);
+      });
     }
     finally {
       tdf.tearDown();
     }
   }
 
+  @Test
   public void testImplicitToString() {
-    PsiClass aClass = myJavaFacade.findClass("Foo");
-    assertNotNull(aClass);
-    PsiMethod toString = assertOneElement(aClass.findMethodsByName("toString", false));
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass("Foo");
+      assertNotNull(aClass);
+      PsiMethod toString = assertThat(aClass.findMethodsByName("toString", false)).singleElement().actual();
 
-    JavaFindUsagesHandlerFactory factory = JavaFindUsagesHandlerFactory.getInstance(myProject);
-    int[] count = {0};
-    factory.createFindUsagesHandler(toString, false).processElementUsages(toString, info -> {
-      count[0]++;
-      return true;
-    }, factory.getFindMethodOptions());
-    assertEquals(1, count[0]);
+      JavaFindUsagesHandlerFactory factory = JavaFindUsagesHandlerFactory.getInstance(myProject);
+      int[] count = {0};
+      factory.createFindUsagesHandler(toString, false).processElementUsages(toString, info -> {
+        count[0]++;
+        return true;
+      }, factory.getFindMethodOptions());
+      assertEquals(1, count[0]);
+    });
   }
 
   public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) {
@@ -379,12 +441,15 @@ public class FindUsagesTest extends JavaPsiTestCase {
     Collections.sort(expected);
     Collections.sort(actual);
 
-    assertEquals("Usages don't match", expected, actual);
+    assertEquals(expected, actual, "Usages don't match");
   }
 
+  @Test
   public void testFindUsagesMustInterrupt/*DuringLongButInterruptibleResolveInsideReadAction*/() throws Exception {
-    PsiClass aClass = myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject));
-    PsiField field = Objects.requireNonNull(aClass).findFieldByName("ref", false);
+    PsiField field = ReadAction.computeBlocking(() -> {
+      PsiClass aClass = myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject));
+      return Objects.requireNonNull(aClass).findFieldByName("ref", false);
+    });
     AtomicInteger toSleepMs = new AtomicInteger();
     AtomicBoolean resolveStarted = new AtomicBoolean();
     final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
@@ -428,11 +493,13 @@ public class FindUsagesTest extends JavaPsiTestCase {
         }, new EmptyProgressIndicator())
       );
 
-      while(!resolveStarted.get() && !future.isDone()) {
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      }
+      EdtTestUtil.runInEdtAndWait(() -> {
+        while(!resolveStarted.get() && !future.isDone()) {
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        }
+      });
 
-      WriteAction.run(() -> toSleepMs.set(0));
+      WriteAction.runAndWait(() -> toSleepMs.set(0));
 
       future.get();
       assertEquals(2, usages.get().size());
@@ -442,16 +509,17 @@ public class FindUsagesTest extends JavaPsiTestCase {
     }
   }
 
+  @Test
   public void testFindUsagesMustNotSwallow/*IndexNotReadyException*/() throws ExecutionException, InterruptedException {
-    PsiClass aClass = myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject));
-    PsiField field = Objects.requireNonNull(aClass).findFieldByName("ref", false);
+    PsiClass aClass = ReadAction.computeBlocking(() -> myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject)));
+    PsiField field = ReadAction.computeBlocking(() -> Objects.requireNonNull(aClass).findFieldByName("ref", false));
     SearchScope scope = new LocalSearchScope(aClass);
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
         ProgressManager.getInstance().runProcess(() ->
             assertThrows(IndexNotReadyException.class, () -> {
               SearchRequestCollector collector = new SearchRequestCollector(new SearchSession(field));
               collector.searchWord(field.getName(), scope, true, field);
-              PsiSearchHelper.getInstance(getProject()).processRequests(collector, reference -> {
+              PsiSearchHelper.getInstance(myProject).processRequests(collector, reference -> {
                   throw IndexNotReadyException.create();
                 });
             })

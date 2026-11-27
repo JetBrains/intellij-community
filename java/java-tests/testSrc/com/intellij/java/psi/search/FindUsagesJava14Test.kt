@@ -2,70 +2,91 @@
 package com.intellij.java.psi.search
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightFixture
+import com.intellij.openapi.application.readAction
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.JavaPsiTestCase
 import com.intellij.testFramework.PsiTestUtil
-import junit.framework.TestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.lang.Integer.max
 
-class FindUsagesJava14Test : JavaPsiTestCase() {
-  override fun setUp() {
-    super.setUp()
-    IdeaTestUtil.setProjectLanguageLevel(myJavaFacade.project, LanguageLevel.HIGHEST)
-    val root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages14/" + getTestName(true)
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17())
-    createTestProjectStructure(root)
+@TestApplication
+class FindUsagesJava14Test {
+  private val fixture by heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath())
+
+  @BeforeEach
+  fun setUp() {
+    IdeaTestUtil.setProjectLanguageLevel(fixture.project, LanguageLevel.HIGHEST)
+    val root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages14/" + fixture.getTestName(true)
+    PsiTestUtil.removeAllRoots(fixture.module, IdeaTestUtil.getMockJdk17())
+    fixture.createTestProjectStructure(root)
   }
 
-  fun testRecordComponentMethod() {
-    val record = myJavaFacade.findClass("pack.MyRecord", GlobalSearchScope.moduleScope(myModule))!!
-    TestCase.assertTrue(record.isRecord)
-    testReferences(record.recordComponents[0], """
-      5     String s = s();
-                       ^
-      
-      12     asd.s();
-             ^^^^^
-    """.trimIndent())
+  @Test
+  fun testRecordComponentMethod(): Unit = timeoutRunBlocking {
+    readAction {
+      val record = fixture.javaFacade.findClass("pack.MyRecord", GlobalSearchScope.moduleScope(fixture.module))!!
+      assertTrue(record.isRecord)
+      testReferences(record.recordComponents[0], """
+        5     String s = s();
+                         ^
+        
+        12     asd.s();
+               ^^^^^
+      """.trimIndent())
+    }
   }
 
-  fun testRecordComponentField() {
-    val record = myJavaFacade.findClass("pack.MyRecord", GlobalSearchScope.moduleScope(myModule))!!
-    TestCase.assertTrue(record.isRecord)
-    testReferences(record.recordComponents[0], """
-      5     s.substring(10, 12);
-            ^
-    """.trimIndent())
+  @Test
+  fun testRecordComponentField(): Unit = timeoutRunBlocking {
+    readAction {
+      val record = fixture.javaFacade.findClass("pack.MyRecord", GlobalSearchScope.moduleScope(fixture.module))!!
+      assertTrue(record.isRecord)
+      testReferences(record.recordComponents[0], """
+        5     s.substring(10, 12);
+              ^
+      """.trimIndent())
+    }
   }
 
-  fun testCompactConstructor() {
-    val record = myJavaFacade.findClass("pack.MyRecord", GlobalSearchScope.moduleScope(myModule))!!
-    TestCase.assertTrue(record.isRecord)
-    testReferences(record.recordComponents[0], """
-      5     String x = s();
-                       ^
-    """.trimIndent())
+  @Test
+  fun testCompactConstructor(): Unit = timeoutRunBlocking {
+    readAction {
+      val record = fixture.javaFacade.findClass("pack.MyRecord", GlobalSearchScope.moduleScope(fixture.module))!!
+      assertTrue(record.isRecord)
+      testReferences(record.recordComponents[0], """
+        5     String x = s();
+                         ^
+      """.trimIndent())
+    }
   }
 
-  fun testSeparateFiles() {
-    val record = myJavaFacade.findClass("pack1.MyRecord", GlobalSearchScope.moduleScope(myModule))!!
-    TestCase.assertTrue(record.isRecord)
-    testReferences(record.recordComponents[0], """
+  @Test
+  fun testSeparateFiles(): Unit = timeoutRunBlocking {
+    readAction {
+      val record = fixture.javaFacade.findClass("pack1.MyRecord", GlobalSearchScope.moduleScope(fixture.module))!!
+      assertTrue(record.isRecord)
+      testReferences(record.recordComponents[0], """
 5     String s = s();
                  ^
 
 8     asd.s();
       ^^^^^
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 
   private fun testReferences(elementToSearch: PsiElement, expectedText: String): Array<out PsiElement> {
-    val elements = ReferencesSearch.search(elementToSearch, GlobalSearchScope.moduleScope(myModule), false)
+    val elements = ReferencesSearch.search(elementToSearch, GlobalSearchScope.moduleScope(fixture.module), false)
       .mapping { reference: PsiReference -> reference.element }
       .toArray(PsiElement.EMPTY_ARRAY)
     val actualText = elements.sortedBy { it.textRange.startOffset }.joinToString("\n\n") { createSnippet(it) }
@@ -74,7 +95,7 @@ class FindUsagesJava14Test : JavaPsiTestCase() {
   }
 
   private fun createSnippet(element: PsiElement) : String {
-    val document = getDocument(element.containingFile)
+    val document = fixture.getDocument(element.containingFile)!!
     val textRange = element.textRange
     val startLine = document.getLineNumber(textRange.startOffset)
     val lastLine = document.getLineNumber(textRange.endOffset)

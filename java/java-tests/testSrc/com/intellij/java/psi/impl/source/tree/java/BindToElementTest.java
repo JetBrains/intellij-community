@@ -16,9 +16,10 @@
 package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,31 +34,46 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @HeavyPlatformTestCase.WrapInCommand
-public class BindToElementTest extends JavaCodeInsightTestCase {
+@TestApplication
+public class BindToElementTest {
+  private static final Logger LOG = Logger.getInstance(BindToElementTest.class);
   public static final String TEST_ROOT = JavaTestUtil.getJavaTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @BeforeEach
+  void setUp() {
     VirtualFile root = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> StandardFileSystems.local().refreshAndFindFileByPath(
       new File(new File(TEST_ROOT), "prj").getAbsolutePath()
     ));
     assertNotNull(root);
-    PsiTestUtil.addSourceRoot(myModule, root);
+    PsiTestUtil.addSourceRoot(heavyFixture.get().getModule(), root);
   }
 
-  public void testSingleClassImport() throws Exception {
+  @Test
+  public void testSingleClassImport() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     doTest(() -> {
-      PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-      final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
-      final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
+      final PsiJavaCodeReferenceElement referenceElement = ReadAction.computeBlocking(() -> {
+        PsiElement element = fixture.getFile().findElementAt(fixture.getEditor().getCaretModel().getOffset());
+        return PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
+      });
+      final PsiClass aClassA = ReadAction.computeBlocking(
+        () -> JavaPsiFacade.getInstance(fixture.getProject()).findClass("p2.A", GlobalSearchScope.moduleScope(fixture.getModule())));
       assertNotNull(aClassA);
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      WriteCommandAction.runWriteCommandAction(fixture.getProject(), () -> {
         try {
           referenceElement.bindToElement(aClassA);
         }
@@ -68,15 +84,20 @@ public class BindToElementTest extends JavaCodeInsightTestCase {
     });
   }
 
-  public void testReplacingType() throws Exception {
+  @Test
+  public void testReplacingType() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
     doTest(() -> {
-      final PsiElement elementAt = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-      final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(elementAt, PsiTypeElement.class);
-      final PsiClass aClassA = JavaPsiFacade.getInstance(myProject).findClass("p2.A", GlobalSearchScope.moduleScope(myModule));
+      final PsiTypeElement typeElement = ReadAction.computeBlocking(() -> {
+        final PsiElement elementAt = fixture.getFile().findElementAt(fixture.getEditor().getCaretModel().getOffset());
+        return PsiTreeUtil.getParentOfType(elementAt, PsiTypeElement.class);
+      });
+      final PsiClass aClassA = ReadAction.computeBlocking(
+        () -> JavaPsiFacade.getInstance(fixture.getProject()).findClass("p2.A", GlobalSearchScope.moduleScope(fixture.getModule())));
       assertNotNull(aClassA);
-      final PsiElementFactory factory = myJavaFacade.getElementFactory();
-      final PsiClassType type = factory.createType(aClassA);
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      final PsiElementFactory factory = fixture.getJavaFacade().getElementFactory();
+      final PsiClassType type = ReadAction.computeBlocking(() -> factory.createType(aClassA));
+      WriteCommandAction.runWriteCommandAction(fixture.getProject(), () -> {
         try {
           typeElement.replace(factory.createTypeElement(type));
         }
@@ -87,10 +108,11 @@ public class BindToElementTest extends JavaCodeInsightTestCase {
     });
   }
 
-  private void doTest(final Runnable runnable) throws Exception {
-    final String relativeFilePath = "/psi/impl/bindToElementTest/" + getTestName(false);
-    configureByFile(relativeFilePath + ".java");
+  private void doTest(final Runnable runnable) {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final String relativeFilePath = "/psi/impl/bindToElementTest/" + fixture.getTestName(false);
+    fixture.configureByFile(relativeFilePath + ".java");
     runnable.run();
-    checkResultByFile(relativeFilePath + ".java.after");
+    fixture.checkResultByFile(relativeFilePath + ".java.after");
   }
 }

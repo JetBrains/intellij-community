@@ -1,8 +1,9 @@
 package com.intellij.java.injection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -17,71 +18,74 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class JavaInjectedLanguageMultiFileTest extends JavaCodeInsightTestCase {
-  @Override
-  public @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
+@TestApplication
+public class JavaInjectedLanguageMultiFileTest {
   @NonNls private static final String BASE_PATH = "/injection/multiFile/";
 
-  @Override
-  protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
-    return super.getOpenProjectOptions().componentStoreLoadingEnabled(false);
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    MyTestInjector testInjector = new MyTestInjector(fixture.getPsiManager());
+    testInjector.injectAll(fixture.getTestRootDisposable());
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(getTestRootDisposable());
-  }
+  private void doTest(String[] classNames, String newPackageName) throws Exception {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    String root = fixture.getTestDataPath() + BASE_PATH + fixture.getTestName(true);
 
-  private void doTest(String[] classNames, String newPackageName) throws Exception{
-    String root = getTestDataPath()+ BASE_PATH + getTestName(true);
-
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
+    PsiTestUtil.removeAllRoots(fixture.getModule(), IdeaTestUtil.getMockJdk17());
     String rootBefore = root + "/before";
-    VirtualFile rootDir = createTestProjectStructure(rootBefore);
-
-    performAction(classNames, newPackageName);
+    VirtualFile rootDir = fixture.createTestProjectStructure(rootBefore);
 
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = StandardFileSystems.local().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      performAction(classNames, newPackageName);
+      PostprocessReformattingAspect.getInstance(fixture.getProject()).doPostponedFormatting();
+      PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+    });
   }
 
   private void performAction(String[] classNames, String newPackageName) {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Project project = fixture.getProject();
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];
-      classes[i] = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
-      assertNotNull("Class " + className + " not found", classes[i]);
+      classes[i] = fixture.getJavaFacade().findClass(className, GlobalSearchScope.allScope(project));
+      assertNotNull(classes[i], "Class " + className + " not found");
     }
 
-    PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(newPackageName);
-    assertNotNull("Package " + newPackageName + " not found", aPackage);
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(newPackageName);
+    assertNotNull(aPackage, "Package " + newPackageName + " not found");
     final PsiDirectory[] dirs = aPackage.getDirectories();
     assertThat(dirs).hasSize(1);
 
     PackageWrapper wrapper = PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dirs[0]));
     SingleSourceRootMoveDestination destination = new SingleSourceRootMoveDestination(wrapper, dirs[0]);
-    new MoveClassesOrPackagesProcessor(myProject, classes, destination, true, true, null).run();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    new MoveClassesOrPackagesProcessor(project, classes, destination, true, true, null).run();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
+  @Test
   public void testMoveClass() throws Exception { doTest(new String[]{"x.y.C"}, "x"); }
 }

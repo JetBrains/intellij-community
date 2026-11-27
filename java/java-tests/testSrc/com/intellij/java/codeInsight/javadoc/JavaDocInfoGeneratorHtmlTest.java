@@ -5,13 +5,16 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocInfoHtmlPrinter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoPrinter;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -19,7 +22,12 @@ import javax.swing.text.html.HTMLEditorKit;
 import java.io.StringReader;
 import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /// HTML variant of the javadoc info generator
+@TestApplication
 public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest {
   @Override
   protected @NotNull JavaDocInfoPrinter getPrinter() {
@@ -49,68 +57,80 @@ public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest
       .replaceAll("[ \t]+\\n", "\n");
   }
 
+  @Test
   public void testClassTypeParamsPresentation() {
     PsiClass psiClass = getTestClass();
-    PsiReferenceList extendsList = psiClass.getExtendsList();
-    assertNotNull(extendsList);
-    PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
-    PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
-    String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
-    assertNotNull(docInfo);
-    assertFileTextEquals(UIUtil.getHtmlBodyWithoutPreWrapper(docInfo));
+    ReadAction.runBlocking(() -> {
+      PsiReferenceList extendsList = psiClass.getExtendsList();
+      assertNotNull(extendsList);
+      PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
+      PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
+      String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
+      assertNotNull(docInfo);
+      assertFileTextEquals(UIUtil.getHtmlBodyWithoutPreWrapper(docInfo));
+    });
   }
 
+  @Test
   public void testRelativeFileLinks() {
-    var context = myJavaFacade.getElementFactory().createClass("C");
-    var html = new StringBuilder("""
-      <html><head><base href="file:/project/src/p/C.java"></head><body>
-      <a href="doc-files/diagram.png">Image</a>
-      <a href="../guide">No extension</a>
-      <a href='../guide.html?x=1&amp;y=2#part'>Guide</a>
-      <a href="doc-files/guide.html?url=https://example.com">Guide URL</a>
-      <a href="https://example.com/guide.html">External</a>
-      <a href="mailto:docs@example.com">Mail</a>
-      <a href="psi_element://C">Class</a>
-      <a href="java/lang/String.html">String</a>
-      </body></html>
-      """);
-    var result = new JavaDocInfoHtmlPrinter().postProcess(html, getProject(), context);
-    assertEquals("""
-      <html><head><base href="file:/project/src/p/C.java"></head><body>
-      <a href="file:/project/src/p/doc-files/diagram.png">Image</a>
-      <a href="file:/project/src/guide">No extension</a>
-      <a href='file:/project/src/guide.html?x=1&amp;y=2#part'>Guide</a>
-      <a href="file:/project/src/p/doc-files/guide.html?url=https://example.com">Guide URL</a>
-      <a href="https://example.com/guide.html">External</a>
-      <a href="mailto:docs@example.com">Mail</a>
-      <a href="psi_element://C">Class</a>
-      <a href="psi_element://java.lang.String">String</a>
-      </body></html>
-      """, result);
+    ReadAction.runBlocking(() -> {
+      var context = heavyFixture.get().getJavaFacade().getElementFactory().createClass("C");
+      var html = new StringBuilder("""
+        <html><head><base href="file:/project/src/p/C.java"></head><body>
+        <a href="doc-files/diagram.png">Image</a>
+        <a href="../guide">No extension</a>
+        <a href='../guide.html?x=1&amp;y=2#part'>Guide</a>
+        <a href="doc-files/guide.html?url=https://example.com">Guide URL</a>
+        <a href="https://example.com/guide.html">External</a>
+        <a href="mailto:docs@example.com">Mail</a>
+        <a href="psi_element://C">Class</a>
+        <a href="java/lang/String.html">String</a>
+        </body></html>
+        """);
+      var result = new JavaDocInfoHtmlPrinter().postProcess(html, heavyFixture.get().getProject(), context);
+      assertEquals("""
+        <html><head><base href="file:/project/src/p/C.java"></head><body>
+        <a href="file:/project/src/p/doc-files/diagram.png">Image</a>
+        <a href="file:/project/src/guide">No extension</a>
+        <a href='file:/project/src/guide.html?x=1&amp;y=2#part'>Guide</a>
+        <a href="file:/project/src/p/doc-files/guide.html?url=https://example.com">Guide URL</a>
+        <a href="https://example.com/guide.html">External</a>
+        <a href="mailto:docs@example.com">Mail</a>
+        <a href="psi_element://C">Class</a>
+        <a href="psi_element://java.lang.String">String</a>
+        </body></html>
+        """, result);
+    });
   }
 
+  @Test
   public void testRelativeFileLinkInSourceArchive() {
-    var context = myJavaFacade.getElementFactory().createClass("C");
-    var html = new StringBuilder("""
-      <html><head><base href="jar:file:/project/sources.jar!/p/C.java"></head><body>
-      <a href="doc-files/diagram.png">Diagram</a>
-      </body></html>
-      """);
-    var result = new JavaDocInfoHtmlPrinter().postProcess(html, getProject(), context);
-    assertEquals("""
-      <html><head><base href="jar:file:/project/sources.jar!/p/C.java"></head><body>
-      <a href="jar:file:/project/sources.jar!/p/doc-files/diagram.png">Diagram</a>
-      </body></html>
-      """, result);
+    ReadAction.runBlocking(() -> {
+      var context = heavyFixture.get().getJavaFacade().getElementFactory().createClass("C");
+      var html = new StringBuilder("""
+        <html><head><base href="jar:file:/project/sources.jar!/p/C.java"></head><body>
+        <a href="doc-files/diagram.png">Diagram</a>
+        </body></html>
+        """);
+      var result = new JavaDocInfoHtmlPrinter().postProcess(html, heavyFixture.get().getProject(), context);
+      assertEquals("""
+        <html><head><base href="jar:file:/project/sources.jar!/p/C.java"></head><body>
+        <a href="jar:file:/project/sources.jar!/p/doc-files/diagram.png">Diagram</a>
+        </body></html>
+        """, result);
+    });
   }
 
+  @Test
   public void testPackageRelativeImage() throws Exception {
-    var root = createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
+    var root = heavyFixture.get().createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
     var packageInfo = root.findFileByRelativePath("p/package-info.java");
     assertNotNull(packageInfo);
-    var psiPackage = myJavaFacade.findPackage("p");
-    assertNotNull(psiPackage);
-    var html = JavaDocInfoGeneratorFactory.create(getProject(), psiPackage).generateDocInfo(null);
+    var html = ReadAction.computeBlocking(() -> {
+      var psiPackage = heavyFixture.get().getJavaFacade().findPackage("p");
+      assertNotNull(psiPackage);
+      return JavaDocInfoGeneratorFactory.create(heavyFixture.get().getProject(), psiPackage).generateDocInfo(null);
+    });
     assertNotNull(html);
     var baseUrl = VfsUtilCore.convertToURL(packageInfo.getUrl());
     assertNotNull(baseUrl);

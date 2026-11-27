@@ -3,7 +3,7 @@ package com.intellij.java.codeInspection.ex
 
 import com.intellij.JavaTestUtil
 import com.intellij.analysis.AnalysisScope
-import com.intellij.codeInsight.JavaCodeInsightTestCase
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightFixture
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.GlobalInspectionContext
 import com.intellij.codeInspection.HTMLComposer
@@ -23,45 +23,47 @@ import com.intellij.codeInspection.lang.HTMLComposerExtension
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory
 import com.intellij.codeInspection.lang.RefManagerExtension
 import com.intellij.codeInspection.reference.RefManager
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.disableAllTools
-import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GlobalInspectionContextToolsTest : JavaCodeInsightTestCase() {
-  @Throws(java.lang.Exception::class)
-  public override fun setUp() {
-    super.setUp()
+@TestApplication
+class GlobalInspectionContextToolsTest {
+  private val fixture by heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/inspection/globalContext/")
+
+  @BeforeEach
+  fun setUp() {
     InspectionProfileImpl.INIT_INSPECTIONS = true
-    ThreadingAssertions.assertEventDispatchThread()
-    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed)
   }
 
-  @Throws(java.lang.Exception::class)
-  public override fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     InspectionProfileImpl.INIT_INSPECTIONS = false
-    super.tearDown()
   }
 
-  override fun getTestDataPath(): String {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/globalContext/"
-  }
-
-  @Throws(Exception::class)
-  fun testPreInitTools() {
+  @Test
+  fun testPreInitTools(): Unit = timeoutRunBlocking {
     val preInitCalled = AtomicBoolean()
     val preRunCalled = AtomicBoolean()
     InspectionExtensionsFactory.EP_NAME.point
-      .registerExtension(GICTestExtensionFactory(preInitCalled, preRunCalled), getTestRootDisposable())
+      .registerExtension(GICTestExtensionFactory(preInitCalled, preRunCalled), fixture.testRootDisposable)
     val profile = InspectionProfileImpl("Foo", object : InspectionToolsSupplier() {
       override fun createTools(): List<InspectionToolWrapper<*, *>> {
         val tools = ArrayList<InspectionToolWrapper<*, *>>()
@@ -71,15 +73,17 @@ class GlobalInspectionContextToolsTest : JavaCodeInsightTestCase() {
       }
     }, (InspectionProfileManager.getInstance() as BaseInspectionProfileManager))
     profile.disableAllTools()
-    profile.enableTool(JavaDummyTestInspection().shortName, getProject())
+    profile.enableTool(JavaDummyTestInspection().shortName, fixture.project)
 
-    val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
+    val context = (InspectionManager.getInstance(fixture.project) as InspectionManagerEx).createNewGlobalContext()
     context.setExternalProfile(profile)
-    configureByFile("Foo.java")
+    fixture.configureByFile("Foo.java")
 
-    val scope = AnalysisScope(file)
-    context.doInspections(scope)
-    UIUtil.dispatchAllInvocationEvents() // wait for launchInspections in invokeLater
+    val scope = readAction { AnalysisScope(fixture.file!!) }
+    withContext(Dispatchers.EDT) {
+      context.doInspections(scope)
+      UIUtil.dispatchAllInvocationEvents() // wait for launchInspections in invokeLater
+    }
     assertTrue(preInitCalled.get())
     assertTrue(preRunCalled.get())
   }

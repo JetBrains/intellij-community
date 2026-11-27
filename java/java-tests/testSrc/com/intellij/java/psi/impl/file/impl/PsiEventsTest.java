@@ -1,21 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl.file.impl;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -30,22 +32,44 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildData;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildDirectory;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.move;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.rename;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.setFileText;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({"ConstantConditions", "FieldCanBeLocal", "unused"})
 @SkipSlowTestLocally
-public class PsiEventsTest extends JavaPsiTestCase {
+@TestApplication
+public class PsiEventsTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  private Project myProject;
+  private Module myModule;
+  private PsiManagerEx myPsiManager;
+  private Disposable myTestRootDisposable;
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;
   private VirtualFile mySrcDir1;
@@ -54,14 +78,16 @@ public class PsiEventsTest extends JavaPsiTestCase {
   private VirtualFile myClsDir1;
   private VirtualFile myIgnoredDir;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    myProject = fixture.getProject();
+    myModule = fixture.getModule();
+    myPsiManager = fixture.getPsiManager();
+    myTestRootDisposable = fixture.getTestRootDisposable();
+    VirtualFile rootVFile = fixture.createTempVirtualDir();
 
-    Path root = createTempDirectoryWithSuffix(null);
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFile rootVFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root);
+    WriteAction.runAndWait(() -> {
 
       myPrjDir1 = createChildDirectory(rootVFile, "prj1");
       mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
@@ -85,12 +111,13 @@ public class PsiEventsTest extends JavaPsiTestCase {
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
+  @Test
   public void testCreateFile() {
     FileManager fileManager = myPsiManager.getFileManager();
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    PsiDirectory psiDir = fileManager.findDirectory(myPrjDir1);
+    PsiDirectory psiDir = ReadAction.computeBlocking(() -> fileManager.findDirectory(myPrjDir1));
     createChildData(myPrjDir1, "a.txt");
 
     String string = listener.getEventsString();
@@ -99,15 +126,16 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildAddition
         childAdded
         """;
-    assertEquals(psiDir.getName(), expected, string);
+    assertEquals(expected, string, psiDir.getName());
   }
 
+  @Test
   public void testCreateDirectory() {
     FileManager fileManager = myPsiManager.getFileManager();
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    PsiDirectory psiDir = fileManager.findDirectory(myPrjDir1);
+    PsiDirectory psiDir = ReadAction.computeBlocking(() -> fileManager.findDirectory(myPrjDir1));
     createChildDirectory(myPrjDir1, "aaa");
 
     String string = listener.getEventsString();
@@ -116,19 +144,20 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildAddition
         childAdded
         """;
-    assertEquals(psiDir.getName(), expected, string);
+    assertEquals(expected, string, psiDir.getName());
   }
 
+  @Test
   public void testDeleteFile() {
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
 
     FileManager fileManager = myPsiManager.getFileManager();
-    PsiFile psiFile = fileManager.findFile(file);//it's important to hold the reference
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));//it's important to hold the reference
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    delete(file);
+    VfsTestUtil.deleteFile(file);
 
     String string = listener.getEventsString();
     String expected =
@@ -136,22 +165,23 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildRemoval
         childRemoved
         """;
-    assertEquals(psiFile.getName(), expected, string);
+    assertEquals(expected, string, psiFile.getName());
   }
 
+  @Test
   public void testConsequentDeleteDeleteFile() {
     VirtualFile file1 = createChildData(myPrjDir1, "a.txt");
     VirtualFile file2 = createChildData(myPrjDir2, "b.txt");
 
     FileManager fileManager = myPsiManager.getFileManager();
-    PsiFile psiFile1 = fileManager.findFile(file1);//it's important to hold the reference
-    PsiFile psiFile2 = fileManager.findFile(file2);//it's important to hold the reference
+    PsiFile psiFile1 = ReadAction.computeBlocking(() -> fileManager.findFile(file1));//it's important to hold the reference
+    PsiFile psiFile2 = ReadAction.computeBlocking(() -> fileManager.findFile(file2));//it's important to hold the reference
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    delete(file1);
-    delete(file2);
+    VfsTestUtil.deleteFile(file1);
+    VfsTestUtil.deleteFile(file2);
 
     String string = listener.getEventsString();
     String expected =
@@ -164,19 +194,20 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testConsequentDeleteDirDeleteFile() {
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
     VirtualFile dir = createChildDirectory(myPrjDir2, "dir");
 
     FileManager fileManager = myPsiManager.getFileManager();
-    PsiFile psiFile = fileManager.findFile(file); //it's important to hold the reference
-    PsiDirectory psiDir = fileManager.findDirectory(dir); //it's important to hold the reference
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file)); //it's important to hold the reference
+    PsiDirectory psiDir = ReadAction.computeBlocking(() -> fileManager.findDirectory(dir)); //it's important to hold the reference
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    delete(dir);
-    delete(file);
+    VfsTestUtil.deleteFile(dir);
+    VfsTestUtil.deleteFile(file);
 
     String string = listener.getEventsString();
     String expectedCorrect = """
@@ -200,19 +231,20 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expectedDefacto, string);
   }
 
+  @Test
   public void testConsequentMoveDeleteFile() {
     VirtualFile file1 = createChildData(myPrjDir1, "a.txt");
     VirtualFile file2 = createChildData(myPrjDir2, "b.txt");
 
     FileManager fileManager = myPsiManager.getFileManager();
-    PsiFile psiFile1 = fileManager.findFile(file1); //it's important to hold the reference
-    PsiFile psiFile2 = fileManager.findFile(file2); //it's important to hold the reference
+    PsiFile psiFile1 = ReadAction.computeBlocking(() -> fileManager.findFile(file1)); //it's important to hold the reference
+    PsiFile psiFile2 = ReadAction.computeBlocking(() -> fileManager.findFile(file2)); //it's important to hold the reference
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file1, mySrcDir3);
-    delete(file2);
+    VfsTestUtil.deleteFile(file2);
 
     String string = listener.getEventsString();
     String expected = """
@@ -224,16 +256,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testDeleteDirectory() {
     VirtualFile file = createChildDirectory(myPrjDir1, "aaa");
 
     FileManager fileManager = myPsiManager.getFileManager();
-    PsiDirectory psiDirectory = fileManager.findDirectory(file);
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    delete(file);
+    VfsTestUtil.deleteFile(file);
 
     String string = listener.getEventsString();
     String expected =
@@ -241,19 +274,20 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildRemoval
         childRemoved
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
+    assertEquals(expected, string, psiDirectory.getName());
   }
 
+  @Test
   public void testRenameFile() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
-    PsiDirectory directory = fileManager.findDirectory(myPrjDir1);
+    PsiDirectory directory = ReadAction.computeBlocking(() -> fileManager.findDirectory(myPrjDir1));
     assertNotNull(directory);
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "b.txt");
 
@@ -263,18 +297,19 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforePropertyChange fileName
         propertyChanged fileName
         """;
-    assertEquals(psiFile.getName(), expected, string);
+    assertEquals(expected, string, psiFile.getName());
   }
 
+  @Test
   public void testRenameFileWithoutDir() {
     FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
-    GCWatcher.tracking(fileManager.getCachedDirectory(myPrjDir1)).ensureCollected();
+    GCWatcher.tracking(ReadAction.computeBlocking(() -> fileManager.getCachedDirectory(myPrjDir1))).ensureCollected();
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "b.txt");
 
@@ -284,16 +319,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforePropertyChange fileName
         propertyChanged fileName
         """;
-    assertEquals(psiFile.getName(), expected, string);
+    assertEquals(expected, string, psiFile.getName());
   }
 
+  @Test
   public void testRenameFileChangingExtension() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "b.xml");
 
@@ -303,16 +339,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildReplacement
         childReplaced
         """;
-    assertEquals(psiFile.getName(), expected, string);
+    assertEquals(expected, string, psiFile.getName());
   }
 
+  @Test
   public void testRenameFileToIgnored() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "CVS");
 
@@ -322,17 +359,18 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildRemoval
         childRemoved
         """;
-    assertEquals(psiFile.getName(), expected, string);
-    assertNull(fileManager.findFile(file));
+    assertEquals(expected, string, psiFile.getName());
+    assertNull(ReadAction.computeBlocking(() -> fileManager.findFile(file)));
   }
 
+  @Test
   public void testRenameFileFromIgnored() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "CVS");
-    PsiDirectory psiDirectory = fileManager.findDirectory(file.getParent());
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file.getParent()));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "aaa.txt");
 
@@ -342,16 +380,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildAddition
         childAdded
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
+    assertEquals(expected, string, psiDirectory.getName());
   }
 
+  @Test
   public void testRenameDirectory_WithPsiDir() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
-    PsiDirectory psiDirectory = fileManager.findDirectory(file);
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "dir2");
 
@@ -361,19 +400,20 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforePropertyChange directoryName
         propertyChanged directoryName
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
+    assertEquals(expected, string, psiDirectory.getName());
   }
 
+  @Test
   public void testRenameDirectory_WithoutPsiDir() {
     FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
 
-    GCWatcher.tracking(fileManager.getCachedDirectory(file)).ensureCollected();
+    GCWatcher.tracking(ReadAction.computeBlocking(() -> fileManager.getCachedDirectory(file))).ensureCollected();
 
-    assertNull(fileManager.getCachedDirectory(file));
+    assertNull(ReadAction.computeBlocking(() -> fileManager.getCachedDirectory(file)));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "dir2");
 
@@ -383,16 +423,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforePropertyChange propUnloadedPsi
         propertyChanged propUnloadedPsi
         """;
-    assertEquals(fileManager.findDirectory(file).getName(), expected, string);
+    assertEquals(expected, string, ReadAction.computeBlocking(() -> fileManager.findDirectory(file).getName()));
   }
 
+  @Test
   public void testRenameDirectoryToIgnored() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
-    PsiDirectory psiDirectory = fileManager.findDirectory(file);
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "CVS");
 
@@ -402,17 +443,18 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildRemoval
         childRemoved
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
-    assertNull(fileManager.findDirectory(file));
+    assertEquals(expected, string, psiDirectory.getName());
+    assertNull(ReadAction.computeBlocking(() -> fileManager.findDirectory(file)));
   }
 
+  @Test
   public void testRenameDirectoryFromIgnored() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "CVS");
-    PsiDirectory psiDirectory = fileManager.findDirectory(file.getParent());
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file.getParent()));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     rename(file, "dir");
 
@@ -422,21 +464,19 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildAddition
         childAdded
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
+    assertEquals(expected, string, psiDirectory.getName());
   }
 
+  @Test
   public void testMakeFileReadOnly() throws Exception {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
     final EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true);
-      return null;
-    });
+    WriteAction.runAndWait(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(file, true));
 
 
     final String expected =
@@ -452,19 +492,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
       }
     }.assertCompleted(listener.getEventsString());
 
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-      return null;
-    });
+    WriteAction.runAndWait(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false));
   }
 
+  @Test
   public void testMoveFile() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, myPrjDir1.getParent());
 
@@ -474,16 +512,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildMovement
         childMoved
         """;
-    assertEquals(psiFile.getName(), expected, string);
+    assertEquals(expected, string, psiFile.getName());
   }
 
+  @Test
   public void testMoveFileToIgnoredDir() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
-    PsiFile psiFile = fileManager.findFile(file);
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, myIgnoredDir);
 
@@ -493,15 +532,16 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildRemoval
         childRemoved
         """;
-    assertEquals(psiFile.getName(), expected, string);
-    assertNull(fileManager.findFile(file));
+    assertEquals(expected, string, psiFile.getName());
+    assertNull(ReadAction.computeBlocking(() -> fileManager.findFile(file)));
   }
 
+  @Test
   public void testMoveFileFromIgnoredDir() {
     VirtualFile file = createChildData(myIgnoredDir, "a.txt");
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, myPrjDir1);
 
@@ -514,12 +554,13 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testMoveFileInsideIgnoredDir() {
     VirtualFile file = createChildData(myIgnoredDir, "a.txt");
     VirtualFile subdir = createChildDirectory(myIgnoredDir, "subdir");
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, subdir);
 
@@ -528,13 +569,14 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testMoveDirectory() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir");
-    PsiDirectory psiDirectory = fileManager.findDirectory(file);
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, myPrjDir1.getParent());
 
@@ -544,16 +586,17 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildMovement
         childMoved
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
+    assertEquals(expected, string, psiDirectory.getName());
   }
 
+  @Test
   public void testMoveDirectoryToIgnored() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir");
-    PsiDirectory psiDirectory = fileManager.findDirectory(file);
+    PsiDirectory psiDirectory = ReadAction.computeBlocking(() -> fileManager.findDirectory(file));
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, myIgnoredDir);
 
@@ -563,15 +606,16 @@ public class PsiEventsTest extends JavaPsiTestCase {
         beforeChildRemoval
         childRemoved
         """;
-    assertEquals(psiDirectory.getName(), expected, string);
-    assertNull(fileManager.findDirectory(file));
+    assertEquals(expected, string, psiDirectory.getName());
+    assertNull(ReadAction.computeBlocking(() -> fileManager.findDirectory(file)));
   }
 
+  @Test
   public void testMoveDirectoryFromIgnored() {
     VirtualFile file = createChildDirectory(myIgnoredDir, "dir");
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, myPrjDir1);
 
@@ -584,12 +628,13 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testMoveDirectoryInsideIgnored() {
     VirtualFile file = createChildDirectory(myIgnoredDir, "dir");
     VirtualFile subdir = createChildDirectory(myIgnoredDir, "subdir");
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     move(file, subdir);
 
@@ -598,19 +643,20 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testChangeFile() {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
     setFileText(file, "aaa");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    PsiFile psiFile = fileManager.findFile(file);
-    assertNotNull(psiFile.getText()); // Trigger PSI loading
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
+    PsiFile psiFile = ReadAction.computeBlocking(() -> fileManager.findFile(file));
+    assertNotNull(ReadAction.computeBlocking(() -> psiFile.getText())); // Trigger PSI loading
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     setFileText(file, "bbb");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     /*
     assertEquals("", listener.getEventsString());
@@ -628,11 +674,12 @@ public class PsiEventsTest extends JavaPsiTestCase {
       listener.getEventsString());
   }
 
+  @Test
   public void testAddExcludeRoot() {
     final VirtualFile dir = createChildDirectory(myPrjDir1, "aaa");
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     PsiTestUtil.addExcludedRoot(myModule, dir);
 
@@ -646,11 +693,12 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testAddSourceRoot() {
     final VirtualFile dir = createChildDirectory(myPrjDir1, "aaa");
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
     PsiTestUtil.addSourceRoot(myModule, dir);
 
@@ -663,11 +711,12 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testModifyFileTypes() {
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       FileTypeManagerEx fileTypeManagerEx = (FileTypeManagerEx)FileTypeManager.getInstance();
       fileTypeManagerEx.makeFileTypesChange("psi events test", EmptyRunnable.getInstance());
     });
@@ -682,22 +731,26 @@ public class PsiEventsTest extends JavaPsiTestCase {
     assertEquals(expected, string);
   }
 
+  @Test
   public void testCyclicDispatching() throws Throwable {
-    final VirtualFile virtualFile = createFile("a.xml", "<tag/>").getVirtualFile();
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    final VirtualFile virtualFile = fixture.createFile("a.xml", "<tag/>").getVirtualFile();
     final PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
       @Override
       public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        getJavaFacade().findClass("XXX", GlobalSearchScope.allScope(myProject));
+        fixture.getJavaFacade().findClass("XXX", GlobalSearchScope.allScope(myProject));
       }
     };
-    getPsiManager().addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
     rename(virtualFile, "b.xml");
   }
 
+  private PsiFile myFile;
   private String original;
   private String eventsFired = "";
   private PsiTreeChangeListener listener;
 
+  @Test
   public void testBeforeAfterChildrenChange() throws Throwable {
     listener = new PsiTreeChangeListener() {
       @Override
@@ -767,7 +820,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
       }
     };
 
-    myFile = createFile("A.java", "class A { int i; }");
+    myFile = heavyFixture.get().createFile("A.java", "class A { int i; }");
     doTestEvents("class A { }");
     //doTestEvents("class A { int i; int j; }"); //todo: f*(&&ing compactChanges() in TreeChangeEventImpl garbles afterXXX events so that they don't match beforeXXX
     doTestEvents("class A { int k; }");
@@ -796,43 +849,44 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
   private void assertBeforeEventFired(PsiTreeChangeEvent afterEvent) {
     PsiTreeChangeEventImpl.PsiEventType code = ((PsiTreeChangeEventImpl)afterEvent).getCode();
-    assertFalse(code.name(), code.name().startsWith("BEFORE_"));
+    assertFalse(code.name().startsWith("BEFORE_"), code.name());
     PsiTreeChangeEventImpl.PsiEventType beforeCode = PsiTreeChangeEventImpl.PsiEventType.values()[code.ordinal() - 1];
-    assertTrue(beforeCode.name(), beforeCode.name().startsWith("BEFORE_"));
+    assertTrue(beforeCode.name().startsWith("BEFORE_"), beforeCode.name());
     String beforeText = eventText(afterEvent, beforeCode);
     int i = eventsFired.indexOf(beforeText);
-    assertTrue("Event '" + beforeText + "' must be fired. Events so far: " + eventsFired, i >= 0);
+    assertTrue(i >= 0, "Event '" + beforeText + "' must be fired. Events so far: " + eventsFired);
   }
 
   private void doTestEvents(String newText) {
     Disposable disposable = Disposer.newDisposable();
     try {
-      getPsiManager().addPsiTreeChangeListener(listener, disposable);
+      myPsiManager.addPsiTreeChangeListener(listener, disposable);
       eventsFired = "";
-      original = getFile().getText();
-      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
-      ApplicationManager.getApplication().runWriteAction(() -> document.setText(newText));
+      original = ReadAction.computeBlocking(() -> myFile.getText());
+      Document document = ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(myProject).getDocument(myFile));
+      WriteAction.runAndWait(() -> document.setText(newText));
 
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
-      ApplicationManager.getApplication().runWriteAction(() -> document.setText(original));
+      WriteAction.runAndWait(() -> document.setText(original));
 
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
     }
     finally {
       Disposer.dispose(disposable);
     }
   }
 
+  @Test
   public void testCopyFile() throws Exception {
-    VirtualFile original = createFile(myModule, mySrcDir1, "a.xml", "<tag/>").getVirtualFile();
+    VirtualFile original = heavyFixture.get().createFile(myModule, mySrcDir1, "a.xml", "<tag/>").getVirtualFile();
 
     EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener, getTestRootDisposable());
+    myPsiManager.addPsiTreeChangeListener(listener, myTestRootDisposable);
 
-    PsiDirectory psiDir2 = PsiManager.getInstance(myProject).findDirectory(mySrcDir2);
+    PsiDirectory psiDir2 = ReadAction.computeBlocking(() -> PsiManager.getInstance(myProject).findDirectory(mySrcDir2));
     assertNotNull(psiDir2);
-    WriteAction.run(() -> original.copy(this, mySrcDir2, "b.xml"));
+    WriteAction.runAndWait(() -> original.copy(this, mySrcDir2, "b.xml"));
 
     assertEquals("""
                    beforeChildAddition
@@ -840,10 +894,11 @@ public class PsiEventsTest extends JavaPsiTestCase {
                    """, listener.getEventsString());
   }
 
+  @Test
   public void testSuccessfulRecoveryAfterTreeChangePreprocessorThrowsException() throws Exception {
-    PsiFile psiFile = createFile("a.xml", "<tag/>");
+    PsiFile psiFile = heavyFixture.get().createFile("a.xml", "<tag/>");
     VirtualFile vFile = psiFile.getVirtualFile();
-    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    Document document = ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(vFile));
     assert document != null;
 
     PsiTreeChangePreprocessor preprocessor = event -> {
@@ -853,21 +908,21 @@ public class PsiEventsTest extends JavaPsiTestCase {
     };
 
     Disposable disposable = Disposer.newDisposable();
-    ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor, disposable);
+    myPsiManager.addTreeChangePreprocessor(preprocessor, disposable);
     try {
       Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(() -> {
         WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
       });
-      assertInstanceOf(error, PluginException.class);
-      assertInstanceOf(error.getCause(), NullPointerException.class);
+      assertInstanceOf(PluginException.class, error);
+      assertInstanceOf(NullPointerException.class, error.getCause());
     }
     finally {
       Disposer.dispose(disposable);
     }
 
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
+    assertEquals("  <tag/>", ReadAction.computeBlocking(() -> myPsiManager.findFile(vFile).getText()));
   }
 }

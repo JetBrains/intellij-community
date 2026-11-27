@@ -238,7 +238,11 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
-  private fun setUpJdk(jdk: Sdk) {
+  /**
+   * Adds [jdk] to the JDK table and makes it the JDK of each module.
+   * It is `setUpJdk` of [com.intellij.testFramework.JavaProjectTestCase], with the JDK as a parameter.
+   */
+  fun setUpJdk(jdk: Sdk) {
     val jdkTable = ProjectJdkTable.getInstance()
     if (jdkTable.allJdks.none { it === jdk }) {
       WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(jdk, project) }
@@ -360,6 +364,19 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     modulesToDispose.add(module)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
     return module
+  }
+
+  /**
+   * Creates a new Java module [moduleName] in the project directory. The module closes with the project.
+   * It is `createModule` of [com.intellij.testFramework.JavaProjectTestCase].
+   */
+  fun createModule(moduleName: String): Module {
+    val moduleFile = project.stateStore.projectBasePath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
+    val newModule = WriteAction.computeAndWait<Module, RuntimeException> {
+      ModuleManager.getInstance(project).newModule(moduleFile, JavaModuleType.getModuleType().id)
+    }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    return newModule
   }
 
   fun findVirtualFile(filePath: String): VirtualFile {
@@ -825,6 +842,57 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
      * The marker of the reference in a test data file of [configureReferenceByFile].
      */
     const val REFERENCE_MARKER: String = "<ref>"
+
+    /**
+     * Creates the file [name] in [dir] in a write action. The requestor is [dir].
+     * It is `createChildData` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun createChildData(dir: VirtualFile, name: String): VirtualFile =
+      WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(dir, name) }
+
+    /**
+     * Creates the directory [name] in [dir] in a write action. The requestor is [dir].
+     * It is `createChildDirectory` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun createChildDirectory(dir: VirtualFile, name: String): VirtualFile =
+      WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildDirectory(dir, name) }
+
+    /**
+     * Writes [text] to [file] in a write action.
+     * It is `setFileText` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun setFileText(file: VirtualFile, text: String) {
+      WriteAction.runAndWait<IOException> { LoadTextUtil.write(null, file, file, text, -1) }
+    }
+
+    /**
+     * Renames [file] in a write command.
+     * It is `rename` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun rename(file: VirtualFile, newName: String) {
+      WriteCommandAction.writeCommandAction(null).run<IOException> { file.rename(file, newName) }
+    }
+
+    /**
+     * Moves [file] to [newParent] in a write command.
+     * It is `move` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun move(file: VirtualFile, newParent: VirtualFile) {
+      WriteCommandAction.writeCommandAction(null).run<IOException> { file.move(file, newParent) }
+    }
+
+    /**
+     * Copies [file] to [newParent] as [copyName] in a write command, and returns the copy.
+     * It is `copy` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun copy(file: VirtualFile, newParent: VirtualFile, copyName: String): VirtualFile =
+      WriteCommandAction.writeCommandAction(null).compute<VirtualFile, IOException> { file.copy(file, newParent, copyName) }
 
     /**
      * Creates a [HeavyJavaCodeInsightFixture] with a new project for each test. Declare it as an instance field.

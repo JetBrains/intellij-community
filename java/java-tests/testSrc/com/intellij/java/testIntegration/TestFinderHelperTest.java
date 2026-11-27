@@ -1,8 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.testIntegration;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
@@ -19,66 +23,88 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testIntegration.TestFinderHelper;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TestFinderHelperTest extends JavaPsiTestCase {
+import java.util.Collection;
+
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class TestFinderHelperTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private VirtualFile myContentRootDir;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    myContentRootDir = getTempDir().createVirtualDir();
+  @BeforeEach
+  void setUp() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Module myModule = fixture.getModule();
+    myContentRootDir = fixture.createTempVirtualDir();
     PsiTestUtil.addSourceRoot(myModule, myContentRootDir);
     IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
     ModuleRootModificationUtil.addModuleLibrary(myModule, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IndexingTestUtil.waitUntilIndexesAreReady(fixture.getProject());
   }
 
+  @Test
   public void testNoTestsForClass() {
     PsiClass c = createClass("Foo");
-    assertSameElements(TestFinderHelper.findTestsForClass(c));
+    assertThat(findTestsForClass(c)).isEmpty();
   }
 
+  @Test
   public void testNoClassesForTest() {
     PsiClass t = createTest("FooTest");
-    assertEmpty(TestFinderHelper.findClassesForTest(t));
+    assertThat(findClassesForTest(t)).isEmpty();
   }
 
+  @Test
   public void testIsTest() {
-    assertFalse(TestFinderHelper.isTest(createClass("Foo")));
-    assertTrue(TestFinderHelper.isTest(createTest("FooTest")));
-    assertTrue(TestFinderHelper.isTest(createTest("XXX")));
+    assertFalse(isTest(createClass("Foo")));
+    assertTrue(isTest(createTest("FooTest")));
+    assertTrue(isTest(createTest("XXX")));
   }
 
+  @Test
   public void testSimpleCase() {
     PsiClass c = createClass("Foo");
     PsiClass t = createTest("FooTest");
 
-    assertSameElements(TestFinderHelper.findTestsForClass(c), t);
-    assertSameElements(TestFinderHelper.findClassesForTest(t), c);
+    assertThat(findTestsForClass(c)).containsExactlyInAnyOrder(t);
+    assertThat(findClassesForTest(t)).containsExactlyInAnyOrder(c);
   }
 
-  public void testImplicitClass() throws Exception {
-    PsiFile file = createFile("Main.java", "void main() { }");
-    PsiClass c = PsiTreeUtil.getChildOfType(file, PsiImplicitClass.class);
+  @Test
+  public void testImplicitClass() {
+    PsiFile file = heavyFixture.get().createFile("Main.java", "void main() { }");
+    PsiClass c = ReadAction.computeBlocking(() -> PsiTreeUtil.getChildOfType(file, PsiImplicitClass.class));
     PsiClass t = createTest("MainTest");
 
-    assertSameElements(TestFinderHelper.findTestsForClass(c), t);
-    assertSameElements(TestFinderHelper.findClassesForTest(t), c);
+    assertThat(findTestsForClass(c)).containsExactlyInAnyOrder(t);
+    assertThat(findClassesForTest(t)).containsExactlyInAnyOrder(c);
   }
 
+  @Test
   public void testIgnoreCase() {
     PsiClass c = createClass("FOo");
     PsiClass t = createTest("FooTest");
 
-    assertSameElements(TestFinderHelper.findTestsForClass(c), t);
+    assertThat(findTestsForClass(c)).containsExactlyInAnyOrder(t);
   }
 
+  @Test
   public void testFromClassInners() {
     PsiClass c = createClass("Foo");
     PsiClass t = createTest("FooTest");
@@ -86,13 +112,14 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
     PsiMethod cm = addMethod(c);
     PsiMethod tm = addMethod(t);
 
-    assertSameElements(TestFinderHelper.findTestsForClass(cm), t);
-    assertSameElements(TestFinderHelper.findClassesForTest(tm), c);
+    assertThat(findTestsForClass(cm)).containsExactlyInAnyOrder(t);
+    assertThat(findClassesForTest(tm)).containsExactlyInAnyOrder(c);
 
-    assertFalse(TestFinderHelper.isTest(cm));
-    assertTrue(TestFinderHelper.isTest(tm));
+    assertFalse(isTest(cm));
+    assertTrue(isTest(tm));
   }
 
+  @Test
   public void testVariousTestNaming() {
     PsiClass c = createClass("Foo");
 
@@ -106,12 +133,13 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
         createTest("AbcFoo"),
         createTest("AbcFooAbc")};
 
-    assertSameElements(TestFinderHelper.findTestsForClass(c), tests);
+    assertThat(findTestsForClass(c)).containsExactlyInAnyOrder(tests);
     for (PsiClass each : tests) {
-      assertSameElements(TestFinderHelper.findClassesForTest(each), c);
+      assertThat(findClassesForTest(each)).containsExactlyInAnyOrder(c);
     }
   }
 
+  @Test
   public void testVariousClassNaming() {
     PsiClass t = createTest("FooBarBaz");
 
@@ -127,12 +155,13 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
     createClass("ooBar"); // start with word
     createClass("az"); // whole word
 
-    assertSameElements(TestFinderHelper.findClassesForTest(t), classes);
+    assertThat(findClassesForTest(t)).containsExactlyInAnyOrder(classes);
     for (PsiClass each : classes) {
-      assertSameElements(TestFinderHelper.findTestsForClass(each), t);
+      assertThat(findTestsForClass(each)).containsExactlyInAnyOrder(t);
     }
   }
 
+  @Test
   public void testSortingFoundTestsByRelevance() {
     PsiClass c = createClass("FooBar");
 
@@ -143,9 +172,10 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
         createTest("BazFooBarBaz"),
         createTest("BazBazFooBar")};
 
-    assertSameElements(TestFinderHelper.findTestsForClass(c), tests);
+    assertThat(findTestsForClass(c)).containsExactlyInAnyOrder(tests);
   }
 
+  @Test
   public void testSortingFoundClassesByRelevance() {
     PsiClass t = createTest("FooBarBaz");
 
@@ -156,19 +186,19 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
         createClass("Baz"),
         createClass("Foo")};
 
-    assertOrderedEquals(TestFinderHelper.findClassesForTest(t), classes);
+    assertThat(findClassesForTest(t)).containsExactly(classes);
   }
 
   private PsiClass createClass(String name) throws IncorrectOperationException {
-    PsiDirectory directory = myPsiManager.findDirectory(myContentRootDir);
+    PsiDirectory directory = ReadAction.computeBlocking(() -> heavyFixture.get().getPsiManager().findDirectory(myContentRootDir));
     assertNotNull(directory);
-    return JavaDirectoryService.getInstance().createClass(directory, name);
+    return EdtTestUtil.runInEdtAndGet(() -> JavaDirectoryService.getInstance().createClass(directory, name));
   }
 
   private PsiClass createTest(String name) throws IncorrectOperationException {
     final PsiClass result = createClass(name);
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(heavyFixture.get().getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         PsiAnnotation annotation = getPsiFactory().createAnnotationFromText("@org.junit.runner.RunWith", result);
         PsiModifierList modifiers = result.getModifierList();
@@ -184,25 +214,37 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
       catch (IncorrectOperationException e) {
         throw new RuntimeException(e);
       }
-    }), null, null);
+    }), null, null));
 
     return result;
   }
 
   private PsiMethod addMethod(final PsiClass c) throws IncorrectOperationException {
     final PsiMethod[] method = new PsiMethod[1];
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(heavyFixture.get().getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         method[0] = (PsiMethod)c.add(getPsiFactory().createMethod("foo", PsiTypes.voidType()));
       }
       catch (IncorrectOperationException e) {
         throw new RuntimeException(e);
       }
-    }), null, null);
+    }), null, null));
     return method[0];
   }
 
   private PsiElementFactory getPsiFactory() {
-    return JavaPsiFacade.getInstance(myProject).getElementFactory();
+    return JavaPsiFacade.getInstance(heavyFixture.get().getProject()).getElementFactory();
+  }
+
+  private static Collection<PsiElement> findTestsForClass(PsiElement element) {
+    return ReadAction.computeBlocking(() -> TestFinderHelper.findTestsForClass(element));
+  }
+
+  private static Collection<PsiElement> findClassesForTest(PsiElement element) {
+    return ReadAction.computeBlocking(() -> TestFinderHelper.findClassesForTest(element));
+  }
+
+  private static boolean isTest(PsiElement element) {
+    return ReadAction.computeBlocking(() -> TestFinderHelper.isTest(element));
   }
 }

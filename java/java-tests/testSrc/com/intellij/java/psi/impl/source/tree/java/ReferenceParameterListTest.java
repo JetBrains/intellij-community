@@ -15,6 +15,9 @@
  */
 package com.intellij.java.psi.impl.source.tree.java;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
@@ -25,38 +28,51 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.Test;
 
-public class ReferenceParameterListTest extends JavaPsiTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class ReferenceParameterListTest {
   private static final Logger LOG = Logger.getInstance(ReferenceParameterListTest.class);
+
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void testParameterListInExtends() {
-    final PsiManager manager = PsiManager.getInstance(myProject);
+    final PsiManager manager = PsiManager.getInstance(heavyFixture.get().getProject());
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    final PsiClass classFromText = factory.createClassFromText("class X extends Y<Z, W> {}", null);
-    final PsiClass classX = classFromText.getInnerClasses()[0];
-    final PsiJavaCodeReferenceElement[] extendsOfX = classX.getExtendsList().getReferenceElements();
-    assertEquals(1, extendsOfX.length);
-    final PsiJavaCodeReferenceElement ref = extendsOfX[0];
-    assertEquals("Y<Z,W>", ref.getCanonicalText());
-    assertEquals("Y", ref.getReferenceName());
-    final PsiTypeElement[] refParams = ref.getParameterList().getTypeParameterElements();
-    assertEquals(2, refParams.length);
-    assertEquals("Z", refParams[0].getType().getCanonicalText());
-    assertEquals("W", refParams[1].getType().getCanonicalText());
-    final PsiType refType = factory.createType(ref);
-    assertEquals("Y<Z,W>", refType.getCanonicalText());
-    final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType) refType).getReference();
-    assertEquals("Y<Z,W>", reference.getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      final PsiClass classFromText = factory.createClassFromText("class X extends Y<Z, W> {}", null);
+      final PsiClass classX = classFromText.getInnerClasses()[0];
+      final PsiJavaCodeReferenceElement[] extendsOfX = classX.getExtendsList().getReferenceElements();
+      assertEquals(1, extendsOfX.length);
+      final PsiJavaCodeReferenceElement ref = extendsOfX[0];
+      assertEquals("Y<Z,W>", ref.getCanonicalText());
+      assertEquals("Y", ref.getReferenceName());
+      final PsiTypeElement[] refParams = ref.getParameterList().getTypeParameterElements();
+      assertEquals(2, refParams.length);
+      assertEquals("Z", refParams[0].getType().getCanonicalText());
+      assertEquals("W", refParams[1].getType().getCanonicalText());
+      final PsiType refType = factory.createType(ref);
+      assertEquals("Y<Z,W>", refType.getCanonicalText());
+      final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType) refType).getReference();
+      assertEquals("Y<Z,W>", reference.getCanonicalText());
+    });
   }
+  @Test
   public void testResolvableParameterListInExtends() {
-    final PsiManager manager = PsiManager.getInstance(myProject);
+    final PsiManager manager = PsiManager.getInstance(heavyFixture.get().getProject());
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    final PsiClass classFromText = factory.createClassFromText(
+    final PsiClass classFromText = ReadAction.computeBlocking(() -> factory.createClassFromText(
             "class Z {} class W{}" +
             "class Y<A, B> {} " +
             "class X extends Y<Z, W> {}",
-            null);
+            null));
 
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
@@ -67,19 +83,21 @@ public class ReferenceParameterListTest extends JavaPsiTestCase {
         LOG.error(e);
       }
     });
-    final PsiClass classX = classFromText.getInnerClasses()[3];
-    final PsiJavaCodeReferenceElement[] extendsOfX = classX.getExtendsList().getReferenceElements();
-    assertEquals(1, extendsOfX.length);
-    final PsiJavaCodeReferenceElement ref = extendsOfX[0];
-    assertEquals("Q.Y<Q.Z,Q.W>", ref.getCanonicalText());
-    assertEquals("Y", ref.getReferenceName());
-    final PsiTypeElement[] refParams = ref.getParameterList().getTypeParameterElements();
-    assertEquals(2, refParams.length);
-    assertEquals("Q.Z", refParams[0].getType().getCanonicalText());
-    assertEquals("Q.W", refParams[1].getType().getCanonicalText());
-    final PsiType refType = factory.createType(ref);
-    assertEquals("Q.Y<Q.Z,Q.W>", refType.getCanonicalText());
-    final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType) refType).getReference();
-    assertEquals("Q.Y<Q.Z,Q.W>", reference.getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      final PsiClass classX = classFromText.getInnerClasses()[3];
+      final PsiJavaCodeReferenceElement[] extendsOfX = classX.getExtendsList().getReferenceElements();
+      assertEquals(1, extendsOfX.length);
+      final PsiJavaCodeReferenceElement ref = extendsOfX[0];
+      assertEquals("Q.Y<Q.Z,Q.W>", ref.getCanonicalText());
+      assertEquals("Y", ref.getReferenceName());
+      final PsiTypeElement[] refParams = ref.getParameterList().getTypeParameterElements();
+      assertEquals(2, refParams.length);
+      assertEquals("Q.Z", refParams[0].getType().getCanonicalText());
+      assertEquals("Q.W", refParams[1].getType().getCanonicalText());
+      final PsiType refType = factory.createType(ref);
+      assertEquals("Q.Y<Q.Z,Q.W>", refType.getCanonicalText());
+      final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType) refType).getReference();
+      assertEquals("Q.Y<Q.Z,Q.W>", reference.getCanonicalText());
+    });
   }
 }

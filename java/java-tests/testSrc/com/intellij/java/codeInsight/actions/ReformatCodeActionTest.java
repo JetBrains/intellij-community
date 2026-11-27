@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.actions;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.ReformatFilesOptions;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -10,6 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
@@ -20,19 +23,32 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.HeavyTestHelper;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.createChildDirectory;
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Lepenkin Y.A.
  */
-public class ReformatCodeActionTest extends JavaPsiTestCase {
+@TestApplication
+public class ReformatCodeActionTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
   private static final String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
   private static final String[] IMPORTS_LIST = new String[]{"import java.util.List;", "import java.util.Set;", "import java.util.Map"};
   private static final String TEST_SOURCE = """
@@ -68,14 +84,16 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
   private static final String TEMP_DIR_NAME = "dir";
   private PsiDirectory myWorkingDirectory;
 
-  public void testReformatAndOptimizeMultipleFiles() throws IOException {
+  @Test
+  public void testReformatAndOptimizeMultipleFiles() {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
     performReformatActionOnSelectedFiles(files);
     checkFormationAndImportsOptimizationFor(files);
   }
 
-  public void testOptimizeAndReformatOnlySelectedFiles() throws IOException {
+  @Test
+  public void testOptimizeAndReformatOnlySelectedFiles() {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
     List<PsiFile> forProcessing = List.of(files.get(0), files.get(1));
     List<PsiFile> noProcessing = List.of(files.get(2), files.get(3));
@@ -88,7 +106,8 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     checkNoProcessingWasPerformedOn(noProcessing);
   }
 
-  public void testOptimizeAndReformatInModule() throws IOException {
+  @Test
+  public void testOptimizeAndReformatInModule() {
     Module module = createModuleWithSourceRoot("newModule");
     VirtualFile srcDir = ModuleRootManager.getInstance(module).getSourceRoots()[0];
     List<PsiFile> files = createTestFiles(srcDir, classNames);
@@ -99,23 +118,16 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     checkFormationAndImportsOptimizationFor(files);
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myWorkingDirectory = createDirectory(getOrCreateProjectBaseDir(), TEMP_DIR_NAME);
+  @BeforeEach
+  void setUp() {
+    myWorkingDirectory = createDirectory(HeavyTestHelper.getOrCreateProjectBaseDir(heavyFixture.get().getProject()), TEMP_DIR_NAME);
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
+  @AfterEach
+  void tearDown() {
+    if (myWorkingDirectory != null) {
       VfsTestUtil.deleteFile(myWorkingDirectory.getVirtualFile());
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
       myWorkingDirectory = null;
-      super.tearDown();
     }
   }
 
@@ -130,48 +142,48 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
 
   protected PsiDirectory createDirectory(VirtualFile parent, String name) {
     VirtualFile dir = createChildDirectory(parent, name);
-    return PsiDirectoryFactory.getInstance(getProject()).createDirectory(dir);
+    return ReadAction.computeBlocking(() -> PsiDirectoryFactory.getInstance(heavyFixture.get().getProject()).createDirectory(dir));
   }
 
   @NotNull
-  protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, String @NotNull [] fileNames) throws IOException {
+  protected List<PsiFile> createTestFiles(@NotNull VirtualFile parentDirectory, String @NotNull [] fileNames) {
     String[] fileText = createTestJavaClassesWithAdditionalImports(fileNames);
     List<PsiFile> files = new ArrayList<>();
     for (int i = 0; i < fileNames.length; i++) {
       String fileName = fileNames[i] + ".java";
-      files.add(createFile(getModule(), parentDirectory, fileName, fileText[i]));
+      files.add(heavyFixture.get().createFile(heavyFixture.get().getModule(), parentDirectory, fileName, fileText[i]));
     }
     return files;
   }
 
   @NotNull
-  protected List<PsiFile> createTestFiles(@NotNull PsiDirectory parentDirectory, String @NotNull [] fileNames) throws IOException {
+  protected List<PsiFile> createTestFiles(@NotNull PsiDirectory parentDirectory, String @NotNull [] fileNames) {
     return createTestFiles(parentDirectory.getVirtualFile(), fileNames);
   }
 
   private static void checkReformatActionAvailableAndPerform(@NotNull AnAction action, @NotNull AnActionEvent event) {
     action.update(event);
-    assertTrue("Reformat code action is not enabled", event.getPresentation().isEnabled());
+    assertTrue(event.getPresentation().isEnabled(), "Reformat code action is not enabled");
     action.actionPerformed(event);
   }
 
   protected void performReformatActionOnSelectedFiles(List<PsiFile> files) {
     final AnAction action = getReformatCodeAction();
-    final AnActionEvent event = createEventFor(action, getVirtualFileArrayFrom(files), getProject());
-    checkReformatActionAvailableAndPerform(action, event);
+    final AnActionEvent event = createEventFor(action, getVirtualFileArrayFrom(files), heavyFixture.get().getProject());
+    EdtTestUtil.runInEdtAndWait(() -> checkReformatActionAvailableAndPerform(action, event));
   }
 
   protected void performReformatActionOnModule(Module module, List<VirtualFile> files) {
     final AnAction action = getReformatCodeAction();
-    AnActionEvent event = createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module));
-    checkReformatActionAvailableAndPerform(action, event);
+    AnActionEvent event = createEventFor(action, files, heavyFixture.get().getProject(), new AdditionalEventInfo().setModule(module));
+    EdtTestUtil.runInEdtAndWait(() -> checkReformatActionAvailableAndPerform(action, event));
   }
 
   protected void checkFormationAndImportsOptimizationFor(List<PsiFile> @NotNull ... fileCollection) {
     for (List<PsiFile> files : fileCollection) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
-        assertEquals(getFormattedAndImportOptimizedJavaSourceFor(className), file.getText());
+        assertEquals(getFormattedAndImportOptimizedJavaSourceFor(className), ReadAction.computeBlocking(() -> file.getText()));
       }
     }
   }
@@ -180,7 +192,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     for (List<PsiFile> files : fileCollections) {
       for (PsiFile file : files) {
         String className = getClassNameFromJavaFile(file);
-        assertEquals(getUntouchedJavaSourceForTotalProcessing(className), file.getText());
+        assertEquals(getUntouchedJavaSourceForTotalProcessing(className), ReadAction.computeBlocking(() -> file.getText()));
       }
     }
   }
@@ -230,7 +242,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     String path = dir.getVirtualFile().getPath() + "/" + newModuleName + ".iml";
 
     Module module = WriteAction
-      .compute(() -> ModuleManager.getInstance(getProject()).newModule(path, JavaModuleType.getModuleType().getId()));
+      .computeAndWait(() -> ModuleManager.getInstance(heavyFixture.get().getProject()).newModule(path, JavaModuleType.getModuleType().getId()));
     PsiDirectory src = createDirectory(dir.getVirtualFile(), "src");
 
     PsiTestUtil.addSourceRoot(module, src.getVirtualFile());

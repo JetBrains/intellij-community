@@ -15,41 +15,63 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeManager;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class FilePathResolveTest extends JavaCodeInsightTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class FilePathResolveTest {
   private static final String BASE_PATH = "/psi/resolve/filePath/";
 
-  public void testC1() throws Exception{
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
+
+  @Test
+  public void testC1() {
     configure("C.java");
     checkNavigatesTo("MyClass.java");
   }
-  public void testC2() throws Exception{
+  @Test
+  public void testC2() {
     configure("C2.java");
     checkNavigatesTo("MyFile.txt");
   }
 
-  public void testResolveFileReference() throws Exception {
-    configureByFile(BASE_PATH + "C.java", BASE_PATH);
-    FileIncludeManager fileIncludeManager = FileIncludeManager.getManager(getProject());
-    PsiFileSystemItem item = fileIncludeManager.resolveFileInclude(new FileIncludeInfo("x/MyFile.txt"), getFile());
+  @Test
+  public void testResolveFileReference() {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    fixture.configureByFile(BASE_PATH + "C.java", BASE_PATH);
+    FileIncludeManager fileIncludeManager = FileIncludeManager.getManager(fixture.getProject());
+    PsiFileSystemItem item = ReadAction.computeBlocking(
+      () -> fileIncludeManager.resolveFileInclude(new FileIncludeInfo("x/MyFile.txt"), fixture.getFile()));
     assertNotNull(item);
     assertEquals("MyFile.txt", item.getName());
   }
 
   private void checkNavigatesTo(String expected) {
-    final int offset = myEditor.getCaretModel().getOffset();
-    final PsiElement targetElement = GotoDeclarationAction.findTargetElement(myProject, myEditor, offset);
-    assertEquals(expected, ((PsiFile)targetElement).getName());
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    Editor myEditor = fixture.getEditor();
+    ReadAction.runBlocking(() -> {
+      final int offset = myEditor.getCaretModel().getOffset();
+      final PsiElement targetElement = GotoDeclarationAction.findTargetElement(fixture.getProject(), myEditor, offset);
+      assertEquals(expected, ((PsiFile)targetElement).getName());
+    });
   }
 
-  private void configure(final String fileName) throws Exception {
-    configureByFile(BASE_PATH + fileName, BASE_PATH);
+  private void configure(final String fileName) {
+    heavyFixture.get().configureByFile(BASE_PATH + fileName, BASE_PATH);
   }
 }
