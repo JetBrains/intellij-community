@@ -51,6 +51,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
@@ -207,6 +208,15 @@ public abstract class EditorPaintingTestCase {
 
   protected void addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
     addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
+  }
+
+  /**
+   * Folds the lines from {@code startLine} to {@code endLine} into one custom fold region.
+   * The region is a pink frame of a fixed size.
+   */
+  protected void addCustomLinesFolding(int startLine, int endLine) {
+    FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
   }
 
   protected final void configureSoftWraps(int charCountToWrapAt) {
@@ -483,6 +493,38 @@ public abstract class EditorPaintingTestCase {
   /**
    * The highlighter of {@link #setTokenEditorHighlighter}.
    */
+  private static final class OurCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+    private static final int WIDTH = 25;
+    private static final int HEIGHT = 15;
+
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      return WIDTH;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return HEIGHT;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {
+      g.setColor(Color.pink);
+      Rectangle r = targetRegion.getBounds();
+      int startX = r.x;
+      int endX = r.x + r.width - 1;
+      int startY = r.y;
+      int endY = r.y + r.height - 1;
+      g.drawLine(startX, startY, startX, endY);
+      g.drawLine(startX, endY, endX, endY);
+      g.drawLine(endX, endY, endX, startY);
+      g.drawLine(endX, startY, startX, startY);
+    }
+  }
+
   private static final class TokenHighlighter implements EditorHighlighter {
     private final int[] tokenStarts;
     private final TextAttributes[] tokenAttributes;

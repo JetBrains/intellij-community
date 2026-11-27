@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -237,6 +238,39 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
         configureSoftWraps(8);
         myFixture.getEditor().getSelectionModel().setSelection(6, 10);
         assertOnlySmallBlockBeforeSoftWrappedLine();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testHuggingSelectionOverBlockInlays() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        initText("line 1\nline 2\na");
+        Document document = myFixture.getEditor().getDocument();
+        myFixture.addBlockInlay(document.getLineStartOffset(0));
+        myFixture.addBlockInlay(document.getLineStartOffset(1));
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+        myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testCustomFoldRegionInsideHuggingSelection() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        initText("<selection>\ntext\n<caret></selection>");
+        addCustomLinesFolding(1, 1);
+        checkResult();
       } finally {
         restoreSelectionState(state);
       }

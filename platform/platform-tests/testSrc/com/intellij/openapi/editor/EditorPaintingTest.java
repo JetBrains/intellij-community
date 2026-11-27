@@ -514,6 +514,67 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     });
   }
 
+  private void runTestHuggingSelectionAcrossSoftWrap() throws Exception {
+    myFixture.initText("ab cdefghij");
+    configureSoftWraps(8);
+    myFixture.getEditor().getSelectionModel().setSelection(1, 5);
+    checkResult();
+  }
+
+  @Test
+  public void testHuggingSelectionAcrossSoftWrapRounded() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        runTestHuggingSelectionAcrossSoftWrap();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testHuggingSelectionAcrossSoftWrapStraight() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, true);
+      try {
+        runTestHuggingSelectionAcrossSoftWrap();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  private void runTestGuardedBlock() throws Exception {
+    myFixture.initText("ab\ncdef\nghijklmnop");
+    myFixture.getEditor().getDocument().createGuardedBlock(1, 5);
+    checkResult();
+  }
+
+  @Test
+  public void testGuardedBlockRounded() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        runTestGuardedBlock();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testGuardedBlockStraight() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, true);
+      try {
+        runTestGuardedBlock();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
   @Test
   public void testMultiLineHighlighterRounded() {
     myFixture.runTest(() -> {
@@ -1406,11 +1467,6 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     });
   }
 
-  private void addCustomLinesFolding(int startLine, int endLine) {
-    FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
-    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
-  }
-
   private static boolean containsRed(BufferedImage image) {
     int rgb = Color.red.getRGB();
     for (int x = 0; x < image.getWidth(); x++) {
@@ -1522,38 +1578,6 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     @Override
     public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myGutterIconRenderer;
-    }
-  }
-
-  private static class OurCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
-    private static final int WIDTH = 25;
-    private static final int HEIGHT = 15;
-
-    @Override
-    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
-      return WIDTH;
-    }
-
-    @Override
-    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
-      return HEIGHT;
-    }
-
-    @Override
-    public void paint(@NotNull CustomFoldRegion region,
-                      @NotNull Graphics2D g,
-                      @NotNull Rectangle2D targetRegion,
-                      @NotNull TextAttributes textAttributes) {
-      g.setColor(Color.pink);
-      Rectangle r = targetRegion.getBounds();
-      int startX = r.x;
-      int endX = r.x + r.width - 1;
-      int startY = r.y;
-      int endY = r.y + r.height - 1;
-      g.drawLine(startX, startY, startX, endY);
-      g.drawLine(startX, endY, endX, endY);
-      g.drawLine(endX, endY, endX, startY);
-      g.drawLine(endX, startY, startX, startY);
     }
   }
 }
