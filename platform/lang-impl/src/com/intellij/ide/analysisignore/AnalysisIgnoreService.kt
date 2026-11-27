@@ -106,7 +106,7 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
   /** Waits until every file of [scheduleChanges] got its default lines or was queued for a read. */
   @TestOnly
   suspend fun awaitPendingFills() {
-    fillJobs.values.toList().joinAll()
+    joinAll(*fillJobs.values.toTypedArray())
   }
 
   /**
