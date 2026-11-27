@@ -2003,11 +2003,11 @@ public final class EditorPainter implements TextDrawingCallback {
             if (start == it.getEndOffset() && !it.atEnd()) {
               it.advance();
             }
-            boolean atBreak = it.getStartOffset() == start;
-            List<BackgroundLayer> layers = atBreak ? it.getBreakBackgroundLayers(false) : it.getBackgroundLayers();
-            TextAttributes attributes = atBreak ? it.getBreakAttributes() : it.getMergedAttributes();
             float xNew = fragment.getEndX();
             if (xNew >= visitStartX) {
+              boolean atBreak = it.getStartOffset() == start;
+              List<BackgroundLayer> layers = atBreak ? it.getBreakBackgroundLayers(false) : it.getBackgroundLayers();
+              TextAttributes attributes = atBreak ? it.getBreakAttributes() : it.getMergedAttributes();
               painter.paint(fragment, 0, 0, attributes, layers, x, xNew, y);
             }
             x = xNew;
@@ -2022,8 +2022,6 @@ public final class EditorPainter implements TextDrawingCallback {
                 }
                 it.advance();
               }
-              TextAttributes attributes = it.getMergedAttributes();
-              List<BackgroundLayer> layers = it.getBackgroundLayers();
               int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
               if (fragment.isRtl() ? curEnd >= start : curEnd <= start) {
                 reportBrokenFragmentRange(fragment, it, fragmentStartOffset, start, curEnd, end, visualLineEndOffset);
@@ -2031,6 +2029,8 @@ public final class EditorPainter implements TextDrawingCallback {
               }
               float xNew = fragment.offsetToX(x, start, curEnd);
               if (xNew >= visitStartX) {
+                TextAttributes attributes = it.getMergedAttributes();
+                List<BackgroundLayer> layers = it.getBackgroundLayers();
                 painter.paint(fragment,
                               fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
                               fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset,
