@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -338,8 +338,8 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       return TypeMigrationBundle.message("migrate.fix.text",
-                                         TypeMigrationProcessor.getPresentation(element),
-                                         StringUtil.escapeXmlEntities(myTargetType.getCanonicalText(false)));
+                                         StringUtil.stripHtml(TypeMigrationProcessor.getPresentation(element), false),
+                                         myTargetType.getCanonicalText(false));
     }
 
     @Override

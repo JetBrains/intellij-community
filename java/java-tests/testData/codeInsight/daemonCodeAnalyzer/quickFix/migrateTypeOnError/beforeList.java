@@ -1,4 +1,4 @@
-// "<html>Migrate 'list' type to 'String[]'</html>" "true"
+// "Migrate 'list' type to 'String[]'" "true"
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 

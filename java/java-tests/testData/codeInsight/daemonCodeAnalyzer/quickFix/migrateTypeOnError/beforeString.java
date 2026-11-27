@@ -1,4 +1,4 @@
-// "<html>Migrate 's' type to 'int'</html>" "false"
+// "Migrate 's' type to 'int'" "false"
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 

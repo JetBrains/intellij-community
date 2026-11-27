@@ -1,4 +1,4 @@
-// "<html>Migrate 'x' type to 'AtomicInteger'</html>" "true"
+// "Migrate 'x' type to 'AtomicInteger'" "true"
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
