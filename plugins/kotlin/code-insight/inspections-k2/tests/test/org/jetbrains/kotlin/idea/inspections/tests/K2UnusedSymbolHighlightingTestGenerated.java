@@ -955,6 +955,16 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/anonymousParameterConsumed.kt");
         }
 
+        @TestMetadata("arrayAccessConsumed.kt")
+        public void testArrayAccessConsumed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/arrayAccessConsumed.kt");
+        }
+
+        @TestMetadata("arrayAccessUnused.kt")
+        public void testArrayAccessUnused() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/arrayAccessUnused.kt");
+        }
+
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/callableReference.kt");
@@ -990,6 +1000,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/contextualPropertyConsumed.kt");
         }
 
+        @TestMetadata("destructuringConsumed.kt")
+        public void testDestructuringConsumed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/destructuringConsumed.kt");
+        }
+
         @TestMetadata("directReference.kt")
         public void testDirectReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/directReference.kt");
@@ -1008,6 +1023,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("featureDisabled.kt")
         public void testFeatureDisabled() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/featureDisabled.kt");
+        }
+
+        @TestMetadata("forLoopConsumed.kt")
+        public void testForLoopConsumed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameter/forLoopConsumed.kt");
         }
 
         @TestMetadata("implicitConsumed.kt")

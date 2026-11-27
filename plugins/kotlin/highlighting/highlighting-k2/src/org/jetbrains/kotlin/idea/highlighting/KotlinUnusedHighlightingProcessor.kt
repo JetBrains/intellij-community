@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
@@ -57,8 +59,10 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -135,9 +139,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                     return
                 }
                 val singleCall = expression.resolveSuccessfulExpressionCall()?.simple
-                singleCall?.contextArguments?.forEach {
-                    refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
-                }
+                registerImplicitContextArguments(singleCall)
 
                 val symbol = singleCall?.symbol ?: expression.resolveSuccessfulSymbol()
 //                if ((symbol as? KaClassSymbol)?.classKind?.isObject == true ||
@@ -191,17 +193,36 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 }
                 refHolder.registerLocalRef(call.symbol.psi)
                 if (call is KaImplicitInvokeCall) {
-                    call.contextArguments.forEach {
-                        refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
-                    }
+                    registerImplicitContextArguments(call)
                 }
             }
 
             override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
+                registerImplicitContextArguments(expression)
                 expression.references.forEach { reference ->
                     reference.resolve()?.let {
                         refHolder.registerLocalRef(it)
                     }
+                }
+            }
+
+            override fun visitForExpression(expression: KtForExpression) {
+                registerImplicitContextArguments(expression)
+            }
+
+            override fun visitDestructuringDeclarationEntry(multiDeclarationEntry: KtDestructuringDeclarationEntry) {
+                registerImplicitContextArguments(multiDeclarationEntry)
+            }
+
+            private fun registerImplicitContextArguments(element: PsiElement) {
+                KotlinCallProcessor.process(element) { target ->
+                    registerImplicitContextArguments(target.call?.simple)
+                }
+            }
+
+            private fun registerImplicitContextArguments(simple: KaSimpleCall<*, *>?) {
+                simple?.contextArguments?.forEach {
+                    refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
                 }
             }
         }
