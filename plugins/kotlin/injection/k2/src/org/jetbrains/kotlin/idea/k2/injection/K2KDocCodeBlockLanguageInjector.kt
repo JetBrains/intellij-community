@@ -72,8 +72,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
 
                 KDocTokens.CODE_BLOCK_TEXT -> {
                     if (elements.isEmpty()) {
-                        val prevElement = e.prevSibling
-                        elements.add(prevElement)
+                        e.prevSibling?.let(elements::add)
                     }
                     elements.add(e)
                 }

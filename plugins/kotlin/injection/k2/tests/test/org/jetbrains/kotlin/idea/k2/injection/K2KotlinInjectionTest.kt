@@ -188,6 +188,20 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
             PlainTextLanguage.INSTANCE)
     }
 
+    // KTIJ-39905
+    fun testKDocCodeBlockOnFirstLine() {
+        myFixture.configureByText(
+            "a.kt",
+            """
+            /**     val x = 1
+             */
+            fun usage() {}
+            """.trimIndent()
+        )
+
+        myFixture.checkHighlighting()
+    }
+
     // KTIJ-33305
     fun testStringLiteralOnAssignmentLhs() {
         myFixture.configureByText(
