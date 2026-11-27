@@ -139,7 +139,8 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
                          @Nullable @NlsContexts.PopupAdvertisement String advertisingText, @NotNull LookupFocusDegree lookupFocusDegree) {
     if (state.isDisposed()) return;
 
-    final LookupManager lookupManager = LookupManager.getInstance(project);
+    var lookupManager = LookupManager.getInstance(project);
+    if (lookupManager == null) return;
 
     final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(editor, lookupItems.toArray(LookupElement.EMPTY_ARRAY));
     if (lookup == null) return;
@@ -306,7 +307,10 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     @Override
     public void undo() {
       if (myTemplateState != null) {
-        LookupManager.getInstance(myProject).hideActiveLookup();
+        var lookupManager = LookupManager.getInstance(myProject);
+        if (lookupManager != null) {
+          lookupManager.hideActiveLookup();
+        }
         myTemplateState.cancelTemplate();
       }
     }
