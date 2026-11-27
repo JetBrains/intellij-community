@@ -1449,19 +1449,32 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     invalidateRangeMarkerVisualPositions(selectionMarker);
     VisualPosition position = isStart ? mySelectionStartPosition : mySelectionEndPosition;
     if (position == null) {
-      VisualPosition startPosition = myEditor.offsetToVisualPosition(selectionMarker.getStartOffset(), true, false);
-      VisualPosition endPosition = myEditor.offsetToVisualPosition(selectionMarker.getEndOffset(), false, true);
-      if (isStart) {
-        position = startPosition.after(endPosition) ? endPosition : startPosition;
-      } else {
-        position = startPosition.after(endPosition) ? startPosition : endPosition;
-      }
+      position = computeSelectionVisualPosition(selectionMarker.getStartOffset(), selectionMarker.getEndOffset(), isStart);
     }
     if (!selectionMarker.hasVirtualSelection()) {
       return position;
     }
     int virtualColumn = isStart ? selectionMarker.getStartVirtualOffset() : selectionMarker.getEndVirtualOffset();
     return new VisualPosition(position.line, position.column + virtualColumn);
+  }
+
+  /**
+   * Gives the visual position of the first or the last end of the selection from {@code startOffset} to {@code endOffset}.
+   * On one visual line, the end offset can come first, for example in right-to-left text. Ends on two visual lines keep
+   * their order, so only the requested end is converted.
+   */
+  private @NotNull VisualPosition computeSelectionVisualPosition(int startOffset, int endOffset, boolean isStart) {
+    if (myEditor.offsetToVisualLine(startOffset, false) != myEditor.offsetToVisualLine(endOffset, true)) {
+      return isStart
+             ? myEditor.offsetToVisualPosition(startOffset, true, false)
+             : myEditor.offsetToVisualPosition(endOffset, false, true);
+    }
+    VisualPosition startPosition = myEditor.offsetToVisualPosition(startOffset, true, false);
+    VisualPosition endPosition = myEditor.offsetToVisualPosition(endOffset, false, true);
+    if (isStart) {
+      return startPosition.after(endPosition) ? endPosition : startPosition;
+    }
+    return startPosition.after(endPosition) ? startPosition : endPosition;
   }
 
   private @NotNull Pair<LogicalPosition, LogicalPosition> getSelectionLogicalRange() {
