@@ -19,10 +19,13 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.awt.Component
 import java.awt.Font
+import java.awt.Insets
 import java.awt.Point
 import java.awt.event.HierarchyEvent
 import java.text.Bidi
@@ -32,6 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 import javax.swing.JComponent
+import javax.swing.ScrollPaneConstants
+import javax.swing.border.AbstractBorder
 import javax.swing.border.EmptyBorder
 
 @TestApplication
@@ -258,6 +263,54 @@ class EditorViewSnapshotTest {
   }
 
   @Test
+  fun `test a layout of the scroll pane takes the insets that follow a scroll bar`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val scrollPane = editorEx.scrollPane
+    val scrollBar = scrollPane.horizontalScrollBar
+    scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    scrollPane.setSize(200, 100)
+    scrollPane.doLayout()
+    editor.contentComponent.border = ScrollBarGapBorder { scrollBar.isVisible }
+    val insetsBefore = editor.contentComponent.insets
+    scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+    scrollPane.doLayout()
+    val componentInsets = editor.contentComponent.insets
+    assertNotEquals(
+      insetsBefore,
+      componentInsets,
+      "The visible scroll bar adds a gap to the insets of the border",
+    )
+    assertEquals(
+      componentInsets,
+      view.insets,
+      "The layout of the scroll pane puts the gap into the snapshot",
+    )
+  }
+
+  @Test
+  fun `test an opacity change of a scroll bar takes the insets that follow it`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val scrollBar = editorEx.scrollPane.horizontalScrollBar
+    scrollBar.isOpaque = true
+    editor.contentComponent.border = ScrollBarGapBorder { !scrollBar.isOpaque }
+    val insetsBefore = editor.contentComponent.insets
+    scrollBar.isOpaque = false
+    val componentInsets = editor.contentComponent.insets
+    assertNotEquals(
+      insetsBefore,
+      componentInsets,
+      "The transparent scroll bar adds a gap to the insets of the border",
+    )
+    assertEquals(
+      componentInsets,
+      view.insets,
+      "The opacity change puts the gap into the snapshot",
+    )
+  }
+
+  @Test
   fun `test a block inlay takes the insets of the view`(): Unit = fixture.runTest {
     initText("text")
     val inlay = editor.inlayModel.addBlockElement(0, false, true, 0, FixedSizeRenderer())!!
@@ -338,6 +391,16 @@ class EditorViewSnapshotTest {
     }
   }
 
+  /**
+   * Adds a bottom gap while [hasGap] holds, as the border of a scroll pane view does for a transparent scroll bar.
+   */
+  private class ScrollBarGapBorder(private val hasGap: () -> Boolean) : AbstractBorder() {
+    override fun getBorderInsets(c: Component, insets: Insets): Insets {
+      insets.set(0, 0, if (hasGap()) GAP else 0, 0)
+      return insets
+    }
+  }
+
   private class FixedSizeRenderer : EditorCustomElementRenderer {
     override fun calcWidthInPixels(inlay: Inlay<*>): Int = 50
 
@@ -348,5 +411,6 @@ class EditorViewSnapshotTest {
     private val projectFixture = projectFixture(openAfterCreation = true)
     private const val REINIT_COUNT = 200
     private const val TIMEOUT_SECONDS = 30L
+    private const val GAP = 5
   }
 }

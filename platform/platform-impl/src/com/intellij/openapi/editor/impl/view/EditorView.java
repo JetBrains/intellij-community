@@ -781,6 +781,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   /**
    * Returns the content component insets from the snapshot. The caller owns the result.
+   * The snapshot takes new insets at a border change, at a UI update, when the editor becomes showing,
+   * and at each call of {@link #updateInsets}.
    */
   public Insets getInsets() {
     return mySnapshot.insets().toInsets();
@@ -791,9 +793,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return new EditorInsets(insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  private void updateInsets() {
+  /**
+   * Puts the current insets of the content component into the snapshot.
+   * Returns true when they differ from the insets of the previous snapshot.
+   */
+  public boolean updateInsets() {
     EditorInsets insets = readInsets();
-    SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> snapshot.withInsets(insets));
+    EditorViewSnapshot previous = SNAPSHOT_UPDATER.getAndUpdate(this, snapshot -> snapshot.withInsets(insets));
+    return !previous.insets().equals(insets);
   }
 
   /**
@@ -803,7 +810,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     EditorInsets snapshotInsets = mySnapshot.insets();
     EditorInsets componentInsets = readInsets();
     if (!snapshotInsets.equals(componentInsets)) {
-      LOG.error("The content component insets changed without a border change or a UI update." +
+      LOG.error("The content component insets changed without an event that updates the snapshot." +
                 " Snapshot: " + snapshotInsets +
                 ", component: " + componentInsets +
                 ", border: " + describeBorder(myEditor.getContentComponent().getBorder()));

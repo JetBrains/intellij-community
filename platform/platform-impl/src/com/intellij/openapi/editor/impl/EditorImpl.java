@@ -2963,10 +2963,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   /**
    * Returns the content component insets from the view snapshot. The caller owns the result.
+   * The snapshot also takes new insets after a layout of the scroll pane and at an opacity change of a scroll bar.
    */
   @ApiStatus.Internal
   public @NotNull Insets getContentInsets() {
     return myView.getInsets();
+  }
+
+  /**
+   * Puts the current content insets into the view snapshot, and repaints the content when they change.
+   * It does nothing before the view exists.
+   */
+  private void updateContentInsets() {
+    EditorView view = myView;
+    if (view != null && view.updateInsets()) {
+      myEditorComponent.repaint();
+    }
   }
 
   @Override
@@ -3779,6 +3791,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       addPropertyChangeListener("opaque", _ -> {
         revalidate();
         repaint();
+        updateContentInsets();
       });
     }
 
@@ -5628,6 +5641,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.updateSize(true, true);
       }
       super.layout();
+      updateContentInsets();
     }
 
     @Override
