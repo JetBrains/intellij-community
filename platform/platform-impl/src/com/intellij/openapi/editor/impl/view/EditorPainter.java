@@ -303,7 +303,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final int myFillStartX;
     private final int myFillEndX;
     private final float mySelectionExtensionWidth;
-    private final @Nullable HighlighterVisualModel myHighlighterVisualModel;
+    private final BackgroundFill myBackgroundFill;
     private boolean myBrokenFragmentRangeReported;
 
     Session(EditorView view, EditorPainterCache cache, EditorCaretPainter caretPainter, Graphics2D g) {
@@ -356,13 +356,9 @@ public final class EditorPainter implements TextDrawingCallback {
       myFillEndX = fillEndX();
       mySelectionExtensionWidth = selectionExtensionWidth();
       if (myRoundedHighlighting) {
-        myHighlighterVisualModel = new HighlighterVisualModel(
-          myEditor,
-          myYShift,
-          myHuggingHighlighting
-        );
+        myBackgroundFill = new HighlighterVisualModel(myEditor, myYShift, myHuggingHighlighting);
       } else {
-        myHighlighterVisualModel = null;
+        myBackgroundFill = new DirectBackgroundFill(myGraphics, myEditor, myDefaultBackgroundColor, myBackgroundColor);
       }
     }
 
@@ -764,10 +760,7 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       addHighlightersAfterEndOfLine(myDocMarkup);
       addHighlightersAfterEndOfLine(myEditorMarkup);
-      if (myHighlighterVisualModel != null) {
-        myHighlighterVisualModel.paint(myGraphics, myLineHeight);
-        myHighlighterVisualModel.paintAfterLineEndBoxes(myGraphics, myLineHeight);
-      }
+      myBackgroundFill.paintCollected(myGraphics, myLineHeight);
       if (calculateMarginWidths && myEndVisualLine >= lineCount - 1) {
         int length = myMarginPositions.y().length;
         myMarginPositions.y()[length - 1] = myMarginPositions.y()[length - 2] + myLineHeight;
@@ -960,52 +953,18 @@ public final class EditorPainter implements TextDrawingCallback {
       if (count == 0) {
         return;
       }
-      List<BackgroundLayer> visibleLayers = layers.subList(0, count);
-      if (myHighlighterVisualModel == null) {
-        BackgroundLayer top = topLayer(visibleLayers);
-        paintBackground(top.getColor(), x, y, width, height);
-      } else {
-        myHighlighterVisualModel.paintLayeredBlock(new Rectangle2D.Float(x, y, width, height), visibleLayers);
-      }
-    }
-
-    /**
-     * Gives the one layer that the user sees in a block of these layers.
-     * The list starts at the top layer. A layer that forces the background wins over every other layer.
-     */
-    private static @NotNull BackgroundLayer topLayer(@NotNull List<BackgroundLayer> layers) {
-      BackgroundLayer top = layers.getFirst();
-      for (BackgroundLayer layer : layers) {
-        if (layer.getForcesBackground() && layer.compareTo(top) > 0) {
-          top = layer;
-        }
-      }
-      return top;
+      myBackgroundFill.fillLayeredBlock(new Rectangle2D.Float(x, y, width, height), layers.subList(0, count));
     }
 
     private void paintBackgroundLayer(@Nullable BackgroundLayer layer, float x, int y, float width, int height) {
       if (layer == null || width <= 0 || isDefaultBackground(layer.getColor())) {
         return;
       }
-      if (myHighlighterVisualModel == null) {
-        paintBackground(layer.getColor(), x, y, width, height);
-      } else {
-        myHighlighterVisualModel.paintBackgroundBlock(new Rectangle2D.Float(x, y, width, height), layer);
-      }
+      myBackgroundFill.fillBlock(new Rectangle2D.Float(x, y, width, height), layer);
     }
 
     private void paintSelectionBlock(Rectangle2D block) {
-      if (myHighlighterVisualModel == null) {
-        paintBackground(
-          selectionBackgroundColor(),
-          (float)block.getX(),
-          (int)block.getY(),
-          (float)block.getWidth(),
-          (int)block.getHeight()
-        );
-      } else {
-        myHighlighterVisualModel.paintSelectionBlock(block);
-      }
+      myBackgroundFill.fillSelectionBlock(block);
     }
 
     private void paintBackground(@Nullable TextAttributes attributes, float x, int y, float width, int height) {
@@ -1328,10 +1287,8 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintLineExtensionBackground(Color color, float x, int y, float width) {
-      if (myHighlighterVisualModel == null) {
-        paintBackground(color, x, y, width, myLineHeight);
-      } else if (width > 0 && color != null && !isDefaultBackground(color)) {
-        myHighlighterVisualModel.addLineExtensionBackground(new Rectangle2D.Float(x, y, width, myLineHeight), color);
+      if (width > 0 && color != null && !isDefaultBackground(color)) {
+        myBackgroundFill.fillLineExtensionBackground(new Rectangle2D.Float(x, y, width, myLineHeight), color);
       }
     }
 
@@ -1380,12 +1337,8 @@ public final class EditorPainter implements TextDrawingCallback {
       Color color = attributes.getBackgroundColor();
       if (color == null || isDefaultBackground(color)) return;
       float width = myViewSnapshot.plainSpaceWidth();
-      if (myHighlighterVisualModel == null) {
-        paintBackground(color, x, y, width, myLineHeight);
-        return;
-      }
       BackgroundLayer layer = BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting);
-      myHighlighterVisualModel.addAfterLineEndBox(new Rectangle2D.Float(x, y, width, myLineHeight), layer);
+      myBackgroundFill.fillAfterLineEndBox(new Rectangle2D.Float(x, y, width, myLineHeight), layer);
     }
 
     private void paintEffectsAfterEndOfLine(TextAttributes attributes, float x, int y) {

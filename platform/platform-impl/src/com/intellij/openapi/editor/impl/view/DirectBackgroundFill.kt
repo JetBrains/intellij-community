@@ -1,0 +1,68 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl.view
+
+import com.intellij.openapi.editor.impl.EditorImpl
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.geom.Rectangle2D
+
+/**
+ * Fills each background at once with a straight rectangle at the device pixels.
+ * It fills no background of the color [defaultBackground] or [background].
+ */
+internal class DirectBackgroundFill(
+  private val graphics: Graphics2D,
+  private val editor: EditorImpl,
+  private val defaultBackground: Color,
+  private val background: Color,
+) : BackgroundFill {
+  /**
+   * Fills the block with the one layer that the user sees.
+   * A layer that forces the background wins over every other layer.
+   */
+  override fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>) {
+    var top = layers.first()
+    for (layer in layers) {
+      if (layer.forcesBackground && layer > top) {
+        top = layer
+      }
+    }
+    fill(block, top.color)
+  }
+
+  override fun fillBlock(block: Rectangle2D, layer: BackgroundLayer) {
+    fill(block, layer.color)
+  }
+
+  /**
+   * Fills the block from its top at a whole pixel, with a height of whole pixels.
+   */
+  override fun fillSelectionBlock(block: Rectangle2D) {
+    val color = editor.selectionModel.textAttributes.backgroundColor ?: return
+    val rectangle = Rectangle2D.Float(
+      block.x.toFloat(),
+      block.y.toInt().toFloat(),
+      block.width.toFloat(),
+      block.height.toInt().toFloat(),
+    )
+    fill(rectangle, color)
+  }
+
+  override fun fillLineExtensionBackground(block: Rectangle2D, color: Color) {
+    fill(block, color)
+  }
+
+  override fun fillAfterLineEndBox(block: Rectangle2D, layer: BackgroundLayer) {
+    fill(block, layer.color)
+  }
+
+  override fun paintCollected(graphics: Graphics2D, lineHeight: Int) {
+  }
+
+  private fun fill(block: Rectangle2D, color: Color) {
+    if (block.width <= 0 || color == defaultBackground || color == background) {
+      return
+    }
+    EditorPainter.fillRectExact(graphics, block, color)
+  }
+}
