@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +35,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 public class IndentGuideRenderer implements CustomHighlighterRenderer {
@@ -187,11 +191,26 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
   }
 
   /**
-   * Paints the line of a guide. A subclass keeps the line within the stroke width and one more pixel on either side of
-   * the x coordinate. The paint skips a guide farther from the clip.
+   * Paints the pixels of {@link LinePainter2D#paint(Graphics2D, double, double, double, double)}. A subclass keeps the line
+   * within the stroke width and one more pixel on either side of the x coordinate. The paint skips a guide farther from
+   * the clip.
    */
   protected void drawLine(@NotNull Graphics2D g, int x1, int y1, int x2, int y2) {
-    LinePainter2D.paint(g, x1, y1, x2, y2);
+    if (x1 != x2 ||
+        !(g.getStroke() instanceof BasicStroke stroke) ||
+        stroke.getLineWidth() < 1 ||
+        g.getRenderingHint(RenderingHints.KEY_ANTIALIASING) == RenderingHints.VALUE_ANTIALIAS_ON) {
+      LinePainter2D.paint(g, x1, y1, x2, y2);
+      return;
+    }
+    double strokeWidth = stroke.getLineWidth();
+    double endY = y1 == y2 ? y2 + strokeWidth - 1 : y2;
+    ScaleContext scaleContext = ScaleContext.create(g);
+    double x = PaintUtil.alignToInt(x1, scaleContext);
+    double minY = PaintUtil.alignToInt(Math.min(y1, endY), scaleContext);
+    double maxY = Math.max(y1, endY);
+    double width = PaintUtil.alignToInt(strokeWidth, scaleContext);
+    g.fill(new Rectangle2D.Double(x, minY, width, maxY + 1 - minY));
   }
 
   private static @Nullable Color getIndentColor(Editor editor, int startOffset, boolean selected, boolean stickyPainting) {
