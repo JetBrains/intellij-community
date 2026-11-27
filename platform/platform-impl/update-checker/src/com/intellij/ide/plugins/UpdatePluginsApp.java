@@ -29,6 +29,8 @@ import static java.util.Objects.requireNonNull;
  * Works in two stages.
  * On the first run, it collects available updates and writes an update script.
  * The second run needs {@code idea.force.plugin.updates = "true"} system property to apply the updates.
+ * The bootstrap applies them before it looks up this starter, so the second run exits in {@link #premain},
+ * before the application container and the VFS start.
  *
  * @see AppMode#FORCE_PLUGIN_UPDATES
  * @see com.intellij.platform.ide.bootstrap.StartupUtil#runActionScript
@@ -39,6 +41,11 @@ final class UpdatePluginsApp implements ApplicationStarter {
 
   @Override
   public void premain(@NotNull List<String> args) {
+    if (Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+      logInfo("Plugin updates are applied");
+      System.exit(0);
+    }
+
     System.setProperty("idea.skip.indices.initialization", "true");
 
     var oldConfig = System.getProperty(OLD_CONFIG_DIR_PROPERTY);
@@ -49,11 +56,6 @@ final class UpdatePluginsApp implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
-    if (Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      logInfo("Plugin updates are applied");
-      System.exit(0);
-    }
-
     InternalPluginResults updateCheckResult;
     try {
       updateCheckResult = ApplicationManager.getApplication().executeOnPooledThread(
