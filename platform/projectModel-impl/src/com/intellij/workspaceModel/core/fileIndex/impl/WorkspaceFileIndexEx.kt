@@ -1,11 +1,10 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -16,7 +15,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
@@ -234,23 +232,9 @@ sealed interface WorkspaceFileInternalInfo {
   abstract override fun toString(): String
 }
 
-@ApiStatus.Internal
-interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
+internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>>
   fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetWithCustomData<*>?
-}
-
-/**
- * A single file set of the index. Use this type when the code needs a cast to [WorkspaceFileSetImpl] as the underlying implementation
- * might be the wrapper.
- */
-@ApiStatus.Internal
-interface SingleWorkspaceFileSet : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, WorkspaceFileInternalInfo {
-  val entityPointer: EntityPointer<WorkspaceEntity>
-
-  val entityStorageKind: EntityStorageKind
-
-  var cachedRootDescriptor: RootDescriptor?
 }
 
 @ApiStatus.Experimental

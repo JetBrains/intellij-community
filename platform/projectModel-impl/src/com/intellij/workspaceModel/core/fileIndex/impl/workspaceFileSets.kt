@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
@@ -136,7 +136,7 @@ internal class WorkspaceFileSetImpl(
   override val entityStorageKind: EntityStorageKind,
   override val data: WorkspaceFileSetData,
   override val recursive: Boolean = true,
-) : SingleWorkspaceFileSet, StoredFileSet {
+) : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
 
   /**
    * The [RootDescriptor] this file set resolves to, computed on first demand - see `FileSet2RootDescriptor.kt`.
@@ -147,7 +147,7 @@ internal class WorkspaceFileSetImpl(
    * itself stable per entity. The race on the field is benign - two threads can only store equal descriptors.
    */
   @Volatile
-  override var cachedRootDescriptor: RootDescriptor? = null
+  internal var cachedRootDescriptor: RootDescriptor? = null
 
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
 

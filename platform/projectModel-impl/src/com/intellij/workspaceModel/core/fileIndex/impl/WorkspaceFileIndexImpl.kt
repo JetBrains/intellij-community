@@ -376,7 +376,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       includeExternalNonIndexableSets, includeCustomKindSets
     )
     return when (info) {
-      is SingleWorkspaceFileSet -> info
+      is WorkspaceFileSetImpl -> info
       is MultipleWorkspaceFileSets -> info.find(null)
       else -> null
     }
@@ -397,7 +397,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       includeExternalNonIndexableSets, includeCustomKindSets
     )
     return when (info) {
-      is SingleWorkspaceFileSet -> listOf(info)
+      is WorkspaceFileSetImpl -> listOf(info)
       is MultipleWorkspaceFileSets -> info.fileSets
       else -> emptyList()
     }
@@ -512,19 +512,19 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       includeExternalNonIndexableSets, includeCustomKindSets
     )
     return when (info) {
-      is SingleWorkspaceFileSet -> listOfNotNull(resolveEntity(info, WorkspaceModel.getInstance(project).currentSnapshot))
+      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(info, WorkspaceModel.getInstance(project).currentSnapshot))
       is MultipleWorkspaceFileSets -> {
         // one snapshot for the whole call: fetching the service per file set costs more than the resolution
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
         info.fileSets.mapNotNull { fileSet ->
-          (fileSet as? SingleWorkspaceFileSet)?.let { resolveEntity(it, snapshot) }
+          (fileSet as? StoredFileSet?)?.let { resolveEntity(it, snapshot) }
         }
       }
       is NonWorkspace -> emptyList()
     }
   }
 
-  private fun resolveEntity(fileSet: SingleWorkspaceFileSet, snapshot: ImmutableEntityStorage): WorkspaceEntity? {
+  private fun resolveEntity(fileSet: StoredFileSet, snapshot: ImmutableEntityStorage): WorkspaceEntity? {
     if (fileSet.entityStorageKind != EntityStorageKind.MAIN) return null
     return fileSet.entityPointer.resolve(snapshot)
   }
