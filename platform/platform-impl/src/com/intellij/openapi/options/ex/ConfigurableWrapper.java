@@ -33,11 +33,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
+  private static final Set<String> WARNED_DYNAMIC_CONFIGURABLE_TYPES = ConcurrentHashMap.newKeySet();
 
   public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
     return wrapConfigurable(ep, false);
@@ -392,6 +395,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
             Collections.addAll(list, configurables);
           }
         }
+        else {
+          warnDynamicNonComposite();
+        }
       }
       if (super.myEp.children != null) {
         for (ConfigurableEP<?> ep : super.myEp.getChildren()) {
@@ -450,6 +456,34 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       isInitialized = true;
       ConfigurableCardPanel.warn(this, "children", time);
       return myKids;
+    }
+
+    private void warnDynamicNonComposite() {
+      UnnamedConfigurable configurable = getRawConfigurable();
+      Class<?> configurableType = configurable == null ? super.myEp.getConfigurableType() : configurable.getClass();
+      if (configurableType == null ||
+          Composite.class.isAssignableFrom(configurableType) ||
+          Configurable.WithEpDependencies.class.isAssignableFrom(configurableType)) {
+        return;
+      }
+
+      String providerClassName = super.myEp.providerClass;
+      if (providerClassName != null) {
+        Class<?> providerType = super.myEp.findClassOrNull(providerClassName);
+        if (providerType != null && Configurable.WithEpDependencies.class.isAssignableFrom(providerType)) {
+          return;
+        }
+      }
+
+      if (!WARNED_DYNAMIC_CONFIGURABLE_TYPES.add(configurableType.getName())) {
+        return;
+      }
+
+      PluginDescriptor pluginDescriptor = super.myEp.getPluginDescriptor();
+      String pluginId = pluginDescriptor == null ? "<unknown>" : pluginDescriptor.getPluginId().getIdString();
+      String message = "Configurable " + configurableType.getName() + " with id '" + super.myEp.id +
+                       "' in plugin '" + pluginId + "' declares dynamic=true but does not implement Configurable.Composite";
+      LOG.warn(message);
     }
 
     @Override
