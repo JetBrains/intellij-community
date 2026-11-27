@@ -259,7 +259,7 @@ fun projectFixture(
 
   initialized(project) {
     runAllSuspend(
-      { awaitEditorNotificationJobs(project) },
+      { cancelEditorNotificationJobs(project) },
       { testWorkspaceModelLeak(project, testClass) },
       { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false) },
       { application.checkEditorsReleased(project) },
@@ -268,14 +268,14 @@ fun projectFixture(
 }
 
 /**
- * Waits for the editor notification jobs of [project].
+ * Cancels the editor notification jobs of [project], and waits until they end. The project closes after them.
  * A job keeps its file editors alive. An editor of a disposed module holds the old workspace model snapshot through its inlays.
- * [testWorkspaceModelLeak] blocks the EDT, so a job that waits for the EDT cannot finish during the check.
+ * [testWorkspaceModelLeak] blocks the EDT, so a job that waits for the EDT cannot end during the check.
  */
 @TestOnly
-private suspend fun awaitEditorNotificationJobs(project: Project) {
+private suspend fun cancelEditorNotificationJobs(project: Project) {
   val editorNotifications = project.serviceIfCreated<EditorNotifications>() as? EditorNotificationsImpl ?: return
-  editorNotifications.awaitUpdateJobs()
+  editorNotifications.cancelUpdateJobs()
 }
 
 @TestOnly

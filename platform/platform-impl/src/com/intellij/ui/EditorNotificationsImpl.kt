@@ -179,6 +179,23 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     }
   }
 
+  /**
+   * Cancels the update jobs of the open files, and waits until they end.
+   * Call it only when the notifications of the open files are no longer needed, for example before the project closes.
+   */
+  @TestOnly
+  suspend fun cancelUpdateJobs() {
+    val parentJob = coroutineScope.coroutineContext[Job]!!
+    while (true) {
+      val jobs = parentJob.children.filter { it != updateAllRequestFlowJob }.toList()
+      if (jobs.isEmpty()) {
+        return
+      }
+      jobs.forEach { it.cancel() }
+      jobs.joinAll()
+    }
+  }
+
   @TestOnly
   fun completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
