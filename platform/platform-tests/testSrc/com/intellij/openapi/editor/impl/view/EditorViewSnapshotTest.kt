@@ -334,6 +334,34 @@ class EditorViewSnapshotTest {
   }
 
   @Test
+  fun `test a layout takes the gap that the viewport adds for a transparent scroll bar on the left`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val scrollPane = editorEx.scrollPane
+    val scrollBar = scrollPane.verticalScrollBar
+    editorEx.verticalScrollbarOrientation = EditorEx.VERTICAL_SCROLLBAR_LEFT
+    editorEx.setVerticalScrollbarVisible(true)
+    scrollBar.isOpaque = false
+    scrollPane.setSize(200, 100)
+    scrollPane.doLayout()
+    val componentInsets = editor.contentComponent.insets
+    assertTrue(
+      scrollBar.width > 0,
+      "The layout gives the scroll bar a width",
+    )
+    assertEquals(
+      scrollBar.width,
+      componentInsets.left,
+      "The border of the viewport adds the width of the transparent scroll bar on the left",
+    )
+    assertEquals(
+      componentInsets,
+      view.insets,
+      "The layout of the scroll pane puts the gap into the snapshot",
+    )
+  }
+
+  @Test
   fun `test the release of an editor ignores insets that the release changes`(): Unit = fixture.runTest {
     val editorFactory = EditorFactory.getInstance()
     val otherEditor = editorFactory.createEditor(editorFactory.createDocument("text")) as EditorEx
