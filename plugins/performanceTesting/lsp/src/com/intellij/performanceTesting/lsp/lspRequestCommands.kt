@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.lsp
 
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.find.actions.FindUsagesAction
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -98,5 +99,32 @@ internal class LspHoverCommand(text: String, line: Int) : PlaybackCommandCorouti
       span.end()
     }
     check(html.any { it.contains(expectedText) }) { "No documentation with '$expectedText' at the caret, got: $html" }
+  }
+}
+
+/**
+ * Collects the context actions at the caret of the selected editor, as Alt+Enter does before it shows its popup,
+ * and checks that one of them has the given text. The platform asks each action whether it is available, and
+ * the actions of the LSP client ask the server for its code actions then: one request for the quick fixes
+ * of the problem at the caret, and one for the intentions at the caret.
+ * The command shows no popup. `%altEnter` shows one when it only checks for an action, and no command closes it.
+ *
+ * Syntax: `%lspContextActions <the text of an action>`
+ */
+internal class LspContextActionsCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  companion object {
+    const val PREFIX: String = CMD_PREFIX + "lspContextActions"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    val actionText = extractCommandArgument(PREFIX)
+    require(actionText.isNotBlank()) { "Expected: $PREFIX <the text of an action>, got: '$text'" }
+    val project = context.project
+    val editor = selectedEditor(project)
+    val psiFile = readAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) } ?: error("The editor has no PSI file")
+    val texts = withContext(Dispatchers.EDT) {
+      ShowIntentionActionsHandler.calcCachedIntentions(project, editor, psiFile).allActions.map { it.text }
+    }
+    check(actionText in texts) { "The context actions at the caret have no '$actionText', they are: $texts" }
   }
 }

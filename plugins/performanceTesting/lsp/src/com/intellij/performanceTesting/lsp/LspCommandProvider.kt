@@ -18,6 +18,7 @@ internal class LspCommandProvider : CommandProvider {
     LspWaitForLineCommand.PREFIX to CreateCommand(::LspWaitForLineCommand),
     LspFindUsagesCommand.PREFIX to CreateCommand(::LspFindUsagesCommand),
     LspHoverCommand.PREFIX to CreateCommand(::LspHoverCommand),
+    LspContextActionsCommand.PREFIX to CreateCommand(::LspContextActionsCommand),
     LspSearchEverywhereCommand.PREFIX to CreateCommand(::LspSearchEverywhereCommand),
   )
 }
