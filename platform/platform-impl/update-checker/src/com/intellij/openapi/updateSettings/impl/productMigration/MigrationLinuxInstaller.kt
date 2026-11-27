@@ -159,7 +159,7 @@ fun unpackMigrationArchive(archive: Path, target: Path, indicator: ProgressIndic
   }
 }
 
-/** Installs [distribution] for the current user into the common data folder of the IDEs. */
+/** Installs [distribution] for the current user into the common data folder of the IDEs, and writes its entry of the application menu. */
 internal fun installLinuxDistribution(distribution: DistributionInfo, workDir: Path, indicator: ProgressIndicator): Path {
   val parent = try {
     PathManager.getCommonDataPath()
@@ -167,11 +167,14 @@ internal fun installLinuxDistribution(distribution: DistributionInfo, workDir: P
   catch (e: UncheckedIOException) {
     throw installError("cannot make the common data folder: ${e.message}", e)
   }
-  return installLinuxApp(
+  val app = installLinuxApp(
     parent = parent,
     product = distribution.product,
     indicator = indicator,
     download = { downloadAndVerify(distribution.fileUrl, workDir, indicator) },
     unpack = { archive, target -> unpackMigrationArchive(archive, target, indicator) },
   )
+  // the common data folder is `<data home>/JetBrains`
+  writeLinuxDesktopEntry(app, distribution.product, parent.resolveSibling("applications"))
+  return app
 }

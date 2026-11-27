@@ -82,6 +82,31 @@ class InstalledProductInfoTest {
   }
 
   @Test
+  fun `name, icon and window class of a Linux application`() {
+    writeRootLauncher(app, osName = "Linux", launcherPath = "bin/jetbrains")
+    write("bin/jetbrains.svg", "<svg/>")
+    write("product-info.json", """{ "name": "JetBrains IDE", "productCode": "JB", "svgIconPath": "bin/jetbrains.svg", "launch": [
+      { "os": "Windows", "launcherPath": "bin/jetbrains64.exe", "startupWmClass": "other" },
+      { "os": "Linux", "launcherPath": "bin/jetbrains", "startupWmClass": "jetbrains-ide" }] }""")
+    val info = readInstalledProductInfo(app, OS.Linux)!!
+    assertEquals("JetBrains IDE", info.name)
+    assertEquals(app.resolve("bin/jetbrains.svg"), info.icon)
+    assertEquals("jetbrains-ide", info.startupWmClass)
+  }
+
+  @Test
+  fun `no icon that is missing or outside the application, and no window class without a record`() {
+    write("product-info.json", """{ "productCode": "JB", "svgIconPath": "bin/missing.svg" }""")
+    val info = readInstalledProductInfo(app, OS.Linux)!!
+    assertNull(info.name)
+    assertNull(info.icon)
+    assertNull(info.startupWmClass)
+    tempDir.newFile("outside.svg")
+    write("product-info.json", """{ "productCode": "JB", "svgIconPath": "../outside.svg" }""")
+    assertNull(readInstalledProductInfo(app, OS.Linux)!!.icon)
+  }
+
+  @Test
   fun `launcher is the first record of the OS`() {
     val launcher = writeRootLauncher(app, osName = "Windows", launcherPath = "bin/jetbrains64.exe")
     write("product-info.json", """{ "productCode": "JB", "launch": [

@@ -127,14 +127,25 @@ fun deleteMigrationState(file: Path) {
   deleteLogged(migrationRedirectContentFile(file))
 }
 
-/** The data of the `product-info.json` of an installed IDE. [launcher] is an executable file inside the IDE. */
+/**
+ * The data of the `product-info.json` of an installed IDE. [launcher] is an executable file inside the IDE.
+ * [icon] is the SVG icon, a file inside the IDE.
+ * [startupWmClass] is the window class of the `launch` record of the launcher.
+ */
 @ApiStatus.Internal
-class InstalledProductInfo(val productCode: String?, val launcher: Path?)
+class InstalledProductInfo(
+  val productCode: String?,
+  val launcher: Path?,
+  val name: String? = null,
+  val icon: Path? = null,
+  val startupWmClass: String? = null,
+)
 
 /**
  * Returns the `product-info.json` data of the installed IDE [app], or `null` when the file does not exist or is not valid.
  * The startup calls it before the services exist, so it uses the path rule of `IdeProductInfo.loadProductInfo` and not the service.
  * The launcher is the `launcherPath` of the first `launch` record of [os], relative to the folder of the file.
+ * The icon is the `svgIconPath`, relative to the same folder.
  */
 @ApiStatus.Internal
 fun readInstalledProductInfo(app: Path, os: OS = OS.CURRENT): InstalledProductInfo? {
@@ -152,12 +163,16 @@ fun readInstalledProductInfo(app: Path, os: OS = OS.CURRENT): InstalledProductIn
 
   val osName = launchOsName(os)
   var productCode: String? = null
-  var launcherPath: String? = null
+  var productName: String? = null
+  var iconPath: String? = null
+  var launch: LaunchRecord? = null
   try {
     parseMigrationJson(text) { parser, name ->
       when (name) {
         "productCode" -> productCode = parser.stringOrNull()
-        "launch" -> launcherPath = readLauncherPath(parser, osName)
+        "name" -> productName = parser.stringOrNull()
+        "svgIconPath" -> iconPath = parser.stringOrNull()
+        "launch" -> launch = readLaunchRecord(parser, osName)
         else -> parser.skipChildren()
       }
     }
@@ -166,7 +181,23 @@ fun readInstalledProductInfo(app: Path, os: OS = OS.CURRENT): InstalledProductIn
     LOG.info("invalid ${file}: ${e.message}")
     return null
   }
-  return InstalledProductInfo(productCode, launcherPath?.let { resolveLauncher(app, file, it) })
+  return InstalledProductInfo(
+    productCode = productCode,
+    launcher = launch?.launcherPath?.let { resolveLauncher(app, file, it) },
+    name = productName,
+    icon = iconPath?.let { resolveIcon(app, file, it) },
+    startupWmClass = launch?.startupWmClass,
+  )
+}
+
+private fun resolveIcon(app: Path, file: Path, relativePath: String): Path? {
+  val icon = try {
+    file.parent.resolve(relativePath).normalize()
+  }
+  catch (_: InvalidPathException) {
+    return null
+  }
+  return icon.takeIf { it.startsWith(app.normalize()) && Files.isRegularFile(it) }
 }
 
 private fun resolveLauncher(app: Path, file: Path, relativePath: String): Path? {
@@ -228,24 +259,28 @@ private fun launchOsName(os: OS): String? = when (os) {
   OS.FreeBSD, OS.OHOS, OS.Other -> null
 }
 
+private class LaunchRecord(val launcherPath: String?, val startupWmClass: String?)
+
 /**
  * Reads the `launch` array at the current token of [parser].
- * Returns the `launcherPath` of its first record with the `os` value [osName].
+ * Returns its first record with the `os` value [osName].
  */
-private fun readLauncherPath(parser: JsonParser, osName: String?): String? {
+private fun readLaunchRecord(parser: JsonParser, osName: String?): LaunchRecord? {
   if (parser.currentToken() != JsonToken.START_ARRAY) invalidMigrationJson("'launch' is not an array")
-  var result: String? = null
+  var result: LaunchRecord? = null
   while (parser.nextToken() != JsonToken.END_ARRAY) {
     var os: String? = null
     var launcherPath: String? = null
+    var startupWmClass: String? = null
     readMigrationJsonObject(parser) { recordParser, name ->
       when (name) {
         "os" -> os = recordParser.stringOrNull()
         "launcherPath" -> launcherPath = recordParser.stringOrNull()
+        "startupWmClass" -> startupWmClass = recordParser.stringOrNull()
         else -> recordParser.skipChildren()
       }
     }
-    if (result == null && osName != null && os == osName) result = launcherPath
+    if (result == null && osName != null && os == osName) result = LaunchRecord(launcherPath, startupWmClass)
   }
   return result
 }

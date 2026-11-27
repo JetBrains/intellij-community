@@ -147,7 +147,7 @@ fun downloadAndVerify(
 /**
  * Downloads and verifies the file of [distribution], installs it for the current user, and returns the installed application.
  * macOS gets the application in `~/Applications`. Windows gets it in the folder for the programs of the user.
- * Linux gets it in the common data folder of the IDEs.
+ * Linux gets it in the common data folder of the IDEs, with an entry in the application menu.
  */
 @RequiresBackgroundThread
 internal fun installMigrationDistribution(distribution: DistributionInfo, indicator: ProgressIndicator): Path {
