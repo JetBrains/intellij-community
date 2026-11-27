@@ -575,7 +575,7 @@ public final class EditorPainter implements TextDrawingCallback {
         TextAttributes attributes = Objects.requireNonNull(myViewSnapshot.prefixAttributes());
         float x = myCorrector.startX(myStartVisualLine);
         int y = myYShift + myView.visualLineToY(0);
-        paintBackground(attributes, x, y, width, myLineHeight);
+        paintPrefixBackground(attributes.getBackgroundColor(), x, y, width);
         myTextDrawingTasks.add(_ -> {
           paintLineLayoutWithEffect(
             prefixLayout,
@@ -1099,21 +1099,14 @@ public final class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    private void paintBackground(@Nullable TextAttributes attributes, float x, int y, float width, int height) {
-      if (attributes != null) {
-        paintBackground(attributes.getBackgroundColor(), x, y, width, height);
-      }
-    }
-
-    private void paintBackground(Color color, float x, int y, float width, int height) {
+    /**
+     * Paints the background of the prefix text at once, with straight corners. It takes no part in the rounded shapes.
+     */
+    private void paintPrefixBackground(@Nullable Color color, float x, int y, float width) {
       if (width <= 0 || color == null || isDefaultBackground(color)) {
         return;
       }
-      fillRectExact(
-        myGraphics,
-        new Rectangle2D.Float(x, y, width, height),
-        color
-      );
+      fillRectExact(myGraphics, new Rectangle2D.Float(x, y, width, myLineHeight), color);
     }
 
     private void paintCustomRenderers(MarkupModelEx markupModel) {
