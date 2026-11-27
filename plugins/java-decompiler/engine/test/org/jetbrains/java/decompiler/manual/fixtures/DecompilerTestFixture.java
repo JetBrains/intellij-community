@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler.manual.fixtures;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.decompiler.DecompilerFileComparisonFailedError;
+import org.jetbrains.java.decompiler.DecompilerAssertions;
 import org.jetbrains.java.decompiler.DecompilerTestDataUtil;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -120,7 +120,7 @@ public class DecompilerTestFixture {
           @Override
           public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) throws IOException {
             Path actualFile = actual.resolve(expected.relativize(expectedFile));
-            DecompilerFileComparisonFailedError.assertContent(expectedFile, Files.readString(actualFile, StandardCharsets.UTF_8));
+            DecompilerAssertions.assertContent(expectedFile, Files.readString(actualFile, StandardCharsets.UTF_8));
             return FileVisitResult.CONTINUE;
           }
         });
@@ -131,7 +131,7 @@ public class DecompilerTestFixture {
     }
     else {
       try {
-        DecompilerFileComparisonFailedError.assertContent(expected, Files.readString(actual, StandardCharsets.UTF_8));
+        DecompilerAssertions.assertContent(expected, Files.readString(actual, StandardCharsets.UTF_8));
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);

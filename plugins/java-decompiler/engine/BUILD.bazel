@@ -72,7 +72,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "//java/java-runtime:rt",
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//libraries/junit6-launcher",

@@ -33,7 +33,6 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   testImplementation("org.eclipse.jdt:ecj:3.31.0")
   testImplementation("org.codehaus.groovy:groovy-all:3.0.25")
-  testImplementation("com.jetbrains.intellij.java:java-rt:253.31033.145") // Make it possible to use FileComparisonData
 }
 
 application {
