@@ -36,6 +36,7 @@ private val LOG = logger<MigrationInstallException>()
 
 private const val MAC_DOWNLOAD_FILE_NAME = "distribution.dmg"
 private const val WINDOWS_DOWNLOAD_FILE_NAME = "distribution.exe"
+private const val LINUX_DOWNLOAD_FILE_NAME = "distribution.tar.gz"
 private const val PROCESS_TIMEOUT_MS = 30 * 60 * 1000
 private const val DETACH_TIMEOUT_MS = 60 * 1000
 private const val CODESIGN_DISPLAY_TIMEOUT_MS = 60 * 1000
@@ -89,7 +90,8 @@ fun <T> withMigrationWorkDir(workDir: Path, action: (Path) -> T): T {
 @ApiStatus.Internal
 fun migrationDownloadFileName(os: OS = OS.CURRENT): String = when (os) {
   OS.Windows -> WINDOWS_DOWNLOAD_FILE_NAME
-  OS.macOS, OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> MAC_DOWNLOAD_FILE_NAME
+  OS.Linux -> LINUX_DOWNLOAD_FILE_NAME
+  OS.macOS, OS.FreeBSD, OS.OHOS, OS.Other -> MAC_DOWNLOAD_FILE_NAME
 }
 
 /** Downloads [url] into [workDir] and returns the file. Its SHA-256 must match the checksum file `<url>.sha256`, which loads first. */
@@ -145,6 +147,7 @@ fun downloadAndVerify(
 /**
  * Downloads and verifies the file of [distribution], installs it for the current user, and returns the installed application.
  * macOS gets the application in `~/Applications`. Windows gets it in the folder for the programs of the user.
+ * Linux gets it in the common data folder of the IDEs.
  */
 @RequiresBackgroundThread
 internal fun installMigrationDistribution(distribution: DistributionInfo, indicator: ProgressIndicator): Path {
@@ -152,7 +155,8 @@ internal fun installMigrationDistribution(distribution: DistributionInfo, indica
     when (OS.CURRENT) {
       OS.macOS -> installMacApp(downloadAndVerify(distribution.fileUrl, workDir, indicator), distribution.product, indicator)
       OS.Windows -> installWindowsDistribution(distribution, workDir, indicator)
-      OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> throw installError("no install of the distribution for ${OS.CURRENT}")
+      OS.Linux -> installLinuxDistribution(distribution, workDir, indicator)
+      OS.FreeBSD, OS.OHOS, OS.Other -> throw installError("no install of the distribution for ${OS.CURRENT}")
     }
   }
 }

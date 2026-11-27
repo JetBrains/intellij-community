@@ -260,5 +260,5 @@ private fun isEmptyDirectory(path: Path): Boolean {
   }
 }
 
-private fun existsError(target: Path, logMessage: String): MigrationInstallException =
+internal fun existsError(target: Path, logMessage: String): MigrationInstallException =
   MigrationInstallException(IdeBundle.message("updates.migration.error.exists", target.toString()), logMessage)
