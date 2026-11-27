@@ -384,7 +384,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
       paintCustomRenderers(myDocMarkup);
       paintCustomRenderers(myEditorMarkup);
-      paintBackground();
+      paintBackgroundsAndQueueText();
       paintRightMargin();
       paintCustomRenderers(myAfterBackgroundCustomHighlighters);
       paintLineMarkersSeparators(myDocMarkup);
@@ -539,7 +539,11 @@ public final class EditorPainter implements TextDrawingCallback {
       return myEditor.getSelectionModel().getTextAttributes().getBackgroundColor();
     }
 
-    private void paintBackground() {
+    /**
+     * Paints the backgrounds of the visual lines of the clip.
+     * It queues the text, the inlays, the soft wrap signs and the line extensions for {@link #paintTextWithEffects()}.
+     */
+    private void paintBackgroundsAndQueueText() {
       SelectionInlayQueries selectionInlayQueries = new SelectionInlayQueries(myEditor);
 
       int lineCount = myView.getVisibleLineCount(myDocument);
@@ -573,8 +577,6 @@ public final class EditorPainter implements TextDrawingCallback {
         });
       }
 
-      int startX = myFillStartX;
-      int endX = myFillEndX;
       int prevY = Math.max(myInsets.top, myClip.y) + myYShift;
       int firstVisualLine = myDryRunRows ? Math.max(0, myStartVisualLine - 1) : myStartVisualLine;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myDocument, myView, firstVisualLine);
@@ -587,20 +589,7 @@ public final class EditorPainter implements TextDrawingCallback {
         int y = visLinesIterator.getY() + myYShift;
         if (calculateMarginWidths && !aboveClip) myMarginPositions.y()[visualLine - myStartVisualLine] = y;
         if (y > prevY && !aboveClip) {
-          boolean selection = selectionInlayQueries.isAllBlockInlaysAboveSelected(visualLine);
-          BackgroundLayer betweenLinesLayer = getBetweenLinesBackgroundLayer(selection, visLinesIterator.getVisualLineStartOffset());
-          TextAttributes attributes = new TextAttributes();
-          attributes.setBackgroundColor(betweenLinesLayer == null ? null : betweenLinesLayer.getColor());
-          myBetweenLinesAttributes.put(visualLine, attributes);
-          if (selection && myHuggingHighlighting) {
-            for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
-              Rectangle bounds = blockInlay.getBounds();
-              if (bounds == null) continue;
-              paintSelectionBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height));
-            }
-          } else {
-            paintBackgroundLayer(betweenLinesLayer, startX, prevY, endX - startX, y - prevY);
-          }
+          paintBetweenLines(selectionInlayQueries, visualLine, visLinesIterator.getVisualLineStartOffset(), prevY, y);
         }
         boolean dryRun = aboveClip || visualLine > myEndVisualLine;
         if (dryRun && !calculateMarginWidths && !myDryRunRows) break;
@@ -616,7 +605,7 @@ public final class EditorPainter implements TextDrawingCallback {
               return;
             }
             if (visualLine == 0) xEnd -= myView.getPrefixTextWidthInPixels();
-            paintLayeredBackground(backgroundLayers, startX, y, xEnd - startX);
+            paintLayeredBackground(backgroundLayers, myFillStartX, y, xEnd - myFillStartX);
             if (myHuggingHighlighting
                 && it.isInSelection(true)
                 && myEditor.isRightAligned()) {
@@ -702,27 +691,10 @@ public final class EditorPainter implements TextDrawingCallback {
             List<BackgroundLayer> layers = it.getPastLineEndBackgroundLayers();
             CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
             if (cfr != null) {
-              float paintWidth = endX - startX;
-              if (myHuggingHighlighting && isSelected(cfr)) {
-                paintWidth = cfr.getWidthInPixels();
-                backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
-                float start = startX - (myEditor.isRightAligned() ? myStubWidth : 0.0f);
-                float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : myStubWidth);
-                paintSelectionBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
-              } else {
-                paintLayeredBackground(layers, startX, y, paintWidth, cfr.getHeightInPixels());
-              }
-              if (dryRun) {
-                return;
-              }
-              myTextDrawingTasks.add(g -> {
-                cfr.getRenderer().paint(
-                  cfr, g, new Rectangle2D.Double(x, y, cfr.getWidthInPixels(), cfr.getHeightInPixels()), backgroundAttributes
-                );
-              });
+              paintCustomFoldRegion(cfr, backgroundAttributes, layers, x, y, dryRun);
               return;
             }
-            paintLayeredBackground(layers, x, y, endX - x);
+            paintLayeredBackground(layers, x, y, myFillEndX - x);
             int offset = it.getEndOffset();
             SoftWrapEx softWrap = visLinesIterator.getEndSoftWrap();
             if (softWrap == null) {
@@ -765,6 +737,66 @@ public final class EditorPainter implements TextDrawingCallback {
         int length = myMarginPositions.y().length;
         myMarginPositions.y()[length - 1] = myMarginPositions.y()[length - 2] + myLineHeight;
       }
+    }
+
+    /**
+     * Paints the background of the band of block inlays above {@code visualLine}, from {@code top} to {@code bottom}.
+     * It keeps the color of the band for {@link #paintBlockInlays()}.
+     */
+    private void paintBetweenLines(
+      SelectionInlayQueries selectionInlayQueries,
+      int visualLine,
+      int visualLineStartOffset,
+      int top,
+      int bottom
+    ) {
+      boolean selection = selectionInlayQueries.isAllBlockInlaysAboveSelected(visualLine);
+      BackgroundLayer betweenLinesLayer = getBetweenLinesBackgroundLayer(selection, visualLineStartOffset);
+      TextAttributes attributes = new TextAttributes();
+      attributes.setBackgroundColor(betweenLinesLayer == null ? null : betweenLinesLayer.getColor());
+      myBetweenLinesAttributes.put(visualLine, attributes);
+      if (selection && myHuggingHighlighting) {
+        for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
+          Rectangle bounds = blockInlay.getBounds();
+          if (bounds == null) {
+            continue;
+          }
+          paintSelectionBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height));
+        }
+      } else {
+        paintBackgroundLayer(betweenLinesLayer, myFillStartX, top, myFillEndX - myFillStartX, bottom - top);
+      }
+    }
+
+    /**
+     * Paints the background of a custom fold region at {@code x}.
+     * Unless the row is a dry run, it queues the region for {@link #paintTextWithEffects()}.
+     */
+    private void paintCustomFoldRegion(
+      CustomFoldRegion cfr,
+      TextAttributes backgroundAttributes,
+      List<BackgroundLayer> layers,
+      float x,
+      int y,
+      boolean dryRun
+    ) {
+      float paintWidth = myFillEndX - myFillStartX;
+      if (myHuggingHighlighting && isSelected(cfr)) {
+        paintWidth = cfr.getWidthInPixels();
+        backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
+        float start = myFillStartX - (myEditor.isRightAligned() ? myStubWidth : 0.0f);
+        float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : myStubWidth);
+        paintSelectionBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
+      } else {
+        paintLayeredBackground(layers, myFillStartX, y, paintWidth, cfr.getHeightInPixels());
+      }
+      if (dryRun) {
+        return;
+      }
+      myTextDrawingTasks.add(g -> {
+        Rectangle2D bounds = new Rectangle2D.Double(x, y, cfr.getWidthInPixels(), cfr.getHeightInPixels());
+        cfr.getRenderer().paint(cfr, g, bounds, backgroundAttributes);
+      });
     }
 
     private float getExtensionsStartX(float x, List<Inlay<?>> inlays) {
