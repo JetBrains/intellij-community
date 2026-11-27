@@ -31,18 +31,6 @@ class GradientTextureCache: Disposable {
     else texture!!
   }
 
-  @RequiresEdt
-  fun getVerticalTexture(graphics: Graphics2D, height: Int, colorStart: Color, colorEnd: Color, x: Int = 0, y: Int = 0): TexturePaint {
-    val realHeight = floor(JBUIScale.sysScale(graphics) * height).toInt()
-
-    return if (realHeight != texture?.image?.height || checkValues(colorStart, colorEnd, x, y)) {
-      AppUIUtil.createVerticalGradientTexture(graphics, colorStart, colorEnd, height, x, y).also {
-        cacheValues(it, colorStart, colorEnd, x, y)
-      }
-    }
-    else texture!!
-  }
-
   private fun checkValues(colorStart: Color, colorEnd: Color, x: Int, y: Int): Boolean {
     return colorStart.rgb != this.colorStart || colorEnd.rgb != this.colorEnd || x != this.x || y != this.y
   }

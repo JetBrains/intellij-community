@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.ide.ProjectGradients
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
@@ -16,13 +15,11 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.toolWindow.ToolWindowLeftToolbar
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.Gray
 import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
-import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.ImageUtil
@@ -31,11 +28,8 @@ import com.intellij.util.ui.UIUtil
 import java.awt.AlphaComposite
 import java.awt.Color
 import java.awt.Component
-import java.awt.GradientPaint
 import java.awt.Graphics2D
-import java.awt.LinearGradientPaint
 import java.awt.Paint
-import java.awt.RadialGradientPaint
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
@@ -126,20 +120,10 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
 
 internal fun isColorIslandGradient(): Boolean = Registry.`is`("idea.islands.color.gradient.enabled", false)
 
-/**
- * Kill switch for the dithered gradient rendering; when disabled, the previous Java2D gradient painting is used.
- */
-private fun isGradientDitheringEnabled(): Boolean = Registry.`is`("ide.islands.gradient.dithering.enabled", true)
-
 internal fun isColorIslandGradientAvailable(): Boolean = IslandsState.isEnabled() && isColorIslandGradient()
 
 private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
                             component: Component, source: Component, g: Graphics2D) {
-  if (!isGradientDitheringEnabled()) {
-    doGradientPaintLegacy(frame, mainColor, project, projectWindowCustomizer, component, source, g)
-    return
-  }
-
   val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
 
   val ctx = ScaleContext.create(g)
@@ -192,82 +176,7 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   islandsInactiveFrameGraphics2D?.preserveComposite = false
 }
 
-private fun doGradientPaintLegacy(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
-                                  component: Component, source: Component, g: Graphics2D) {
-  val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
-
-  val ctx = ScaleContext.create(g)
-
-  val length = JBUI.getInt("RecentProject.MainToolbarGradient.width", 700)
-  val height = JBUI.getInt("RecentProject.MainToolbarGradient.height", 200)
-
-  val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null).coerceAtLeast(0)
-  val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
-  val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
-
-  val fullBounds = Rectangle(totalWidth, height)
-  val bounds = if (SystemInfo.isLinux && source is ToolWindowLeftToolbar) fullBounds else g.clipBounds?.intersection(fullBounds) ?: fullBounds
-  if (bounds.isEmpty) {
-    return
-  }
-
-  val cache = getGradientCache(frame.component)
-  val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
-  val blendedColor = cache.getBlendedColor(mainColor, centerColor)
-
-  val initialComposite = g.composite
-  val islandsInactiveFrameGraphics2D = g as? IslandsInactiveFrameGraphics2D
-
-  if (SwingUtilities.getWindowAncestor(frame.component)?.isActive == false) {
-    islandsInactiveFrameGraphics2D?.preserveComposite = true
-
-    val componentFullBounds = Rectangle(component.width, component.height)
-    val componentBounds = g.clipBounds?.intersection(componentFullBounds) ?: componentFullBounds
-    if (!componentBounds.isEmpty) {
-      g.color = mainColor
-      g.fillRect(componentBounds.x, componentBounds.y, componentBounds.width, componentBounds.height)
-    }
-
-    g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
-  }
-
-  g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-
-  alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
-
-  val leftBounds = bounds.intersection(Rectangle(leftWidth, height))
-  if (!leftBounds.isEmpty) {
-    g.paint = cache.left.getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
-    g.fillRect(leftBounds.x, leftBounds.y, leftBounds.width, leftBounds.height)
-  }
-
-  val rightBounds = bounds.intersection(Rectangle(leftWidth, 0, rightWidth, height))
-  if (!rightBounds.isEmpty) {
-    g.paint = cache.right.getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
-    g.fillRect(rightBounds.x, rightBounds.y, rightBounds.width, rightBounds.height)
-  }
-
-  alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
-
-  g.composite = initialComposite
-
-  val startColor = if (SystemInfo.isMac) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
-  g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
-  g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
-
-  islandsInactiveFrameGraphics2D?.preserveComposite = false
-}
-
 private class GradientCache {
-  // state of the legacy painting (`ide.islands.gradient.dithering.enabled=false`)
-  val left = GradientTextureCache()
-  val right = GradientTextureCache()
-  var legacyWidth = 0
-  var legacyHeight = 0
-  var legacyIndex = -1
-  var legacyIsBright = false
-  var legacyImage: BufferedImage? = null
-
   private var width = 0
   private var height = 0
   private var scale = 0f
@@ -444,11 +353,6 @@ private fun getGradientCache(root: JComponent): GradientCache {
 
 private fun doColorGradientPaint(project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, frame: IdeFrame,
                                  component: Component, g: Graphics2D) {
-  if (!isGradientDitheringEnabled()) {
-    doColorGradientPaintLegacy(project, projectWindowCustomizer, frame, component, g)
-    return
-  }
-
   val width = component.width
   val height = component.height
   val fullBounds = Rectangle(width, height)
@@ -522,91 +426,6 @@ internal fun fillToolWindowTint(g: Graphics2D, tint: Color, bounds: Rectangle) {
 
 private fun blendChannel(base: Int, tint: Int, alpha: Float): Int = (base + (tint - base) * alpha).roundToInt()
 
-private fun doColorGradientPaintLegacy(project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, frame: IdeFrame,
-                                       component: Component, g: Graphics2D) {
-  val width = component.width
-  val height = component.height
-  val fullBounds = Rectangle(width, height)
-  val bounds = g.clipBounds?.intersection(fullBounds) ?: fullBounds
-  if (bounds.isEmpty) {
-    return
-  }
-
-  val islandsInactiveFrameGraphics2D = g as? IslandsInactiveFrameGraphics2D
-  val initialComposite = g.composite
-  val info = projectWindowCustomizer.getProjectGradients(project)
-  val isToolWindowColor = isIslandsToolWindowGradientColor(g.paint)
-
-  if (isToolWindowColor) {
-    g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat("Island.toolWindowAlpha", 0.2f))
-  }
-  else if (SwingUtilities.getWindowAncestor(component)?.isActive == false) {
-    islandsInactiveFrameGraphics2D?.preserveComposite = true
-
-    g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
-  }
-
-  val cache = getGradientCache(frame.component)
-
-  if (SystemInfo.isMac) {
-    paintColorGradientLegacy(width, height, g, info, cache)
-  }
-  else {
-    val isBright = JBColor.isBright()
-
-    if (cache.legacyImage == null || cache.legacyIsBright != isBright || cache.legacyWidth != width || cache.legacyHeight != height || cache.legacyIndex != info.index) {
-      cache.legacyIndex = info.index
-      cache.legacyWidth = width
-      cache.legacyHeight = height
-      cache.legacyIsBright = isBright
-
-      val image = ImageUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB)
-      cache.legacyImage = image
-      image.createGraphics().use { paintColorGradientLegacy(width, height, it, info, cache) }
-    }
-
-    @Suppress("UseJBColor")
-    if (isToolWindowColor) {
-      g.color = Color(cache.legacyImage!!.getRGB(bounds.centerX.toInt(), bounds.centerY.toInt()))
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
-    }
-    else {
-      UIUtil.drawImage(g, cache.legacyImage!!, bounds, bounds, null)
-    }
-  }
-
-  g.composite = initialComposite
-  islandsInactiveFrameGraphics2D?.preserveComposite = false
-}
-
-private fun paintColorGradientLegacy(width: Int, height: Int, g: Graphics2D, info: ProjectGradients, cache: GradientCache) {
-  g.paint = LinearGradientPaint(0f, 0f, width.toFloat(), height.toFloat(),
-                                floatArrayOf(info.getDiagonalFraction1(0f), info.getDiagonalFraction2(0.13f),
-                                             info.getDiagonalFraction3(0.3f), info.getDiagonalFraction4(1f)),
-                                arrayOf(info.diagonalColor1, info.diagonalColor2, info.diagonalColor3, info.diagonalColor4))
-
-  g.fillRect(0, 0, width, height)
-
-  val ovalRadius = width / 4f
-  val ovalWidth = width / 2
-  val ovalCenterX = width * 0.2f
-  val ovalCenterY = 36f
-
-  g.paint = RadialGradientPaint(ovalCenterX, ovalCenterY, ovalRadius,
-                                floatArrayOf(0f, 1f),
-                                arrayOf(info.radialColor1, info.radialColor2))
-
-  g.fillOval((ovalCenterX - ovalRadius).toInt(), (ovalCenterY - ovalRadius).toInt(), ovalWidth, ovalWidth)
-
-  g.paint = cache.left.getHorizontalTexture(g, width, info.horizontalColor1, info.horizontalColor2)
-
-  g.fillRect(0, 0, width, height)
-
-  g.paint = cache.right.getVerticalTexture(g, height, info.verticalColor1, info.verticalColor2)
-
-  g.fillRect(0, 0, width, height)
-}
-
 /**
  * The 8x8 Bayer index matrix, used to compute per-pixel ordered dithering thresholds.
  */
@@ -638,8 +457,6 @@ private const val GRADIENT_BAND_HEIGHT = 64
  * the image is re-rendered on every frame resize and must not take more than a few milliseconds.
  *
  * The image is composed at full opacity; the inactive frame and tool window alphas are applied when it is drawn.
- * The legacy macOS painting applied them to each gradient layer instead, with a slightly different result;
- * the composed variant matches what other platforms have always shown.
  */
 @Suppress("UseJBColor")
 private fun renderColorGradientImage(image: BufferedImage, width: Int, height: Int, scale: Float, info: ProjectGradients) {

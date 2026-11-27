@@ -52,6 +52,7 @@ import com.intellij.util.system.OS
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTAccessor
@@ -477,6 +478,8 @@ object AppUIUtil {
     }
   }
 
+  @Deprecated("Use overloaded method")
+  @ApiStatus.ScheduledForRemoval
   @Suppress("DuplicatedCode")
   fun createVerticalGradientTexture(
     graphics: Graphics,
