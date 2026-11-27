@@ -34,6 +34,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -106,6 +108,55 @@ class BazelJUnitOutputListenerTest {
     NodeList errors = testCase.getElementsByTagName("system-err");
     assertThat(errors.getLength()).isEqualTo(1);
     assertThat(errors.item(0).getTextContent()).contains("InterruptedWhileRunningScenario.interruptedTest");
+  }
+
+  /**
+   * A parallel run ends the tests of several classes at once. Each class keeps its own suite with its own tests, and the
+   * listener sees the failure of the run.
+   */
+  @Test
+  void writesTheSuiteOfEachClassOfAParallelRun(@TempDir Path tempDir) throws Exception {
+    Path xmlOutputFile = tempDir.resolve("parallel.xml");
+    var launcher = LauncherFactory.create(LauncherConfig.builder()
+                                         .enableLauncherSessionListenerAutoRegistration(false)
+                                         .build());
+    var request = LauncherDiscoveryRequestBuilder.request()
+      .selectors(selectClass(ParallelScenarioA.class), selectClass(ParallelScenarioB.class), selectClass(ParallelScenarioC.class))
+      .configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition")
+      .configurationParameter("junit.jupiter.execution.parallel.enabled", "true")
+      .configurationParameter("junit.jupiter.execution.parallel.mode.default", "same_thread")
+      .configurationParameter("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
+      .configurationParameter("junit.jupiter.execution.parallel.config.executor-service", "worker_thread_pool")
+      .configurationParameter("junit.jupiter.execution.parallel.config.strategy", "fixed")
+      .configurationParameter("junit.jupiter.execution.parallel.config.fixed.parallelism", Integer.toString(PARALLEL_CLASSES))
+      .build();
+
+    boolean failed;
+    try (var listener = new BazelJUnitOutputListener(xmlOutputFile)) {
+      launcher.registerTestExecutionListeners(listener);
+      launcher.execute(request);
+      failed = listener.hasTestsWithThrowableResults();
+    }
+    var documentBuilderFactory = DocumentBuilderFactory.newInstance();
+    documentBuilderFactory.setNamespaceAware(false);
+    Document xml = documentBuilderFactory.newDocumentBuilder().parse(xmlOutputFile.toFile());
+
+    assertThat(failed).isTrue();
+    assertThat(getSuiteNames(xml)).containsExactlyInAnyOrder(ParallelScenarioA.class.getName(), ParallelScenarioB.class.getName(),
+                                                             ParallelScenarioC.class.getName());
+    assertThat(sumSuiteAttribute(xml, "tests")).isEqualTo(6);
+    assertThat(sumSuiteAttribute(xml, "failures")).isEqualTo(1);
+    // an error is a timeout of the barrier: the classes did not overlap, and the run tested nothing
+    assertThat(sumSuiteAttribute(xml, "errors")).isEqualTo(0);
+    assertThat(getTeamCityNames(xml)).contains(ParallelScenarioC.class.getName() + ".failingTest()");
+    for (int i = 0; i < xml.getElementsByTagName("testsuite").getLength(); i++) {
+      Element suite = (Element)xml.getElementsByTagName("testsuite").item(i);
+      NodeList testCases = suite.getElementsByTagName("testcase");
+      assertThat(testCases.getLength()).isEqualTo(2);
+      for (int j = 0; j < testCases.getLength(); j++) {
+        assertThat(((Element)testCases.item(j)).getAttribute("classname")).isEqualTo(suite.getAttribute("name"));
+      }
+    }
   }
 
   /** The nested class and its failure are two suites, and only the first one holds the time of the class. */
@@ -384,6 +435,52 @@ class BazelJUnitOutputListenerTest {
       }
     }
     return count;
+  }
+
+  private static final int PARALLEL_CLASSES = 3;
+
+  /** The first test of each parallel scenario waits for the first tests of the other two, so the classes overlap. */
+  private static final CyclicBarrier PARALLEL_BARRIER = new CyclicBarrier(PARALLEL_CLASSES);
+
+  private static void awaitTheOtherParallelClasses() throws Exception {
+    PARALLEL_BARRIER.await(1, TimeUnit.MINUTES);
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class ParallelScenarioA {
+    @Test
+    void overlappingTest() throws Exception {
+      awaitTheOtherParallelClasses();
+    }
+
+    @Test
+    void secondTest() {
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class ParallelScenarioB {
+    @Test
+    void overlappingTest() throws Exception {
+      awaitTheOtherParallelClasses();
+    }
+
+    @Test
+    void secondTest() {
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class ParallelScenarioC {
+    @Test
+    void overlappingTest() throws Exception {
+      awaitTheOtherParallelClasses();
+    }
+
+    @Test
+    void failingTest() {
+      throw new AssertionError("the failure of a parallel class");
+    }
   }
 
   @Disabled(SCENARIO_DISABLED_REASON)

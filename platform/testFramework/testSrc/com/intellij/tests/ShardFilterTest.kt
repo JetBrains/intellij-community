@@ -4,6 +4,7 @@ package com.intellij.tests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
@@ -12,6 +13,8 @@ import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.core.LauncherConfig
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
 private const val TARGET = "//sample:sample_test"
 private val SAMPLES = listOf(ShardFilterTest.SampleA::class.java, ShardFilterTest.SampleB::class.java, ShardFilterTest.SampleC::class.java,
@@ -145,6 +148,27 @@ class ShardFilterTest {
 
     assertThat(discover(filter, listOf(SampleE::class.java))).isEmpty()
     assertThat(filter.hasExcludedTests()).isTrue()
+  }
+
+  @Test
+  fun `the parallelism of a parallel target is the shard count of its plan line`(@TempDir dir: Path) {
+    val file = dir.resolve("shard-plan.tsv")
+    file.writeText("default\t2\n" + plan(shards = 3) + "target\t//other:big_test\t20\n")
+
+    assertThat(ShardFilter.plannedParallelism(file.toString(), TARGET)).isEqualTo(3)
+    assertThat(ShardFilter.plannedParallelism(file.toString(), "//other:big_test")).isEqualTo(ShardFilter.MAX_PARALLELISM)
+    assertThat(ShardFilter.plannedParallelism(file.toString(), "//unknown:unknown_test")).isEqualTo(2)
+  }
+
+  @Test
+  fun `a parallel target without a readable plan gets the default parallelism`(@TempDir dir: Path) {
+    val malformed = dir.resolve("malformed.tsv")
+    malformed.writeText("target\t$TARGET\tmany\n")
+
+    assertThat(ShardFilter.plannedParallelism(null, TARGET)).isEqualTo(ShardFilter.DEFAULT_PARALLELISM)
+    assertThat(ShardFilter.plannedParallelism("", TARGET)).isEqualTo(ShardFilter.DEFAULT_PARALLELISM)
+    assertThat(ShardFilter.plannedParallelism(dir.resolve("missing.tsv").toString(), TARGET)).isEqualTo(ShardFilter.DEFAULT_PARALLELISM)
+    assertThat(ShardFilter.plannedParallelism(malformed.toString(), TARGET)).isEqualTo(ShardFilter.DEFAULT_PARALLELISM)
   }
 
   private fun plan(shards: Int, vararg seconds: Pair<String, Double>): String {

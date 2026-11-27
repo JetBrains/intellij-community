@@ -40,6 +40,25 @@ JAVA_TEST_ARGS = [
 # The tag `jvm-c2` on a jps_test target keeps C2 for it.
 C1_ONLY_JVM_FLAGS = ["-XX:TieredStopAtLevel=1"]
 
+# The JUnit settings of `jps_test(junit_parallel = True)`: the top-level classes run in parallel threads, and the tests of
+# one class run one after another. A class with `@TestApplication` is `@Isolated`, so no other test runs beside its tests.
+# A test that runs beside other tests skips the thread leak check and the Swing timer check, which look at the whole JVM.
+# The runner, `JUnit5BazelRunner`, takes the number of threads from the shard plan of bt, and bt runs a target with the tag
+# `junit-parallel` in one shard. A parallel run captures the output of each test from the shared standard streams, so the
+# output of a test can hold lines of a concurrent test.
+#
+# Turn it on for a target whose classes with `@TestApplication` take at most 90 s in all, one shard of bt. These classes
+# run alone in the one JVM, so more of them make the target slower than its shards. A class that measures the whole JVM,
+# such as its heap, needs `@Isolated` too.
+JUNIT_PARALLEL_JVM_FLAGS = [
+    "-Djunit.jupiter.execution.parallel.enabled=true",
+    "-Djunit.jupiter.execution.parallel.mode.default=same_thread",
+    "-Djunit.jupiter.execution.parallel.mode.classes.default=concurrent",
+    "-Djunit.jupiter.execution.parallel.config.executor-service=worker_thread_pool",
+]
+
+JUNIT_PARALLEL_TAG = "junit-parallel"
+
 def _is_c1_only(tags):
     package = native.package_name()
     is_air = native.repository_name() == "@" and (package == "plugins/air" or package.startswith("plugins/air/"))
@@ -78,9 +97,9 @@ def _classes_duration_data():
 
     fail("Unexpected repository/module combination for tests-options.bzl: repository_name=%r module_name=%r" % (repo, module))
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], sandbox = False, env = {}, **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], sandbox = False, env = {}, junit_parallel = False, **kwargs):
     # Merge user-provided args with our default ones
-    all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + (C1_ONLY_JVM_FLAGS if _is_c1_only(tags) else []) + jvm_flags
+    all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + (C1_ONLY_JVM_FLAGS if _is_c1_only(tags) else []) + (JUNIT_PARALLEL_JVM_FLAGS if junit_parallel else []) + jvm_flags
     all_args = JAVA_TEST_ARGS + args
 
     normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
@@ -99,6 +118,8 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
     all_env = env | {"JB_TEST_SANDBOX": str(sandbox)}
 
     all_tags.append("jetbrains_test_runner")
+    if junit_parallel and JUNIT_PARALLEL_TAG not in all_tags:
+        all_tags.append(JUNIT_PARALLEL_TAG)
 
     classes_duration_data = _classes_duration_data()
     if classes_duration_data != None:

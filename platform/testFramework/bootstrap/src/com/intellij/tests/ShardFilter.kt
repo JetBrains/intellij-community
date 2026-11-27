@@ -158,6 +158,34 @@ class ShardFilter private constructor(
       return ShardFilter(totalShards, shardIndex, plan, planText?.let { plan?.digest() ?: NO_PLAN_DIGEST })
     }
 
+    /**
+     * The most threads that [plannedParallelism] gives a target: the most shards that `bt` gives a target.
+     */
+    const val MAX_PARALLELISM: Int = 8
+
+    /**
+     * The parallelism of a target whose test classes run in parallel threads: the number of shards that the shard plan
+     * wants for the target, from 1 to [MAX_PARALLELISM]. It is [DEFAULT_PARALLELISM] when the run has no plan or the plan
+     * cannot be read. `bt` runs such a target in one shard, so the threads take the place of the shards.
+     */
+    @JvmStatic
+    fun plannedParallelism(): Int = plannedParallelism(System.getenv(SHARD_PLAN_ENV), System.getenv("TEST_TARGET").orEmpty())
+
+    /**
+     * The [plannedParallelism] of the [target] with the plan path [planValue], in the format of [SHARD_PLAN_ENV].
+     */
+    @JvmStatic
+    fun plannedParallelism(planValue: String?, target: String): Int {
+      val plan = planValue?.takeIf { it.isNotBlank() }?.let { readPlan(it, target) } ?: return DEFAULT_PARALLELISM
+      return plan.shardCount.coerceIn(1, MAX_PARALLELISM)
+    }
+
+    /**
+     * The parallelism of [plannedParallelism] without a shard plan: the number of shards that `bt` gives a target that the
+     * plan does not name.
+     */
+    const val DEFAULT_PARALLELISM: Int = 2
+
     @JvmStatic
     fun writeShardStatus() {
       val file = System.getenv("TEST_SHARD_STATUS_FILE") ?: return

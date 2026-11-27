@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -98,7 +97,8 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
     }
   }
 
-  private final Set<TestIdentifier> testsWithThrowableResult = new HashSet<>();
+  // the tests of a parallel run end on several threads at once
+  private final Set<TestIdentifier> testsWithThrowableResult = ConcurrentHashMap.newKeySet();
 
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {

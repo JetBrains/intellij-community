@@ -98,6 +98,11 @@ public final class JUnit5BazelRunner {
   // Test-only escape hatch for runner self-tests: build the real request while ignoring filters inherited from the outer Bazel run.
   private static final String intellijBuildTestRunnerIgnoreInheritedFilters = "intellij.build.test.runner.ignore.inherited.filters";
 
+  // the Jupiter keys of org.junit.jupiter.engine.Constants; the runner does not depend on the Jupiter engine
+  private static final String PARALLEL_EXECUTION_ENABLED_PROPERTY = "junit.jupiter.execution.parallel.enabled";
+  private static final String PARALLEL_CONFIG_STRATEGY_PROPERTY = "junit.jupiter.execution.parallel.config.strategy";
+  private static final String PARALLEL_CONFIG_FIXED_PARALLELISM_PROPERTY = "junit.jupiter.execution.parallel.config.fixed.parallelism";
+
   private static final String intellijBuildTestGroups = "intellij.build.test.groups";
   private static final String intellijBuildTestGroupRoots = "test.group.roots";
   private static final String commonTestGroupsResourceName = "tests/testGroups.properties";
@@ -141,7 +146,34 @@ public final class JUnit5BazelRunner {
 
     builder = builder.filters(ignorePostDiscoveryFilter);
 
+    configureParallelExecution(builder);
+
     return builder.build();
+  }
+
+  /**
+   * Gives a parallel run its number of threads. JUnit reads the other parallel settings of `jps_test(junit_parallel = True)`
+   * from the system properties, and the explicit parameters of the request take precedence over them.
+   * <p>
+   * An IDE run of the tests stays sequential: its service messages name no flow, so the IDE cannot tell concurrent tests
+   * apart.
+   */
+  private static void configureParallelExecution(LauncherDiscoveryRequestBuilder builder) {
+    if (!Boolean.getBoolean(PARALLEL_EXECUTION_ENABLED_PROPERTY)) {
+      return;
+    }
+    if ("true".equals(System.getenv(jbEnvIdeSmRun))) {
+      builder.configurationParameter(PARALLEL_EXECUTION_ENABLED_PROPERTY, "false");
+      return;
+    }
+    if (System.getProperty(PARALLEL_CONFIG_STRATEGY_PROPERTY) != null) {
+      return;
+    }
+    int parallelism = ShardFilter.plannedParallelism();
+    System.err.println("Running the test classes in " + parallelism + " parallel threads");
+    builder
+      .configurationParameter(PARALLEL_CONFIG_STRATEGY_PROPERTY, "fixed")
+      .configurationParameter(PARALLEL_CONFIG_FIXED_PARALLELISM_PROPERTY, Integer.toString(parallelism));
   }
 
   private static List<? extends DiscoverySelector> getTestSelectorsByClassPathRoots(ClassLoader classLoader) throws Throwable {
