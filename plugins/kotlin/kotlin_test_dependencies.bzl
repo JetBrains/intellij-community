@@ -75,39 +75,15 @@ download_file(
 )
 
 download_file(
-    name = "kotlinx-coroutines-core-1.6.4.jar",
-    url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.6.4/kotlinx-coroutines-core-1.6.4.jar",
-    sha256 = "778851e73851b502e8366434bc9ec58371431890fb12b89e7edbf1732962c030",
-)
-
-download_file(
-    name = "kotlinx-coroutines-core-jvm-1.6.4.jar",
-    url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar",
-    sha256 = "c24c8bb27bb320c4a93871501a7e5e0c61607638907b197aef675513d4c820be",
-)
-
-download_file(
     name = "kotlinx-coroutines-core-1.7.3.jar",
     url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.7.3/kotlinx-coroutines-core-1.7.3.jar",
     sha256 = "f9522095aedcc2a6ab32c7484061ea698352c71be1390adb403b59aa48a38fdc",
 )
 
 download_file(
-    name = "kotlinx-coroutines-core-1.7.3-sources.jar",
-    url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.7.3/kotlinx-coroutines-core-1.7.3-sources.jar",
-    sha256 = "86ce259182afe7dd82cfe97da50a736a6194a91cfe19b8336799890bbd0e81b1",
-)
-
-download_file(
     name = "kotlinx-coroutines-core-jvm-1.7.3.jar",
     url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.7.3/kotlinx-coroutines-core-jvm-1.7.3.jar",
     sha256 = "1ab3acc38f3e7355c4f9d1ec62107a46fa73c899f3070d055e5d4373dfe67e12",
-)
-
-download_file(
-    name = "kotlinx-coroutines-core-jvm-1.7.3-sources.jar",
-    url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.7.3/kotlinx-coroutines-core-jvm-1.7.3-sources.jar",
-    sha256 = "efabad4b6a46957325d956487a226234f26c2f519cddfcb7480c61c79e3ad95b",
 )
 
 download_file(
@@ -192,6 +168,12 @@ download_file(
     name = "kotlinx-coroutines-core-jvm-1.10.2.jar",
     url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2.jar",
     sha256 = "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd",
+)
+
+download_file(
+    name = "kotlinx-coroutines-core-jvm-1.10.2-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/maven-central/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.2/kotlinx-coroutines-core-jvm-1.10.2-sources.jar",
+    sha256 = "cd86e9635cc7ac1b7d9854ed589e3041fb11cc67d2273e7d312278ba5628e2c8",
 )
 
 download_file(
