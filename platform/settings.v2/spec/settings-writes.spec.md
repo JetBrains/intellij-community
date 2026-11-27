@@ -13,6 +13,7 @@ targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/ShutdownSaver.kt
   - ../shared/essential/src/com/intellij/platform/settings/v2/impl/ModalShutdownSaver.kt
   - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/ProjectSettingsCacheService.kt
 ---
 
 # Settings Writes
@@ -138,6 +139,10 @@ A batch applies several writes and slot operations as one atomic change.
   be headless. In a product that is not headless, the vault must log an error before the save.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsShutdownSaveTest.kt
 - The platform must flush a project before the project closes.
+- A settings save of the IDE must flush the pending saves: a save of the application flushes the application
+  scope, and a save of a project flushes that project.
+  See [ADR 00H6KQ](../adr/00H6KQ-the-settings-save-of-the-ide-flushes-the-pending-saves-of-the-vault.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsIdeSaveTest.kt
 
 ## Error Handling
 

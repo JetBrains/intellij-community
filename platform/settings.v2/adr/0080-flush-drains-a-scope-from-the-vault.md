@@ -18,12 +18,14 @@ not in providers.
 
 **`SettingsVault.flush(scopeContext)` forces every pending save the scope covers to disk now, skipping the
 debounce, and suspends until written.** It drains by context, not by provider, so a project flush also reaches
-file configs beneath it. The vault drains on app shutdown, and the project layer service drains its project on
+file configs beneath it. The vault drains on app shutdown, and the platform drains a project on its
 close. A per-unit write mutex keeps a flush and a saver from writing one file at once.
 
 ## Consequences
 
 - Shutdown and project close lose no pending write.
-- The external API stays, for branch switch and pre-commit, which cancel nothing.
+- The external API stays, for a caller that needs the files on the disk at once and cancels nothing. The settings
+  save of the IDE is such a caller
+  ([ADR 00H6KQ](./00H6KQ-the-settings-save-of-the-ide-flushes-the-pending-saves-of-the-vault.md)).
 - Callers must quiesce writes; a write arriving after the drain starts is not guaranteed to be included.
 - The resulting behavior is in the [settings writes spec](../spec/settings-writes.spec.md).

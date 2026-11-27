@@ -10,6 +10,7 @@ package com.intellij.platform.settings.v2.impl
 // @spec ../../../../../../../../spec/settings-writes.spec.md
 // @spec ../../../../../../../../spec/snapshot-cache.spec.md
 
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
@@ -80,7 +81,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * the lock and gives it to [LayerProvider.writeData]. While a save is pending, the vault drops the spontaneous
  * [push]es of that store. This also drops the watcher echo of the own write of the vault.
  */
-internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVault {
+internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVault, SettingsSavingComponent {
   /** Holds the model: an immutable snapshot that a writer swaps under [vaultWriteMutex]. A read takes it with no lock. */
   @Volatile
   private var model: Map<String, ContextLayers> = emptyMap()
@@ -844,18 +845,30 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   override suspend fun flush(scopeContext: SettingsContext) {
     val units = vaultWriteMutex.withLock { pendingUnitsUnder(scopeContext) }
     // Each unit is a separate store with its own write mutex, so persist them concurrently. A flush runs at the
-    // shutdown and at a project close, where the wall-clock time matters.
+    // shutdown, at a project close and in the settings save of the IDE, where the wall-clock time matters.
     coroutineScope { units.forEach { (storageContext, coordinate) -> launch { persistNow(storageContext, coordinate) } } }
+  }
+
+  /**
+   * Flushes the application scope, and so every pending save, in a settings save of the application. The application
+   * store calls it in `ComponentStoreWithExtraComponents.saveSettingsAndCommitComponents` of the module
+   * `intellij.platform.configurationStore.impl`. So a config file is current on the disk whenever the XML settings
+   * are, for example after the autosave.
+   */
+  override suspend fun save() {
+    flush(SettingsContext.app())
   }
 
   /**
    * Collects the storage units that [flush] must drain. It resolves the [storage context][LayerProvider.storageContext]
    * of each layer in the model under [scopeContext], and keeps the units in [pendingSaves]. Many contexts can share one
-   * unit. Call under [vaultWriteMutex].
+   * unit. With no pending save, it returns at once and reads no model entry, because the frequent autosave of the
+   * IDE flushes through [save]. Call under [vaultWriteMutex].
    *
    * @return the distinct storage units, each as its storage context and coordinate, that have a pending save
    */
   private fun pendingUnitsUnder(scopeContext: SettingsContext): List<Pair<SettingsContext, LayerCoordinate>> {
+    if (pendingSaves.isEmpty()) return emptyList()
     val units = LinkedHashMap<Pair<String, LayerCoordinate>, Pair<SettingsContext, LayerCoordinate>>()
     for (entry in model.values) {
       if (!scopeContext.isAncestorOf(entry.context, strict = false)) continue
