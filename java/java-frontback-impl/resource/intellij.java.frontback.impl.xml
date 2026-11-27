@@ -42,6 +42,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <pathMacroContributor implementation="com.intellij.application.options.MavenRepositoryPathMacroContributor"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeFactory"
                         serviceImplementation="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeImpl$Factory"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade"

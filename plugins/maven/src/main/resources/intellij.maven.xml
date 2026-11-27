@@ -149,7 +149,6 @@
     <registryKey key="MAVEN.system.in.process" defaultValue="true"
                  description="Whether IDEA should use 'in-process' mode for interaction with Maven API"/>
 
-    <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
     <projectPathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenProjectPathMacroContributor"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.idea.maven.utils.MavenBuildProcessParameterProvider"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
