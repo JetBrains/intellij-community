@@ -12,6 +12,7 @@ import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.registerSupport
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.projectStructure.TRANSPARENT_COPY_ORIGIN_KEY
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
@@ -50,6 +51,7 @@ abstract class KotlinLanguageInjectionPerformerBase : LanguageInjectionPerformer
         InjectorUtils.registerInjection(language, file, parts.ranges, registrar, fileExtension) {
             it.registerSupport(support, false)
                 .frankensteinInjection(parts.isUnparsable)
+                .putInjectedFileUserData(TRANSPARENT_COPY_ORIGIN_KEY, true)
         }
         return true
     }

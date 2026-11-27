@@ -12,6 +12,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.analysis.api.projectStructure.TRANSPARENT_COPY_ORIGIN_KEY
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -265,6 +266,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
 
         registrar.startInjecting(language, if (language == KotlinLanguage.INSTANCE) KotlinParserDefinition.STD_SCRIPT_SUFFIX else null)
             .makeInspectionsLenient(true)
+            .putInjectedFileUserData(TRANSPARENT_COPY_ORIGIN_KEY, true)
 
         textRanges.forEach {
             registrar.addPlace(null, null, context, it)
