@@ -112,6 +112,7 @@ jvm_library(
         "//plugins/sh/plugin:plugin-main",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//plugins/sh/terminal/frontend:sh-terminal-frontend-tests_test_lib",
     ],
     deps = [
         # do not sort,

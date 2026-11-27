@@ -1,6 +1,14 @@
 load("@community//build:jps_module.bzl", "jps_module")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "sh-terminal-frontend-tests_test",
+    tags = ["shell-script-tests"],
+    runtime_deps = [":sh-terminal-frontend-tests_test_lib"],
+)
+### skip generation section `test intellij.sh.terminal.frontend.tests`
 
 ### auto-generated section `dev intellij.sh.terminal.frontend` start
 content_module_jar(module = ":frontend")
@@ -44,6 +52,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/terminal",
         "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",
         "//plugins/terminal",
@@ -59,3 +68,56 @@ jps_module(
     target = "frontend",
 )
 ### auto-generated section `iml intellij.sh.terminal.frontend` end
+
+### auto-generated section `build intellij.sh.terminal.frontend.tests` start
+jvm_library(
+    name = "sh-terminal-frontend-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//plugins/sh/terminal/frontend"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/sh/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/sh/terminal",
+        "//plugins/sh/core",
+        "//plugins/terminal/frontend",
+        "//plugins/terminal",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/terminal",
+        "//platform/projectModel-api:projectModel",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//platform/eel-nioFs",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+    ],
+)
+### auto-generated section `build intellij.sh.terminal.frontend.tests` end
+
+### auto-generated section `iml intellij.sh.terminal.frontend.tests` start
+jps_module(
+    name = "intellij.sh.terminal.frontend.tests",
+    resources = False,
+    target = "sh-terminal-frontend-tests_test_lib",
+)
+### auto-generated section `iml intellij.sh.terminal.frontend.tests` end

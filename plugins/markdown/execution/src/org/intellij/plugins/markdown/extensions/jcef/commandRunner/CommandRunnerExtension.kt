@@ -149,7 +149,7 @@ class CommandRunnerExtension(
   override fun processCodeBlock(codeFenceRawContent: String, language: String): String {
     try {
       val lang = CodeFenceLanguageGuesser.guessLanguageForExecution(language)
-      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(lang) }
+      val runner = MarkdownCodeFenceRunner.findRunner(lang)
       if (runner == null) return ""
 
       val hash = MarkdownUtil.md5(codeFenceRawContent, "$sessionKey:$language")
@@ -203,7 +203,7 @@ class CommandRunnerExtension(
     }
   }
 
-  private fun executeBlock(command: PreviewCommand, executorId: String, x: Int, y: Int) {
+  private fun executeBlock(command: PreviewCommand, x: Int, y: Int) {
     val project = panel.project ?: return
     val virtualFile = panel.virtualFile ?: return
     val paths = getMarkdownCommandWorkingDirectoryPaths(project, virtualFile) ?: return
@@ -216,7 +216,7 @@ class CommandRunnerExtension(
       workingDirectoryPaths = paths,
       fenceLanguage = command.fenceLanguage,
     )
-    launchBlockRunner(project, command.text, executorId, workingDirectory = null, context = context)
+    launchBlockRunner(project, command.text, context)
   }
 
   private fun runWithConfirmationIfNeeded(needsConfirmation: Boolean, command: String, runAction: () -> Unit) {
@@ -259,13 +259,13 @@ class CommandRunnerExtension(
       val needsConfirmation = PreviewClickConfirmation.needsConfirmation(args.getOrNull(5))
       if (needsConfirmation) {
         confirmThenRun(command.text) {
-          executeBlock(command, executorId, x, y)
+          executeBlock(command, x, y)
         }
         return false
       }
       if (firstLineCommand == null) {
         ApplicationManager.getApplication().invokeLater {
-          executeBlock(command, executorId, x, y)
+          executeBlock(command, x, y)
         }
         return false
       }
@@ -276,7 +276,7 @@ class CommandRunnerExtension(
                                              AllIcons.RunConfigurations.TestState.Run_run) {
         override fun actionPerformed(e: AnActionEvent) {
           ApplicationManager.getApplication().invokeLater {
-            executeBlock(command, executorId, x, y)
+            executeBlock(command, x, y)
           }
         }
       }
@@ -355,42 +355,17 @@ class CommandRunnerExtension(
     fun launchBlockRunner(
       project: Project,
       command: String,
-      executorId: String,
-      workingDirectory: String?,
-      context: MarkdownRunnerContext? = null,
+      context: MarkdownRunnerContext,
     ): Boolean {
-      val language = context?.fenceLanguage?.let(CodeFenceLanguageGuesser::guessLanguageForExecution)
-      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { context == null || it.isApplicable(language) }
+      val language = context.fenceLanguage?.let(CodeFenceLanguageGuesser::guessLanguageForExecution)
+      val runner = MarkdownCodeFenceRunner.findRunner(language)
       if (runner == null) {
         LOG.warn("No Markdown runner is registered, the block is not executed.")
         return false
       }
-      val trusted = TrustedProjectUtil.executeIfTrusted(project) {
-        startRunner(project, command, executorId, runner, workingDirectory, context)
-      }
-      if (!trusted) {
-        LOG.info("Markdown block is not executed: the project is not trusted.")
-      }
-      return trusted
-    }
-
-    private fun startRunner(
-      project: Project,
-      command: String,
-      executorId: String,
-      runner: MarkdownRunner,
-      workingDirectory: String?,
-      context: MarkdownRunnerContext?,
-    ) {
-      val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
       LOG.info("Markdown block run: ${runner.javaClass.name}.")
       invokeLater {
-        val accepted = if (context == null) {
-          runner.run(command, project, workingDirectory, executor)
-        }
-        else {
-          runner.run(command, project, executor, context)
-        }
+        val accepted = runner.run(command, project, context)
         if (accepted) {
           RUNNER_EXECUTED.log(project, RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
         }
@@ -398,6 +373,7 @@ class CommandRunnerExtension(
           LOG.warn("Markdown block run: ${runner.javaClass.name} declined to run the command.")
         }
       }
+      return true
     }
 
     @ApiStatus.Internal
@@ -484,56 +460,7 @@ class CommandRunnerExtension(
     private val LOG = logger<CommandRunnerExtension>()
 
     @ApiStatus.Internal
-    fun trimPrompt(cmd: String, language: String = ""): String {
-      val lines = cmd.lines()
-      val commands = if (isConsole(language)) consoleCommands(lines) else shellCommands(lines)
-      return commands
-        .map(::stripTrailingShellComment)
-        .filter { line -> line.isNotEmpty() }
-        .joinToString("\n")
-    }
-
-    private fun isConsole(language: String): Boolean {
-      return language.trim().takeWhile { !it.isWhitespace() }.equals("console", ignoreCase = true)
-    }
-
-    private fun shellCommands(lines: List<String>): List<String> {
-      return lines.map { line -> if (hasPrompt(line, "$")) line.drop(1) else line }
-    }
-
-    private fun consoleCommands(lines: List<String>): List<String> {
-      val commands = mutableListOf<String>()
-      var continued = false
-      for (line in lines) {
-        val command = when {
-          continued -> line
-          hasPrompt(line, "$#") -> line.drop(1)
-          else -> null
-        }
-        continued = command != null && line.takeLastWhile { it == '\\' }.length % 2 == 1
-        if (command != null) commands.add(command)
-      }
-      return commands.ifEmpty { lines }
-    }
-
-    private fun hasPrompt(line: String, prompts: String): Boolean {
-      return line.isNotEmpty() && line[0] in prompts && line.getOrNull(1)?.isWhitespace() != false
-    }
-
-    private fun stripTrailingShellComment(line: String): String {
-      var inSingle = false
-      var inDouble = false
-      for (i in line.indices) {
-        when (line[i]) {
-          '\'' -> if (!inDouble) inSingle = !inSingle
-          '"' -> if (!inSingle) inDouble = !inDouble
-          '#' -> if (!inSingle && !inDouble && (i == 0 || line[i - 1].isWhitespace())) {
-            return line.substring(0, i).trimEnd()
-          }
-        }
-      }
-      return line
-    }
+    fun trimPrompt(cmd: String, language: String = ""): String = trimMarkdownCommandPrompt(cmd, language)
   }
 }
 

@@ -32,17 +32,15 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
-        "//plugins/markdown/execution",
         "//platform/core-api:core",
         "//plugins/sh/core",
         "//platform/ide-core",
-        "//platform/execution",
         "@lib//:kotlin-stdlib",
         "//platform/eel",
         "//platform/eel-nioFs",
         "//platform/eel-provider",
         "//platform/platform-api:ide",
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/util",
     ],
 )

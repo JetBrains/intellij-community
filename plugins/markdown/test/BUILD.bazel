@@ -147,6 +147,7 @@ jvm_library(
         "//plugins/git4idea:vcs-git-backend-tests_test_lib",
         "//platform/productMode",
         "//plugins/markdown/test/testFramework",
+        "//platform/kernel/rpc.lite",
         "//platform/vcs-log/api:vcs-log",
     ],
 )

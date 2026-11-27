@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.sh.terminal.frontend.tests" scope="RUNTIME" />
   </component>
 </module>

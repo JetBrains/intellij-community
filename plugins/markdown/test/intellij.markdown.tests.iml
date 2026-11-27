@@ -122,6 +122,7 @@
     <orderEntry type="module" module-name="intellij.markdown.tests.jcef" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.lite" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.markdown" />

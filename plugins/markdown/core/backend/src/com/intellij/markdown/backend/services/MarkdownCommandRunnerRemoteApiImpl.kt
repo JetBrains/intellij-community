@@ -4,18 +4,25 @@ package com.intellij.markdown.backend.services
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import kotlinx.coroutines.flow.Flow
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCommandWorkingDirectoryPaths
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectories
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectoryPaths
 import org.intellij.plugins.markdown.service.MarkdownCommandRunnerRemoteApi
-import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 
 internal class MarkdownCommandRunnerRemoteApiImpl : MarkdownCommandRunnerRemoteApi {
+  override suspend fun getWorkingDirectoryPaths(
+    projectId: ProjectId,
+    virtualFileId: VirtualFileId,
+  ): MarkdownCommandWorkingDirectoryPaths? {
+    val project = projectId.findProjectOrNull() ?: return null
+    return getMarkdownCommandWorkingDirectoryPaths(project, virtualFileId.virtualFile())
+  }
+
   override suspend fun filterRunnable(
     projectId: ProjectId,
     virtualFileId: VirtualFileId?,
@@ -42,24 +49,6 @@ internal class MarkdownCommandRunnerRemoteApiImpl : MarkdownCommandRunnerRemoteA
       return false
     }
     return CommandRunnerExtension.executeByExecutorId(project, workingDirectory, true, command, executorId, RunnerPlace.PREVIEW)
-  }
-
-  override suspend fun runBlock(
-    projectId: ProjectId,
-    command: String,
-    executorId: String,
-    workingDirectory: String,
-  ): Boolean {
-    val project = projectId.findProjectOrNull() ?: return false
-    if (!TrustedProjects.isProjectTrusted(project)) {
-      LOG.info("Markdown block is not executed: the project is not trusted on the backend.")
-      return false
-    }
-    return CommandRunnerExtension.launchBlockRunner(project, command, executorId, workingDirectory)
-  }
-
-  override suspend fun frontendRunnerRequests(): Flow<MarkdownFrontendRunnerRequest> {
-    return service<MarkdownFrontendRunnerRequestService>().requests()
   }
 
   override suspend fun isProjectTrusted(projectId: ProjectId): Boolean {

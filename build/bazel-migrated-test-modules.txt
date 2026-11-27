@@ -371,6 +371,7 @@ intellij.searchEverywhereMl.tests
 intellij.searchEverywhereMl.typos.tests
 intellij.settingsRepository.tests
 intellij.settingsSync.tests
+intellij.sh.terminal.frontend.tests
 intellij.sh.tests
 intellij.spring.boot.configYaml.tests.exploratory
 intellij.spring.boot.json.tests.exploratory

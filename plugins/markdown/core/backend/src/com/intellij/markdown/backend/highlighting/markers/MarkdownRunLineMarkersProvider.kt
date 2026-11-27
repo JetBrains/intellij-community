@@ -7,17 +7,10 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
-import com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
@@ -31,19 +24,14 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectories
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectoryPaths
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.withMarkdownCommandWorkingDirectory
-import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
@@ -55,13 +43,6 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     fun getInfo(element: PsiElement): Info? {
       if (!CommandRunnerExtension.isExtensionEnabled() || !element.isValid) {
         return null
-      }
-
-      if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {
-        val lang = element.text?.trim()
-        if (!lang.isNullOrEmpty()) {
-          return processBlock(lang, element)
-        }
       }
 
       val inCodeSpan = isOpeningCodeSpanBacktick(element)
@@ -91,60 +72,6 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
         }
       }
       return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
-    }
-
-    private fun collectFenceText(element: MarkdownCodeFence): String? {
-      val fenceElements = MarkdownCodeFence.obtainFenceContent(element, false) ?: return null
-      return fenceElements.joinToString(separator = "") { it.text }
-    }
-
-    private fun processBlock(lang: String, element: PsiElement): Info? {
-      val language = CodeFenceLanguageGuesser.guessLanguageForExecution(lang)
-      val runnerTitle = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) }?.title()
-                        ?: if (language?.id == "Shell Script" || language?.id == "PowerShell") {
-                          MarkdownBundle.message("markdown.runner.launch.shell")
-                        }
-                        else return null
-      val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
-      val command = if (language?.id == "PowerShell") text else trimPrompt(text, lang)
-      val runAction = object : AnAction({ runnerTitle }, AllIcons.RunConfigurations.TestState.Run_run) {
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-        override fun update(event: AnActionEvent) {
-          event.presentation.text = if (event.place == ActionPlaces.EDITOR_GUTTER_POPUP) {
-            MarkdownBundle.message("markdown.runner.choose.terminal")
-          }
-          else {
-            runnerTitle
-          }
-        }
-
-        override fun actionPerformed(event: AnActionEvent) {
-          val project = event.getData(CommonDataKeys.PROJECT) ?: return
-          val sourceFile = element.containingFile.virtualFile
-          val workingDirectoryPaths = getMarkdownCommandWorkingDirectoryPaths(project, sourceFile) ?: return
-          val mouseEvent = event.inputEvent as? MouseEvent
-          val screenPoint = mouseEvent?.locationOnScreen?.let { MarkdownFrontendRunnerRequest.ScreenPoint(it.x, it.y) }
-          val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-          service<MarkdownFrontendRunnerRequestService>().request(
-            MarkdownFrontendRunnerRequest(
-              projectId = project.projectId(),
-              languageId = language?.id,
-              command = command,
-              sourceFileUrl = sourceFile.url,
-              showTargetChooser = event.place == ActionPlaces.EDITOR_GUTTER_POPUP,
-              offset = element.textOffset,
-              workingDirectoryPaths = workingDirectoryPaths,
-              screenPoint = screenPoint,
-              editorId = editor.editorId(),
-              fenceLanguage = lang,
-            )
-          )
-        }
-      }
-      return Info(AllIcons.RunConfigurations.TestState.Run_run, arrayOf(runAction)) {
-        MarkdownBundle.message("markdown.runner.launch.block.tooltip", runnerTitle)
-      }
     }
 
     private fun processCodeSpan(element: PsiElement, elementText: String): Info? {

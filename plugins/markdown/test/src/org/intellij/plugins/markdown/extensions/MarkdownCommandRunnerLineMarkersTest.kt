@@ -2,13 +2,10 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
-import com.intellij.execution.Executor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
 import com.intellij.lang.Language
-import com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService
-import com.intellij.markdown.frontend.execution.MarkdownFrontendRunnerFlowService
 import com.intellij.markdown.jcef.preview.HtmlSourceTextPreprocessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -17,26 +14,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.project.projectId
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
@@ -49,17 +43,13 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.replaceService
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCodeFenceRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunnerContext
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectoryPaths
-import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
@@ -78,8 +68,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TestTimeSource
 
 @TestApplication
 class MarkdownCommandRunnerLineMarkersTest {
@@ -92,10 +80,10 @@ class MarkdownCommandRunnerLineMarkersTest {
   @TestDisposable
   lateinit var disposable: Disposable
 
-  private val markdownRunnerEp = ExtensionPointName.create<MarkdownRunner>("org.intellij.markdown.markdownRunner")
+  private val markdownRunnerEp = MarkdownCodeFenceRunner.EP_NAME
   private val capturingRunner = CapturingRunner()
   private lateinit var runnerDisposable: Disposable
-  private lateinit var registeredRunners: List<MarkdownRunner>
+  private lateinit var registeredRunners: List<MarkdownCodeFenceRunner>
 
   @BeforeEach
   fun setUp() {
@@ -174,15 +162,15 @@ class MarkdownCommandRunnerLineMarkersTest {
       )
 
       assertTrue(EditorTestFixture.performEditorShortcut(editor, myFixture.project, shortcut, inputEvent, "run shortcut"))
-      awaitFrontendRunner()
+      awaitRunner()
       assertEquals("pwd", capturingRunner.capturedCommand?.trim())
     }
   }
 
   @Test
-  fun `terminal fence markers do not require a backend runner`(): Unit = timeoutRunBlocking {
+  fun `terminal fence markers use the frontend runner`(): Unit = timeoutRunBlocking {
     Disposer.dispose(runnerDisposable)
-    ExtensionTestUtil.maskExtensions(markdownRunnerEp, emptyList(), disposable)
+    ExtensionTestUtil.maskExtensions(markdownRunnerEp, registeredRunners, disposable)
 
     withContext(Dispatchers.EDT) {
       for (alias in listOf("shell", "bash", "sh", "zsh", "console", "powershell", "posh", "pwsh", "PowerShell")) {
@@ -212,7 +200,7 @@ class MarkdownCommandRunnerLineMarkersTest {
       for (shell in listOf("bash", "zsh")) {
         capturingRunner.capturedCommand = null
         clickPreviewBlock(pipe, if (shell == "bash") bashHtml else zshHtml)
-        awaitFrontendRunner()
+        awaitRunner()
 
         assertEquals(command, capturingRunner.capturedCommand)
         assertEquals(shell, capturingRunner.capturedContext?.fenceLanguage)
@@ -419,14 +407,14 @@ class MarkdownCommandRunnerLineMarkersTest {
   }
 
   @Test
-  fun `frontend uses the backend project directory for a file without a parent`(): Unit = timeoutRunBlocking {
+  fun `frontend uses the project directory for a file without a parent`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       checkDirectoryForParentlessFile(useFileDirectory = false)
     }
   }
 
   @Test
-  fun `frontend uses the backend file directory for a file without a parent`(): Unit = timeoutRunBlocking {
+  fun `frontend uses the file directory for a file without a parent`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       checkDirectoryForParentlessFile(useFileDirectory = true)
     }
@@ -440,21 +428,18 @@ class MarkdownCommandRunnerLineMarkersTest {
       override fun getPath(): String = backendFile.path
     }
     assertNull(frontendFile.parent)
-    val editorFactory = EditorFactory.getInstance()
-    val document = requireNotNull(FileDocumentManager.getInstance().getDocument(frontendFile))
-    val editor = editorFactory.createEditor(document, myFixture.project)
-    val request = createFrontendRequest().copy(editorId = editor.editorId())
-    try {
-      ApplicationManager.getApplication().getService(MarkdownFrontendRunnerRequestService::class.java).request(request)
-      awaitFrontendRunner()
+    val paths = requireNotNull(getMarkdownCommandWorkingDirectoryPaths(myFixture.project, frontendFile))
+    val sourcePaths = requireNotNull(getMarkdownCommandWorkingDirectoryPaths(myFixture.project, backendFile))
+    assertEquals(sourcePaths.projectDirectory, paths.projectDirectory)
+    assertEquals(sourcePaths.fileDirectory, paths.fileDirectory)
+    assertFalse(paths.fileDirectory == paths.projectDirectory)
 
-      val paths = request.workingDirectoryPaths
-      assertFalse(paths.fileDirectory == paths.projectDirectory)
-      assertEquals(if (useFileDirectory) paths.fileDirectory else paths.projectDirectory, capturingRunner.capturedDir)
-    }
-    finally {
-      editorFactory.releaseEditor(editor)
-    }
+    capturingRunner.run(
+      "pwd", myFixture.project,
+      MarkdownRunnerContext(frontendFile.url, false, myFixture.editor.contentComponent, 0, 0, paths),
+    )
+
+    assertEquals(if (useFileDirectory) sourcePaths.fileDirectory else sourcePaths.projectDirectory, capturingRunner.capturedDir)
   }
 
   @Test
@@ -466,20 +451,6 @@ class MarkdownCommandRunnerLineMarkersTest {
 
       assertEquals(myFixture.file.virtualFile.url, capturingRunner.capturedContext?.sourceFileUrl)
       assertEquals("bash", capturingRunner.capturedContext?.fenceLanguage)
-    }
-  }
-
-  @Test
-  fun `frontend continues after a runner failure`(): Unit = timeoutRunBlocking {
-    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
-    capturingRunner.failNext = true
-    withContext(Dispatchers.EDT) {
-      fireBlockMarkerAction()
-      capturingRunner.capturedCommand = null
-
-      fireBlockMarkerAction()
-
-      assertEquals("pwd", capturingRunner.capturedCommand?.trim())
     }
   }
 
@@ -608,70 +579,6 @@ class MarkdownCommandRunnerLineMarkersTest {
     }
   }
 
-  @Test
-  fun `only the latest click remains queued before frontend startup`() {
-    val queue = MarkdownFrontendRunnerRequestService()
-    Disposer.register(disposable, queue)
-    val request = createFrontendRequest()
-    repeat(100) { queue.request(request.copy(command = "echo $it")) }
-
-    val received = timeoutRunBlocking { queue.requests().first() }
-
-    assertEquals("echo 99", received.command)
-  }
-
-  @Test
-  fun `a recent click remains available before frontend startup`() {
-    val timeSource = TestTimeSource()
-    val queue = MarkdownFrontendRunnerRequestService.createForTest(timeSource)
-    Disposer.register(disposable, queue)
-    val request = createFrontendRequest()
-    queue.request(request)
-    timeSource += 4.seconds
-
-    val received = timeoutRunBlocking { queue.requests().first() }
-
-    assertEquals(request, received)
-  }
-
-  @Test
-  fun `a click expires after five seconds without a frontend collector`(): Unit = timeoutRunBlocking {
-    val timeSource = TestTimeSource()
-    val queue = MarkdownFrontendRunnerRequestService.createForTest(timeSource)
-    Disposer.register(disposable, queue)
-    val request = createFrontendRequest()
-    queue.request(request)
-    timeSource += 5.seconds
-
-    val received = async(start = CoroutineStart.UNDISPATCHED) { queue.requests().first() }
-    assertFalse(received.isCompleted)
-    val freshRequest = request.copy(command = "echo fresh")
-    queue.request(freshRequest)
-
-    assertEquals(freshRequest, received.await())
-  }
-
-  @Test
-  fun `a disposed queue ignores new clicks`() {
-    val queue = MarkdownFrontendRunnerRequestService()
-    Disposer.dispose(queue)
-
-    queue.request(createFrontendRequest())
-  }
-
-  private fun createFrontendRequest(): MarkdownFrontendRunnerRequest {
-    return MarkdownFrontendRunnerRequest(
-      projectId = myFixture.project.projectId(),
-      languageId = myFixture.file.language.id,
-      command = "pwd",
-      sourceFileUrl = myFixture.file.virtualFile.url,
-      showTargetChooser = true,
-      offset = 3,
-      workingDirectoryPaths = requireNotNull(getMarkdownCommandWorkingDirectoryPaths(myFixture.project, myFixture.file.virtualFile)),
-      editorId = myFixture.editor.editorId(),
-    )
-  }
-
   private fun createPreviewExtension(pipe: BrowserPipe? = null): CommandRunnerExtension {
     val panel = createPreviewPanel(myFixture.file.virtualFile, pipe)
     return CommandRunnerExtension(panel, CommandRunnerExtension.Provider()).also { Disposer.register(disposable, it) }
@@ -756,46 +663,37 @@ class MarkdownCommandRunnerLineMarkersTest {
       .add(CommonDataKeys.EDITOR, editor)
       .build()
     val event = AnActionEvent.createEvent(dataContext, action.templatePresentation.clone(), place, ActionUiKind.NONE, inputEvent)
-    action.actionPerformed(event)
-    assertNull(capturingRunner.capturedCommand, "The backend action must delegate execution to the frontend")
-    awaitFrontendRunner()
+    ActionUtil.performAction(action, event)
+    awaitRunner()
   }
 
   @RequiresEdt
-  private fun awaitFrontendRunner() {
-    service<MarkdownFrontendRunnerFlowService>()
+  private fun awaitRunner() {
     PlatformTestUtil.waitWithEventsDispatching("The frontend runner did not execute", { capturingRunner.capturedCommand != null }, 10)
   }
 
-  private class CapturingRunner : MarkdownRunner {
+  private class CapturingRunner : MarkdownCodeFenceRunner {
     var capturedDir: String? = "not-captured"
     var capturedCommand: String? = null
     var capturedContext: MarkdownRunnerContext? = null
-    var failNext = false
     var reuseTarget = false
     var acceptsLanguage: (Language?) -> Boolean = { true }
 
     override fun isApplicable(language: Language?): Boolean = acceptsLanguage(language)
 
-    override fun run(command: String, project: Project, workingDirectory: String?, executor: Executor): Boolean {
-      capturedDir = workingDirectory
-      capturedCommand = command
-      if (failNext) {
-        failNext = false
-        error("Test runner failure")
+    override fun run(command: String, project: Project, context: MarkdownRunnerContext): Boolean {
+      capturedContext = context
+      if (reuseTarget) {
+        capturedDir = null
+        capturedCommand = command
+      }
+      else {
+        context.withWorkingDirectory(project) { workingDirectory ->
+          capturedDir = workingDirectory
+          capturedCommand = command
+        }
       }
       return true
-    }
-
-    override fun run(
-      command: String,
-      project: Project,
-      executor: Executor,
-      context: MarkdownRunnerContext,
-    ): Boolean {
-      capturedContext = context
-      if (reuseTarget) return run(command, project, null, executor)
-      return super.run(command, project, executor, context)
     }
 
     override fun title() = "Test Runner"

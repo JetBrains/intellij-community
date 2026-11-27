@@ -16,7 +16,7 @@
     <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
-  <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.markdown.frontend.execution.MarkdownFrontendRunnerFlowService$StartupActivity"/>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <codeFenceRunnerProvider implementation="com.intellij.markdown.frontend.execution.MarkdownLegacyCodeFenceRunnerProvider"/>
   </extensions>
 </idea-plugin>

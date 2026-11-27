@@ -13,6 +13,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.IdeFrameGuests
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asNioPath
@@ -35,6 +37,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer
@@ -66,12 +69,13 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     runInNewTerminal: Runnable,
     shell: String?,
   ): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID) ?: return false
-    run(toolWindow, command, title, runInNewTerminal, shell)
+    val toolWindow = getMarkdownToolWindow(project) ?: return false
+    run(project, toolWindow, command, title, runInNewTerminal, shell)
     return true
   }
 
   internal fun run(
+    project: Project,
     toolWindow: ToolWindow,
     command: String,
     @NlsContexts.TabTitle title: String,
@@ -79,7 +83,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     shell: String? = null,
   ) {
     val selectedContent = toolWindow.contentManager.selectedContent
-    if (selectedContent != null && runInTerminalContent(toolWindow, selectedContent, command, title, shell)) {
+    if (selectedContent != null && runInTerminalContent(project, toolWindow, selectedContent, command, title, shell)) {
       return
     }
     runInNewTerminal.run()
@@ -126,8 +130,10 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   }
 
   override fun hasTerminalStartedFrom(project: Project, sourceFileUrl: String): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID) ?: return false
-    return hasTerminalStartedFrom(toolWindow.contentManager.contentsRecursively, sourceFileUrl)
+    val toolWindow = getMarkdownToolWindow(project) ?: return false
+    return toolWindow.contentManager.contentsRecursively.any {
+      it.getUserData(MARKDOWN_SOURCE_FILE_URL) == sourceFileUrl && isMarkdownTerminal(project, toolWindow, it, shell = null)
+    }
   }
 
   internal fun associateTerminal(content: Content, sourceFileUrl: String) {
@@ -136,10 +142,6 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
 
   internal fun markAutomaticTitle(content: Content, @NlsContexts.TabTitle title: String) {
     content.putUserData(LAST_AUTOMATIC_TITLE, title)
-  }
-
-  internal fun hasTerminalStartedFrom(contents: List<Content>, sourceFileUrl: String): Boolean {
-    return contents.any { it.getUserData(MARKDOWN_SOURCE_FILE_URL) == sourceFileUrl }
   }
 
   override fun showChooser(
@@ -152,8 +154,8 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     runInNewTerminal: Runnable,
     shell: String?,
   ): Boolean {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID) ?: return false
-    val terminalContents = toolWindow.contentManager.contentsRecursively.filter { isTerminal(it, shell) }
+    val toolWindow = getMarkdownToolWindow(project) ?: return false
+    val terminalContents = toolWindow.contentManager.contentsRecursively.filter { isMarkdownTerminal(project, toolWindow, it, shell) }
     val actions = DefaultActionGroup()
     actions.add(DumbAwareAction.create(ShBundle.message("sh.markdown.runner.terminal.new")) {
       runInNewTerminal.run()
@@ -163,7 +165,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     }
     terminalContents.forEach { content ->
       actions.add(DumbAwareAction.create(content.displayName) {
-        runInTerminalContent(toolWindow, content, command, title, shell)
+        runInTerminalContent(project, toolWindow, content, command, title, shell)
       })
     }
     ActionManager.getInstance()
@@ -183,7 +185,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   ) {
     if (shell == null) {
       terminalProjectScope(project).launch(start = CoroutineStart.UNDISPATCHED) {
-        createReworkedTab(project, command, workingDirectory, title, requestFocus = true, sourceFileUrl)
+        createMarkdownTab(project, command, workingDirectory, title, sourceFileUrl)
       }
       return
     }
@@ -193,7 +195,34 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
       val shellCommand = if (context.execCommand.shellName.value == shell) context.execCommand.command
                          else LocalTerminalStartCommandBuilder.convertShellPathToCommand(shell, context.eelDescriptor)
       if (!project.isDisposed) {
-        createReworkedTab(project, command, context.workingDirectory.asNioPath().toString(), title, true, sourceFileUrl, shellCommand)
+        createMarkdownTab(project, command, context.workingDirectory.asNioPath().toString(), title, sourceFileUrl, shellCommand)
+      }
+    }
+  }
+
+  private suspend fun createMarkdownTab(
+    project: Project,
+    command: String,
+    workingDirectory: String,
+    @NlsContexts.TabTitle title: String,
+    sourceFileUrl: String?,
+    shellCommand: List<String>? = null,
+  ) = withContext(Dispatchers.EDT) {
+    val frameOwner = IdeFrameGuests.frameOwnerOf(project)
+    val addToToolWindow = frameOwner === project
+    val tab = createReworkedTab(project, command, workingDirectory, title, true, sourceFileUrl, shellCommand, addToToolWindow)
+    if (!addToToolWindow) {
+      var attached = false
+      try {
+        TerminalToolWindowTabsManager.getInstance(frameOwner).attachTab(tab)
+        attached = true
+      }
+      finally {
+        if (!attached) {
+          TerminalTabCloseListener.executeContentOperationSilently(tab.content) {
+            TerminalToolWindowTabsManager.getInstance(project).closeTab(tab)
+          }
+        }
       }
     }
   }
@@ -206,19 +235,24 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     requestFocus: Boolean,
     sourceFileUrl: String?,
     shellCommand: List<String>? = null,
-  ) = withContext(Dispatchers.EDT) {
+    addToToolWindow: Boolean = true,
+  ): TerminalToolWindowTab = withContext(Dispatchers.EDT) {
     val tab = TerminalToolWindowTabsManager.getInstance(project)
       .createTabBuilder()
       .workingDirectory(workingDirectory)
       .shellCommand(shellCommand)
       .tabName(title)
       .requestFocus(requestFocus)
+      .shouldAddToToolWindow(addToToolWindow)
+      .restoreOnProjectReopen(addToToolWindow)
       // A tab that stays hidden would never start its shell, and the command would wait forever.
       .deferSessionStartUntilUiShown(requestFocus)
       .createTabAsync()
+    tab.content.putUserData(TERMINAL_ORIGIN, TerminalOrigin(project, project.getEelDescriptor()))
     if (sourceFileUrl != null) associateTerminal(tab.content, sourceFileUrl)
     markAutomaticTitle(tab.content, title)
     enqueueCommand(tab.content, tab.view, command)
+    tab
   }
 
   private fun enqueueCommand(content: Content, terminalView: TerminalView, command: String) {
@@ -263,15 +297,18 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   @RequiresEdt(generateAssertion = false)
   private fun findIdleReworkedTab(project: Project, toolWindow: ToolWindow, workingDirectory: String): TerminalToolWindowTab? {
     val selectedTab = toolWindow.contentManager.selectedContent?.getTerminalTab()
-    if (selectedTab != null && isIdleIn(selectedTab, workingDirectory)) return selectedTab
-    return TerminalToolWindowTabsManager.getInstance(project).tabs.firstOrNull { it !== selectedTab && isIdleIn(it, workingDirectory) }
+    if (selectedTab != null && isIdleIn(project, toolWindow, selectedTab, workingDirectory)) return selectedTab
+    return TerminalToolWindowTabsManager.getInstance(project).tabs.firstOrNull {
+      it !== selectedTab && isIdleIn(project, toolWindow, it, workingDirectory)
+    }
   }
 
   /**
    * A shell tab standing at its prompt in [workingDirectory] with nothing typed. Without shell integration the state of the shell
    * is unknown, so such a tab is never reused.
    */
-  private fun isIdleIn(tab: TerminalToolWindowTab, workingDirectory: String): Boolean {
+  private fun isIdleIn(project: Project, toolWindow: ToolWindow, tab: TerminalToolWindowTab, workingDirectory: String): Boolean {
+    if (!isProjectTerminal(project, toolWindow, tab.content)) return false
     if (tab.processOptions.processType != TerminalProcessType.SHELL) return false
     val currentDirectory = tab.view.workingDirectoryFlow.value ?: return false
     if (!FileUtil.pathsEqual(workingDirectory, currentDirectory.toString())) return false
@@ -290,13 +327,14 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   }
 
   private fun runInTerminalContent(
+    project: Project,
     toolWindow: ToolWindow,
     content: Content,
     command: String,
     @NlsContexts.TabTitle title: String,
     shell: String?,
   ): Boolean {
-    if (!isTerminal(content, shell) || !sendCommand(content, command, title)) return false
+    if (!isMarkdownTerminal(project, toolWindow, content, shell) || !sendCommand(content, command, title)) return false
 
     toolWindow.activate(null)
     content.manager?.setSelectedContent(content)
@@ -311,6 +349,20 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     return options.processType == TerminalProcessType.SHELL && options.guessShellName().value == shell
   }
 
+  private fun isMarkdownTerminal(project: Project, toolWindow: ToolWindow, content: Content, shell: String?): Boolean =
+    isTerminal(content, shell) && isProjectTerminal(project, toolWindow, content)
+
+  private fun isProjectTerminal(project: Project, toolWindow: ToolWindow, content: Content): Boolean {
+    val origin = content.getUserData(TERMINAL_ORIGIN)
+    if ((origin?.project ?: toolWindow.project) !== project) return false
+    if (toolWindow.project === project && IdeFrameGuests.frameGuestsOf(project).isEmpty()) return true
+    val descriptor = content.getTerminalTab()?.view?.sessionDeferred?.getNow()?.eelDescriptor ?: origin?.eelDescriptor ?: return false
+    return descriptor == project.getEelDescriptor()
+  }
+
+  private fun getMarkdownToolWindow(project: Project): ToolWindow? =
+    ToolWindowManager.getInstance(IdeFrameGuests.frameOwnerOf(project)).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
+
   /** A directory spelled by the project's environment becomes the nio path routed to it; anything else is already a nio path. */
   private fun toTerminalWorkingDirectory(project: Project, workingDirectory: String): String {
     return try {
@@ -324,10 +376,13 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     }
   }
 
+  private class TerminalOrigin(val project: Project, val eelDescriptor: EelDescriptor)
+
   companion object {
     private val LOG = logger<ShFrontendTerminalRunner>()
     private val COMMAND_SEND_MUTEX: Key<Mutex> = Key.create("Shell.Command.Send.Mutex")
     internal val MARKDOWN_SOURCE_FILE_URL: Key<String> = Key.create("Shell.Markdown.Source.File.Url")
+    private val TERMINAL_ORIGIN: Key<TerminalOrigin> = Key.create("Shell.Terminal.Origin")
     internal val LAST_AUTOMATIC_TITLE: Key<@NlsContexts.TabTitle String> = Key.create("Shell.Markdown.Last.Automatic.Title")
   }
 }

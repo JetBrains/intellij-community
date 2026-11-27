@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.BaseProjectDirectories
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VfsUtilCore
 import kotlinx.serialization.Serializable
@@ -61,9 +63,12 @@ fun getMarkdownCommandWorkingDirectoryPaths(project: Project, virtualFile: Virtu
     return null
   }
   val projectBaseDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)
+                             ?: project.getBaseDirectories().firstOrNull { FileUtil.isAncestor(it.path, virtualFile.path, false) }
   val projectDirectory = projectBaseDirectory?.canonicalPath ?: fileDirectory
   val fileDirectoryRelativePath =
-    virtualFile.parent?.let { parent -> projectBaseDirectory?.let { VfsUtilCore.getRelativePath(parent, it, '/') } }?.let { "/$it" }
+    virtualFile.parent?.let { parent -> projectBaseDirectory?.let { VfsUtilCore.getRelativePath(parent, it, '/') } }
+      ?.let { "/$it" }
+    ?: FileUtil.getRelativePath(projectDirectory, fileDirectory, '/')?.let { "/$it" }
     ?: fileDirectory.substringAfterLast('/')
   return MarkdownCommandWorkingDirectoryPaths(projectDirectory, fileDirectory, fileDirectoryRelativePath)
 }

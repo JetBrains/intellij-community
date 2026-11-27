@@ -7,12 +7,17 @@ import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.flow.Flow
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCommandWorkingDirectoryPaths
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Rpc
 interface MarkdownCommandRunnerRemoteApi : RemoteApi<Unit> {
+  suspend fun getWorkingDirectoryPaths(
+    projectId: ProjectId,
+    virtualFileId: VirtualFileId,
+  ): MarkdownCommandWorkingDirectoryPaths?
+
   suspend fun filterRunnable(
     projectId: ProjectId,
     virtualFileId: VirtualFileId?,
@@ -28,20 +33,13 @@ interface MarkdownCommandRunnerRemoteApi : RemoteApi<Unit> {
     workingDirectory: String,
   ): Boolean
 
-  suspend fun runBlock(
-    projectId: ProjectId,
-    command: String,
-    executorId: String,
-    workingDirectory: String,
-  ): Boolean
-
-  suspend fun frontendRunnerRequests(): Flow<MarkdownFrontendRunnerRequest>
-
   suspend fun isProjectTrusted(projectId: ProjectId): Boolean
 
   suspend fun setProjectTrusted(projectId: ProjectId)
 
   companion object {
+    fun isConnected(): Boolean = LiteRemoteApiProviderService.isConnected()
+
     suspend fun getInstance(): MarkdownCommandRunnerRemoteApi {
       return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<MarkdownCommandRunnerRemoteApi>())
     }

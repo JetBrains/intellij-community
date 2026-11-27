@@ -34,6 +34,9 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress SplitModeXmlApiUsage -->
+    <runLineMarkerContributor language="Markdown"
+                              implementationClass="com.intellij.markdown.frontend.highlighting.MarkdownLocalRunLineMarkerContributor"/>
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController$Listener"/>
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewEditorListener"/>
     <editorActionHandler action="EditorBackSpace"
@@ -68,6 +71,8 @@
   </extensions>
 
   <actions resource-bundle="messages.MarkdownBundle">
+    <action id="Markdown.RunCodeFence" class="com.intellij.markdown.frontend.actions.MarkdownRunCodeFenceAction"
+            icon="AllIcons.RunConfigurations.TestState.Run_run" use-shortcut-of="RunClass"/>
     <action id="Markdown.Preview.AdjustFontSize"
             class="com.intellij.markdown.frontend.actions.AdjustFontSizeAction">
       <add-to-group group-id="Markdown.PreviewGroup"/>

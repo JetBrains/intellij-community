@@ -1934,7 +1934,7 @@ plugins/sh/plugin intellij.sh.plugin intellij.sh.plugin.main
 plugins/sh/python intellij.sh.python
 plugins/sh/spellchecker intellij.sh.spellchecker
 plugins/sh/terminal intellij.sh.terminal
-plugins/sh/terminal/frontend intellij.sh.terminal.frontend
+plugins/sh/terminal/frontend intellij.sh.terminal.frontend intellij.sh.terminal.frontend.tests
 plugins/space/jps-plugin intellij.space.java.jps
 plugins/stats-collector intellij.statsCollector intellij.statsCollector.tests
 plugins/stream-debugger intellij.debugger.streams.plugin intellij.java.debugger.streams.tests

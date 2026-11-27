@@ -54,6 +54,12 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
+    <extensionPoint qualifiedName="org.intellij.markdown.codeFenceRunner"
+                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCodeFenceRunner"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.codeFenceRunnerProvider"
+                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCodeFenceRunner$Provider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.frontMatterFoldingPolicy"
                     interface="org.intellij.plugins.markdown.folding.MarkdownFrontMatterFoldingPolicy"
                     dynamic="true"/>
