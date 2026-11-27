@@ -83,7 +83,7 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
    */
   fun emptyStateProject(id: String): Project? {
     val frameOwner = manager.project
-    if (manager.getEntry(id)?.toolWindow?.isMultiProject == true) {
+    if (frameToolWindowOf(id) != null) {
       return frameOwner
     }
     val active = IdeFrameGuests.activeProjectOf(frameOwner)
@@ -244,11 +244,24 @@ internal class ToolWindowManagerPresentation(private val manager: ToolWindowMana
       return null
     }
 
-    val own = manager.getEntry(task.id)?.toolWindow
     if (task.contentFactory is MultiProjectToolWindowFactory) {
-      return own ?: manager.registerForFrameGuest(task).toolWindow
+      return manager.getEntry(task.id)?.toolWindow ?: manager.registerForFrameGuest(task).toolWindow
     }
-    return own?.takeIf { it.isMultiProject }
+    return frameToolWindowOf(task.id)
+  }
+
+  /**
+   * The tool window of the whole frame with [id], see [MultiProjectToolWindowFactory]. Only the frame owner has it, so
+   * a frame guest that has no tool window with [id] gets this one, and its calls for [id] go to the manager of the frame owner.
+   * `null` for a tool window of the frame owner that shows one project, and after the disposal of the frame owner.
+   *
+   * The function runs on any thread.
+   */
+  fun frameToolWindowOf(id: String): ToolWindowImpl? {
+    if (isDisposed || manager.project.isDisposed) {
+      return null
+    }
+    return manager.getEntry(id)?.toolWindow?.takeIf { it.isMultiProject }
   }
 
   /**

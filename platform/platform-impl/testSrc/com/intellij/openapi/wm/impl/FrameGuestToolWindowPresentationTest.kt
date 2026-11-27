@@ -58,10 +58,12 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.function.Supplier
@@ -655,6 +657,95 @@ internal class FrameGuestToolWindowPresentationTest {
 
     assertThat(registered).isSameAs(own)
     assertThat(managers.of(first).getToolWindow(ID)).isNull()
+  }
+
+  @Test
+  fun `a show request of a frame guest by id shows the tool window of the whole frame`() = onEdt {
+    val managers = createManagers()
+    val own = managers.registerFrameToolWindow()
+
+    managers.of(first).showToolWindow(ID)
+
+    assertThat(own.isVisible).isTrue()
+  }
+
+  @Test
+  fun `a hide request of a frame guest by id hides the tool window of the whole frame`() = onEdt {
+    val managers = createManagers()
+    val own = managers.registerFrameToolWindow()
+    own.show()
+
+    managers.of(first).hideToolWindow(ID, false)
+
+    assertThat(own.isVisible).isFalse()
+
+    own.show()
+    managers.of(second).hideToolWindow(id = ID, hideSide = false, moveFocus = false, removeFromStripe = false, source = null)
+
+    assertThat(own.isVisible).isFalse()
+  }
+
+  @Test
+  fun `an activation request of a frame guest by id activates the tool window of the whole frame and runs its runnable`() = onEdt {
+    val managers = createManagers()
+    val own = managers.registerFrameToolWindow()
+    val ownerEvents = recordEvents(owner)
+    val ran = CompletableDeferred<Unit>()
+
+    managers.of(first).activateToolWindow(id = ID, runnable = { ran.complete(Unit) }, autoFocusContents = false)
+
+    assertThat(own.isVisible).isTrue()
+    assertThat(ownerEvents).contains(ToolWindowManagerEventType.ActivateToolWindow.name)
+    ran.await()
+  }
+
+  @Test
+  fun `a notification of a frame guest for a tool window of the whole frame goes to the frame owner`() = onEdt {
+    val managers = createManagers()
+    managers.registerFrameToolWindow()
+
+    managers.of(first).notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = ID, type = MessageType.INFO, htmlBody = "Done"))
+
+    assertThat(shownBalloons).describedAs("the frame owner has the only tool window with the id").containsExactly(owner.name)
+    val balloon = managers.owner.getEntry(ID)!!.balloon
+    assertThat(balloon).isNotNull()
+    assertThat(managers.of(first).getToolWindowBalloon(ID)).isSameAs(balloon)
+  }
+
+  @Test
+  fun `a layout request of a frame guest by id changes the tool window of the whole frame`() = onEdt {
+    val managers = createManagers()
+    val own = managers.registerFrameToolWindow()
+
+    managers.of(first).setToolWindowAutoHide(ID, true)
+    managers.of(first).setToolWindowType(ID, ToolWindowType.SLIDING)
+
+    assertThat(own.isAutoHide).isTrue()
+    assertThat(own.type).isEqualTo(ToolWindowType.SLIDING)
+  }
+
+  @Test
+  fun `a frame guest brings back the stripe button of a tool window of the whole frame`() = onEdt {
+    val managers = createManagers()
+    val own = managers.registerFrameToolWindow()
+    // as the action of the user that removes a tool window from the sidebar
+    managers.owner.hideToolWindow(ID, removeFromStripe = true, source = ToolWindowEventSource.RemoveStripeButtonAction)
+    assertThat(managers.of(first).isStripeButtonShow(own)).isFalse()
+
+    managers.of(first).restoreStripeButton(ID)
+
+    assertThat(managers.owner.getEntry(ID)!!.stripeButton).isNotNull()
+    assertThat(managers.of(first).isStripeButtonShow(own)).describedAs("the frame owner has the stripe button").isTrue()
+  }
+
+  @Test
+  fun `a request of a frame guest by id does not reach a tool window of the frame owner that shows one project`() = onEdt {
+    val managers = createManagers()
+    val own = managers.owner.registerToolWindow(task(), buttonManager(managers.owner)).toolWindow
+
+    assertThatThrownBy { managers.of(first).showToolWindow(ID) }.isInstanceOf(IllegalThreadStateException::class.java)
+
+    assertThat(own.isVisible).isFalse()
   }
 
   @Test
@@ -1613,6 +1704,12 @@ internal class FrameGuestToolWindowPresentationTest {
       val toolWindow = manager.registerToolWindow(task, buttonManager(manager)).toolWindow
       assertThat(toolWindow.isPresented).isTrue()
       return toolWindow
+    }
+
+    /** Registers the tool window of the whole frame: only the frame owner has it, see [MultiProjectToolWindowFactory]. */
+    fun registerFrameToolWindow(): ToolWindowImpl {
+      val task = RegisterToolWindowTaskData(id = ID, anchor = ToolWindowAnchor.LEFT, contentFactory = MultiProjectFactory())
+      return owner.registerToolWindow(task, buttonManager(owner)).toolWindow
     }
 
     /** Registers the tool window of the frame owner as the code of Find and Run does: no factory, and the tool window hides on empty content. */

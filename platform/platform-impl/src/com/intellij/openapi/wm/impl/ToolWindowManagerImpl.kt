@@ -581,18 +581,55 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * [call] gets the tool window of the frame owner that presents [toolWindow]. A presented tool window that the frame owner
    * does not present now drops the call.
    *
-   * @return `true` when [toolWindow] is a presented tool window: the caller must leave the state of this manager alone
+   * A tool window of another manager gets the same route: a frame guest gets the tool window of the whole frame from the frame
+   * owner, see [ownOrFrameToolWindow], and the manager of that tool window does the call. [call] gets that tool window then.
+   *
+   * @return `true` when the manager of the frame owner has the call: the caller must leave the state of this manager alone
    */
   private inline fun forwardToFrameOwner(toolWindow: ToolWindow?, call: ToolWindowManagerImpl.(presenting: ToolWindowImpl) -> Unit): Boolean {
-    if (toolWindow !is ToolWindowImpl || !toolWindow.isPresented) {
+    if (toolWindow !is ToolWindowImpl) {
       return false
     }
-    toolWindow.presentedBy?.let { it.toolWindowManager.call(it) }
-    return true
+    if (toolWindow.isPresented) {
+      toolWindow.presentedBy?.let { it.toolWindowManager.call(it) }
+      return true
+    }
+    if (toolWindow.toolWindowManager !== this) {
+      toolWindow.toolWindowManager.call(toolWindow)
+      return true
+    }
+    return false
   }
 
   private inline fun forwardToFrameOwner(id: String, call: ToolWindowManagerImpl.(presenting: ToolWindowImpl) -> Unit): Boolean {
-    return forwardToFrameOwner(idToEntry.get(id)?.toolWindow, call)
+    return forwardToFrameOwner(ownOrFrameToolWindow(id), call)
+  }
+
+  /**
+   * The tool window of this manager with [id]. A frame guest that has none gets the tool window of the whole frame with [id]
+   * from the frame owner, see [ToolWindowManagerPresentation.frameToolWindowOf]. The function runs on any thread.
+   */
+  private fun ownOrFrameToolWindow(id: String): ToolWindowImpl? {
+    return idToEntry.get(id)?.toolWindow ?: frameToolWindowOf(id)
+  }
+
+  /** The tool window of the whole frame with [id] that this frame guest gets from the frame owner. `null` for another manager. */
+  private fun frameToolWindowOf(id: String): ToolWindowImpl? = frameOwnerPresentation?.frameToolWindowOf(id)
+
+  /**
+   * Gives a call for the tool window [id] to the manager of the frame owner, when this frame guest has no tool window with [id]
+   * and the frame owner has the tool window of the whole frame with it. Use it where [forwardToFrameOwner] does not fit: a call
+   * that the presentation of the frame owner handles for a presented tool window, as a show request.
+   *
+   * @return `true` when the manager of the frame owner has the call
+   */
+  private inline fun forwardFrameToolWindow(id: String, call: ToolWindowManagerImpl.() -> Unit): Boolean {
+    if (idToEntry.containsKey(id)) {
+      return false
+    }
+    val frameToolWindow = frameToolWindowOf(id) ?: return false
+    frameToolWindow.toolWindowManager.call()
+    return true
   }
 
   /**
@@ -833,13 +870,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val entry = idToEntry.get(id)
     if (entry == null) {
-      LOG.error(Throwable("No entry found for the tool window $id"))
-      return
+      // The frame owner has the only tool window of the whole frame. The runnable stays in the scope of this project,
+      // so it does not run after the close of this frame guest.
+      val isForwarded = forwardFrameToolWindow(id) {
+        activateToolWindow(id = id, runnable = null, autoFocusContents = autoFocusContents, source = source)
+      }
+      if (!isForwarded) {
+        LOG.error(Throwable("No entry found for the tool window $id"))
+        return
+      }
     }
-    activateToolWindow(entry = entry,
-                       info = getRegisteredMutableInfoOrLogError(id),
-                       autoFocusContents = autoFocusContents,
-                       source = source)
+    else {
+      activateToolWindow(entry = entry,
+                         info = getRegisteredMutableInfoOrLogError(id),
+                         autoFocusContents = autoFocusContents,
+                         source = source)
+    }
 
     coroutineScope.launch(Dispatchers.EDT) {
       //maybe readAction
@@ -1021,7 +1067,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       .filter { it.isAvailable }
   }
 
-  override fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = idToEntry.get(toolWindow.id)?.stripeButton != null
+  override fun isStripeButtonShow(toolWindow: ToolWindow): Boolean {
+    if (toolWindow is ToolWindowImpl && !toolWindow.isPresented && toolWindow.toolWindowManager !== this) {
+      // the tool window of the whole frame that this frame guest got from the frame owner, which has its stripe button
+      return toolWindow.toolWindowManager.isStripeButtonShow(toolWindow)
+    }
+    return idToEntry.get(toolWindow.id)?.stripeButton != null
+  }
 
   /**
    * @return windowed decorator for the tool window with specified `ID`.
@@ -1081,6 +1133,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   open fun showToolWindow(id: String) {
     LOG.debug { "showToolWindow($id)" }
     EDT.assertIsEdt()
+    // the frame owner has the only tool window of the whole frame
+    if (forwardFrameToolWindow(id) { showToolWindow(id) }) {
+      return
+    }
     val entry = idToEntry.get(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is not registered")
     if (entry.toolWindow.isPresented) {
       putOnProjectStripeForShow(entry.toolWindow)
@@ -1112,6 +1168,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   ) {
     EDT.assertIsEdt()
 
+    // the frame owner has the only tool window of the whole frame
+    if (forwardFrameToolWindow(id) { hideToolWindow(id, hideSide, moveFocus, removeFromStripe, source) }) {
+      return
+    }
     val entry = idToEntry.get(id)!!
     if (entry.toolWindow.isPresented) {
       frameOwnerPresentation?.hide(entry.toolWindow, hideSide, moveFocus, removeFromStripe, source)
@@ -2005,9 +2065,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     // The target comes first: a frame guest can have the target and no tool window with the requested id.
     val target = options.copy(toolWindowId = notifications.resolveNotificationTarget(options.toolWindowId))
     // The frame owner has the stripe button and the pane of a presented tool window. The pane of a frame guest is in no frame,
-    // so a balloon there shows nothing to the user.
-    val source = idToEntry.get(target.toolWindowId)?.toolWindow
+    // so a balloon there shows nothing to the user. The frame owner also has the only tool window of the whole frame.
+    val source = ownOrFrameToolWindow(target.toolWindowId)
     if (forwardToFrameOwner(source) { notifyByBalloon(target) }) {
+      // a tool window of the whole frame is not presented, so the call does nothing for it
       frameOwnerPresentation?.guestBalloonShown(source!!)
       return
     }
@@ -2073,6 +2134,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   fun setVisibleOnLargeStripe(id: String, visible: Boolean) {
+    // the frame owner has the only tool window of the whole frame, and the lambda of the forward below is empty
+    if (forwardFrameToolWindow(id) { setVisibleOnLargeStripe(id, visible) }) {
+      return
+    }
     if (forwardToFrameOwner(id) { }) {
       // the frame owner keeps the stripe button
       return
@@ -2581,6 +2646,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    */
   @ApiStatus.Internal
   fun restoreStripeButton(id: String) {
+    // the frame owner has the only tool window of the whole frame
+    if (forwardFrameToolWindow(id) { restoreStripeButton(id) }) {
+      return
+    }
     doSetShowStripeButton(id, true)
     // the frame owner has the stripe button of a presented tool window
     forwardToFrameOwner(id) { presenting -> if (presenting.isAvailable) setStripeButtonShown(id, true) }
