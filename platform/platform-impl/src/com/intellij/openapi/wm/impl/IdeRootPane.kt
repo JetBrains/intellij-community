@@ -197,25 +197,28 @@ class IdeRootPane internal constructor() : JRootPane() {
           yShift += mbd.height
         }
       }
-      val tabsComponent = projectTabsComponent
-      if (tabsComponent != null && tabsComponent.isVisible) {
-        val toolbarDim = tabsComponent.preferredSize
-        if (toolbarDim != null) {
-          val toolbarHeight = toolbarDim.height
-          tabsComponent.setBounds(0, yShift, w, toolbarHeight)
-          yShift += toolbarHeight
-        }
+      if (SystemInfoRt.isMac) {
+        yShift = layoutAtPreferredHeight(projectTabsComponent, yShift, w)
+        yShift = layoutAtPreferredHeight(toolbar, yShift, w)
       }
-      val toolbar = toolbar
-      if (toolbar != null && toolbar.isVisible) {
-        val toolbarDim = toolbar.preferredSize
-        if (toolbarDim != null) {
-          val toolbarHeight = toolbarDim.height
-          toolbar.setBounds(0, yShift, w, toolbarHeight)
-          yShift += toolbarHeight
-        }
+      else {
+        yShift = layoutAtPreferredHeight(toolbar, yShift, w)
+        yShift = layoutAtPreferredHeight(projectTabsComponent, yShift, w)
       }
       contentPane?.setBounds(0, yShift, w, h - yShift)
+    }
+
+    /**
+     * Sets the bounds of a visible [component] to [width] and its preferred height at [y].
+     * Returns the `y` below [component], or [y] when [component] is `null` or not visible.
+     */
+    private fun layoutAtPreferredHeight(component: JComponent?, y: Int, width: Int): Int {
+      if (component == null || !component.isVisible) {
+        return y
+      }
+      val height = component.preferredSize?.height ?: return y
+      component.setBounds(0, y, width, height)
+      return y + height
     }
 
     private fun isFixedMenu(): Boolean = !isFullScreen && !CustomWindowHeaderUtil.isDecoratedMenu(UISettings.getInstance())

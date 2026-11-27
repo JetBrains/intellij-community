@@ -485,9 +485,13 @@ private fun createMacAwareMenuBar(
   }
 }
 
+/**
+ * Sets [menuBar] as the menu bar of [rootPane].
+ * Then moves [menuBar] to a layer above the frame title, the project tabs and the toolbar.
+ */
 private fun installMenuBar(rootPane: JRootPane, menuBar: JMenuBar) {
   rootPane.jMenuBar = menuBar
-  rootPane.layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
+  rootPane.layeredPane.setLayer(menuBar, JLayeredPane.DEFAULT_LAYER - 1)
 }
 
 private sealed interface FrameHeaderHelper {

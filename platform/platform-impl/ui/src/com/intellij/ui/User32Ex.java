@@ -74,9 +74,40 @@ public final class User32Ex {
     }
   }
 
+  /**
+   * Sets {@code WINDOWPLACEMENT.rcNormalPosition} of a hidden window. The window stays hidden.
+   * The position is left, top, right and bottom in the coordinates of {@link #getWindowNormalPosition}.
+   *
+   * @return {@code false} when the window is visible or the call fails
+   */
+  public static boolean setHiddenWindowNormalPosition(long window, int @NotNull [] position) {
+    if (position.length != 4) {
+      throw new IllegalArgumentException("The position must have 4 values: " + position.length);
+    }
+    try (var arena = Arena.ofConfined()) {
+      var handle = MemorySegment.ofAddress(window);
+      if ((int)Handles.IS_WINDOW_VISIBLE.invokeExact(handle) != 0) {
+        return false;
+      }
+      var placement = arena.allocate(WINDOWPLACEMENT_SIZE);
+      placement.set(JAVA_INT, 0, WINDOWPLACEMENT_SIZE);
+      if ((int)Handles.GET_WINDOW_PLACEMENT.invokeExact(handle, placement) == 0) {
+        return false;
+      }
+      placement.set(JAVA_INT, WINDOWPLACEMENT_SHOW_CMD_OFFSET, SW_HIDE);
+      MemorySegment.copy(position, 0, placement, JAVA_INT, WINDOWPLACEMENT_NORMAL_POSITION_OFFSET, 4);
+      return (int)Handles.SET_WINDOW_PLACEMENT.invokeExact(handle, placement) != 0;
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
+  }
+
   /** {@code WINDOWPLACEMENT { UINT length, flags, showCmd; POINT ptMinPosition, ptMaxPosition; RECT rcNormalPosition; }}, 44 bytes */
   private static final int WINDOWPLACEMENT_SIZE = 44;
+  private static final int WINDOWPLACEMENT_SHOW_CMD_OFFSET = 8;
   private static final int WINDOWPLACEMENT_NORMAL_POSITION_OFFSET = 28;
+  private static final int SW_HIDE = 0;
 
   /** @return the offset of the best icon in an {@code .ico} image, or 0 when there is none */
   public static int lookupIconIdFromDirectoryEx(@NotNull MemorySegment resourceBits, boolean icon, int width, int height, int flags) {
@@ -288,6 +319,8 @@ public final class User32Ex {
     static final MethodHandle GET_SYSTEM_METRICS = downcall("GetSystemMetrics", FunctionDescriptor.of(JAVA_INT, JAVA_INT));
     /** {@code BOOL GetWindowPlacement(HWND, WINDOWPLACEMENT *)} */
     static final MethodHandle GET_WINDOW_PLACEMENT = downcall("GetWindowPlacement", FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
+    /** {@code BOOL SetWindowPlacement(HWND, const WINDOWPLACEMENT *)} */
+    static final MethodHandle SET_WINDOW_PLACEMENT = downcall("SetWindowPlacement", FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
     /** {@code BOOL EnumWindows(WNDENUMPROC, LPARAM)} */
     static final MethodHandle ENUM_WINDOWS = downcall("EnumWindows", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG));
     /** {@code BOOL CALLBACK WNDENUMPROC(HWND, LPARAM)} */
