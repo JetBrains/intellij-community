@@ -3,8 +3,9 @@ package com.intellij.java.psi;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiNameHelper;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PsiNameHelperTest {
   @Test
@@ -1189,6 +1190,6 @@ public class PsiNameHelperTest {
   }
 
   private static void doTest(String referenceText, String shortName) {
-    Assert.assertEquals(shortName, PsiNameHelper.getShortClassName(referenceText));
+    assertEquals(shortName, PsiNameHelper.getShortClassName(referenceText));
   }
 }

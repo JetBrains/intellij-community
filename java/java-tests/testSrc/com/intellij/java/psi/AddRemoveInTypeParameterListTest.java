@@ -15,51 +15,74 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
+import org.junit.jupiter.api.Test;
 
-public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class AddRemoveInTypeParameterListTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
+
+  @Test
   public void testAdd() throws IncorrectOperationException {
-    PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type {\n}");
-    PsiClass aClass = file.getClasses()[0];
-    PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
-    PsiReferenceParameterList list = ref.getParameterList();
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type {\n}");
+      PsiClass aClass = file.getClasses()[0];
+      PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
+      PsiReferenceParameterList list = ref.getParameterList();
 
-    PsiElementFactory factory = getJavaFacade().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(projectFixture.get().getProject());
 
-    PsiTypeElement typeElement1 = factory.createTypeElement(factory.createTypeFromText("A", null));
-    list.add(typeElement1);
+      PsiTypeElement typeElement1 = factory.createTypeElement(factory.createTypeFromText("A", null));
+      list.add(typeElement1);
 
-    assertEquals("class Test extends Type<A> {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+      assertEquals("class Test extends Type<A> {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
 
-    PsiTypeElement typeElement2 = factory.createTypeElement(factory.createTypeFromText("B", null));
-    list.add(typeElement2);
+      PsiTypeElement typeElement2 = factory.createTypeElement(factory.createTypeFromText("B", null));
+      list.add(typeElement2);
 
-    assertEquals("class Test extends Type<A, B> {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+      assertEquals("class Test extends Type<A, B> {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
 
-    PsiTypeElement typeElement3 = factory.createTypeElement(factory.createTypeFromText("C", null));
-    list.addAfter(typeElement3, null);
+      PsiTypeElement typeElement3 = factory.createTypeElement(factory.createTypeFromText("C", null));
+      list.addAfter(typeElement3, null);
 
-    assertEquals("class Test extends Type<C, A, B> {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+      assertEquals("class Test extends Type<C, A, B> {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
+    });
   }
 
+  @Test
   public void testRemove() throws IncorrectOperationException {
-    final PsiJavaFile file = (PsiJavaFile)createLightFile("Test.java", "class Test extends Type<A, B, C, D> {\n}");
-    PsiClass aClass = file.getClasses()[0];
-    PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
-    PsiReferenceParameterList list = ref.getParameterList();
-    final PsiTypeElement[] parms = list.getTypeParameterElements();
+    final PsiJavaFile file = ReadAction.computeBlocking(() -> (PsiJavaFile)createLightFile("Test.java", "class Test extends Type<A, B, C, D> {\n}"));
+    final PsiTypeElement[] parms = ReadAction.computeBlocking(() -> {
+      PsiClass aClass = file.getClasses()[0];
+      PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
+      PsiReferenceParameterList list = ref.getParameterList();
+      return list.getTypeParameterElements();
+    });
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       parms[0].delete();
@@ -81,7 +104,15 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
     });
 
 
-    assertEquals("class Test extends Type {\n}", file.getText());
-    PsiTestUtil.checkFileStructure(file);
+    ReadAction.runBlocking(() -> {
+      assertEquals("class Test extends Type {\n}", file.getText());
+      PsiTestUtil.checkFileStructure(file);
+    });
+  }
+
+  private static PsiFile createLightFile(String fileName, String text) {
+    Project project = projectFixture.get().getProject();
+    return PsiFileFactory.getInstance(project).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
+                                                                  text, LocalTimeCounter.currentTime(), false, false);
   }
 }

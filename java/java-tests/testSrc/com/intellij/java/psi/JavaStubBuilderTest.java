@@ -3,7 +3,13 @@ package com.intellij.java.psi;
 
 import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
@@ -14,38 +20,33 @@ import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.security.SecureRandom;
 import java.util.List;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_LATEST;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class JavaStubBuilderTest extends LightIdeaTestCase {
-  private StubBuilder myBuilder;
+@TestApplication
+public class JavaStubBuilderTest {
+  private static final Logger LOG = Logger.getInstance(JavaStubBuilderTest.class);
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_LATEST);
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myBuilder = new JavaLightStubBuilder();
-  }
+  private final StubBuilder myBuilder = new JavaLightStubBuilder();
 
-  @Override
-  protected void tearDown() throws Exception {
-    myBuilder = null;
-    super.tearDown();
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
-  }
-
+  @Test
   public void testEmpty() {
     doTest("/**/",
 
@@ -55,6 +56,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testFileHeader() {
     doTest("""
              package p;
@@ -72,6 +74,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testClassDeclaration() {
     doTest("""
              package p;class A implements I, J<I> { }
@@ -123,6 +126,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testMethods() {
     doTest("""
              public @interface Anno {
@@ -205,6 +209,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testFields() {
     doTest("""
              static class C {
@@ -244,6 +249,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testAnonymousClasses() {
     doTest("""
              class C { {
@@ -269,6 +275,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testEnums() {
     doTest("""
              enum E {
@@ -305,6 +312,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalVariables() {
     doTest("""
              class C {
@@ -351,6 +359,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testNonListParameters() {
     doTest("""
              class C {
@@ -386,6 +395,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testAnnotations() {
     doTest("""
              @Deprecated
@@ -409,6 +419,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testNestedGenerics() {
     doTest("""
              class X {
@@ -427,6 +438,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testTypeAnnotations() {
     doTest("""
              import j.u.@A C;
@@ -524,6 +536,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalClass() {
     doTest("""
              class C {
@@ -553,6 +566,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testModuleInfo() {
     doTest("""
              @Deprecated open module M. /*ignore me*/ N {
@@ -580,6 +594,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testRecord() {
     doTest("record A(int x, String y) {}",
 
@@ -600,6 +615,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   }
 
   @TestFor(issues = "IDEA-393876")
+  @Test
   public void testRecordWithVarArgsCompactConstructor() {
     doTest("record A(int x, String... y) { A { y = y.clone(); } }",
 
@@ -623,6 +639,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testIncompleteRecord() {
     doTest("record A",
 
@@ -637,6 +654,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalRecord() {
     doTest("""
              class A {
@@ -670,6 +688,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalRecordIncorrect() {
     doTest("""
              class A {
@@ -695,6 +714,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalRecordLikeIncompleteCode() {
     doTest("""
              class A {
@@ -719,6 +739,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalRecordLikeIncompleteCodeWithTypeParameters() {
     doTest("""
              class A {
@@ -749,6 +770,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testLocalRecordWithTypeParameters() {
     doTest("""
              class A {
@@ -781,6 +803,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testInvalidGenericEmptyBody() {
     doTest("""
              import java.util.*;
@@ -801,6 +824,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testInvalidGenericEmptyBodyQualified() {
     doTest("""
              private static class A implements java.util.function.BiConsumer<java.util.List<A>, java.util.List<A>n>> {}
@@ -816,6 +840,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
 
+  @Test
   public void testCommentInType() {
     doTest("""
              class A {
@@ -842,49 +867,55 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
             """);
   }
 
+  @Test
   public void testInterfaceKeywordInBody() {
     String source = """
       class X {
         void test() {}interface
       }""";
-    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    FileASTNode fileNode = file.getNode();
-    assertNotNull(fileNode);
-    assertFalse(fileNode.isParsed());
-    StubElement<?> element = myBuilder.buildStubTree(file);
-    List<StubElement<?>> stubs = element.getChildrenStubs();
-    assertSize(2, stubs);
-    PsiClassStub<?> classStub = (PsiClassStub<?>)stubs.get(1);
-    assertFalse(classStub.isInterface());
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+      FileASTNode fileNode = file.getNode();
+      assertNotNull(fileNode);
+      assertFalse(fileNode.isParsed());
+      StubElement<?> element = myBuilder.buildStubTree(file);
+      List<StubElement<?>> stubs = element.getChildrenStubs();
+      assertEquals(2, stubs.size());
+      PsiClassStub<?> classStub = (PsiClassStub<?>)stubs.get(1);
+      assertFalse(classStub.isInterface());
+    });
   }
 
+  @Test
   public void testTypeAnnotation() {
     String source = """
-      import org.jetbrains.annotations.NotNull;
-      
+            
       public final class Container<E> {
           public final Container<@NotNull Container<@NotNull E>> test() {
               return new Container<>();
           }
       }
       """;
-    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    FileASTNode fileNode = file.getNode();
-    assertNotNull(fileNode);
-    assertFalse(fileNode.isParsed());
-    StubElement<?> element = myBuilder.buildStubTree(file);
-    PsiClassStub<?> classStub = ContainerUtil.findInstance(element.getChildrenStubs(), PsiClassStub.class);
-    assertNotNull(classStub);
-    PsiMethodStub methodStub = ContainerUtil.findInstance(classStub.getChildrenStubs(), PsiMethodStub.class);
-    assertNotNull(methodStub);
-    TypeInfo typeInfo = methodStub.getReturnTypeText();
-    assertEquals("Container<Container<E>>", typeInfo.text());
-    TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
-    assertEquals("""
-                   /1->@NotNull
-                   /1/1->@NotNull""", annotations.toString());
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+      FileASTNode fileNode = file.getNode();
+      assertNotNull(fileNode);
+      assertFalse(fileNode.isParsed());
+      StubElement<?> element = myBuilder.buildStubTree(file);
+      PsiClassStub<?> classStub = ContainerUtil.findInstance(element.getChildrenStubs(), PsiClassStub.class);
+      assertNotNull(classStub);
+      PsiMethodStub methodStub = ContainerUtil.findInstance(classStub.getChildrenStubs(), PsiMethodStub.class);
+      assertNotNull(methodStub);
+      TypeInfo typeInfo = methodStub.getReturnTypeText();
+      assertEquals("Container<Container<E>>", typeInfo.text());
+      TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
+      assertEquals("""
+                     /1->@NotNull
+                     /1/1->@NotNull""", annotations.toString());
+    });
   }
 
+  @Test
   public void testTypeAnnotationQualified() {
     String source = """
       import pkg.Anno1;
@@ -894,23 +925,26 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
           public final native com.foo.@Anno1 Outer.@Anno2 Inner test();
       }
       """;
-    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    FileASTNode fileNode = file.getNode();
-    assertNotNull(fileNode);
-    assertFalse(fileNode.isParsed());
-    StubElement<?> element = myBuilder.buildStubTree(file);
-    PsiClassStub<?> classStub = ContainerUtil.findInstance(element.getChildrenStubs(), PsiClassStub.class);
-    assertNotNull(classStub);
-    PsiMethodStub methodStub = ContainerUtil.findInstance(classStub.getChildrenStubs(), PsiMethodStub.class);
-    assertNotNull(methodStub);
-    TypeInfo typeInfo = methodStub.getReturnTypeText();
-    assertEquals("com.foo.Outer.Inner", typeInfo.text());
-    TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
-    assertEquals("""
-                   /.->@Anno1
-                   ->@Anno2""", annotations.toString());
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+      FileASTNode fileNode = file.getNode();
+      assertNotNull(fileNode);
+      assertFalse(fileNode.isParsed());
+      StubElement<?> element = myBuilder.buildStubTree(file);
+      PsiClassStub<?> classStub = ContainerUtil.findInstance(element.getChildrenStubs(), PsiClassStub.class);
+      assertNotNull(classStub);
+      PsiMethodStub methodStub = ContainerUtil.findInstance(classStub.getChildrenStubs(), PsiMethodStub.class);
+      assertNotNull(methodStub);
+      TypeInfo typeInfo = methodStub.getReturnTypeText();
+      assertEquals("com.foo.Outer.Inner", typeInfo.text());
+      TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
+      assertEquals("""
+                     /.->@Anno1
+                     ->@Anno2""", annotations.toString());
+    });
   }
 
+  @Test
   public void testSOEProof() {
     StringBuilder sb = new StringBuilder();
     SecureRandom random = new SecureRandom();
@@ -920,41 +954,52 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
       sb.append("  \"").append(random.nextInt(Integer.MAX_VALUE)).append("\" +\n");
     }
     sb.append("  \"\");\n}");
+    int depth = i;
 
-    PsiJavaFile file = (PsiJavaFile)createLightFile("SOE_test.java", sb.toString());
-    long t = System.currentTimeMillis();
-    StubElement<?> tree = myBuilder.buildStubTree(file);
-    t = System.currentTimeMillis() - t;
-    assertEquals("""
-                   PsiJavaFileStub []
-                     IMPORT_LIST:PsiImportListStub
-                     CLASS:PsiClassStub[name=SOE_test fqn=SOE_test]
-                       MODIFIER_LIST:PsiModifierListStub[mask=0]
-                       TYPE_PARAMETER_LIST:PsiTypeParameterListStub
-                       EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
-                       IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
-                       FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)createLightFile("SOE_test.java", sb.toString());
+      long t = System.currentTimeMillis();
+      StubElement<?> tree = myBuilder.buildStubTree(file);
+      t = System.currentTimeMillis() - t;
+      assertEquals("""
+                     PsiJavaFileStub []
+                       IMPORT_LIST:PsiImportListStub
+                       CLASS:PsiClassStub[name=SOE_test fqn=SOE_test]
                          MODIFIER_LIST:PsiModifierListStub[mask=0]
-                   """,
-                 DebugUtil.stubTreeToString(tree));
-    LOG.debug("SOE depth=" + i + ", time=" + t + "ms");
+                         TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                         EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                         IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                         FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]
+                           MODIFIER_LIST:PsiModifierListStub[mask=0]
+                     """,
+                   DebugUtil.stubTreeToString(tree));
+      LOG.debug("SOE depth=" + depth + ", time=" + t + "ms");
+    });
   }
 
   private void doTest(/*@Language("JAVA")*/ String source, @Language("TEXT") String expected) {
-    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
-    FileASTNode fileNode = file.getNode();
-    assertNotNull(fileNode);
-    assertFalse(fileNode.isParsed());
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+      file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+      FileASTNode fileNode = file.getNode();
+      assertNotNull(fileNode);
+      assertFalse(fileNode.isParsed());
 
-    StubElement<?> lightTree = myBuilder.buildStubTree(file);
-    assertFalse(fileNode.isParsed());
+      StubElement<?> lightTree = myBuilder.buildStubTree(file);
+      assertFalse(fileNode.isParsed());
 
-    file.getNode().getChildren(null); // force switch to AST
-    StubElement<?> astBasedTree = myBuilder.buildStubTree(file);
-    assertTrue(fileNode.isParsed());
+      file.getNode().getChildren(null); // force switch to AST
+      StubElement<?> astBasedTree = myBuilder.buildStubTree(file);
+      assertTrue(fileNode.isParsed());
 
-    assertEquals("light tree differs", expected, DebugUtil.stubTreeToString(lightTree));
-    assertEquals("AST-based tree differs", expected, DebugUtil.stubTreeToString(astBasedTree));
+      assertEquals(expected, DebugUtil.stubTreeToString(lightTree), "light tree differs");
+      assertEquals(expected, DebugUtil.stubTreeToString(astBasedTree), "AST-based tree differs");
+    });
+  }
+
+  private static PsiFile createLightFile(String fileName, String text) {
+    Project project = projectFixture.get().getProject();
+    return PsiFileFactory.getInstance(project).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
+                                                                  text, LocalTimeCounter.currentTime(), false, false);
   }
 }

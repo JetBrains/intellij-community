@@ -19,15 +19,29 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaTestDescriptor;
 
+@TestApplication
+public class TreeIsCorrectAfterDiffReparseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(lightJavaTestDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testIDEADEV41862() throws Throwable {
     @NonNls String part1 = """
       package com.test;
@@ -1100,14 +1114,15 @@ public class TreeIsCorrectAfterDiffReparseTest extends LightJavaCodeInsightTestC
 
         private static final Category cat=Category.getInstance(AssignmentManager.class.getName());
       }""";
-    configureFromFileText("Foo.java", part1 + part2);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("Foo.java", part1 + part2);
 
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
-    final Document doc = docManager.getDocument(getFile());
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(part1.length(), "/**"));
+    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(myFixture.getProject());
+    final Document doc = ReadAction.computeBlocking(() -> docManager.getDocument(myFixture.getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> doc.insertString(part1.length(), "/**"));
 
-    DebugUtil.runWithCheckInternalInvariantsEnabled(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> DebugUtil.runWithCheckInternalInvariantsEnabled(() -> {
       docManager.commitAllDocuments();
-    });
+    }));
   }
 }

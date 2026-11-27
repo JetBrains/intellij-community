@@ -5,30 +5,43 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiModifier;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
-@HeavyPlatformTestCase.WrapInCommand
-public class PsiDocumentManager2Test extends LightPlatformTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class PsiDocumentManager2Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+
+  @Test
   public void testUnregisteredFileType() {
+    Project project = projectFixture.get().getProject();
     final class MyFileType extends XmlLikeFileType {
       private MyFileType() {
         super(XMLLanguage.INSTANCE);
@@ -57,50 +70,57 @@ public class PsiDocumentManager2Test extends LightPlatformTestCase {
         return null;
       }
     }
-    PsiFile
-      file = PsiFileFactory.getInstance(getProject()).createFileFromText("DummyFile.my", new MyFileType(), "<gggg></gggg>", LocalTimeCounter.currentTime(), true);
-    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(file));
+    ReadAction.runBlocking(() -> {
+      PsiFile
+        file = PsiFileFactory.getInstance(project).createFileFromText("DummyFile.my", new MyFileType(), "<gggg></gggg>", LocalTimeCounter.currentTime(), true);
+      Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(file));
 
-    assertTrue(document.isWritable());
-    assertTrue(file.getVirtualFile().getFileType() instanceof MyFileType);
-    assertTrue(DaemonCodeAnalyzer.getInstance(getProject()).isHighlightingAvailable(file));
+      assertTrue(document.isWritable());
+      assertTrue(file.getVirtualFile().getFileType() instanceof MyFileType);
+      assertTrue(DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file));
+    });
   }
 
+  @Test
   public void testPsiToDocSyncInNonPhysicalFile() {
-    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
-      .createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}", false, false);
+    Project project = projectFixture.get().getProject();
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(project)
+        .createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}", false, false);
 
-    Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
-    assertNotNull(document);
+      Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
+      assertNotNull(document);
 
-    file.getClasses()[0].getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+      file.getClasses()[0].getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
 
-    assertEquals("public class Foo {}", document.getText());
-    assertFalse(PsiDocumentManager.getInstance(getProject()).isUncommited(document));
+      assertEquals("public class Foo {}", document.getText());
+      assertFalse(PsiDocumentManager.getInstance(project).isUncommited(document));
+    });
   }
 
+  @Test
   public void test_nonPhysical_PSI_matches_document_loaded_after_modifications() {
-    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject())
-      .createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}\nclass Bar{}", false, false);
+    Project project = projectFixture.get().getProject();
+    ReadAction.runBlocking(() -> {
+      PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(project)
+        .createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}\nclass Bar{}", false, false);
 
-    file.getClasses()[1].delete();
-    String expectedText = "class Foo {}\n";
-    assertEquals(expectedText, file.getText());
+      file.getClasses()[1].delete();
+      String expectedText = "class Foo {}\n";
+      assertEquals(expectedText, file.getText());
 
-    Document document = file.getViewProvider().getDocument();
-    assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
-    assertEquals(expectedText, document.getText());
+      Document document = file.getViewProvider().getDocument();
+      assertTrue(PsiDocumentManager.getInstance(project).isCommitted(document));
+      assertEquals(expectedText, document.getText());
+    });
   }
 
-  public void testGetDocumentWithoutReadActionThrows() throws ExecutionException, InterruptedException {
-    VirtualFile file = VfsTestUtil.createFile(getSourceRoot(), "test.txt", "test");
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(
-        () -> FileDocumentManager.getInstance().getDocument(file)
-      );
-      assertTrue(error.getMessage(), error.getMessage().contains(ThreadingAssertions.MUST_EXECUTE_IN_READ_ACTION));
-    }).get();
+  @Test
+  public void testGetDocumentWithoutReadActionThrows() {
+    VirtualFile file = VfsTestUtil.createFile(projectFixture.get().getSourceRoot(), "test.txt", "test");
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(
+      () -> FileDocumentManager.getInstance().getDocument(file)
+    );
+    assertTrue(error.getMessage().contains(ThreadingAssertions.MUST_EXECUTE_IN_READ_ACTION), error.getMessage());
   }
-
-
 }

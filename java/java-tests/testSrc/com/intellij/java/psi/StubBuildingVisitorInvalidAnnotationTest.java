@@ -5,9 +5,9 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +17,16 @@ import org.jetbrains.org.objectweb.asm.FieldVisitor;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.RecordComponentVisitor;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Verifies that bytecode annotations whose type descriptor carries a bad character
@@ -29,15 +35,18 @@ import java.util.Set;
  * valid Java reference, so letting them through produces
  * {@code IncorrectOperationException} when the stub text is later re-parsed.
  */
-public class StubBuildingVisitorInvalidAnnotationTest extends LightIdeaTestCase {
+@TestApplication
+public class StubBuildingVisitorInvalidAnnotationTest {
   private static final String PLUS_DESC = "Ljdk/Profile+Annotation;";
   private static final String MINUS_DESC = "Lorg/some-test/Annotation;";
   private static final String DEPRECATED_DESC = "Ljava/lang/Deprecated;";
 
+  @Test
   public void testPlusAnnotationsAreDroppedAtEveryLevel() throws Exception {
     doTest(PLUS_DESC, "+");
   }
 
+  @Test
   public void testMinusAnnotationsAreDroppedAtEveryLevel() throws Exception {
     doTest(MINUS_DESC, "-");
   }
@@ -60,7 +69,7 @@ public class StubBuildingVisitorInvalidAnnotationTest extends LightIdeaTestCase 
       },
       () -> annotationTexts.addAll(collectAnnotationTexts(buildStub(bytes))));
 
-    assertEmpty(loggedErrors);
+    assertThat(loggedErrors).isNullOrEmpty();
 
     for (String text : annotationTexts) {
       assertFalse(text.contains(s));

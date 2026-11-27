@@ -6,11 +6,12 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.cls.ClsFormatException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.StringCharacterIterator;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SignatureParsingTest {
   @Test
@@ -47,9 +48,9 @@ public class SignatureParsingTest {
     assertEquals("pkg.Outer.Inner$1", StubBuildingVisitor.GUESSING_MAPPER.fun("pkg/Outer$Inner$1"));
   }
 
-  @Test(expected = ClsFormatException.class)
-  public void testIllegal() throws ClsFormatException {
-    parseTypeString("T");
+  @Test
+  public void testIllegal() {
+    assertThrows(ClsFormatException.class, () -> parseTypeString("T"));
   }
 
   private static String parseTypeString(String signature) throws ClsFormatException {
