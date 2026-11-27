@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -35,6 +36,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentModel
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.MarkdownTableAlignmentSettingsListener
 import org.intellij.plugins.markdown.editor.tables.ui.alignment.TablePadRenderer
+import org.intellij.plugins.markdown.lang.isAirPrompt
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import org.jetbrains.annotations.ApiStatus
@@ -43,7 +45,10 @@ import kotlin.time.Duration.Companion.milliseconds
 /** Coalesces editor changes and refreshes table alignment on the EDT. */
 @ApiStatus.Internal
 class MarkdownTableAlignmentController(private val editor: Editor) : Disposable {
-  private val model = MarkdownTableAlignmentModel(editor)
+  private val model = MarkdownTableAlignmentModel(
+    editor,
+    rowsCanWrap = FileDocumentManager.getInstance().getFile(editor.document)?.isAirPrompt() == true,
+  )
   private val coroutineScope = MarkdownApplicationScope.createChildScope()
   private val refreshRequests = Channel<Unit>(Channel.CONFLATED)
 

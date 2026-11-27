@@ -3,6 +3,9 @@ package org.intellij.plugins.markdown.editor.tables.ui.alignment
 
 import com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.DefaultLineWrapPositionStrategy
+import com.intellij.openapi.editor.SoftWrap
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -198,6 +201,48 @@ class MarkdownTableAlignmentModelTest {
   }
 
   @Test
+  fun `test a table that wraps once padded stays without padding`(): Unit = timeoutRunBlocking {
+    configureRaggedTable()
+    withContext(Dispatchers.EDT) {
+      configureProseSoftWraps(10)
+      repeat(3) {
+        proseModel.refresh(TextRange(0, myFixture.editor.document.textLength))
+
+        assertNoPads()
+        assertThat(softWraps()).isEmpty()
+      }
+    }
+  }
+
+  @Test
+  fun `test a wrapped table is aligned again in a wider view`(): Unit = timeoutRunBlocking {
+    configureRaggedTable()
+    withContext(Dispatchers.EDT) {
+      configureProseSoftWraps(10)
+      proseModel.refresh(TextRange(0, myFixture.editor.document.textLength))
+      assertNoPads()
+
+      configureProseSoftWraps(12)
+      proseModel.refresh(TextRange(0, myFixture.editor.document.textLength))
+
+      assertBordersAligned()
+      assertThat(softWraps()).isEmpty()
+    }
+  }
+
+  @Test
+  fun `test a table wider than the view keeps its padding while table rows do not wrap`(): Unit = timeoutRunBlocking {
+    configureRaggedTable()
+    withContext(Dispatchers.EDT) {
+      EditorTestUtil.configureSoftWraps(myFixture.editor, 10)
+      model.refresh(TextRange(0, myFixture.editor.document.textLength))
+
+      assertBordersAligned()
+      assertThat(softWraps()).isEmpty()
+    }
+  }
+
+  @Test
   fun `test a table without borders is left alone`(): Unit = timeoutRunBlocking {
     // language=Markdown
     myFixture.configureByText(
@@ -287,8 +332,25 @@ class MarkdownTableAlignmentModelTest {
     )
   }
 
+  private fun configureProseSoftWraps(columns: Int) {
+    EditorTestUtil.configureSoftWraps(myFixture.editor, columns)
+    val applianceManager = (myFixture.editor.softWrapModel as SoftWrapModelImpl).applianceManager
+    applianceManager.setLineWrapPositionStrategy(DefaultLineWrapPositionStrategy())
+    applianceManager.recalculateAll("prose soft wraps")
+  }
+
+  private fun softWraps(): List<SoftWrap> {
+    val softWrapModel = myFixture.editor.softWrapModel as SoftWrapModelImpl
+    softWrapModel.prepareToMapping()
+    return softWrapModel.getSoftWrapsForRange(0, myFixture.editor.document.textLength)
+  }
+
   private val model: MarkdownTableAlignmentModel by lazy {
     MarkdownTableAlignmentModel(myFixture.editor).also { Disposer.register(myFixture.testRootDisposable, it) }
+  }
+
+  private val proseModel: MarkdownTableAlignmentModel by lazy {
+    MarkdownTableAlignmentModel(myFixture.editor, rowsCanWrap = true).also { Disposer.register(myFixture.testRootDisposable, it) }
   }
 
   private fun withSettingDisabled(action: () -> Unit) {

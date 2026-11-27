@@ -47,7 +47,7 @@ class TablePadRenderer(var padWidth: Int) : EditorCustomElementRenderer {
 
 /** Owns the visual table-alignment padding in one editor. */
 @ApiStatus.Internal
-class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
+class MarkdownTableAlignmentModel(private val editor: Editor, private val rowsCanWrap: Boolean = false) : Disposable {
   // Ordered by marker offset for updateEditedCell's binary search.
   private val entries = ArrayList<TableEntry>()
 
@@ -164,23 +164,37 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
       return entry
     }
     val borderOffsetsByRow = ArrayList<IntArray>(rowElements.size)
-    val measured = ArrayList<RowSegments>(rowElements.size)
     for (rowElement in rowElements) {
       val borders = borderOffsetsOf(rowElement)
-      val segments = borders?.let { measureRow(editor, it) }
-      if (segments == null) {
+      if (borders == null) {
         entry.disposePads()
         return entry
       }
       borderOffsetsByRow.add(borders)
-      measured.add(segments)
     }
-    if (measured.isEmpty()) {
+    var measured = measureRows(borderOffsetsByRow)
+    if (rowsCanWrap && measured == null && entry.pads.isNotEmpty()) {
+      entry.disposePads()
+      measured = measureRows(borderOffsetsByRow)
+    }
+    if (measured.isNullOrEmpty()) {
       entry.disposePads()
       return entry
     }
     val alignments = alignmentsOf(table)
     val layout = TableAlignmentLayout.compute(measured, alignments)
+    val fit = TableFit(measured.maxOf { it.originX } + layout.columnWidths.sum(), editor.scrollingModel.visibleArea.width)
+    if (entry.wrappedAt?.covers(fit) == true) {
+      entry.disposePads()
+      return entry
+    }
+    applyPads(entry, borderOffsetsByRow, layout)
+    if (rowsCanWrap && borderOffsetsByRow.any(::wraps)) {
+      entry.disposePads()
+      entry.wrappedAt = fit
+      return entry
+    }
+    entry.wrappedAt = null
     val firstLine = editor.document.getLineNumber(table.textRange.startOffset)
     val relativeLines = IntArray(borderOffsetsByRow.size)
     var lastRelativeLine = -1
@@ -195,9 +209,16 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
       borderCounts[line] = borderOffsetsByRow[index].size
       rowIndices[line] = index
     }
-    applyPads(entry, borderOffsetsByRow, layout)
     entry.fastPath = FastPathState(borderCounts, rowIndices, alignments, layout.columnWidths)
     return entry
+  }
+
+  private fun measureRows(borderOffsetsByRow: List<IntArray>): List<RowSegments>? {
+    return borderOffsetsByRow.map { measureRow(editor, it) ?: return null }
+  }
+
+  private fun wraps(borders: IntArray): Boolean {
+    return editor.offsetToXY(borders.first(), false, false).y != editor.offsetToXY(borders.last(), false, false).y
   }
 
   private fun isHiddenByCollapsedRegion(startOffset: Int, endOffset: Int): Boolean {
@@ -349,6 +370,8 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
 
     var fastPath: FastPathState? = null
 
+    var wrappedAt: TableFit? = null
+
     fun disposePads() {
       pads.values.forEach(Disposer::dispose)
       pads.clear()
@@ -368,6 +391,10 @@ class MarkdownTableAlignmentModel(private val editor: Editor) : Disposable {
     val alignments: List<CellAlignment>,
     val columnWidths: List<Int>,
   )
+
+  private class TableFit(val alignedWidth: Int, val viewWidth: Int) {
+    fun covers(other: TableFit): Boolean = other.alignedWidth >= alignedWidth && other.viewWidth <= viewWidth
+  }
 
   private enum class PadSlot { ORIGIN, LEAD, TAIL }
 
