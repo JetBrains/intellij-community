@@ -400,6 +400,7 @@ public final class IterationState {
   /**
    * Gives every layer of the line break at the end of the visual line, the hugging ones included.
    * At a soft wrap, the break is the soft wrap.
+   * In a right-aligned editor without a soft wrap, it gives the layers of the last step before the break.
    */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getLineBreakLayers() {
