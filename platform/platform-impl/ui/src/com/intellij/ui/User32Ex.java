@@ -41,6 +41,11 @@ public final class User32Ex {
   /** {@code SM_REMOTESESSION} for {@link #getSystemMetrics} */
   public static final int SM_REMOTESESSION = 0x1000;
 
+  /**
+   * {@code ASFW_ANY} for {@link #allowSetForegroundWindow(long)}
+   */
+  public static final long ASFW_ANY = -1;
+
   /** {@code GetSystemMetrics}; 0 for an unknown index */
   public static int getSystemMetrics(int index) {
     try {
@@ -135,7 +140,11 @@ public final class User32Ex {
     }
   }
 
-  /** Lets the process call {@code SetForegroundWindow}; a {@code DWORD} process id, so the upper half of a {@code long} pid is dropped. */
+  /**
+   * Lets the process call {@code SetForegroundWindow}; a {@code DWORD} process id, so the upper half of a {@code long} pid is dropped.
+   *
+   * <p> Passing {@link #ASFW_ANY} as {@code processId} allows any process to activate a window.
+   */
   public static void allowSetForegroundWindow(long processId) {
     try {
       var _ = (int)Handles.ALLOW_SET_FOREGROUND_WINDOW.invokeExact((int)processId);
