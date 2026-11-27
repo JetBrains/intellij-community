@@ -77,6 +77,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -1894,14 +1895,10 @@ public final class EditorPainter implements TextDrawingCallback {
       return new IterationState(myEditor, start, end, caretData, false, false, false, backwards);
     }
 
-    private interface MarginWidthConsumer {
-      void process(float width);
-    }
-
     private void paintLineFragments(VisualLinesIterator visLineIterator,
                                     int y,
                                     VisualLineFragmentPainter painter,
-                                    MarginWidthConsumer marginWidthConsumer) {
+                                    @Nullable FloatConsumer marginWidthConsumer) {
       int visualLine = visLineIterator.getVisualLine();
       float x = myCorrector.startX(visualLine) + (visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0);
       int offset = visLineIterator.getVisualLineStartOffset();
@@ -1989,7 +1986,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             if (marginWidthConsumer != null && fragment.getEndLogicalLine() == endLogicalLine &&
                 fragment.getStartLogicalColumn() <= myMarginColumns && fragment.getEndLogicalColumn() > myMarginColumns) {
-              marginWidthConsumer.process(fragment.visualColumnToX(fragment.logicalToVisualColumn(myMarginColumns)));
+              marginWidthConsumer.accept(fragment.visualColumnToX(fragment.logicalToVisualColumn(myMarginColumns)));
               marginReached = true;
             }
           }
@@ -2034,7 +2031,7 @@ public final class EditorPainter implements TextDrawingCallback {
           (visualLine == myCaretModel.getVisualPosition().line || x > myMarginColumns * myViewSnapshot.plainSpaceWidth())) {
         int endLogicalColumn = myView.offsetToLogicalPosition(visualLineEndOffset).column;
         if (endLogicalColumn <= myMarginColumns) {
-          marginWidthConsumer.process(x + (myMarginColumns - endLogicalColumn) * myViewSnapshot.plainSpaceWidth());
+          marginWidthConsumer.accept(x + (myMarginColumns - endLogicalColumn) * myViewSnapshot.plainSpaceWidth());
         }
       }
     }
