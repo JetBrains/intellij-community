@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getIntellisenseLimit
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.CharArrayUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.lang.MarkdownFileType
@@ -38,6 +39,9 @@ import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import java.awt.Font
 import java.awt.Graphics
 import java.util.function.IntUnaryOperator
+import javax.swing.BorderFactory
+import javax.swing.border.Border
+import kotlin.math.roundToInt
 import kotlin.reflect.KMutableProperty1
 
 /** Live preview shows these keys of a code fence gray and plain. The annotator gives them by key, so the scheme of the editor applies. */
@@ -47,6 +51,8 @@ internal val LIVE_PREVIEW_GRAY_FENCE_KEYS: Set<TextAttributesKey> =
 /**
  * Shows one editor in the UI font at the `Preview font size` and with soft wraps while live preview is on.
  * Hides line numbers, indent guides, the right margin and the line between the gutter and the text while live preview is on.
+ * Adds a padding of three times the font size above the first line while live preview is on, except in a diff.
+ * A change of the font size updates the padding.
  * Keeps the caret out of the virtual space after the end of a line while live preview is on.
  * Restores the font of the global scheme and the saved settings from before live preview when live preview turns off.
  * A setting without an override before live preview follows the global settings again after live preview.
@@ -75,6 +81,9 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
    */
   private var fenceAttributesSet = false
 
+  /** The content border before live preview. */
+  private var preLivePreviewContentBorder: Border? = null
+
   /** A setting before live preview. A null [override] means that the setting had no override. */
   private class SavedSetting(
     val property: KMutableProperty1<EditorSettingsState, Boolean>,
@@ -93,6 +102,9 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
       override fun softWrapsChanged() = onSoftWrapsChanged()
       override fun recalculationEnds() = Unit
     })
+    editor.addPropertyChangeListener({ event ->
+      if (event.propertyName == EditorEx.PROP_FONT_SIZE_2D && preLivePreviewSettings != null) applyTopPadding()
+    }, this)
   }
 
   @RequiresEdt
@@ -105,10 +117,12 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
         SavedSetting(property, if (settingsState.isOverridden(property)) property.get(settingsState) else null)
       }
       preLivePreviewGutterBackground = editor.gutterComponentEx.isPaintBackground
+      preLivePreviewContentBorder = editor.contentComponent.border
     }
     applyFont()
     applyFenceAttributes()
     if (editor.editorKind != EditorKind.DIFF) editor.gutterComponentEx.isPaintBackground = false
+    applyTopPadding()
     settings.isLineNumbersShown = false
     settings.isIndentGuidesShown = false
     // The UI font puts the margin column in the middle of the text.
@@ -134,6 +148,7 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
         if (override == null) settingsState.clearOverriding(setting.property) else setting.property.set(settingsState, override)
       }
       editor.gutterComponentEx.isPaintBackground = preLivePreviewGutterBackground
+      editor.contentComponent.border = preLivePreviewContentBorder
     }
   }
 
@@ -201,12 +216,21 @@ internal class MarkdownLivePreviewEditorAppearance private constructor(
     }
   }
 
+  private fun applyTopPadding() {
+    if (editor.editorKind == EditorKind.DIFF) return
+    val padding = (editor.colorsScheme.editorFontSize2D * TOP_PADDING_TO_FONT_SIZE).roundToInt()
+    val border = BorderFactory.createEmptyBorder(padding, 0, 0, 0)
+    editor.contentComponent.border = JBUI.Borders.merge(preLivePreviewContentBorder, border, false)
+  }
+
   private fun setSoftWrapPainter(painter: SoftWrapPainter) {
     (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(painter)
   }
 
   companion object {
     private val KEY = Key.create<MarkdownLivePreviewEditorAppearance>("markdown.live.preview.appearance")
+
+    private const val TOP_PADDING_TO_FONT_SIZE = 3f
 
     /** The settings that live preview changes and restores. */
     private val SAVED_SETTINGS: List<KMutableProperty1<EditorSettingsState, Boolean>> = listOf(

@@ -1893,7 +1893,8 @@ class MarkdownLivePreviewFoldingTest {
       val editor = myFixture.editor
       editor.colorsScheme.setAttributes(MarkdownHighlighterColors.ALERT_TITLE_CAUTION, TextAttributes(Color.BLUE, null, null, null, Font.PLAIN))
       val rule = blockQuoteRules().minBy { it.startOffset }
-      val bitmap = BufferedImage(1000, editor.lineHeight, BufferedImage.TYPE_INT_ARGB)
+      val ruleStart = editor.offsetToXY(rule.startOffset)
+      val bitmap = BufferedImage(1000, ruleStart.y + editor.lineHeight, BufferedImage.TYPE_INT_ARGB)
       val graphics = bitmap.createGraphics()
       try {
         rule.customRenderer!!.paint(editor, rule, graphics)
@@ -1902,7 +1903,7 @@ class MarkdownLivePreviewFoldingTest {
         graphics.dispose()
       }
 
-      assertEquals(Color.BLUE.rgb, bitmap.getRGB(editor.offsetToXY(rule.startOffset).x, editor.lineHeight / 2))
+      assertEquals(Color.BLUE.rgb, bitmap.getRGB(ruleStart.x, ruleStart.y + editor.lineHeight / 2))
     }
   }
 

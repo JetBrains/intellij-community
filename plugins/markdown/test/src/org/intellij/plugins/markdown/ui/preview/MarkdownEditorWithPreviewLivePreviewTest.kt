@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.roundToInt
@@ -302,6 +303,39 @@ class MarkdownEditorWithPreviewLivePreviewTest {
   }
 
   @Test
+  fun testLivePreviewLayoutAddsAndRemovesTheTopPadding(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editorWithPreview = createEditor()
+      val contentComponent = editorWithPreview.editor.contentComponent
+
+      editorWithPreview.setLivePreviewLayout()
+      editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
+      assertEquals(Insets(editorWithPreview.topPadding(), 0, 0, 0), contentComponent.insets, "Live preview must add the top padding")
+
+      editorWithPreview.setLayout(Layout.SHOW_EDITOR)
+      editorWithPreview.waitForFont(EditorColorsManager.getInstance().globalScheme.editorFontName)
+      assertEquals(Insets(0, 0, 0, 0), contentComponent.insets, "Editor Only must remove the top padding")
+    }
+  }
+
+  @Test
+  fun testPreviewFontSizeChangeUpdatesTheTopPadding(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val editorWithPreview = createEditor()
+      editorWithPreview.setLivePreviewLayout()
+      editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
+      val oldPadding = editorWithPreview.editor.contentComponent.insets.top
+
+      val previewFontSize = changePreviewFontSize()
+      editorWithPreview.waitForFontSize(UISettingsUtils.getInstance().scaleFontSize(previewFontSize.toFloat()))
+
+      val newPadding = editorWithPreview.editor.contentComponent.insets.top
+      assertEquals(editorWithPreview.topPadding(), newPadding, "A font size change must update the top padding")
+      assertTrue(newPadding > oldPadding, "A larger font size must make the top padding larger")
+    }
+  }
+
+  @Test
   fun testLivePreviewLayoutHidesAndRestoresGuides(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val editorWithPreview = createEditor()
@@ -519,6 +553,8 @@ class MarkdownEditorWithPreviewLivePreviewTest {
       editor.colorsScheme.editorFontSize2D == fontSize
     }
   }
+
+  private fun MarkdownEditorWithPreview.topPadding(): Int = (editor.colorsScheme.editorFontSize2D * 3).roundToInt()
 
   private fun MarkdownEditorWithPreview.waitForSoftWraps(enabled: Boolean) {
     waitFor({ "The editor soft wraps are ${editor.settings.isUseSoftWraps} instead of $enabled" }) {
