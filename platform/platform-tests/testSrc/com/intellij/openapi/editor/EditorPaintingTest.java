@@ -689,6 +689,78 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     runWithLook(false, true, this::runTestHuggingHighlighterOverCustomFold);
   }
 
+  /**
+   * Asserts the color of the custom fold region on visual line 1, and the color of the stub after it.
+   */
+  private void assertCustomFoldRegionAndStub(int regionRgb, int stubRgb) throws IOException {
+    BufferedImage image = paintEditor(false, null, null);
+    int y = myFixture.getEditor().visualLineToYRange(1)[0] + 7;
+    assertEquals(regionRgb, image.getRGB(12, y), "the region");
+    assertEquals(stubRgb, image.getRGB(29, y), "the stub after the region");
+  }
+
+  private void runTestHighlighterOverLineBreakAfterCustomFold() throws IOException {
+    myFixture.initText("\ntext\nx");
+    addCustomLinesFolding(1, 1);
+    addRangeHighlighter(5, 6, HighlighterLayer.WARNING, null, Color.red);
+    assertCustomFoldRegionAndStub(((EditorEx)myFixture.getEditor()).getBackgroundColor().getRGB(), Color.red.getRGB());
+  }
+
+  @Test
+  public void testHighlighterOverLineBreakAfterCustomFoldRounded() {
+    runWithLook(true, true, this::runTestHighlighterOverLineBreakAfterCustomFold);
+  }
+
+  @Test
+  public void testHighlighterOverLineBreakAfterCustomFoldStraight() {
+    runWithLook(false, true, this::runTestHighlighterOverLineBreakAfterCustomFold);
+  }
+
+  @Test
+  public void testSelectionOverLineBreakAfterCustomFold() {
+    runWithLook(false, true, () -> {
+      myFixture.initText("\ntext\nx");
+      addCustomLinesFolding(1, 1);
+      myFixture.getEditor().getSelectionModel().setSelection(5, 7);
+      int selectionRgb = myFixture.getEditor().getSelectionModel().getTextAttributes().getBackgroundColor().getRGB();
+      assertCustomFoldRegionAndStub(((EditorEx)myFixture.getEditor()).getBackgroundColor().getRGB(), selectionRgb);
+    });
+  }
+
+  @Test
+  public void testCustomFoldRendererGetsTheColorOfAHuggingHighlighter() {
+    runWithLook(false, true, () -> {
+      myFixture.initText("\ntext\nx");
+      List<Color> backgrounds = new ArrayList<>();
+      CustomFoldRegionRenderer renderer = new CustomFoldRegionRenderer() {
+        @Override
+        public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+          return 25;
+        }
+
+        @Override
+        public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+          return 15;
+        }
+
+        @Override
+        public void paint(
+          @NotNull CustomFoldRegion region,
+          @NotNull Graphics2D g,
+          @NotNull Rectangle2D targetRegion,
+          @NotNull TextAttributes textAttributes
+        ) {
+          backgrounds.add(textAttributes.getBackgroundColor());
+        }
+      };
+      FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(1, 1, renderer));
+      addRangeHighlighter(0, 7, HighlighterLayer.WARNING, null, Color.red);
+      paintEditor(false, null, null);
+      assertEquals(List.of(Color.red), backgrounds);
+    });
+  }
+
   @Test
   public void testHuggingMultiLineSyntaxToken() {
     runWithLook(true, true, () -> {

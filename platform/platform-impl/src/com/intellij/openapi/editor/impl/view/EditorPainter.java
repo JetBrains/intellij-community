@@ -104,6 +104,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -776,7 +777,9 @@ public final class EditorPainter implements TextDrawingCallback {
 
     /**
      * Paints the background of a custom fold region at {@code x}.
-     * The filling layers fill the row, and a hugging layer of {@code breakLayers} covers the region and the stub.
+     * The filling layers fill the row. A hugging highlighter that contains the region covers the region, and the
+     * renderer gets its color. In a left-aligned editor, a hugging layer of {@code breakLayers} covers the stub after
+     * the region.
      * Unless the row is a dry run, it queues the region for {@link #paintTextWithEffects()}.
      */
     private void paintCustomFoldRegion(
@@ -788,14 +791,18 @@ public final class EditorPainter implements TextDrawingCallback {
       int y,
       boolean dryRun
     ) {
-      Rectangle2D regionWithStub = withStub(x, x + cfr.getWidthInPixels(), y, cfr.getHeightInPixels());
+      int width = cfr.getWidthInPixels();
+      int height = cfr.getHeightInPixels();
       if (myHuggingHighlighting && isSelected(cfr)) {
         backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
-        paintSelectionBlock(regionWithStub);
+        paintSelectionBlock(withStub(x, x + width, y, height));
       } else {
-        paintLayeredBackground(layers, myFillStartX, y, myFillEndX - myFillStartX, cfr.getHeightInPixels());
+        paintLayeredBackground(layers, myFillStartX, y, myFillEndX - myFillStartX, height);
         if (myHuggingHighlighting) {
-          paintStub(breakLayers, regionWithStub);
+          paintHuggingRegion(cfr, layers, backgroundAttributes, new Rectangle2D.Double(x, y, width, height));
+          if (!myEditor.isRightAligned()) {
+            paintStub(breakLayers, withStub(x + width, x + width, y, height));
+          }
         }
       }
       if (dryRun) {
@@ -804,6 +811,51 @@ public final class EditorPainter implements TextDrawingCallback {
       myTextDrawingTasks.add(g -> {
         Rectangle2D bounds = new Rectangle2D.Double(x, y, cfr.getWidthInPixels(), cfr.getHeightInPixels());
         cfr.getRenderer().paint(cfr, g, bounds, backgroundAttributes);
+      });
+    }
+
+    /**
+     * Paints the hugging highlighters that contain the custom fold region over {@code region}, above these filling
+     * {@code layers}. When one of them is the top layer, {@code backgroundAttributes} gets its color.
+     */
+    private void paintHuggingRegion(
+      CustomFoldRegion cfr,
+      List<BackgroundLayer> layers,
+      TextAttributes backgroundAttributes,
+      Rectangle2D region
+    ) {
+      List<BackgroundLayer> regionLayers = new ArrayList<>(layers);
+      collectHuggingLayers(cfr, myDocMarkup, regionLayers);
+      collectHuggingLayers(cfr, myEditorMarkup, regionLayers);
+      if (regionLayers.size() == layers.size()) {
+        return;
+      }
+      regionLayers.sort(Comparator.reverseOrder());
+      int count = visibleLayerCount(regionLayers);
+      if (count > 0 && regionLayers.getFirst().getHugs()) {
+        backgroundAttributes.setBackgroundColor(regionLayers.getFirst().getColor());
+      }
+      paintStub(regionLayers, region);
+    }
+
+    /**
+     * Adds to {@code result} the layer of each hugging highlighter of this markup model that contains the custom fold
+     * region and has a background.
+     */
+    private void collectHuggingLayers(CustomFoldRegion cfr, MarkupModelEx markupModel, List<BackgroundLayer> result) {
+      int start = cfr.getStartOffset();
+      int end = cfr.getEndOffset();
+      markupModel.processRangeHighlightersOverlappingWith(start, end, highlighter -> {
+        if (highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE &&
+            highlighter.getAffectedAreaStartOffset() <= start &&
+            highlighter.getAffectedAreaEndOffset() >= end) {
+          TextAttributes attributes = highlighter.getTextAttributes(myColorsScheme);
+          Color color = attributes == null ? null : attributes.getBackgroundColor();
+          if (color != null) {
+            result.add(BackgroundLayer.highlighter(highlighter, color, myRoundedHighlighting, myHuggingHighlighting));
+          }
+        }
+        return true;
       });
     }
 
