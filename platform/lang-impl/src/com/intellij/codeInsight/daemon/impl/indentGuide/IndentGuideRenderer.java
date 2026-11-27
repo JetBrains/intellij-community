@@ -13,16 +13,18 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,18 +200,10 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
   private static @Nullable Color getIndentColor(Editor editor, int startOffset, boolean selected, boolean stickyPainting) {
     EditorColorsScheme scheme = editor.getColorsScheme();
     if (ExperimentalUI.isNewUI()) {
-      List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
-                                                                 x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
-      for (RangeHighlighter highlighter : highlighters) {
-        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighter.getLineMarkerRenderer();
-        assert renderer != null;
-        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighter.getStartOffset(), false)) {
-          Color color = renderer.getColor();
-          if (color != null) {
-            Color matched = scheme.getColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR);
-            return ObjectUtils.notNull(matched, color);
-          }
-        }
+      Color markerColor = getLineMarkerColor(editor, startOffset);
+      if (markerColor != null) {
+        Color matched = scheme.getColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR);
+        return ObjectUtils.notNull(matched, markerColor);
       }
     }
     if (!selected && stickyPainting) {
@@ -217,6 +211,45 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
       return null;
     }
     return scheme.getColor(selected ? EditorColors.SELECTED_INDENT_GUIDE_COLOR : EditorColors.INDENT_GUIDE_COLOR);
+  }
+
+  /**
+   * Returns the color of a {@link DefaultLineMarkerRenderer} of the editor markup that starts on the visual line of
+   * {@code offset}. Returns {@code null} when no such line marker has a color. Of several such line markers, the first one
+   * in the order of {@link #comesBefore} wins.
+   */
+  private static @Nullable Color getLineMarkerColor(@NotNull Editor editor, int offset) {
+    Document document = editor.getElfDocument();
+    FoldingModel foldingModel = editor.getFoldingModel();
+    int visualLine = editor.offsetToVisualLine(offset, false);
+    int lineStart = EditorUtil.getNotFoldedLineStartOffset(document, foldingModel, offset, false);
+    int lineEnd = EditorUtil.getNotFoldedLineEndOffset(document, foldingModel, offset, false);
+    Ref<RangeHighlighterEx> first = new Ref<>();
+    ((EditorEx)editor).getMarkupModel().processRangeHighlightersOverlappingWith(lineStart, lineEnd, highlighter -> {
+      if (highlighter.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer renderer &&
+          renderer.getColor() != null &&
+          highlighter.getStartOffset() >= lineStart &&
+          editor.offsetToVisualLine(highlighter.getStartOffset(), false) == visualLine &&
+          (first.isNull() || comesBefore(highlighter, first.get()))) {
+        first.set(highlighter);
+      }
+      return true;
+    });
+    return first.isNull() ? null : ((DefaultLineMarkerRenderer)first.get().getLineMarkerRenderer()).getColor();
+  }
+
+  /**
+   * Tells whether {@code highlighter} comes before {@code other} in the snapshot storage of the markup. The order is by the
+   * start of the affected area, then by the layer from the top, then by the id.
+   */
+  private static boolean comesBefore(@NotNull RangeHighlighterEx highlighter, @NotNull RangeHighlighterEx other) {
+    if (highlighter.getAffectedAreaStartOffset() != other.getAffectedAreaStartOffset()) {
+      return highlighter.getAffectedAreaStartOffset() < other.getAffectedAreaStartOffset();
+    }
+    if (highlighter.getLayer() != other.getLayer()) {
+      return highlighter.getLayer() > other.getLayer();
+    }
+    return highlighter.getId() < other.getId();
   }
 
   protected boolean isSelected(@NotNull Editor editor, int endOffset, int off, int indentColumn) {

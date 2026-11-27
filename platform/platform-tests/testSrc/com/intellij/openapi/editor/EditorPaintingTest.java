@@ -11,7 +11,10 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -20,9 +23,11 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingKeys;
+import com.intellij.openapi.editor.markup.DefaultLineMarkerRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -31,6 +36,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.ColorIcon;
@@ -57,6 +63,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @TestDataPath("$PROJECT_ROOT/community/platform/platform-tests/testData/editor/painting")
 @TestApplication
@@ -229,6 +236,76 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
         checkPartialRepaint(new Rectangle(x, 0, 1, image.getHeight()));
       }
     });
+  }
+
+  @Test
+  public void testIndentGuideOfMatchedBraces() {
+    myFixture.runTest(() -> {
+      addIndentGuideWithLineMarker(0);
+      BufferedImage image = paintEditor(false, null, null);
+      assertTrue(containsColor(image, Color.green));
+      assertFalse(containsRed(image));
+    });
+  }
+
+  @Test
+  public void testIndentGuideWithLineMarkerOnAnotherLine() {
+    myFixture.runTest(() -> {
+      addIndentGuideWithLineMarker(1);
+      BufferedImage image = paintEditor(false, null, null);
+      assertFalse(containsColor(image, Color.green));
+      assertTrue(containsRed(image));
+    });
+  }
+
+  @Test
+  public void testIndentGuideOfTwoLineMarkersOnOneLine() {
+    myFixture.runTest(() -> {
+      addIndentGuideWithLineMarker(1);
+      myFixture.getEditor().getColorsScheme().setColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR, null);
+      Document document = myFixture.getEditor().getDocument();
+      for (TextAttributesKey key : List.of(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES, EditorColors.SEARCH_RESULT_ATTRIBUTES)) {
+        DefaultLineMarkerRenderer renderer = new DefaultLineMarkerRenderer(key, 1);
+        assertNotNull(renderer.getColor());
+        int layer = key == CodeInsightColors.MATCHED_BRACE_ATTRIBUTES ? 1 : 2;
+        RangeHighlighter marker = myFixture.getEditor().getMarkupModel().addRangeHighlighter(
+          null, 0, document.getLineEndOffset(2), layer, HighlighterTargetArea.EXACT_RANGE);
+        marker.setLineMarkerRenderer(renderer);
+      }
+      List<Color> markerColors = new ArrayList<>();
+      for (RangeHighlighter highlighter : myFixture.getEditor().getMarkupModel().getAllHighlighters()) {
+        if (highlighter.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer renderer && highlighter.getStartOffset() == 0) {
+          markerColors.add(renderer.getColor());
+        }
+      }
+      assertEquals(2, markerColors.size());
+      assertNotEquals(markerColors.get(0), markerColors.get(1));
+
+      BufferedImage image = paintEditor(false, null, null);
+
+      assertTrue(containsColor(image, markerColors.get(0)), "the guide takes the color of the first line marker");
+      assertFalse(containsColor(image, markerColors.get(1)));
+    });
+  }
+
+  /**
+   * Adds a red indent guide from the line 0 to the line 3, and a line marker that starts on {@code markerLine}. The
+   * matched brace color of the guide is green.
+   */
+  private void addIndentGuideWithLineMarker(int markerLine) {
+    assumeTrue(ExperimentalUI.isNewUI(), "Only the new UI paints the guide of a line marker in the matched brace color");
+    myFixture.initText("  parent\n    child\n    child\n  next");
+    EditorColorsScheme scheme = myFixture.getEditor().getColorsScheme();
+    scheme.setColor(EditorColors.INDENT_GUIDE_COLOR, Color.red);
+    scheme.setColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR, Color.green);
+    Document document = myFixture.getEditor().getDocument();
+    RangeHighlighter guide = addRangeHighlighter(0, document.getLineStartOffset(3), 0, null);
+    guide.setCustomRenderer(new IndentGuideRenderer());
+    DefaultLineMarkerRenderer renderer = new DefaultLineMarkerRenderer(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES, 1);
+    assertNotNull(renderer.getColor());
+    RangeHighlighter marker = myFixture.getEditor().getMarkupModel().addRangeHighlighter(
+      null, document.getLineStartOffset(markerLine), document.getLineEndOffset(2), 0, HighlighterTargetArea.EXACT_RANGE);
+    marker.setLineMarkerRenderer(renderer);
   }
 
   @Test
@@ -1832,7 +1909,11 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   private static boolean containsRed(BufferedImage image) {
-    return firstColumnWithColor(image, Color.red) >= 0;
+    return containsColor(image, Color.red);
+  }
+
+  private static boolean containsColor(BufferedImage image, Color color) {
+    return firstColumnWithColor(image, color) >= 0;
   }
 
   /**
