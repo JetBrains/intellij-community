@@ -18,20 +18,22 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Checks the order of the refreshes of one storage unit in [BaseLayerService]. A test service holds its store in
- * memory and can hold a read after it took the data. The refreshes run on one thread, so the test knows when the
- * work of a refresh is done.
+ * Checks the refreshes of [BaseLayerService]: their order within one storage unit, and that a refresh of one locality
+ * reads and pushes only that locality. A test service holds its store in memory and can hold a read after it took the
+ * data. The refreshes run on one thread, so the test knows when the work of a refresh is done.
  */
 @TestApplication
 class LayerRefreshOrderTest {
   companion object {
     private val key = SettingsKey("test.refreshOrder.key", default = "def")
     private val fence = SettingsKey("test.refreshOrder.fence", default = "def")
+    private val other = SettingsKey("test.refreshOrder.other", default = "def")
   }
 
   @TestDisposable
@@ -48,17 +50,17 @@ class LayerRefreshOrderTest {
     val refreshScope = CoroutineScope(SupervisorJob() + refreshDispatcher)
     try {
       val service = HeldReadLayerService(refreshScope)
-      service.stored = MapValue(mapOf(key.identity to StringValue("old")))
+      service.stored[LayerLocality.TEAM] = MapValue(mapOf(key.identity to StringValue("old")))
       val heldRead = service.holdNextRead()
 
-      service.requestRefresh(app)
+      service.requestRefresh(app, LayerLocality.TEAM)
       withTimeout(10.seconds) { heldRead.dataTaken.await() }
-      service.stored = MapValue(emptyMap())
-      service.requestRefresh(app)
+      service.stored[LayerLocality.TEAM] = MapValue(emptyMap())
+      service.requestRefresh(app, LayerLocality.TEAM)
       heldRead.release.complete(Unit)
 
       // The second read and its pushes run in one task of the refresh thread, so the hop waits until they are done.
-      awaitEquals(2) { service.reads.get() }
+      awaitEquals(2) { service.reads(LayerLocality.TEAM) }
       withContext(refreshDispatcher) {}
       // The vault takes the pushes in order, so the fence applies after every push of the refreshes. The fence goes to
       // another locality, because a seed replaces the whole layer of its locality.
@@ -73,19 +75,48 @@ class LayerRefreshOrderTest {
     }
   }
 
+  @Test
+  fun `a refresh of one locality reads and pushes only that locality`(): Unit = runBlocking {
+    ExtensionTestUtil.maskExtensions(LayerProvider.EP_NAME, listOf(provider), disposable)
+    app.awaitReady()
+    val refreshDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val refreshScope = CoroutineScope(SupervisorJob() + refreshDispatcher)
+    try {
+      val service = HeldReadLayerService(refreshScope)
+      service.stored[LayerLocality.TEAM] = MapValue(mapOf(key.identity to StringValue("team")))
+      service.stored[LayerLocality.ENVIRONMENTAL] = MapValue(mapOf(other.identity to StringValue("environmental")))
+
+      service.requestRefresh(app, LayerLocality.TEAM)
+      awaitEquals("team") { key[app] }
+      // The read and the pushes of the refresh run in one task of the refresh thread, so the hop waits until they are done.
+      withContext(refreshDispatcher) {}
+
+      assertEquals(0, service.reads(LayerLocality.ENVIRONMENTAL))
+      assertEquals("def", other[app])
+    }
+    finally {
+      refreshScope.cancel()
+      refreshDispatcher.close()
+    }
+  }
+
   /**
-   * Backs [TestLayerProvider] at the application with the in-memory [stored] layer, for the [LayerLocality.TEAM]
-   * locality only. It counts the [reads] and can hold one read after it took the data.
+   * Backs [TestLayerProvider] at the application with the in-memory [stored] layers of the [LayerLocality.TEAM] and the
+   * [LayerLocality.ENVIRONMENTAL] locality. It counts the [reads] of each locality and can hold one read after it took
+   * the data.
    */
   private class HeldReadLayerService(scope: CoroutineScope) : BaseLayerService(scope) {
-    override val localities: List<LayerLocality> = listOf(LayerLocality.TEAM)
+    override val localities: List<LayerLocality> = listOf(LayerLocality.TEAM, LayerLocality.ENVIRONMENTAL)
 
     override val providerClass: Class<out LayerProvider> = TestLayerProvider::class.java
 
-    @Volatile
-    var stored: MapValue = MapValue(emptyMap())
+    /** Holds the layer of each locality. A locality with no entry has an empty layer. */
+    val stored: MutableMap<LayerLocality, MapValue> = ConcurrentHashMap()
 
-    val reads: AtomicInteger = AtomicInteger()
+    private val readCounts = ConcurrentHashMap<LayerLocality, AtomicInteger>()
+
+    /** Returns how many times a [read] of [locality] took its data. */
+    fun reads(locality: LayerLocality): Int = readCounts[locality]?.get() ?: 0
 
     @Volatile
     private var heldRead: HeldRead? = null
@@ -97,12 +128,12 @@ class LayerRefreshOrderTest {
      */
     fun holdNextRead(): HeldRead = HeldRead().also { heldRead = it }
 
-    /** Requests a [refresh] of [storageContext]. */
-    fun requestRefresh(storageContext: SettingsContext) = refresh(storageContext)
+    /** Requests a [refresh] of [storageContext] for [locality]. */
+    fun requestRefresh(storageContext: SettingsContext, locality: LayerLocality) = refresh(storageContext, locality)
 
-    override suspend fun read(storageContext: SettingsContext, locality: LayerLocality): MapValue {
-      val data = stored
-      reads.incrementAndGet()
+    override suspend fun read(storageContext: SettingsContext, locality: LayerLocality, preferVfsContent: Boolean): MapValue {
+      val data = stored[locality] ?: MapValue(emptyMap())
+      readCounts.computeIfAbsent(locality) { AtomicInteger() }.incrementAndGet()
       heldRead?.let { held ->
         heldRead = null
         held.dataTaken.complete(Unit)

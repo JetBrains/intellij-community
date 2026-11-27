@@ -38,13 +38,13 @@ internal class AppLayerService(scope: CoroutineScope) : BaseLayerService(scope) 
     scope.launch {
       watchOptionsDirectory()
       for (locality in localities) {
-        watchConfigFile(this@AppLayerService, configFile(locality)) { refresh(appContext) }
+        watchConfigFile(this@AppLayerService, configFile(locality)) { refresh(appContext, locality) }
       }
     }
   }
 
-  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality): MapValue =
-    withContext(Dispatchers.IO) { JsonConfigFile.read(configFile(locality)) }
+  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality, preferVfsContent: Boolean): MapValue =
+    withContext(Dispatchers.IO) { JsonConfigFile.read(configFile(locality), preferVfsContent) }
 
   override suspend fun write(storageContext: SettingsContext, locality: LayerLocality, data: MapValue) {
     withContext(Dispatchers.IO) { JsonConfigFile.write(configFile(locality), data) }

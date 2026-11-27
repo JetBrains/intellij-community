@@ -42,7 +42,7 @@ internal class AppDefaultsLayerService(scope: CoroutineScope) : BaseLayerService
     Disposer.register(disposable) { testResourceLoader = null }
   }
 
-  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality): MapValue {
+  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality, preferVfsContent: Boolean): MapValue {
     val bytes = withContext(Dispatchers.IO) { resourceLoader.getResourceAsStream(RESOURCE_PATH)?.use { it.readAllBytes() } }
     return if (bytes == null) MapValue(emptyMap()) else JsonSettingsCodec.decode(bytes.decodeToString())
   }

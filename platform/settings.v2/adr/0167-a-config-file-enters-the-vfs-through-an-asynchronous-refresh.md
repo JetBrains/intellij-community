@@ -4,7 +4,8 @@ Date: 2026-11-09
 
 ## Status
 
-Accepted ([IJPL-260980](https://youtrack.jetbrains.com/issue/IJPL-260980)).
+Accepted ([IJPL-260980](https://youtrack.jetbrains.com/issue/IJPL-260980)). Amended by
+[ADR 00GVJL](./00GVJL-a-refresh-on-a-vfs-event-reads-the-config-file-from-the-vfs-and-every-other-read-takes-the-disk.md).
 
 ## Context
 

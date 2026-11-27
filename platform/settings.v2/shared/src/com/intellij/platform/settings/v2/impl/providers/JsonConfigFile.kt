@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 import com.intellij.platform.settings.v2.SettingsValue.MapValue
 import com.intellij.platform.settings.v2.impl.JsonSettingsCodec
 import com.intellij.platform.settings.v2.impl.SettingsDecodingException
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -20,17 +21,42 @@ object JsonConfigFile {
   /**
    * Returns the map that the file at [path] holds, or an empty map when the file is absent.
    *
+   * @param preferVfsContent whether to read the content that the VFS holds for the file. Set it only on a VFS event of
+   *   the file. At that event, the VFS can already hold the save of an editor that the disk does not hold yet. Outside
+   *   of an event, the VFS content can be older than the disk. The VFS content is read only when the VFS already knows
+   *   the file and the file is valid. The lookup runs no VFS refresh (ADR 0167). In every other case, the disk is read.
    * @throws SettingsDecodingException when the file exists but does not parse
    */
-  fun read(path: Path): MapValue {
-    val text = try {
+  fun read(path: Path, preferVfsContent: Boolean = false): MapValue {
+    val text = (if (preferVfsContent) readVfsContent(path) else null)
+               ?: readDiskContent(path)
+               ?: return MapValue(emptyMap())
+    return JsonSettingsCodec.decode(text)
+  }
+
+  /**
+   * Returns the content that the VFS holds for the file at [path], or `null` when the VFS does not know a valid file
+   * there or cannot read its content.
+   */
+  private fun readVfsContent(path: Path): String? {
+    val file = LocalFileSystem.getInstance().findFileByPathIfCached(FileUtil.toSystemIndependentName(path.toString()))
+    if (file == null || !file.isValid) return null
+    return try {
+      file.contentsToByteArray().decodeToString()
+    }
+    catch (_: IOException) {
+      null
+    }
+  }
+
+  /** Returns the content of the file at [path] on the disk, or `null` when the file is absent. */
+  private fun readDiskContent(path: Path): String? =
+    try {
       Files.readString(path)
     }
     catch (_: NoSuchFileException) {
-      return MapValue(emptyMap())
+      null
     }
-    return JsonSettingsCodec.decode(text)
-  }
 
   /** Returns the JSON text that [write] stores for [map]. */
   fun toJson(map: MapValue): String = JsonSettingsCodec.encode(map)

@@ -39,6 +39,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.EnumSet
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -126,12 +127,12 @@ internal class FileLayerService(private val project: Project, private val scope:
     return SaveResult.SAVED
   }
 
-  // The content goes to the disk through nio, not through the VFS cache. So a read sees the real state on the disk,
-  // and a write lands as an external change. An editor with unsaved edits of the same file then shows a conflict,
-  // and the edits are not silently overwritten. The VFS only finds the configs and reports their edits.
-  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality): MapValue {
+  // The content goes to the disk through nio, not through the VFS cache. So a write lands as an external change. An
+  // editor with unsaved edits of the same file then shows a conflict, and the edits are not silently overwritten. A
+  // read takes the disk too, except on a VFS event of the file: the VFS writes to the disk asynchronously (ADR 00GVJL).
+  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality, preferVfsContent: Boolean): MapValue {
     val path = configPath(storageContext, locality)
-    return withContext(Dispatchers.IO) { JsonConfigFile.read(path) }  // throws SettingsDecodingException on malformed; the base skips the layer
+    return withContext(Dispatchers.IO) { JsonConfigFile.read(path, preferVfsContent) }  // throws SettingsDecodingException on malformed; the base skips the layer
   }
 
   override suspend fun write(storageContext: SettingsContext, locality: LayerLocality, data: MapValue) {
@@ -246,49 +247,57 @@ internal class FileLayerService(private val project: Project, private val scope:
     dir.findChild(name)?.takeIf { it.isValid && !it.isDirectory }
 
   // Do not inline, for the same reason as doLoad: the coroutine of ConfigFileListener cannot reach a protected member.
-  private fun doRefresh(storageContext: SettingsContext) = refresh(storageContext)
+  private fun doRefresh(storageContext: SettingsContext, locality: LayerLocality) = refresh(storageContext, locality)
 
   private inner class ConfigFileListener : AsyncFileListener {
     override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
       if (!watcherEnabled) return null
-      // The directories whose config an event touched in any way. A refresh reads the current state again to decide.
-      val dirs = LinkedHashSet<VirtualFile>()
-      for (event in events) collect(event, dirs)
-      if (dirs.isEmpty()) return null
+      // The localities of the config files that an event touched in any way, by directory. A refresh reads the
+      // current state of each file again to decide.
+      val changedConfigs = LinkedHashMap<VirtualFile, MutableSet<LayerLocality>>()
+      for (event in events) collect(event, changedConfigs)
+      if (changedConfigs.isEmpty()) return null
       return object : AsyncFileListener.ChangeApplier {
         override fun afterVfsChange() {
           scope.launch {
-            for (dir in dirs) {
+            for ((dir, changedLocalities) in changedConfigs) {
               // A VFS event is application-wide, so this listener also sees the dirs of other projects. Keep only the dirs of this project.
               val context = readAction {
                 if (!project.isDisposed && ProjectFileIndex.getInstance(project).isInContent(dir)) SettingsContext.file(dir, project) else null
               }
-              if (context != null) doRefresh(context)
+              if (context != null) changedLocalities.forEach { doRefresh(context, it) }
             }
           }
         }
       }
     }
 
-    private fun collect(event: VFileEvent, dirs: MutableSet<VirtualFile>) {
+    private fun collect(event: VFileEvent, changedConfigs: MutableMap<VirtualFile, MutableSet<LayerLocality>>) {
       when (event) {
-        is VFileCreateEvent -> if (isConfigName(event.childName)) dirs.add(event.parent)
-        is VFileContentChangeEvent -> track(event.file, event.file.parent, dirs)
-        is VFileDeleteEvent -> track(event.file, event.file.parent, dirs)
-        is VFileCopyEvent -> if (isConfigName(event.newChildName)) dirs.add(event.newParent)
-        is VFileMoveEvent -> if (isConfigName(event.file.name)) {
-          dirs.add(event.oldParent)
-          dirs.add(event.newParent)
+        is VFileCreateEvent -> addChangedConfig(changedConfigs, event.parent, event.childName)
+        is VFileContentChangeEvent -> addChangedConfig(changedConfigs, event.file.parent, event.file.name)
+        is VFileDeleteEvent -> addChangedConfig(changedConfigs, event.file.parent, event.file.name)
+        is VFileCopyEvent -> addChangedConfig(changedConfigs, event.newParent, event.newChildName)
+        is VFileMoveEvent -> {
+          addChangedConfig(changedConfigs, event.oldParent, event.file.name)
+          addChangedConfig(changedConfigs, event.newParent, event.file.name)
         }
         is VFilePropertyChangeEvent -> if (event.propertyName == VirtualFile.PROP_NAME) {
-          val dir = event.file.parent ?: return
-          if (isConfigName(event.oldValue) || isConfigName(event.newValue)) dirs.add(dir)
+          addChangedConfig(changedConfigs, event.file.parent, event.oldValue)
+          addChangedConfig(changedConfigs, event.file.parent, event.newValue)
         }
       }
     }
 
-    private fun track(file: VirtualFile, dir: VirtualFile?, dirs: MutableSet<VirtualFile>) {
-      if (dir != null && isConfigName(file.name)) dirs.add(dir)
+    /**
+     * Adds the locality of the config file [name] in [dir] to [changedConfigs]. It adds nothing when [name] is not a
+     * config file name or [dir] is absent.
+     *
+     * @param name the file name from a VFS event, which can be absent or not a string
+     */
+    private fun addChangedConfig(changedConfigs: MutableMap<VirtualFile, MutableSet<LayerLocality>>, dir: VirtualFile?, name: Any?) {
+      val locality = (name as? String)?.let(CONFIG_FILE_LOCALITIES::get) ?: return
+      if (dir != null) changedConfigs.getOrPut(dir) { EnumSet.noneOf(LayerLocality::class.java) }.add(locality)
     }
   }
 
@@ -296,19 +305,15 @@ internal class FileLayerService(private val project: Project, private val scope:
     /** Holds the name of the team config file. [localityFileName] derives the names of the other localities from it. */
     const val CONFIG_FILE: String = DIRECTORY_CONFIG_FILE_NAME
 
+    /** Holds the locality of each config file name. The watcher refreshes only the locality of the changed file. */
+    private val CONFIG_FILE_LOCALITIES: Map<String, LayerLocality> = LayerLocality.entries.associateBy { localityFileName(CONFIG_FILE, it) }
+
     /**
      * Holds the config file names of all the localities: `.jetbrains.json`, `.jetbrains.local.json` and
      * `.jetbrains.env.json`. The file layer finds the configs by them in the file name index, and the watcher reacts
      * to them.
      */
-    val CONFIG_FILE_NAMES: Set<String> = LayerLocality.entries.mapTo(HashSet()) { localityFileName(CONFIG_FILE, it) }
-
-    /**
-     * Returns whether [name] is one of the [CONFIG_FILE_NAMES].
-     *
-     * @param name the file name from a VFS event, which can be absent or not a string
-     */
-    private fun isConfigName(name: Any?): Boolean = name is String && name in CONFIG_FILE_NAMES
+    val CONFIG_FILE_NAMES: Set<String> = CONFIG_FILE_LOCALITIES.keys
 
     /**
      * Holds the top-level key of the synthetic per-file container in a directory config: `@@perfile`, then a file

@@ -54,8 +54,8 @@ a:com.intellij.platform.settings.v2.impl.providers.BaseLayerService
 - pa:getProviderClass():java.lang.Class
 - pf:load(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
 - pf:logDroppedSave(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,java.util.Map,java.lang.String):V
-- pa:read(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,kotlin.coroutines.Continuation):java.lang.Object
-- pf:refresh(com.intellij.platform.settings.v2.SettingsContext):V
+- pa:read(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,Z,kotlin.coroutines.Continuation):java.lang.Object
+- pf:refresh(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality):V
 - a:requestData(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
 - p:split(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,com.intellij.platform.settings.v2.SettingsValue$MapValue,kotlin.coroutines.Continuation):java.lang.Object
 - storageContext(com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsContext
@@ -65,7 +65,8 @@ f:com.intellij.platform.settings.v2.impl.providers.CollectIsolatedInParallelKt
 - sf:collectIsolatedInParallel(java.util.List,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.settings.v2.impl.providers.JsonConfigFile
 - sf:INSTANCE:com.intellij.platform.settings.v2.impl.providers.JsonConfigFile
-- f:read(java.nio.file.Path):com.intellij.platform.settings.v2.SettingsValue$MapValue
+- f:read(java.nio.file.Path,Z):com.intellij.platform.settings.v2.SettingsValue$MapValue
+- bs:read$default(com.intellij.platform.settings.v2.impl.providers.JsonConfigFile,java.nio.file.Path,Z,I,java.lang.Object):com.intellij.platform.settings.v2.SettingsValue$MapValue
 - f:toJson(com.intellij.platform.settings.v2.SettingsValue$MapValue):java.lang.String
 - f:write(java.nio.file.Path,com.intellij.platform.settings.v2.SettingsValue$MapValue):V
 f:com.intellij.platform.settings.v2.impl.providers.LocalityFilesKt

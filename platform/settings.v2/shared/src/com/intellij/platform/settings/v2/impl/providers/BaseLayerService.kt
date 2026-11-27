@@ -31,11 +31,12 @@ import java.util.concurrent.ConcurrentHashMap
  * - the [providerClass] to tag the layer data with;
  * - which contexts a [requestData] scope covers.
  *
- * **The load path.** [load] ([read], then [split]) returns the layers of a storage unit. [requestData] gives them to
- * the vault to install. [refresh] pushes the same result as a spontaneous update when the subclass sees that its
- * source changed on its own. A malformed source gives no layer: a push keeps the installed state, and a reload drops
- * it (ADR 0145). [split] fans the whole model of a storage unit out into the layers of each context. By default it
- * gives the model as is. The file layer splits a directory config into the directory layer and the per-file layers.
+ * **The load path.** [load] ([read], then [split]) returns the layers of a storage context for every locality.
+ * [requestData] gives them to the vault to install. [refresh] pushes the layers of one locality as a spontaneous
+ * update when the subclass sees that the source of that locality changed on its own. A malformed source gives no
+ * layer: a push keeps the installed state, and a reload drops it (ADR 0145). [split] fans the whole model of a
+ * storage unit out into the layers of each context. By default it gives the model as is. The file layer splits a
+ * directory config into the directory layer and the per-file layers.
  *
  * **The persist path.** The vault calls [writeData] with the model slices of a storage unit, grouped by
  * [storageContext]. The default writes the single slice. A subclass whose file backs several contexts joins them.
@@ -49,19 +50,22 @@ abstract class BaseLayerService(private val scope: CoroutineScope) : Disposable 
   open val localities: List<LayerLocality> = LayerLocality.entries
 
   /**
-   * Holds one refresher per storage unit, keyed by the identity of the storage context. Each channel is conflated, so
-   * repeated refresh signals coalesce.
+   * Holds one refresher per storage unit, keyed by the identity of the storage context and the locality. Each channel
+   * is conflated, so repeated refresh signals coalesce.
    */
-  private val refreshingChannels = ConcurrentHashMap<String, Channel<Unit>>()
+  private val refreshingChannels = ConcurrentHashMap<Pair<String, LayerLocality>, Channel<Unit>>()
 
   /**
    * Loads the whole persisted layer of [storageContext] for [locality].
    *
+   * @param preferVfsContent whether a store that is a file reads the content that the VFS holds for it, as
+   *   [JsonConfigFile.read] does. [refresh] sets it, because it runs on a VFS event of the file. A store that is not a
+   *   file ignores it.
    * @return the layer, or an empty map for an empty or absent layer
    * @throws SettingsDecodingException when the stored form does not parse, such as a malformed or half-edited file.
    *   [load] then gives no layer for that locality (ADR 0145).
    */
-  protected abstract suspend fun read(storageContext: SettingsContext, locality: LayerLocality): MapValue
+  protected abstract suspend fun read(storageContext: SettingsContext, locality: LayerLocality, preferVfsContent: Boolean): MapValue
 
   /** Persists the whole layer [data] of [storageContext] for [locality] to the store of that locality. */
   protected abstract suspend fun write(storageContext: SettingsContext, locality: LayerLocality, data: MapValue)
@@ -134,46 +138,65 @@ abstract class BaseLayerService(private val scope: CoroutineScope) : Disposable 
    * Reads the stored config of [storageContext] and [split]s it into the layers to return. [requestData] drives this
    * load path. A malformed file (a [SettingsDecodingException] from [read]) gives no layer for its locality. A reload
    * then drops the installed layers, and a push keeps them (ADR 0145). An empty or absent file gives an empty layer.
-   * The result is empty when [providerClass] is not registered.
+   * The result is empty when [providerClass] is not registered. Every locality reads the disk.
    */
   protected suspend fun load(storageContext: SettingsContext): List<LayerData> {
     val provider = layerProvider(providerClass) ?: return emptyList()
-    return localities.flatMap { locality ->
-      val data = try {
-        read(storageContext, locality)
-      }
-      catch (e: SettingsDecodingException) {
-        LOG.debug(e) { "Skipping '$locality' layer for '${storageContext.identity}': stored settings are malformed" }
-        return@flatMap emptyList()
-      }
-      split(storageContext, locality, data).map { (layerContext, layer) -> layerData(layerContext, provider, layer, locality) }
-    }
+    return localities.flatMap { locality -> loadLocality(provider, storageContext, locality, preferVfsContent = false) }
   }
 
   /**
-   * Reads the stored config of [storageContext] again and pushes the layers to the vault as a spontaneous update. A
-   * subclass calls it when it sees that its source changed on its own, however it detects that. [load], in contrast,
-   * returns the layers for the vault to install. It uses [load], so it skips a malformed source the same way.
+   * Reads the stored config of [storageContext] for [locality] and [split]s it into the layers of [provider]. A
+   * malformed file gives no layer.
    *
-   * The refreshes of one storage unit run one at a time and in order. So a refresh that read an older state never
-   * pushes after a refresh that read a newer state. A burst of calls for one unit collapses into at most one more
-   * refresh after the running one.
+   * @param preferVfsContent whether [read] takes the content that the VFS holds
    */
-  protected fun refresh(storageContext: SettingsContext) {
-    refreshingChannels.computeIfAbsent(storageContext.identity) { refresherChannel(storageContext) }.trySend(Unit)
+  private suspend fun loadLocality(
+    provider: LayerProvider,
+    storageContext: SettingsContext,
+    locality: LayerLocality,
+    preferVfsContent: Boolean,
+  ): List<LayerData> {
+    val data = try {
+      read(storageContext, locality, preferVfsContent)
+    }
+    catch (e: SettingsDecodingException) {
+      LOG.debug(e) { "Skipping '$locality' layer for '${storageContext.identity}': stored settings are malformed" }
+      return emptyList()
+    }
+    return split(storageContext, locality, data).map { (layerContext, layer) -> layerData(layerContext, provider, layer, locality) }
   }
 
-  private fun refresherChannel(storageContext: SettingsContext): Channel<Unit> {
+  /**
+   * Reads the stored config of [storageContext] for [locality] again and pushes its layers to the vault as a
+   * spontaneous update. A subclass calls it on a VFS event of the file of that locality. The other localities are not
+   * read. [load], in contrast, returns the layers of every locality for the vault to install. A malformed source is
+   * skipped the same way as in [load].
+   *
+   * The read prefers the content that the VFS holds. The VFS writes the content of a file to the disk asynchronously
+   * (`AsyncableLocalFileSystemImpl`), so at the event of a save from the IDE the disk can still hold the old or a
+   * partly written text (ADR 00GVJL).
+   *
+   * The refreshes of one storage unit, the context and the locality, run one at a time and in order. So a refresh that
+   * read an older state never pushes after a refresh that read a newer state. A burst of calls for one unit collapses
+   * into at most one more refresh after the running one.
+   */
+  protected fun refresh(storageContext: SettingsContext, locality: LayerLocality) {
+    refreshingChannels.computeIfAbsent(storageContext.identity to locality) { refresherChannel(storageContext, locality) }.trySend(Unit)
+  }
+
+  private fun refresherChannel(storageContext: SettingsContext, locality: LayerLocality): Channel<Unit> {
     val channel = Channel<Unit>(Channel.CONFLATED)
     scope.launch {
       while (channel.receiveCatching().isSuccess) {
         try {
           val vault = SettingsVault.getInstance()
-          for (data in load(storageContext)) vault.push(data)
+          val provider = layerProvider(providerClass) ?: continue
+          for (data in loadLocality(provider, storageContext, locality, preferVfsContent = true)) vault.push(data)
         }
         catch (e: Exception) {
           rethrowControlFlowException(e)
-          LOG.error("Failed to refresh settings for '${storageContext.identity}'", e)
+          LOG.error("Failed to refresh the '$locality' settings for '${storageContext.identity}'", e)
         }
       }
     }

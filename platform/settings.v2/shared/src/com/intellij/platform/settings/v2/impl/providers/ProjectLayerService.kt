@@ -36,14 +36,14 @@ internal class ProjectLayerService(private val project: Project, scope: Coroutin
     scope.launch {
       for (locality in localities) {
         val file = configFile(locality) ?: continue
-        watchConfigFile(this@ProjectLayerService, file) { refresh(projectContext) }
+        watchConfigFile(this@ProjectLayerService, file) { refresh(projectContext, locality) }
       }
     }
   }
 
-  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality): MapValue {
+  override suspend fun read(storageContext: SettingsContext, locality: LayerLocality, preferVfsContent: Boolean): MapValue {
     val file = configFile(locality) ?: return MapValue(emptyMap())
-    return withContext(Dispatchers.IO) { JsonConfigFile.read(file) }
+    return withContext(Dispatchers.IO) { JsonConfigFile.read(file, preferVfsContent) }
   }
 
   /** Returns [SaveResult.DROPPED] when the project has no base path, else writes as [BaseLayerService.writeData]. */
