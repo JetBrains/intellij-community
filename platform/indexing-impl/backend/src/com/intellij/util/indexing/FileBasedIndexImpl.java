@@ -75,6 +75,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -111,6 +112,7 @@ import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolde
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -924,14 +926,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           removeSingleIndexValue(indexId, fileId);
         }
         catch (Throwable e) {
-          LOG.info(e);
+          LOG.debug(e);
           if (unexpectedError == null) {
             unexpectedError = e;
           }
         }
       }
 
-      if (unexpectedError != null) {
+      if (unexpectedError != null && !(isShutdownStarted() && ExceptionUtil.causedBy(unexpectedError, ClosedStorageException.class))) {
         LOG.error(unexpectedError);
       }
     }
@@ -1128,9 +1130,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
     if (dirtyFiles.isEmpty()) return;
-    Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
+    RegisteredIndexes registeredIndexes = myRegisteredIndexes;
+    if (registeredIndexes == null) throw new CancellationException("The file-based index is shut down");
+    Collection<ID<?, ?>> indexIDs = registeredIndexes.getState().getIndexIDs();
     for (int fileId : dirtyFiles) {
       ProgressManager.checkCanceled();
+      // The tumbler and the JVM shutdown hook shut down the index, but they do not cancel the job of the caller.
+      if (registeredIndexes.isShutdownPerformed()) throw new CancellationException("The file-based index is shut down");
       ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(indexIDs, fileId, null));
     }
   }
