@@ -6,11 +6,13 @@ import com.intellij.openapi.projectRoots.impl.ReleaseDataMatching
 import com.intellij.openapi.projectRoots.impl.SdkmanReleaseData
 import com.intellij.openapi.projectRoots.impl.SdkmanrcConfigurationProvider
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.cancel
 import org.jetbrains.jps.model.java.JdkVersionDetector
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
@@ -46,8 +48,9 @@ class SdkmanrcWatcherHeavyTests {
   }
 }
 
-class SdkmanrcWatcherLightTests : UsefulTestCase() {
+class SdkmanrcWatcherLightTests {
 
+  @Test
   fun `test candidates parsing`() {
     assertEquals(SdkmanReleaseData.parse("8"),
                  SdkmanReleaseData("8", "8", null, null))
@@ -68,6 +71,7 @@ class SdkmanrcWatcherLightTests : UsefulTestCase() {
   /**
    * Identifiers as printed by `sdk list java`.
    */
+  @Test
   fun `test identifiers parsing`() {
     assertEquals(SdkmanReleaseData.parse("21.0.12+1.1-tem"),
                  SdkmanReleaseData("21.0.12+1.1-tem", "21.0.12", "1.1", "tem"))
@@ -93,6 +97,7 @@ class SdkmanrcWatcherLightTests : UsefulTestCase() {
     assertNull(SdkmanReleaseData.parse("current"))
   }
 
+  @Test
   fun `test identifiers versions and variants`() {
     for ((identifier, expected) in mapOf(
       "26.0.2-amzn" to (JdkVersionDetector.Variant.Corretto to 26),
@@ -112,13 +117,14 @@ class SdkmanrcWatcherLightTests : UsefulTestCase() {
       "8.0.504+1-librca" to (JdkVersionDetector.Variant.Liberica to 8),
     )) {
       val releaseData = SdkmanReleaseData.parse(identifier)
-      assertNotNull("$identifier is not parsed", releaseData)
+      assertNotNull(releaseData, "$identifier is not parsed")
       val (variant, feature) = expected
-      assertEquals("$identifier is not parsed as $variant", variant, releaseData!!.variant)
-      assertEquals("$identifier is not parsed as Java $feature", feature, releaseData.javaVersion?.feature)
+      assertEquals(variant, releaseData!!.variant, "$identifier is not parsed as $variant")
+      assertEquals(feature, releaseData.javaVersion?.feature, "$identifier is not parsed as Java $feature")
     }
   }
 
+  @Test
   fun `test candidates matching`() {
     for ((candidate, version) in mapOf(
       "11.0.11.hs-adpt" to "AdoptOpenJDK (HotSpot) 11.0.11",
@@ -137,27 +143,31 @@ class SdkmanrcWatcherLightTests : UsefulTestCase() {
       "17.0.10-graal" to "GraalVM 23.0.3 - Java 17.0.10",
       "22.ea.2-open" to "Oracle OpenJDK 22",
     )) {
-      assertEquals("$candidate doesn't exactly match $version",
-                   ReleaseDataMatching.EXACT_MATCH,
-                   SdkmanReleaseData.parse(candidate)?.matchVersionString(version))
+      assertEquals(ReleaseDataMatching.EXACT_MATCH,
+                   SdkmanReleaseData.parse(candidate)?.matchVersionString(version),
+                   "$candidate doesn't exactly match $version")
     }
   }
 
+  @Test
   fun `test exact match`() {
     assertEquals(ReleaseDataMatching.EXACT_MATCH,
                  SdkmanReleaseData.parse("17.0.7-tem")?.matchVersionString("Eclipse Temurin 17.0.7"))
   }
 
+  @Test
   fun `test major match`() {
     assertEquals(ReleaseDataMatching.FEATURE_MATCH,
                  SdkmanReleaseData.parse("17.0.0-tem")?.matchVersionString("Eclipse Temurin 17.0.7"))
   }
 
+  @Test
   fun `test no match on variant`() {
     assertEquals(ReleaseDataMatching.NO_MATCH,
                  SdkmanReleaseData.parse("17.0.7-tem")?.matchVersionString("Azul Zulu 17.0.7"))
   }
 
+  @Test
   fun `test no match on version`() {
     assertEquals(ReleaseDataMatching.NO_MATCH,
                  SdkmanReleaseData.parse("17.0.7-tem")?.matchVersionString("Eclipse Temurin 21.0.2"))

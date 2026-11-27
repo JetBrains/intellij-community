@@ -6,10 +6,10 @@ import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationService
 import com.intellij.openapi.projectRoots.impl.ReleaseDataMatching
 import com.intellij.openapi.projectRoots.impl.ToolVersionsConfigurationProvider
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.cancel
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -46,8 +46,9 @@ class ToolVersionsWatcherHeavyTests {
   }
 }
 
-class ToolVersionsWatcherLightTests : UsefulTestCase() {
+class ToolVersionsWatcherLightTests {
 
+  @Test
   fun `test candidates parsing`() {
     assertEquals(AsdfReleaseData.parse("8"),
                  null)
@@ -65,6 +66,7 @@ class ToolVersionsWatcherLightTests : UsefulTestCase() {
                  AsdfReleaseData("liberica-18.0.2.1+1", "liberica", "18.0.2.1"))
   }
 
+  @Test
   fun `test candidates matching`() {
     for ((candidate, version) in mapOf(
       //"corretto-8.342.07.3" to "Amazon Corretto 1.8.0_342",
@@ -81,27 +83,31 @@ class ToolVersionsWatcherLightTests : UsefulTestCase() {
 
       "graalvm-community-21.0.2" to "GraalVM CE 23.1.2 - Java 21.0.2",
     )) {
-      assertEquals("$candidate doesn't exactly match $version",
-                   ReleaseDataMatching.EXACT_MATCH,
-                   AsdfReleaseData.parse(candidate)?.matchVersionString(version))
+      assertEquals(ReleaseDataMatching.EXACT_MATCH,
+                   AsdfReleaseData.parse(candidate)?.matchVersionString(version),
+                   "$candidate doesn't exactly match $version")
     }
   }
 
+  @Test
   fun `test exact match`() {
     assertEquals(ReleaseDataMatching.EXACT_MATCH,
                  AsdfReleaseData.parse("temurin-17.0.7+7")?.matchVersionString("Eclipse Temurin 17.0.7"))
   }
 
+  @Test
   fun `test major match`() {
     assertEquals(ReleaseDataMatching.FEATURE_MATCH,
                  AsdfReleaseData.parse("temurin-17.0.0+1")?.matchVersionString("Eclipse Temurin 17.0.7"))
   }
 
+  @Test
   fun `test no match on variant`() {
     assertEquals(ReleaseDataMatching.NO_MATCH,
                  AsdfReleaseData.parse("temurin-17.0.7+7")?.matchVersionString("Azul Zulu 17.0.7"))
   }
 
+  @Test
   fun `test no match on version`() {
     assertEquals(ReleaseDataMatching.NO_MATCH,
                  AsdfReleaseData.parse("temurin-17.0.7+7")?.matchVersionString("Eclipse Temurin 21.0.2"))
