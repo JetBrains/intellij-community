@@ -102,11 +102,6 @@ object JdkDownloadUtil {
     return registeredSdk ?: createDownloadSdkInternal(sdkType, sdkDownloadTask)
   }
 
-  @Deprecated(message = "Use #downloadSdk(Project?, Sdk) for proper background progress", replaceWith = ReplaceWith("downloadSdk(project, sdk)"))
-  suspend fun downloadSdk(sdk: Sdk): Boolean {
-    return downloadSdk(null, sdk)
-  }
-
   suspend fun downloadSdk(project: Project?, sdk: Sdk): Boolean {
     return withContext(Dispatchers.EDT) {
       Disposer.newDisposable("The JdkDownloader#downloadSdk lifecycle").use { disposable ->

@@ -1,15 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadUtil
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.util.application
@@ -57,24 +54,4 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     return deferred.asCompletableFuture()
   }
 
-  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onJdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
-    return coroutineScope.async {
-      val downloadTask = JdkDownloadUtil.createDownloadTask(project, sdkDownloadTask.jdkItem, sdkDownloadTask.request.installDir)
-                         ?: return@async false
-
-      val sdk = JdkDownloadUtil.createDownloadSdk(JavaSdk.getInstance(), downloadTask)
-
-      onJdkCreated(sdk)
-
-      JdkDownloadUtil.downloadSdk(project, sdk)
-    }.asCompletableFuture()
-  }
-
-  fun scheduleDownloadJdkForNewProject(sdkDownloadTask: JdkDownloadTask): CompletableFuture<Boolean> {
-    return scheduleDownloadJdk(sdkDownloadTask) {
-      edtWriteAction {
-        ProjectRootManager.getInstance(project).projectSdk = it
-      }
-    }
-  }
 }

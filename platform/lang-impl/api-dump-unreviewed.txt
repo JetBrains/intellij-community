@@ -6040,7 +6040,6 @@ c:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 - p:forceAddActionToSelectFromDisk(com.intellij.openapi.projectRoots.SdkType):Z
 - getMulticaster():com.intellij.openapi.projectRoots.SdkModel$Listener
 - isInitialized():Z
-- setupInstallableSdk(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask,java.util.function.Consumer):V
 a:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel$NewSdkAction
 - f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:actionPerformed(com.intellij.openapi.projectRoots.Sdk,javax.swing.JComponent,java.util.function.Consumer):V
