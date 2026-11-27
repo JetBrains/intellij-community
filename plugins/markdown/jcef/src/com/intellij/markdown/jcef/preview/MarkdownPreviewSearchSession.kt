@@ -57,7 +57,7 @@ internal class MarkdownPreviewSearchSession(
 
   internal fun showSearchBar() {
     searchComponent.isVisible = true
-    IdeFocusManager.getInstance(project).requestFocus(searchComponent.searchTextComponent, false)
+    searchComponent.requestFocusInTheSearchFieldAndSelectContent(project)
   }
 
   override fun close() {
