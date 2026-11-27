@@ -1,16 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyrefly.lsp
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseProcessHandler
-import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
@@ -30,7 +27,6 @@ import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.ConfigurationItem
-import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DidChangeConfigurationParams
 import org.eclipse.lsp4j.InitializeResult
 import java.nio.file.Path
@@ -61,17 +57,6 @@ class PyreflyLspClientDescriptor(
     override val diagnosticsSupport: PyLspToolDiagnosticsSupport = object : PyLspToolDiagnosticsSupport() {
       override val showSourceAndCode: Boolean
         get() = !runsBundledPyrefly
-
-      override fun createAnnotation(
-        holder: AnnotationHolder,
-        diagnostic: Diagnostic,
-        textRange: TextRange,
-        quickFixes: List<IntentionAction>,
-      ) {
-        if (isSuppressedPyreflyDiagnostic(diagnostic)) return
-        val customizedQuickFixes = customizePyreflyQuickFixes(holder, diagnostic, textRange, quickFixes)
-        super.createAnnotation(holder, diagnostic, textRange, customizedQuickFixes)
-      }
     }
   }
 

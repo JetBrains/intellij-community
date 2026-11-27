@@ -111,18 +111,4 @@ class ZubanLspClientTest {
       assertNull(zubanMypyPath(root, emptyList(), inherited = " "))
     }
   }
-
-  @Nested
-  inner class StubPackage {
-    @Test
-    fun `the hint names the stub package`() {
-      val message = "Library stubs not installed for \"requests\"\nHint: \"python3 -m pip install types-requests\""
-      assertEquals("types-requests", zubanStubPackage(message))
-    }
-
-    @Test
-    fun `a message without a hint names no package`() {
-      assertNull(zubanStubPackage("Library stubs not installed for \"requests\""))
-    }
-  }
 }

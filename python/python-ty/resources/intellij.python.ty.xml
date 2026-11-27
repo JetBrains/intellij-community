@@ -23,9 +23,8 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.util.progress"/>
+    <module name="intellij.python.community"/>
     <module name="intellij.python.lsp.core"/>
-    <module name="intellij.python.psi"/>
-    <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.ty.common"/>
     <module name="intellij.xml.parser"/>

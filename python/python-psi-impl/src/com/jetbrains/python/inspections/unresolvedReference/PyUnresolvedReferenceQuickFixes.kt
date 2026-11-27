@@ -42,8 +42,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /** `UnresolvedRefTrueFalseQuickFix` for `true` / `false` typos. */
-@ApiStatus.Internal
-fun getTrueFalseQuickFix(refText: String): LocalQuickFix? =
+internal fun getTrueFalseQuickFix(refText: String): LocalQuickFix? =
   if (refText == "true" || refText == "false") UnresolvedRefTrueFalseQuickFix(refText) else null
 
 /** `UnresolvedRefCreateFunctionQuickFix` for unresolved unqualified calls like `foo()`. */
@@ -55,8 +54,7 @@ internal fun getCreateFunctionQuickFix(expr: PyReferenceExpression): LocalQuickF
 }
 
 /** Offer adding a parameter to the enclosing function when an unknown name is used inside its body. */
-@ApiStatus.Internal
-fun getAddParameterQuickFix(refName: String?, expr: PyReferenceExpression?): LocalQuickFix? {
+internal fun getAddParameterQuickFix(refName: String?, expr: PyReferenceExpression?): LocalQuickFix? {
   PsiTreeUtil.getParentOfType(expr, PyFunction::class.java) ?: return null
   val isInsideDecoratorOrAnnotationOrImport =
     PsiTreeUtil.getParentOfType(expr, PyDecorator::class.java) != null ||

@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.zuban
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
@@ -12,11 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.lsp.core.PyLspService
 import com.intellij.python.lsp.core.PyLspTool
-import com.intellij.python.lsp.core.PyLspToolCustomization
 import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolSettings
@@ -34,7 +30,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
-import org.eclipse.lsp4j.Diagnostic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
@@ -162,20 +157,6 @@ class ZubanLspClientDescriptor(
   /** The platform builds these options after the command line, so [pythonExecutable] is known here. */
   override fun createInitializationOptions(): Map<String, Any> =
     zubanInitializationOptions(pythonExecutable, project.service<ZubanConfiguration>().typeCheckingMode)
-
-  override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
-    override val diagnosticsSupport: PyLspToolDiagnosticsSupport = object : PyLspToolDiagnosticsSupport() {
-      override fun createAnnotation(
-        holder: AnnotationHolder,
-        diagnostic: Diagnostic,
-        textRange: TextRange,
-        quickFixes: List<IntentionAction>,
-      ) {
-        val file = holder.currentAnnotationSession.file
-        super.createAnnotation(holder, diagnostic, textRange, zubanQuickFixes(file, diagnostic, textRange) + quickFixes)
-      }
-    }
-  }
 }
 
 /**
