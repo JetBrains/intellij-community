@@ -58,6 +58,8 @@ class LspRequestExecutor(
   private val documentSymbolCache = register(LspPerFileCache<Unit, List<DocumentSymbol>>(lspClient.project, invalidateOnlyOnDocumentChange = true))
   private val documentHighlightCache = register(LspDocumentHighlightCache(lspClient.project))
   private val selectionRangeCache = register(LspPerFileCache<Int, SelectionRange>(lspClient.project, invalidateOnlyOnDocumentChange = true))
+  // Parameter Info asks for the signature help when it opens, and again when its hint updates right after it shows
+  private val signatureHelpCache = register(LspPerFileCache<Int, SignatureHelp>(lspClient.project))
 
   private fun <T : LspCache> register(cache: T): T {
     allCaches.add(cache)
@@ -127,10 +129,12 @@ class LspRequestExecutor(
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun getSignatureHelp(file: VirtualFile, offset: Int): SignatureHelp? {
-    return documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
-      val params = SignatureHelpParams(lspDocument.id, position)
-      sendRequestSync { it.textDocumentService.signatureHelp(params) }
+  internal fun getSignatureHelpCaching(file: VirtualFile, offset: Int): SignatureHelp? {
+    return signatureHelpCache.getOrCompute(file, offset) {
+      documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
+        val params = SignatureHelpParams(lspDocument.id, position)
+        sendRequestSync { it.textDocumentService.signatureHelp(params) }
+      }
     }
   }
 

@@ -67,8 +67,8 @@ internal class LspSearchEverywhereCommand(text: String, line: Int) : PlaybackCom
 
 /**
  * Runs Parameter Info at the caret of the selected editor, as its shortcut does, and waits until its hint highlights
- * a parameter with the given text. For the hint, the LSP client asks the server for the signature help twice:
- * for the signatures that the hint shows, and then for the active parameter, which the hint highlights.
+ * a parameter with the given text. The hint shows the signatures of the server, and highlights the active parameter
+ * of the answer when it updates right after it shows.
  * The hint has no model that a listener could watch for the highlight, so the command checks the hint every 10 ms.
  * It closes the hint at the end, so that the hint makes no requests during the next commands.
  *

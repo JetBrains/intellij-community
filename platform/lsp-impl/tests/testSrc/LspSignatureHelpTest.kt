@@ -167,6 +167,31 @@ internal class LspSignatureHelpTest {
     }
 
     @Test
+    fun `Parameter Info asks the server once for the signatures and the active parameter`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("signature18.txt", "function(1, 2$CARET)").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 13), SignatureHelp(listOf(signature("a", "b")), null, 1))
+
+      changingHint { showParameterInfo() }
+
+      assertEquals(1, serverSession.receivedRequests(serverSession.SIGNATURE_HELP).size)
+      assertEquals("<html>function(a, <b>b</b>)</html>", hintText())
+    }
+
+    @Test
+    fun `Parameter Info again at the same caret with no edit shows the kept answer`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("signature19.txt", "function(1, 2$CARET)").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 13), SignatureHelp(listOf(signature("a", "b")), null, 1))
+      changingHint { showParameterInfo() }
+
+      changingHint { showParameterInfo() }
+
+      assertEquals(1, serverSession.receivedRequests(serverSession.SIGNATURE_HELP).size)
+      assertEquals("<html>function(a, <b>b</b>)</html>", hintText())
+    }
+
+    @Test
     fun `no hint when the server has no signatures`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("signature12.txt", "function(1$CARET)").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
@@ -196,7 +221,7 @@ internal class LspSignatureHelpTest {
     fun `moving the caret to another argument asks again and highlights the new active parameter`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("signature14.txt", "function(1$CARET, 2)").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, 10), SignatureHelp(listOf(signature("a", "b")), null, 0))
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 10), SignatureHelp(listOf(signature("a", "b")), null, 0))
       changingHint { showParameterInfo() }
       assertEquals("<html>function(<b>a</b>, b)</html>", hintText())
 
@@ -211,7 +236,7 @@ internal class LspSignatureHelpTest {
     fun `an edit asks again at the same caret position`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("signature15.txt", "function(1, 2$CARET)").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, 13), SignatureHelp(listOf(signature("a", "b")), null, 0))
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 13), SignatureHelp(listOf(signature("a", "b")), null, 0))
       changingHint { showParameterInfo() }
       assertEquals("<html>function(<b>a</b>, b)</html>", hintText())
 
@@ -230,7 +255,7 @@ internal class LspSignatureHelpTest {
     fun `the hint hides when the server has no signatures at the new caret position`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("signature16.txt", "function(1$CARET) after").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, 10), SignatureHelp(listOf(signature("a")), null, 0))
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 10), SignatureHelp(listOf(signature("a")), null, 0))
       changingHint { showParameterInfo() }
       assertEquals("<html>function(<b>a</b>)</html>", hintText())
 
@@ -245,7 +270,7 @@ internal class LspSignatureHelpTest {
     fun `typing a trigger character of the server shows the hint`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("signature17.txt", "generic$CARET").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, 8), SignatureHelp(listOf(signature("T")), null, 0))
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 8), SignatureHelp(listOf(signature("T")), null, 0))
 
       changingHint { type('<') }
 
@@ -260,7 +285,7 @@ internal class LspSignatureHelpTest {
     private suspend fun parameterInfoHint(fileName: String, text: String, signatureHelp: SignatureHelp): String? {
       val virtualFile = codeInsightFixture.configureByText(fileName, text).virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, text.indexOf(CARET)), signatureHelp)
+      serverSession.expectSignatureHelp(virtualFile, Position(0, text.indexOf(CARET)), signatureHelp)
 
       changingHint { showParameterInfo() }
 
@@ -318,7 +343,7 @@ internal class LspSignatureHelpTest {
       serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
         RegistrationParams(listOf(Registration("signature-help", "textDocument/signatureHelp", SignatureHelpRegistrationOptions())))
       }
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, 10), SignatureHelp(listOf(signature("a")), null, 0))
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 10), SignatureHelp(listOf(signature("a")), null, 0))
 
       changingHint { showParameterInfo() }
 
@@ -340,7 +365,7 @@ internal class LspSignatureHelpTest {
           }),
         ))
       }
-      serverSession.expectParameterInfoRequests(virtualFile, Position(0, 8), SignatureHelp(listOf(signature("index")), null, 0))
+      serverSession.expectSignatureHelp(virtualFile, Position(0, 8), SignatureHelp(listOf(signature("index")), null, 0))
 
       changingHint { type('[') }
 
@@ -364,14 +389,6 @@ internal class LspSignatureHelpTest {
       this.parameters = parameters.map { ParameterInformation(it) }
       this.activeParameter = activeParameter
     }
-
-  /**
-   * Expects the two requests of one Parameter Info at [position] and answers both with [signatureHelp]:
-   * one for the signatures that the hint shows, and one for the active parameter, when the hint updates right after it shows.
-   */
-  private fun FakeLspServerSession.expectParameterInfoRequests(virtualFile: VirtualFile, position: Position, signatureHelp: SignatureHelp) {
-    repeat(2) { expectSignatureHelp(virtualFile, position, signatureHelp) }
-  }
 
   private fun FakeLspServerSession.expectSignatureHelp(virtualFile: VirtualFile, position: Position, signatureHelp: SignatureHelp?) {
     val fileUri = fileUri(virtualFile)

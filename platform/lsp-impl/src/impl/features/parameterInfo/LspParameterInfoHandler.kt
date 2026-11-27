@@ -23,7 +23,7 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     for (client in LspClientManagerImpl.getInstanceImpl(context.file.project).getClientsWithThisFileOpen(virtualFile)) {
       if (client.descriptor.lspCustomization.signatureHelpCustomizer is LspSignatureHelpDisabled) continue
       if (!client.supportsSignatureHelp(virtualFile)) continue
-      val signatureHelp = client.requestExecutor.getSignatureHelp(virtualFile, context.offset) ?: continue
+      val signatureHelp = client.requestExecutor.getSignatureHelpCaching(virtualFile, context.offset) ?: continue
       if (signatureHelp.signatures.isNotEmpty()) {
         context.setItemsToShow(arrayOf<Any>(LspParameterInfoContext(signatureHelp, client)))
         return context.file
@@ -47,7 +47,9 @@ internal class LspParameterInfoHandler : ParameterInfoHandler<PsiElement, LspPar
     }
     val storedContext = context.objectsToView?.firstOrNull() as? LspParameterInfoContext ?: return
     val virtualFile = context.file.virtualFile?.let { (it as? VirtualFileWindow)?.delegate ?: it } ?: return
-    val signatureHelp = storedContext.client.requestExecutor.getSignatureHelp(virtualFile, context.offset)
+    // The hint updates right after it shows, and the cache answers that update with the answer of `findElementForParameterInfo`.
+    // Not when the caret follows whitespace: the platform then moves the offset of the update to before the whitespace.
+    val signatureHelp = storedContext.client.requestExecutor.getSignatureHelpCaching(virtualFile, context.offset)
     if (signatureHelp == null || signatureHelp.signatures.isEmpty()) {
       context.removeHint()
       return
