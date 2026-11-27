@@ -147,6 +147,12 @@ public final class IterationState {
   private boolean myBreakComputed;
   private boolean myBreakComputedBeforeBreak;
   /**
+   * Says that {@link #myMergedAttributes} and {@link #myBackgroundLayers} hold the values of the current step.
+   * {@link #advance()} clears it, and the first read of a value computes both. A step that nobody reads merges nothing.
+   * A right-aligned editor computes each step in {@link #advance()}, because it keeps the layers of the previous step.
+   */
+  private boolean myStepComputed;
+  /**
    * Says that {@link #myHasSoftWrap} holds the answer of {@link #hasSoftWrap()} for the current step. {@link #advance()} clears it.
    */
   private boolean mySoftWrapComputed;
@@ -297,7 +303,12 @@ public final class IterationState {
         ", highlighters: " + isInsideSurrogatePair(minSegmentHighlightersEnd);
     }
 
-    reinit();
+    if (myEditorRightAligned) {
+      // a right-aligned editor keeps the layers of the previous step, so it computes every step
+      reinit();
+    } else {
+      myStepComputed = false;
+    }
   }
 
   @ApiStatus.Internal
@@ -315,8 +326,12 @@ public final class IterationState {
     return myBreakAttributes;
   }
 
+  /**
+   * Gives the merged attributes of the current step. The object is valid until the next {@link #advance()}.
+   */
   @ApiStatus.Internal
   public @NotNull TextAttributes getMergedAttributes() {
+    computeStep();
     return myMergedAttributes;
   }
 
@@ -326,6 +341,7 @@ public final class IterationState {
    */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getBackgroundLayers() {
+    computeStep();
     return myBackgroundLayers;
   }
 
@@ -397,6 +413,7 @@ public final class IterationState {
     if (layer == null && !layers.isEmpty()) {
       layer = layers.getFirst();
     }
+    computeStep();
     myMergedAttributes.setBackgroundColor(layer == null ? myDefaultBackground : layer.getColor());
     return myMergedAttributes;
   }
@@ -421,6 +438,7 @@ public final class IterationState {
     } else if (myEditorRightAligned && myLastBackgroundLayers != null) {
       return myLastBackgroundLayers;
     } else {
+      computeStep();
       return myBackgroundLayers;
     }
   }
@@ -744,6 +762,13 @@ public final class IterationState {
       myLastBackgroundLayers = List.copyOf(myBackgroundLayers);
     }
     myBackgroundLayers = setAttributes(myMergedAttributes, false, false);
+    myStepComputed = true;
+  }
+
+  private void computeStep() {
+    if (!myStepComputed) {
+      reinit();
+    }
   }
 
   private void addAttributes(
