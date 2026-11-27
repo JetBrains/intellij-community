@@ -66,6 +66,11 @@ internal class VcsLogTabsManager(
     if (toolWindowTabs.isNotEmpty()) {
       futureToolWindow.thenAccept { toolWindow ->
         if (!LOG.assertTrue(!logManager.isDisposed, "Attempting to open tabs on disposed VcsLogManager")) return@thenAccept
+        if (toolWindow.project !== project) {
+          // the tool window of the frame owner shows the tabs of the owner, not the saved tabs of this project
+          LOG.debug("The tool window ${ChangesViewContentManager.TOOLWINDOW_ID} belongs to the frame owner, the saved tabs are not reopened")
+          return@thenAccept
+        }
         LOG.debug("Reopening toolwindow tabs with ids: $toolWindowTabs")
         toolWindowTabs.forEach { openToolWindowLogTab(toolWindow, it, false, null) }
       }
@@ -84,7 +89,6 @@ internal class VcsLogTabsManager(
         }
         return@invokeLater
       }
-
       if (toolWindow.isVisible) {
         futureToolWindow.complete(toolWindow)
       }

@@ -74,7 +74,8 @@ internal class IdeVcsLogManager(
 
   @RequiresEdt
   fun runInMainUi(consumer: (MainVcsLogUi) -> Unit) {
-    val toolWindow = VcsLogContentUtil.getToolWindow(project)
+    // the main Log UI of this manager is only in a tool window of this project, and the code below waits for that UI
+    val toolWindow = VcsLogContentUtil.getOwnToolWindow(project)
     if (toolWindow == null) {
       VcsLogContentUtil.showLogIsNotAvailableMessage(project)
       return
@@ -153,7 +154,8 @@ internal class IdeVcsLogManager(
     }
     // At this point we know that commit exists in permanent graph.
     // Try finding it in the opened tabs or open a new tab if none has a matching filter.
-    val window = VcsLogContentUtil.getToolWindow(project) ?: return null
+    // The search waits for the main Log UI of this manager, which is only in a tool window of this project.
+    val window = VcsLogContentUtil.getOwnToolWindow(project) ?: return null
 
     return tryShowCommitSync(window, hash, root, requestFocus, predicate)
            ?: showCommitInEmptyTab(window, hash, root, requestFocus, predicate)

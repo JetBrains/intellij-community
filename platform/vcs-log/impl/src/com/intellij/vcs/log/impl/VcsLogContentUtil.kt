@@ -170,6 +170,14 @@ object VcsLogContentUtil {
   internal fun getToolWindow(project: Project): ToolWindow? {
     return ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
   }
+
+  /**
+   * The tool window that shows the main Log of [project]. A frame guest can get the tool window of its frame owner from
+   * [getToolWindow]. That tool window shows the main Log of the frame owner, so the result is `null` then.
+   */
+  internal fun getOwnToolWindow(project: Project): ToolWindow? {
+    return getToolWindow(project)?.takeIf { it.project === project }
+  }
 }
 
 /**
