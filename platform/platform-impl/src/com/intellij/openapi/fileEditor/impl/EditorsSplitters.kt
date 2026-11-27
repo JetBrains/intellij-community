@@ -1817,7 +1817,8 @@ fun setupFileTab(
     null
   }
 
-  val tabFileColorTask = compositeCoroutineScope.async(CoroutineName("editor tab file status color compute")) {
+  // started by `tabColorTask`: an eager start awaits the file of every tab, and that preloads every file before the first paint
+  val tabFileColorTask = compositeCoroutineScope.async(CoroutineName("editor tab file status color compute"), start = CoroutineStart.LAZY) {
     val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
     val file = fileDeferred.await()
     readAction {

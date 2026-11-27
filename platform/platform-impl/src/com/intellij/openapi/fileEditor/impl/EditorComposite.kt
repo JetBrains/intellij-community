@@ -274,9 +274,11 @@ open class EditorComposite internal constructor(
       coroutineScope.launch(ModalityState.any()
                               .asContextElement() + clientId.asContextElement() + tracer.rootSpan("EditorComposite model flow",
                                                                                                   arrayOf("file", file.name))) {
-        // Let's wait until EDT has created a tab in FileManagerImpl and then show progress
-        val (visibleInStatusBar, showProgress) = span("waiting initDeferred", Dispatchers.EDT) {
-          initDeferred.await()
+        // Let's wait until EDT has created a tab in FileManagerImpl and then show progress.
+        // The wait is off the EDT: a startup with many tabs would queue one EDT event per tab behind the tab creation.
+        // The options are read on the EDT, after the event that created the composite and set them.
+        initDeferred.await()
+        val (visibleInStatusBar, showProgress) = span("initialization options reading", Dispatchers.EDT) {
           preparationVisibleInStatusBar to showPreparationProgress
         }
         try {
