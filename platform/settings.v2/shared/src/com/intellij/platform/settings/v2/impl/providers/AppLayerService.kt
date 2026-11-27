@@ -6,6 +6,7 @@ package com.intellij.platform.settings.v2.impl.providers
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.vfs.WatchRoots
 import com.intellij.platform.settings.v2.LayerData
 import com.intellij.platform.settings.v2.LayerLocality
 import com.intellij.platform.settings.v2.LayerProvider
@@ -35,6 +36,7 @@ internal class AppLayerService(scope: CoroutineScope) : BaseLayerService(scope) 
 
   init {
     scope.launch {
+      watchOptionsDirectory()
       for (locality in localities) {
         watchConfigFile(this@AppLayerService, configFile(locality)) { refresh(appContext) }
       }
@@ -54,7 +56,19 @@ internal class AppLayerService(scope: CoroutineScope) : BaseLayerService(scope) 
   override suspend fun requestData(scopeContext: SettingsContext): List<LayerData> =
     if (scopeContext.realContext is AppSettingsContext) load(appContext) else emptyList()
 
-  private fun configFile(locality: LayerLocality): Path = Path.of(PathManager.getOptionsPath(), localityFileName(FILE_NAME, locality))
+  /**
+   * Registers the config `options` directory as a flat watch root. No project root covers the directory, so without
+   * the root the native file watcher does not report an external edit of a config file, and a VFS refresh skips the
+   * file.
+   *
+   * The root stays until the application ends, as this service does. A removal of the root at the disposal of the
+   * service would come after the file watcher stops, and the watcher then fails.
+   */
+  private fun watchOptionsDirectory() {
+    WatchRoots.getInstance().watch(PathManager.getOptionsDir(), false)
+  }
+
+  private fun configFile(locality: LayerLocality): Path = PathManager.getOptionsDir().resolve(localityFileName(FILE_NAME, locality))
 
   companion object {
     const val FILE_NAME: String = "app.settings.json"
