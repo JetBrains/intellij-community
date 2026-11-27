@@ -280,7 +280,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testMultiLineHighlighterRounded() {
     myFixture.runTest(() -> {
-      var state = setNewSelectionEnabled(true);
+      var state = setSelectionLook(true, false);
       try {
         initText("ab\ncdef\nghijklmnop");
         addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
@@ -309,7 +309,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testFillReachesClipWiderThanViewportRightAligned() {
     myFixture.runTest(() -> {
-      var state = setSelectionLook(true, true);
+      var state = setSelectionLook(true, false);
       try {
         initText("ab\ncdef\nghijklmnop");
         Editor editor = myFixture.getEditor();

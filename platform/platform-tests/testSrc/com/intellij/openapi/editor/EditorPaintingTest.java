@@ -578,7 +578,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testMultiLineHighlighterRounded() {
     myFixture.runTest(() -> {
-      var state = setSelectionLook(true, true);
+      var state = setSelectionLook(true, false);
       try {
         myFixture.initText("ab\ncdef\nghijklmnop");
         addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
@@ -614,7 +614,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testRoundedMultiLineSyntaxToken() {
     myFixture.runTest(() -> {
-      var state = setSelectionLook(true, true);
+      var state = setSelectionLook(true, false);
       try {
         myFixture.initText("ab\ncdef\nghijklmnop\n<caret>q");
         setTokenEditorHighlighter(
@@ -696,7 +696,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testFillReachesClipWiderThanViewport() {
     myFixture.runTest(() -> {
-      var state = setSelectionLook(true, true);
+      var state = setSelectionLook(true, false);
       try {
         myFixture.initText("ab\ncd\nefghijklmnop");
         Editor editor = myFixture.getEditor();
@@ -829,7 +829,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testRoundedHighlighterAcrossSoftWrap() {
     myFixture.runTest(() -> {
-      var state = setSelectionLook(true, true);
+      var state = setSelectionLook(true, false);
       try {
         myFixture.initText("abcdefgh");
         configureSoftWraps(4);
@@ -936,7 +936,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   @Test
   public void testRoundedHighlighterAcrossBlockInlay() {
     myFixture.runTest(() -> {
-      var state = setSelectionLook(true, true);
+      var state = setSelectionLook(true, false);
       try {
         myFixture.initText("abcd\nefgh\n<caret>ijklmnopqrst");
         myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(1), true);
