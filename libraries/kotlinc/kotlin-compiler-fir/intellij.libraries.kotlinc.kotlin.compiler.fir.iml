@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-compiler-fir" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.5.0-ij263-69">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.5.0-ij263-72">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-ij263-69/kotlin-compiler-fir-for-ide-2.5.0-ij263-69.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-ij263-72/kotlin-compiler-fir-for-ide-2.5.0-ij263-72.jar">
               <sha256sum>febd6dc407adce81efee2a224795206cac16b339210e27164b32833ef1c778d2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-ij263-69/kotlin-compiler-fir-for-ide-2.5.0-ij263-69.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-ij263-72/kotlin-compiler-fir-for-ide-2.5.0-ij263-72.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-ij263-69/kotlin-compiler-fir-for-ide-2.5.0-ij263-69-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-ij263-72/kotlin-compiler-fir-for-ide-2.5.0-ij263-72-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
