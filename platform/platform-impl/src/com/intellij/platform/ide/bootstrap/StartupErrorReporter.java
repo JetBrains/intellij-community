@@ -154,9 +154,12 @@ public final class StartupErrorReporter {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UseHtmlChunkToolTip"})
-  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message,
-                                @NonNls @Nullable String additionalDiagnostics,
-                                @Nullable Throwable error) {
+  private static void showError(
+    @Nls(capitalization = Title) String title,
+    @Nls(capitalization = Sentence) String message,
+    @Nullable String additionalDiagnostics,
+    @Nullable Throwable error
+  ) {
     System.err.println();
     System.err.println("**" + title + "**");
     System.err.println();
