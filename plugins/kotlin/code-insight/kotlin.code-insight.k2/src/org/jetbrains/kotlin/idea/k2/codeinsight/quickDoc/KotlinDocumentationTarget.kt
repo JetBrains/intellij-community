@@ -21,7 +21,6 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
@@ -366,7 +365,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
         // it's not possible to create symbol for function type parameter, so we need to process this case separately
         // see KTIJ-22404 and KTIJ-25653
         if (declaration is KtParameter && declaration.isFunctionTypeParameter) {
-            val definition = KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project)).renderFunctionTypeParameter(declaration) ?: return
+            val definition = KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project)).renderFunctionTypeParameter(declaration)
 
             insert(KDocTemplate()) {
                 definition {
@@ -445,7 +444,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclaration
                                                            preBuild: KDocTemplate.() -> Unit = {}) {
     insert(KDocTemplate()) {
         definition {
-            append(symbol.render(KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project), symbol).renderer))
+            append(KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project)).render(symbol))
         }
 
         if (!onlyDefinition) {

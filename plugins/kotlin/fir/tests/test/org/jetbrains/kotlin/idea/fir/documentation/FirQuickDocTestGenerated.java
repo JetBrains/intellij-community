@@ -125,6 +125,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarVarargParameter.kt");
         }
 
+        @TestMetadata("ContextAndParameterAnnotations.kt")
+        public void testContextAndParameterAnnotations() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/ContextAndParameterAnnotations.kt");
+        }
+
         @TestMetadata("ContextParameter.kt")
         public void testContextParameter() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/ContextParameter.kt");
@@ -165,6 +170,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/ExtensionReceiverEnd.kt");
         }
 
+        @TestMetadata("FlexibleReturnType.kt")
+        public void testFlexibleReturnType() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/FlexibleReturnType.kt");
+        }
+
         @TestMetadata("Formatting.kt")
         public void testFormatting() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/Formatting.kt");
@@ -185,6 +195,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/FunctionalReceiver.kt");
         }
 
+        @TestMetadata("GenericDataClass.kt")
+        public void testGenericDataClass() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/GenericDataClass.kt");
+        }
+
         @TestMetadata("InInjection1.kt")
         public void testInInjection1() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/InInjection1.kt");
@@ -198,6 +213,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         @TestMetadata("IndentedCodeBlock.kt")
         public void testIndentedCodeBlock() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/IndentedCodeBlock.kt");
+        }
+
+        @TestMetadata("InheritedDefault.kt")
+        public void testInheritedDefault() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/InheritedDefault.kt");
         }
 
         @TestMetadata("InlineClass.kt")
@@ -308,6 +328,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         @TestMetadata("NoDefaultValueForValParameter.kt")
         public void testNoDefaultValueForValParameter() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/NoDefaultValueForValParameter.kt");
+        }
+
+        @TestMetadata("NonNullReceiver.kt")
+        public void testNonNullReceiver() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/NonNullReceiver.kt");
         }
 
         @TestMetadata("ObjectLiteral.kt")
@@ -510,6 +535,16 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");
         }
 
+        @TestMetadata("RepeatedClassifierName.kt")
+        public void testRepeatedClassifierName() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/RepeatedClassifierName.kt");
+        }
+
+        @TestMetadata("RootPropertyParameterDefault.kt")
+        public void testRootPropertyParameterDefault() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/RootPropertyParameterDefault.kt");
+        }
+
         @TestMetadata("Samples.kt")
         public void testSamples() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/Samples.kt");
@@ -560,9 +595,19 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/UnresolvedAnnotation.kt");
         }
 
+        @TestMetadata("UnsupportedAnnotationValue.kt")
+        public void testUnsupportedAnnotationValue() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/UnsupportedAnnotationValue.kt");
+        }
+
         @TestMetadata("UnusedVariable.kt")
         public void testUnusedVariable() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/UnusedVariable.kt");
+        }
+
+        @TestMetadata("VarargPropertyInList.kt")
+        public void testVarargPropertyInList() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/VarargPropertyInList.kt");
         }
     }
 

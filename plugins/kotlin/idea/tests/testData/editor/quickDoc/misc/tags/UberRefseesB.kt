@@ -108,7 +108,7 @@ class UberRef {
      */
     fun <caret>seesB() {}
 }
-//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">seesB</span>()<span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.Unit">Unit</a></span></pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>Inline comment prefix: <a href="psi_element://SeenA"><code><span style="color:#0000ff;">SeenA</span></code></a> :inline comment postfix.</p>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">seesB</span><span style="">(</span><span style="">)</span><span style="">:</span> <span style="color:#000000;"><a href="psi_element://kotlin.Unit">Unit</a></span></pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>Inline comment prefix: <a href="psi_element://SeenA"><code><span style="color:#0000ff;">SeenA</span></code></a> :inline comment postfix.</p>
 //INFO: <p>Inline comment prefix: <a href="psi_element://UberRef.SeenB"><code><span style="color:#000000;">Alternate text for SeenB</span><span style="">.</span><span style="color:#0000ff;"></span></code></a></p>
 //INFO: <p><a href="psi_element://String"><code><span style="color:#0000ff;">String</span></code></a> :inline comment postfix.</p>
 //INFO: <p><a href="psi_element://kotlin.Int"><code><span style="color:#000000;">Alternate text for Int</span><span style="">.</span><span style="color:#0000ff;"></span></code></a></p>

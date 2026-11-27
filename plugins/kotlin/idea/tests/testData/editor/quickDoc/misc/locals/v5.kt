@@ -8,4 +8,4 @@ fun variableContainerA() {
     var v8: AuxFaceA = object : AuxFaceA {}
     lateinit var v9: AuxClassB
 }
-//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">local</span> <span style="color:#000080;font-weight:bold;">var</span> <span style="color:#000000;">v5</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.String">String</a></span></pre></div>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">local</span> <span style="color:#000080;font-weight:bold;">var</span> <span style="color:#000000;">v5</span><span style="">:</span> <span style="color:#000000;"><a href="psi_element://kotlin.String">String</a></span></pre></div>
