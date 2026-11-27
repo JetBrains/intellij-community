@@ -379,7 +379,7 @@ public final class EditorPainter implements TextDrawingCallback {
       } else {
         myBackgroundFill = new DirectBackgroundFill(myGraphics, myDefaultBackgroundColor, myBackgroundColor);
       }
-      Color selectionColor = selectionBackgroundColor();
+      Color selectionColor = mySelectionModel.getTextAttributes().getBackgroundColor();
       if (selectionColor != null) {
         mySelectionLayer = BackgroundLayer.selection(selectionColor, myRoundedHighlighting, myHuggingHighlighting);
       } else {
@@ -544,10 +544,6 @@ public final class EditorPainter implements TextDrawingCallback {
         myEditor.getFontMetrics(Font.PLAIN),
         'M'
       );
-    }
-
-    private @Nullable Color selectionBackgroundColor() {
-      return mySelectionModel.getTextAttributes().getBackgroundColor();
     }
 
     /**
@@ -787,9 +783,9 @@ public final class EditorPainter implements TextDrawingCallback {
 
     /**
      * Paints the background of a custom fold region at {@code x}.
-     * The filling layers fill the row. A hugging highlighter that contains the region covers the region, and the
-     * renderer gets its color. In a left-aligned editor, a hugging layer of {@code breakLayers} covers the stub after
-     * the region.
+     * The filling layers fill the row. A hugging background that contains the region covers the region, and the
+     * renderer gets its color: the selection or a highlighter. In a left-aligned editor, a hugging layer of
+     * {@code breakLayers} covers the stub after the region.
      * Unless the row is a dry run, it queues the region for {@link #paintTextWithEffects()}.
      */
     private void paintCustomFoldRegion(
@@ -803,16 +799,11 @@ public final class EditorPainter implements TextDrawingCallback {
     ) {
       int width = cfr.getWidthInPixels();
       int height = cfr.getHeightInPixels();
-      if (myHuggingHighlighting && isSelected(cfr)) {
-        backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
-        paintSelectionBlock(withStub(x, x + width, y, height));
-      } else {
-        paintLayeredBackground(layers, myFillStartX, y, myFillEndX - myFillStartX, height);
-        if (myHuggingHighlighting) {
-          paintHuggingRegion(cfr, layers, backgroundAttributes, new Rectangle2D.Double(x, y, width, height));
-          if (!myEditor.isRightAligned()) {
-            paintStub(breakLayers, withStub(x + width, x + width, y, height));
-          }
+      paintLayeredBackground(layers, myFillStartX, y, myFillEndX - myFillStartX, height);
+      if (myHuggingHighlighting) {
+        paintHuggingRegion(cfr, layers, backgroundAttributes, new Rectangle2D.Double(x, y, width, height));
+        if (!myEditor.isRightAligned()) {
+          paintStub(breakLayers, withStub(x + width, x + width, y, height));
         }
       }
       if (dryRun) {
@@ -825,8 +816,9 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     /**
-     * Paints the hugging highlighters that contain the custom fold region over {@code region}, above these filling
-     * {@code layers}. When one of them is the top layer, {@code backgroundAttributes} gets its color.
+     * Paints the hugging backgrounds that contain the custom fold region over {@code region}, above these filling
+     * {@code layers}: the selection and the highlighters. When one of them is the top layer, {@code backgroundAttributes}
+     * gets its color.
      */
     private void paintHuggingRegion(
       CustomFoldRegion cfr,
@@ -835,6 +827,9 @@ public final class EditorPainter implements TextDrawingCallback {
       Rectangle2D region
     ) {
       List<BackgroundLayer> regionLayers = new ArrayList<>(layers);
+      if (mySelectionLayer != null && isSelected(cfr)) {
+        regionLayers.add(mySelectionLayer);
+      }
       collectHuggingLayers(cfr, myDocMarkup, regionLayers);
       collectHuggingLayers(cfr, myEditorMarkup, regionLayers);
       if (regionLayers.size() == layers.size()) {

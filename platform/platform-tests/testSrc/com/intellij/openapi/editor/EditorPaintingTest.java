@@ -790,6 +790,43 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testSelectedCustomFoldRegionKeepsTheFillOfItsRow() {
+    runWithLook(false, true, () -> {
+      myFixture.initText("\ntext\nlonger line");
+      addCustomLinesFolding(1, 1);
+      addLineHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.green);
+      myFixture.getEditor().getSelectionModel().setSelection(0, 6);
+      BufferedImage image = paintEditor(false, null, null);
+      int y = myFixture.getEditor().visualLineToYRange(1)[0] + 7;
+      int selectionRgb = myFixture.getEditor().getSelectionModel().getTextAttributes().getBackgroundColor().getRGB();
+      assertEquals(selectionRgb, image.getRGB(12, y), "the region");
+      assertEquals(Color.green.getRGB(), image.getRGB(60, y), "the row right of the stub");
+    });
+  }
+
+  @Test
+  public void testSelectionOfOnlyTheCustomFoldRegionHasNoStub() {
+    runWithLook(false, true, () -> {
+      myFixture.initText("\ntext\nlonger line");
+      addCustomLinesFolding(1, 1);
+      myFixture.getEditor().getSelectionModel().setSelection(1, 5);
+      int selectionRgb = myFixture.getEditor().getSelectionModel().getTextAttributes().getBackgroundColor().getRGB();
+      assertCustomFoldRegionAndStub(selectionRgb, ((EditorEx)myFixture.getEditor()).getBackgroundColor().getRGB());
+    });
+  }
+
+  @Test
+  public void testHuggingHighlighterAboveTheSelectionCoversCustomFoldRegion() {
+    runWithLook(false, true, () -> {
+      myFixture.initText("\ntext\nlonger line");
+      addCustomLinesFolding(1, 1);
+      myFixture.getEditor().getSelectionModel().setSelection(0, 6);
+      addRangeHighlighter(0, 7, HighlighterLayer.SELECTION + 1, null, Color.red);
+      assertCustomFoldRegionAndStub(Color.red.getRGB(), Color.red.getRGB());
+    });
+  }
+
+  @Test
   public void testCustomFoldRendererGetsTheColorOfAHuggingHighlighter() {
     runWithLook(false, true, () -> {
       myFixture.initText("\ntext\nx");
