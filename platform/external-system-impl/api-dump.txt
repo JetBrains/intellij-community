@@ -589,7 +589,7 @@ c:com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternal
 - getAffectedExternalProjectPath(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
 - isApplicable(com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):Z
 a:com.intellij.openapi.externalSystem.service.project.autoimport.FileChangeListenerBase
-- com.intellij.openapi.vfs.newvfs.BulkFileListener
+- com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 - <init>():V
 - after(java.util.List):V
 - pa:apply():V

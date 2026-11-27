@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class FileChangeListenerBase implements BulkFileListener {
+public abstract class FileChangeListenerBase implements BulkFileListenerBackgroundable {
   protected abstract boolean isRelevant(String path);
 
   protected abstract void updateFile(VirtualFile file, VFileEvent event);
@@ -61,7 +61,7 @@ public abstract class FileChangeListenerBase implements BulkFileListener {
 
       @Override
       public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile f) {
-        return f.isDirectory() && f instanceof NewVirtualFile ? ((NewVirtualFile)f).iterInDbChildren() : null;
+        return f.isDirectory() && f instanceof NewVirtualFile file ? file.iterInDbChildren() : null;
       }
     });
   }
