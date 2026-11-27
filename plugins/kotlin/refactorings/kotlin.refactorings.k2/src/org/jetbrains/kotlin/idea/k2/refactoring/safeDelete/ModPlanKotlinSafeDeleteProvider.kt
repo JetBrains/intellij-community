@@ -107,7 +107,9 @@ internal class ModPlanKotlinSafeDeleteProvider : ModPlanSafeDeleteProvider {
     private fun analysisOf(subject: SymbolPointer, deletedSubjects: List<SymbolPointer>, request: ModPlanRequest): ModPlanAnalysisResult {
         val target = subject.element() ?: return ModPlanAnalysisResult.Refused(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE)
         val usages = search(target, deletedSubjects, request)
-        val legacyMessages = MultiMap<PsiElement, String>().also { collectKotlinConflicts(target, it, headless = true) }
+        val legacyMessages = MultiMap<PsiElement, String>().also {
+            collectKotlinConflicts(target, it, headless = true, ModPlanSafeDeleteUsageInfoUtil.elementsOf(deletedSubjects).asList())
+        }
         val deleteExpectActual = request.optionValues().get(ModPlanKotlinSafeDeleteOptions.DELETE_EXPECT_ACTUAL)
         return ModPlanSafeDeleteUsageInfoUtil.analyzeUsages(
             target, usages, usages, legacyMessages,

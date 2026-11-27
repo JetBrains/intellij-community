@@ -1037,6 +1037,41 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             KotlinTestUtils.runTest(this::doValueParameterTest, this, testDataFilePath);
         }
 
+        @TestMetadata("contextParameterChangesMemberOverload.kt")
+        public void testContextParameterChangesMemberOverload() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterChangesMemberOverload.kt");
+        }
+
+        @TestMetadata("contextParameterChangesOverload.kt")
+        public void testContextParameterChangesOverload() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterChangesOverload.kt");
+        }
+
+        @TestMetadata("contextParameterChangesOverloadInOtherFile.kt")
+        public void testContextParameterChangesOverloadInOtherFile() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterChangesOverloadInOtherFile.kt");
+        }
+
+        @TestMetadata("contextParameterDeclarationClash.kt")
+        public void testContextParameterDeclarationClash() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterDeclarationClash.kt");
+        }
+
+        @TestMetadata("contextParameterPropertyClash.kt")
+        public void testContextParameterPropertyClash() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterPropertyClash.kt");
+        }
+
+        @TestMetadata("contextParameterRemainingContext.kt")
+        public void testContextParameterRemainingContext() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterRemainingContext.kt");
+        }
+
+        @TestMetadata("contextParameterUnchangedOverload.kt")
+        public void testContextParameterUnchangedOverload() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/contextParameterUnchangedOverload.kt");
+        }
+
         @TestMetadata("dataClassComponent.kt")
         public void testDataClassComponent() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/dataClassComponent.kt");

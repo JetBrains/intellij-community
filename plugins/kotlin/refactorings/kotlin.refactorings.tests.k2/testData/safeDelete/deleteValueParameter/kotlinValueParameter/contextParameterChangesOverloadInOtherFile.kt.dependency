@@ -1,0 +1,5 @@
+package q
+
+import p.k
+
+fun callK(): String = k("s")

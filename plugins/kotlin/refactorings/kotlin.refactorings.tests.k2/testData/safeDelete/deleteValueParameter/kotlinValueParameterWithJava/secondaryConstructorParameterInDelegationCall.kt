@@ -1,3 +1,3 @@
-open class MyClassForJava() {
-    constructor(<caret>i: Int) : this()
+open class MyClassForJava(val s: String) {
+    constructor(<caret>i: Int) : this("")
 }

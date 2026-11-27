@@ -6,9 +6,20 @@ import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractSafeDeleteTest;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public abstract class AbstractK2SafeDeleteTest extends AbstractSafeDeleteTest {
+    @Override
+    public void doValueParameterTest(@NotNull String path) throws Exception {
+        var dependency = Path.of(path + ".dependency");
+        if (Files.exists(dependency)) {
+            myFixture.addFileToProject("Dependency.kt", Files.readString(dependency));
+        }
+        super.doValueParameterTest(path);
+    }
+
     @Override
     protected @NotNull List<ModPlanOption<?>> knownOptions() {
         return List.of(

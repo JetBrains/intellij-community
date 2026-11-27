@@ -153,7 +153,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         usages: Array<out UsageInfo>,
         conflicts: MultiMap<PsiElement, @NlsContexts.DialogMessage String>
     ) {
-        collectKotlinConflicts(element, conflicts, headless = false)
+        collectKotlinConflicts(element, conflicts, headless = false, allElementsToDelete.asList())
     }
 
     override fun preprocessUsages(project: Project, usages: Array<out UsageInfo>): Array<UsageInfo> {
@@ -592,20 +592,37 @@ private fun withExpectedActuals(
 /**
  * @param headless true analyzes on the current background thread, instead of under a modal progress on EDT.
  */
-internal fun collectKotlinConflicts(element: PsiElement, conflicts: MultiMap<PsiElement, @NlsContexts.DialogMessage String>, headless: Boolean) {
-    if (element is KtNamedFunction || element is KtProperty) {
-        val ktClass = element.getNonStrictParentOfType<KtClass>()
-        if (ktClass == null || ktClass.body != element.parent) return
+internal fun collectKotlinConflicts(
+    element: PsiElement,
+    conflicts: MultiMap<PsiElement, @NlsContexts.DialogMessage String>,
+    headless: Boolean,
+    deletedElements: Collection<PsiElement>,
+) {
+    when (element) {
+        is KtParameter -> {
+            if (headless) {
+                collectParameterConflicts(element, deletedElements, conflicts)
+            } else {
+                analyzeInModalWindow(element, RefactoringBundle.message("detecting.possible.conflicts")) {
+                    collectParameterConflicts(element, deletedElements, conflicts)
+                }
+            }
+        }
 
-        val modifierList = ktClass.modifierList
-        if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return
+        is KtNamedFunction, is KtProperty -> {
+            val ktClass = element.getNonStrictParentOfType<KtClass>()
+            if (ktClass == null || ktClass.body != element.parent) return
 
-        val declaration = element as KtDeclaration
-        if (headless) {
-            analyze(declaration) { collectImplementsConflicts(declaration, conflicts) }
-        } else {
-            analyzeInModalWindow(declaration, RefactoringBundle.message("detecting.possible.conflicts")) {
-                collectImplementsConflicts(declaration, conflicts)
+            val modifierList = ktClass.modifierList
+            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return
+
+            val declaration = element as KtDeclaration
+            if (headless) {
+                analyze(declaration) { collectImplementsConflicts(declaration, conflicts) }
+            } else {
+                analyzeInModalWindow(declaration, RefactoringBundle.message("detecting.possible.conflicts")) {
+                    collectImplementsConflicts(declaration, conflicts)
+                }
             }
         }
     }
