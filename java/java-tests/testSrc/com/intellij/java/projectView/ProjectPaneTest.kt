@@ -1,22 +1,36 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.projectView
 
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.createChildDirectory
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.getOrCreateModuleDir
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertNotEquals
 
-class ProjectPaneTest : AbstractProjectViewTest() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class ProjectPaneTest {
+  private val fixture by projectViewPaneFixture()
+
+  @BeforeEach
+  fun setUp(): Unit = with(fixture) {
     selectProjectPane()
   }
 
-  fun `test default settings`() {
+  @Test
+  fun `test default settings`(): Unit = with(fixture) {
     val settings = currentSettings // mutable delegate
     val state = ProjectViewState.getInstance(project)
 
@@ -58,9 +72,13 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowModules) // not supported in the Project view
 
     val defaultFlattenModules = ViewSettings.Immutable.DEFAULT.isFlattenModules
-    assertEquals(false, settings.isFlattenModules) // no modules in project
-    state.flattenModules = !defaultFlattenModules
-    assertEquals(false, settings.isFlattenModules) // no modules in project
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        assertEquals(false, settings.isFlattenModules) // no modules in project
+        state.flattenModules = !defaultFlattenModules
+        assertEquals(false, settings.isFlattenModules) // no modules in project
+      }
+    }
 
     val defaultShowURL = ViewSettings.Immutable.DEFAULT.isShowURL
     assertEquals(defaultShowURL, settings.isShowURL)
@@ -95,7 +113,8 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
   }
 
-  fun `test default settings with modules in project`() {
+  @Test
+  fun `test default settings with modules in project`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("one") {}
       dir("two") {}
@@ -145,9 +164,13 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowModules) // not supported in the Project view
 
     val defaultFlattenModules = ViewSettings.Immutable.DEFAULT.isFlattenModules
-    assertEquals(defaultFlattenModules, settings.isFlattenModules)
-    state.flattenModules = !defaultFlattenModules
-    assertEquals(!defaultFlattenModules, settings.isFlattenModules)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        assertEquals(defaultFlattenModules, settings.isFlattenModules)
+        state.flattenModules = !defaultFlattenModules
+        assertEquals(!defaultFlattenModules, settings.isFlattenModules)
+      }
+    }
 
     val defaultShowURL = ViewSettings.Immutable.DEFAULT.isShowURL
     assertEquals(defaultShowURL, settings.isShowURL)
@@ -182,7 +205,8 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
   }
 
-  fun `test node collapse on sibling add`() {
+  @Test
+  fun `test node collapse on sibling add`(): Unit = with(fixture) {
     with(ProjectViewState.getInstance(project)) {
       hideEmptyMiddlePackages = false
     }
@@ -195,28 +219,29 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     val folder = createChildDirectory(parent, "folder")
 
     selectFile(folder)
-    test.assertStructure(" -PsiDirectory: module\n" +
-                         "  -PsiDirectory: parent\n" +
-                         "   PsiDirectory: folder\n" +
-                         " +External Libraries\n")
+    assertStructure(test, " -PsiDirectory: module\n" +
+                          "  -PsiDirectory: parent\n" +
+                          "   PsiDirectory: folder\n" +
+                          " +External Libraries\n")
 
     selectFile(createChildDirectory(folder, "child"))
-    test.assertStructure(" -PsiDirectory: module\n" +
-                         "  -PsiDirectory: parent\n" +
-                         "   -PsiDirectory: folder\n" +
-                         "    PsiDirectory: child\n" +
-                         " +External Libraries\n")
+    assertStructure(test, " -PsiDirectory: module\n" +
+                          "  -PsiDirectory: parent\n" +
+                          "   -PsiDirectory: folder\n" +
+                          "    PsiDirectory: child\n" +
+                          " +External Libraries\n")
 
     selectFile(createChildDirectory(parent, "sibling"))
-    test.assertStructure(" -PsiDirectory: module\n" +
-                         "  -PsiDirectory: parent\n" +
-                         "   -PsiDirectory: folder\n" +
-                         "    PsiDirectory: child\n" +
-                         "   PsiDirectory: sibling\n" +
-                         " +External Libraries\n")
+    assertStructure(test, " -PsiDirectory: module\n" +
+                          "  -PsiDirectory: parent\n" +
+                          "   -PsiDirectory: folder\n" +
+                          "    PsiDirectory: child\n" +
+                          "   PsiDirectory: sibling\n" +
+                          " +External Libraries\n")
   }
 
-  fun `test file nesting support`() {
+  @Test
+  fun `test file nesting support`(): Unit = with(fixture) {
     val test = createTreeTest()
     val root = directoryContent {
       dir("src") {
@@ -231,21 +256,25 @@ class ProjectPaneTest : AbstractProjectViewTest() {
 
     setFileNestingRules(".js" to ".js.map")
     selectFile(mapFile)
-    test.assertStructure(" -PsiDirectory: src\n" +
-                         "  -PsiDirectory: com\n" +
-                         "   -test.js\n" +
-                         "    test.js.map\n" +
-                         " +External Libraries\n")
+    assertStructure(test, " -PsiDirectory: src\n" +
+                          "  -PsiDirectory: com\n" +
+                          "   -test.js\n" +
+                          "    test.js.map\n" +
+                          " +External Libraries\n")
 
-    val structureBefore = test.toString()
-    projectView.setUseFileNestingRules(false)
+    val structureBefore = print(test)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        projectView.setUseFileNestingRules(false)
+      }
+    }
     selectFile(mapFile)
-    test.assertStructure(" -PsiDirectory: src\n" +
-                         "  -PsiDirectory: com\n" +
-                         "   test.js\n" +
-                         "   test.js.map\n" +
-                         " +External Libraries\n")
+    assertStructure(test, " -PsiDirectory: src\n" +
+                          "  -PsiDirectory: com\n" +
+                          "   test.js\n" +
+                          "   test.js.map\n" +
+                          " +External Libraries\n")
 
-    assertNotEquals(structureBefore, test.toString())
+    assertNotEquals(structureBefore, print(test))
   }
 }

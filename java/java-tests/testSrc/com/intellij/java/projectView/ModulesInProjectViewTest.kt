@@ -1,50 +1,69 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.projectView
 
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.heavyJavaCodeInsightTestNamedSubFixture
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectView.impl.PackageViewPane
+import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Queryable
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
-import com.intellij.projectView.BaseProjectViewTestCase
+import com.intellij.projectView.ProjectViewFixture
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import com.intellij.workspaceModel.ide.registerProjectRoot
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
 
-abstract class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
-  init {
-    myPrintInfo = Queryable.PrintInfo()
-  }
-
+/**
+ * A [ProjectViewFixture] without test data. The module files go to the `.idea` directory, so that they do not affect
+ * the expected structure of the project view. It replaces `ModulesInProjectViewTestCase`.
+ */
+private class ModulesInProjectViewFixture(context: Context, packageViewPaneId: String, printInfo: Queryable.PrintInfo)
+  : ProjectViewFixture(context, null, false, packageViewPaneId, printInfo) {
   override fun setUp() {
     super.setUp()
-    myStructure.isShowLibraryContents = false
+    structure.isShowLibraryContents = false
   }
 
-  override fun doCreateRealModule(moduleName: String): Module {
+  override fun createMainModule(): Module = createModule(project.name)
+
+  override fun createModule(moduleName: String): Module {
     return WriteAction.computeAndWait<Module, RuntimeException> {
       /* iml files are created under .idea directory to ensure that they won't affect expected structure of Project View;
          this is needed to ensure that tests work the same way under the old project model and under workspace model where all modules
          are saved when a single module is unloaded */
       val imlPath = project.stateStore.projectBasePath.resolve(".idea/$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-      ModuleManager.getInstance(myProject).newModule(imlPath, moduleType.id)
+      ModuleManager.getInstance(project).newModule(imlPath, JavaModuleType.getModuleType().id)
     }
   }
-
-  override fun getTestPath(): String? = null
 }
 
+private fun modulesInProjectViewFixture(packageViewPaneId: String, printInfo: Queryable.PrintInfo): TestFixture<ProjectViewFixture> =
+  heavyJavaCodeInsightTestNamedSubFixture("modulesInProjectViewFixture", directoryBasedProject = true) { context ->
+    ModulesInProjectViewFixture(context, packageViewPaneId, printInfo)
+  }
+
 // directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
-class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
-  fun `test unloaded modules`() {
+@TestApplication
+class ModulesInProjectViewTest {
+  private val fixture by modulesInProjectViewFixture(ProjectViewPane.ID, Queryable.PrintInfo())
+
+  @Test
+  fun `test unloaded modules`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("loaded") {
         dir("unloaded-inner") {
@@ -77,8 +96,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runWithModalProgressBlocking(myProject, "") {
-      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
+    timeoutRunBlocking {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
     }
     assertStructureEqual("""
       Project
@@ -93,7 +112,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent())
   }
 
-  fun `test unloaded module with qualified name`() {
+  @Test
+  fun `test unloaded module with qualified name`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("unloaded") {
         dir("subdir") {}
@@ -117,13 +137,14 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runWithModalProgressBlocking(myProject, "") {
-      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    timeoutRunBlocking {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)
   }
 
-  fun `test module and plain project root`() {
+  @Test
+  fun `test module and plain project root`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module") {
         dir("subdir") {}
@@ -133,8 +154,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       }
     }.generateInVirtualTempDir()
     PsiTestUtil.addContentRoot(createModule("module"), root.findChild("module")!!)
-    runWithModalProgressBlocking(myProject, "") {
-      registerProjectRoot(myProject, root.findChild("projectRoot")!!.toNioPath())
+    timeoutRunBlocking {
+      registerProjectRoot(project, root.findChild("projectRoot")!!.toNioPath())
     }
     assertStructureEqual("""
           |Project
@@ -146,7 +167,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
           """.trimMargin())
   }
 
-  fun `test deleted roots are not shown`() {
+  @Test
+  fun `test deleted roots are not shown`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module") {
         dir("subdir") {}
@@ -160,8 +182,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     }.generateInVirtualTempDir()
     PsiTestUtil.addContentRoot(createModule("module"), root.findChild("module")!!)
     PsiTestUtil.addContentRoot(createModule("deletedModule"), root.findChild("deletedModule")!!)
-    runWithModalProgressBlocking(myProject, "") {
-      registerProjectRoot(myProject, root.findChild("deletedProjectRoot")!!.toNioPath())
+    timeoutRunBlocking {
+      registerProjectRoot(project, root.findChild("deletedProjectRoot")!!.toNioPath())
     }
     assertStructureEqual("""
           |Project
@@ -184,7 +206,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
           """.trimMargin())
   }
 
-  fun `test do not show parent groups for single module`() {
+  @Test
+  fun `test do not show parent groups for single module`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module") {
         dir("subdir") {}
@@ -199,14 +222,15 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
           """.trimMargin())
   }
 
-  fun `test flatten modules option`() {
+  @Test
+  fun `test flatten modules option`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module1") {}
       dir("module2") {}
     }.generateInVirtualTempDir()
     PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
     PsiTestUtil.addContentRoot(createModule("foo.bar.module2"), root.findChild("module2")!!)
-    myStructure.isFlattenModules = true
+    structure.isFlattenModules = true
     assertStructureEqual("""
           |Project
           | module1
@@ -215,7 +239,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
           """.trimMargin())
   }
 
-  fun `test do not show groups duplicating module names`() {
+  @Test
+  fun `test do not show groups duplicating module names`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("foo") {}
       dir("foo.bar") {}
@@ -231,7 +256,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
           """.trimMargin())
   }
 
-  fun `test modules with common parent group`() {
+  @Test
+  fun `test modules with common parent group`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module1") {
         dir("subdir") {}
@@ -255,7 +281,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       """.trimMargin())
   }
 
-  fun `test three-level modules`() {
+  @Test
+  fun `test three-level modules`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module1") {
         dir("subdir") {}
@@ -283,7 +310,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       """.trimMargin())
   }
 
-  fun `test modules in nested groups`() {
+  @Test
+  fun `test modules in nested groups`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module1") {
         dir("subdir") {}
@@ -307,7 +335,8 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
   }
 
   // BAZEL-3331: reproduces the "dummy module" case where a directory belongs to a different module than the files inside it.
-  fun `test directory with children from another module is shown in flatten packages mode`() {
+  @Test
+  fun `test directory with children from another module is shown in flatten packages mode`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("moduleA") {
         file("File1.kt")
@@ -323,13 +352,13 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     val moduleB = createModule("moduleB")
     PsiTestUtil.addSourceRoot(moduleB, file1)
     PsiTestUtil.addSourceRoot(moduleB, file2)
-    val projectFileIndex = ProjectRootManager.getInstance(myProject).fileIndex
+    val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     assertEquals(moduleA, projectFileIndex.getModuleForFile(moduleADir))
     assertEquals(moduleB, projectFileIndex.getModuleForFile(file1))
     assertEquals(moduleB, projectFileIndex.getModuleForFile(file2))
     assertFalse(ModuleRootManager.getInstance(moduleA).fileIndex.isInContent(file1))
-    myStructure.isFlattenPackages = true
-    val psiDirectory = PsiManager.getInstance(myProject).findDirectory(moduleADir)!!
+    structure.isFlattenPackages = true
+    val psiDirectory = timeoutRunBlocking { readAction { PsiManager.getInstance(project).findDirectory(moduleADir)!! } }
     assertStructureEqual(psiDirectory, """
       moduleA
        File1.kt
@@ -338,18 +367,12 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
   }
 }
 
-class ModulesInPackageViewTest : ModulesInProjectViewTestCase() {
-  
-  init {
-    myPrintInfo = Queryable.PrintInfo(arrayOf("id"), arrayOf("name"))
-  }
+@TestApplication
+class ModulesInPackageViewTest {
+  private val fixture by modulesInProjectViewFixture(PackageViewPane.ID, Queryable.PrintInfo(arrayOf("id"), arrayOf("name")))
 
-  override fun setUp() {
-    packageViewPaneId = PackageViewPane.ID
-    super.setUp()
-  }
-
-  fun `test nested modules`() {
+  @Test
+  fun `test nested modules`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("module1") {
         dir("module11") {

@@ -4,25 +4,39 @@ package com.intellij.java.projectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.projectView.BaseProjectViewTestCase;
+import com.intellij.projectView.ProjectViewFixture;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import org.jdom.Element;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JTree;
 
-public class ProjectTreeStateTest extends BaseProjectViewTestCase {
+import static com.intellij.projectView.ProjectViewFixture.projectViewFixture;
+
+@TestApplication
+public class ProjectTreeStateTest {
+  private final TestFixture<ProjectViewFixture> projectViewFixture = projectViewFixture();
+
   private String myExpectedTree;
 
+  @Test
   public void testUpdateProjectView() {
-    getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
+    ProjectViewFixture fixture = projectViewFixture.get();
+    fixture.getStructure().setProviders(new ClassesTreeStructureProvider(fixture.getProject()), new FormMergerTreeStructureProvider(fixture.getProject()));
 
-    AbstractProjectViewPane pane = myStructure.createPane();
+    TreeState treeState = EdtTestUtil.runInEdtAndGet(() -> {
+      AbstractProjectViewPane pane = fixture.getStructure().createPane();
 
-    JTree tree = pane.getTree();
-    PlatformTestUtil.assertTreeEqual(tree, myExpectedTree, true);
+      JTree tree = pane.getTree();
+      PlatformTestUtil.assertTreeEqual(tree, myExpectedTree, true);
 
-    TreeState treeState = TreeState.createOn(tree);
+      return TreeState.createOn(tree);
+    });
 
     doTestState(treeState);
 
@@ -34,16 +48,18 @@ public class ProjectTreeStateTest extends BaseProjectViewTestCase {
   }
 
   private void doTestState(TreeState treeState) {
-    JTree tree2 = myStructure.createPane().getTree();
-    treeState.applyTo(tree2);
+    ProjectViewFixture fixture = projectViewFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      JTree tree2 = fixture.getStructure().createPane().getTree();
+      treeState.applyTo(tree2);
 
-    PlatformTestUtil.waitWhileBusy(tree2);
-    PlatformTestUtil.assertTreeEqual(tree2, myExpectedTree, true);
+      PlatformTestUtil.waitWhileBusy(tree2);
+      PlatformTestUtil.assertTreeEqual(tree2, myExpectedTree, true);
+    });
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     myExpectedTree = """
       -Project
        +PsiDirectory: updateProjectView

@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ReadAction
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -369,8 +371,9 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
   /**
    * Creates a new Java module [moduleName] in the project directory. The module closes with the project.
    * It is `createModule` of [com.intellij.testFramework.JavaProjectTestCase].
+   * A sub-fixture overrides it to put the module file in another directory, as an override of `doCreateRealModule` did.
    */
-  fun createModule(moduleName: String): Module {
+  open fun createModule(moduleName: String): Module {
     val moduleFile = project.stateStore.projectBasePath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
     val newModule = WriteAction.computeAndWait<Module, RuntimeException> {
       ModuleManager.getInstance(project).newModule(moduleFile, JavaModuleType.getModuleType().id)
@@ -908,6 +911,17 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
       WriteCommandAction.writeCommandAction(null).compute<VirtualFile, IOException> { file.copy(file, newParent, copyName) }
 
     /**
+     * Returns the directory of the module file of [module], and creates it when it does not exist.
+     * It is `getOrCreateModuleDir` of [com.intellij.testFramework.HeavyPlatformTestCase].
+     */
+    @JvmStatic
+    fun getOrCreateModuleDir(module: Module): VirtualFile {
+      val moduleDir = module.moduleNioFile.parent
+      Files.createDirectories(moduleDir)
+      return checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(moduleDir)) { moduleDir.toString() }
+    }
+
+    /**
      * Creates a [HeavyJavaCodeInsightFixture] with a new project for each test. Declare it as an instance field.
      * [testDataPath] is the prefix of each test data path of the helpers.
      * See [heavyJavaCodeInsightSubFixture] for [testDataProjectDir].
@@ -953,23 +967,48 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
       create: (Context) -> T,
     ): TestFixture<T> = subFixture(debugName, testDataProjectDir = null, fileBasedProject = true, create)
 
+    /**
+     * Creates a sub-fixture of [HeavyJavaCodeInsightFixture] with [create], with a new project for each test.
+     * The project, its directory or `.ipr` file and the main module get the name of the test method,
+     * as on [com.intellij.testFramework.HeavyPlatformTestCase].
+     * Use it when an expected text holds the name of the project or of the main module.
+     * [directoryBasedProject] chooses a directory-based project or a project with an `.ipr` file.
+     * See [heavyJavaCodeInsightSubFixture] for the lifecycle.
+     */
+    @TestOnly
+    @JvmStatic
+    fun <T : HeavyJavaCodeInsightFixture> heavyJavaCodeInsightTestNamedSubFixture(
+      debugName: String,
+      directoryBasedProject: Boolean,
+      create: (Context) -> T,
+    ): TestFixture<T> =
+      subFixture(debugName, testDataProjectDir = null, fileBasedProject = !directoryBasedProject, create, testNamedProject = true)
+
     private fun <T : HeavyJavaCodeInsightFixture> subFixture(
       debugName: String,
       testDataProjectDir: Function<String, String>?,
       fileBasedProject: Boolean,
       create: (Context) -> T,
+      testNamedProject: Boolean = false,
     ): TestFixture<T> =
       testFixture(debugName) { testContext ->
         val tempRoot = tempPathFixture().init()
         val extensionContext = testContext.extensionContext
         val testMethod = extensionContext.requiredTestMethod
         val projectDisposable = Disposer.newDisposable(debugName)
-        val project = if (testDataProjectDir == null) {
-          projectFixture(if (fileBasedProject) iprPathFixture() else tempPathFixture(), openAfterCreation = true).init()
-        }
-        else {
-          val projectDir = testDataProjectDir.apply(PlatformTestUtil.getTestName(testMethod.name, true))
-          openTestDataProject(projectDir, tempPathFixture().init(), projectDisposable)
+        val project = when {
+          testDataProjectDir == null && testNamedProject -> {
+            val projectName = FileUtil.sanitizeFileName(testMethod.name, false)
+            val projectPath = testNamedPathFixture(projectName + if (fileBasedProject) ProjectFileType.DOT_DEFAULT_EXTENSION else "")
+            projectFixture(projectPath, OpenProjectTask { this.projectName = projectName }, openAfterCreation = true).init()
+          }
+          testDataProjectDir == null -> {
+            projectFixture(if (fileBasedProject) iprPathFixture() else tempPathFixture(), openAfterCreation = true).init()
+          }
+          else -> {
+            val projectDir = testDataProjectDir.apply(PlatformTestUtil.getTestName(testMethod.name, true))
+            openTestDataProject(projectDir, tempPathFixture().init(), projectDisposable)
+          }
         }
         val context = Context(project, tempRoot, extensionContext.requiredTestClass, testMethod, testDataProjectDir != null)
         val fixture = create(context)
@@ -986,6 +1025,10 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
 
     private fun iprPathFixture(): TestFixture<Path> = testFixture("iprPathFixture") {
       initialized(tempPathFixture().init().resolve("test" + ProjectFileType.DOT_DEFAULT_EXTENSION)) {}
+    }
+
+    private fun testNamedPathFixture(fileName: String): TestFixture<Path> = testFixture("testNamedPathFixture") {
+      initialized(tempPathFixture().init().resolve(fileName)) {}
     }
 
     private fun openTestDataProject(projectDir: String, dir: Path, disposable: Disposable): Project {

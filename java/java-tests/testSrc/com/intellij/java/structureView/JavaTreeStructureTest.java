@@ -6,23 +6,29 @@ import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
 import com.intellij.ide.structureView.impl.java.VisibilitySorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectView.TestSourceBasedFixture;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestSourceBasedTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JTree;
 
-public class JavaTreeStructureTest extends TestSourceBasedTestCase {
-  @Override
-  protected String getTestPath() {
-    return "structureView";
-  }
+import static com.intellij.projectView.TestSourceBasedFixture.testSourceBasedFixture;
 
+@TestApplication
+public class JavaTreeStructureTest {
+  private final TestFixture<TestSourceBasedFixture> testSourceBasedFixture = testSourceBasedFixture("structureView", null, JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void testJavaClassStructure() {
     doTest(svc -> {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
@@ -89,6 +95,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
+  @Test
   public void testShowClassMembers() {
     doTest(svc -> {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
@@ -138,6 +145,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
+  @Test
   public void testVisibilitySorter() {
     doTest(svc -> {
       svc.setActionActive(InheritedMembersNodeProvider.ID, false);
@@ -166,6 +174,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
+  @Test
   public void testMembersOrder() {
     doTest(svc -> {
       svc.setActionActive(InheritedMembersNodeProvider.ID, false);
@@ -190,21 +199,19 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
   }
 
   private void doTest(CheckAction checkAction) {
-    PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
-    VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
-    FileEditor fileEditor = fileEditors[0];
-    StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
-      .createStructureView(fileEditor, myProject);
-    Disposer.register(getTestRootDisposable(), svc);
-    fileEditorManager.closeFile(virtualFile);
-    PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
-    checkAction.testClassStructure(svc);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    TestSourceBasedFixture fixture = testSourceBasedFixture.get();
+    PsiClass psiClass = ReadAction.computeBlocking(() -> JavaDirectoryService.getInstance().getClasses(fixture.getPackageDirectory("com/package1"))[0]);
+    VirtualFile virtualFile = ReadAction.computeBlocking(() -> psiClass.getContainingFile().getVirtualFile());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(fixture.getProject());
+      FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
+      FileEditor fileEditor = fileEditors[0];
+      StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
+        .createStructureView(fileEditor, fixture.getProject());
+      Disposer.register(fixture.getTestRootDisposable(), svc);
+      fileEditorManager.closeFile(virtualFile);
+      PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
+      checkAction.testClassStructure(svc);
+    });
   }
 }

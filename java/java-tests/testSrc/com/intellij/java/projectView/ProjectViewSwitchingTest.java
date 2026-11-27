@@ -1,25 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.projectView;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ProjectViewSwitchingTest extends AbstractProjectViewTest {
-  @Override
-  protected String getTestPath() {
-    return "projectView";
-  }
+import static com.intellij.java.projectView.ProjectViewPaneFixtureKt.projectViewPaneFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class ProjectViewSwitchingTest {
+  private final TestFixture<ProjectViewPaneFixture> paneFixture = projectViewPaneFixture("projectView", false);
+
+  @Test
   public void testRemoveAddProjectPane() {
-    ProjectView projectView = ProjectView.getInstance(getProject());
-    projectView.changeView(ProjectViewPane.ID);
+    ProjectViewPaneFixture fixture = paneFixture.get();
+    ProjectView projectView = ProjectView.getInstance(fixture.getProject());
+    EdtTestUtil.runInEdtAndWait(() -> projectView.changeView(ProjectViewPane.ID));
     assertEquals(ProjectViewPane.ID, projectView.getCurrentViewId());
 
-    VirtualFile class1 = getContentRoot().findFileByRelativePath("src/com/package1/Class1.java");
-    selectFile(class1);
+    VirtualFile class1 = fixture.getContentRoot().findFileByRelativePath("src/com/package1/Class1.java");
+    fixture.selectFile(class1);
     String expectedTreeStructure = """
        -PsiDirectory: removeAddProjectPane
         -PsiDirectory: src
@@ -32,19 +38,16 @@ public class ProjectViewSwitchingTest extends AbstractProjectViewTest {
        +External Libraries
       """;
 
-    createTreeTest().assertStructure(expectedTreeStructure);
+    fixture.assertStructure(fixture.createTreeTest(), expectedTreeStructure);
 
-    projectView.removeProjectPane(projectView.getProjectViewPaneById(ProjectViewPane.ID));
-    ((ProjectViewImpl)projectView).addProjectPane(new ProjectViewPane(getProject()), true);
-    projectView.changeView(ProjectViewPane.ID);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      projectView.removeProjectPane(projectView.getProjectViewPaneById(ProjectViewPane.ID));
+      ((ProjectViewImpl)projectView).addProjectPane(new ProjectViewPane(fixture.getProject()), true);
+      projectView.changeView(ProjectViewPane.ID);
+    });
 
     // it is important that we create a new instance of the TreeTestUtil (createTreeTest()) here,
     // because the old one has captured a reference to the old project view tree
-    createTreeTest().assertStructure(expectedTreeStructure); // addProjectPane should restore state
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    fixture.assertStructure(fixture.createTreeTest(), expectedTreeStructure); // addProjectPane should restore state
   }
 }

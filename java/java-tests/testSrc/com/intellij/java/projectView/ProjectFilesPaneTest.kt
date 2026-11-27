@@ -1,35 +1,49 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.projectView
 
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.createChildDirectory
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture.Companion.getOrCreateModuleDir
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ProjectViewSettings
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertNotEquals
 
-class ProjectFilesPaneTest : AbstractProjectViewTest() {
-  private val contentRootPresentation: String
-    get() = FileUtil.getLocationRelativeToUserHome(ModuleRootManager.getInstance(module).contentRoots[0].path)
+@TestApplication
+class ProjectFilesPaneTest {
+  private val fixture by projectViewPaneFixture()
 
-  override fun setUp() {
-    super.setUp()
+  private val contentRootPresentation: String
+    get() = FileUtil.getLocationRelativeToUserHome(ModuleRootManager.getInstance(fixture.module).contentRoots[0].path)
+
+  @BeforeEach
+  fun setUp(): Unit = with(fixture) {
     selectProjectFilesPane()
   }
 
   private fun allowed(any: Any?): Boolean {
     val node = any as? ProjectViewNode<*> ?: return true
     val file = node.virtualFile ?: return true
-    return ProjectFileIndex.getInstance(project).isInContent(file)
+    return ProjectFileIndex.getInstance(fixture.project).isInContent(file)
   }
 
-  fun `test default settings`() {
+  @Test
+  fun `test default settings`(): Unit = with(fixture) {
     val settings = currentSettings // mutable delegate
     val state = ProjectViewState.getInstance(project)
 
@@ -110,7 +124,8 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Scope view
   }
 
-  fun `test default settings with modules in project`() {
+  @Test
+  fun `test default settings with modules in project`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("one") {}
       dir("two") {}
@@ -199,7 +214,8 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Scope view
   }
 
-  fun `test node collapse on sibling add`() {
+  @Test
+  fun `test node collapse on sibling add`(): Unit = with(fixture) {
     with(ProjectViewState.getInstance(project)) {
       showExcludedFiles = false
       showModules = false
@@ -213,25 +229,26 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
     val folder = createChildDirectory(parent, "folder")
 
     selectFile(folder)
-    test.assertStructure(" -" + contentRootPresentation + "\n" +
-                         "  -parent\n" +
-                         "   folder\n")
+    assertStructure(test, " -" + contentRootPresentation + "\n" +
+                          "  -parent\n" +
+                          "   folder\n")
 
     selectFile(createChildDirectory(folder, "child"))
-    test.assertStructure(" -" + contentRootPresentation + "\n" +
-                         "  -parent\n" +
-                         "   -folder\n" +
-                         "    child\n")
+    assertStructure(test, " -" + contentRootPresentation + "\n" +
+                          "  -parent\n" +
+                          "   -folder\n" +
+                          "    child\n")
 
     selectFile(createChildDirectory(parent, "sibling"))
-    test.assertStructure(" -" + contentRootPresentation + "\n" +
-                         "  -parent\n" +
-                         "   -folder\n" +
-                         "    child\n" +
-                         "   sibling\n")
+    assertStructure(test, " -" + contentRootPresentation + "\n" +
+                          "  -parent\n" +
+                          "   -folder\n" +
+                          "    child\n" +
+                          "   sibling\n")
   }
 
-  fun `test file nesting support`() {
+  @Test
+  fun `test file nesting support`(): Unit = with(fixture) {
     with(ProjectViewState.getInstance(project)) {
       showModules = false
     }
@@ -249,19 +266,23 @@ class ProjectFilesPaneTest : AbstractProjectViewTest() {
 
     setFileNestingRules(".js" to ".js.map")
     selectFile(mapFile)
-    test.assertStructure(" -" + contentRootPresentation + "\n" +
-                         "  -com\n" +
-                         "   -test.js\n" +
-                         "    test.js.map\n")
+    assertStructure(test, " -" + contentRootPresentation + "\n" +
+                          "  -com\n" +
+                          "   -test.js\n" +
+                          "    test.js.map\n")
 
-    val structureBefore = test.toString()
-    projectView.setUseFileNestingRules(false)
+    val structureBefore = print(test)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        projectView.setUseFileNestingRules(false)
+      }
+    }
     selectFile(mapFile)
-    test.assertStructure(" -" + contentRootPresentation + "\n" +
-                         "  -com\n" +
-                         "   test.js\n" +
-                         "   test.js.map\n")
+    assertStructure(test, " -" + contentRootPresentation + "\n" +
+                          "  -com\n" +
+                          "   test.js\n" +
+                          "   test.js.map\n")
 
-    assertNotEquals(structureBefore, test.toString())
+    assertNotEquals(structureBefore, print(test))
   }
 }

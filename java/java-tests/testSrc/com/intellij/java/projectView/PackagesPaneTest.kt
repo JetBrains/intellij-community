@@ -6,16 +6,24 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.util.treeView.NodeOptions
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class PackagesPaneTest : AbstractProjectViewTest() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class PackagesPaneTest {
+  private val fixture by projectViewPaneFixture()
+
+  @BeforeEach
+  fun setUp(): Unit = with(fixture) {
     selectPackagesPane()
   }
 
-  fun `test default settings`() {
+  @Test
+  fun `test default settings`(): Unit = with(fixture) {
     val settings = currentSettings // mutable delegate
     val state = ProjectViewState.getInstance(project)
 
@@ -96,7 +104,8 @@ class PackagesPaneTest : AbstractProjectViewTest() {
     assertEquals(!defaultShowLibraryContents, settings.isShowLibraryContents)
   }
 
-  fun `test default settings with modules in project`() {
+  @Test
+  fun `test default settings with modules in project`(): Unit = with(fixture) {
     val root = directoryContent {
       dir("one") {}
       dir("two") {}

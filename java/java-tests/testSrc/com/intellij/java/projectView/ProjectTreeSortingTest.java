@@ -13,14 +13,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectView.BaseProjectViewTestCase;
+import com.intellij.projectView.ProjectViewFixture;
 import com.intellij.projectView.TestProjectViewPSIPane;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.tree.TreePath;
 import java.io.IOException;
@@ -34,50 +40,56 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
+import static com.intellij.projectView.ProjectViewFixture.projectViewFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class ProjectTreeSortingTest {
+  private final TestFixture<ProjectViewFixture> projectViewFixture = projectViewFixture();
+
   private ProjectView myProjectView;
   private TestProjectViewPSIPane myPane;
   private boolean myOriginalManualOrder;
   private boolean myOriginalSortByType;
   private boolean myOriginalFoldersAlwaysOnTop;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    ProjectViewFixture fixture = projectViewFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myPane = new TestProjectViewPSIPane(fixture.getProject(), fixture.getStructure(), 9);
+      myPane.createComponent();
+      Disposer.register(fixture.getStructure(), myPane);
 
-    myPane = new TestProjectViewPSIPane(myProject, myStructure, 9);
-    myPane.createComponent();
-    Disposer.register(myStructure, myPane);
+      myProjectView = ProjectView.getInstance(fixture.getProject());
+      myProjectView.addProjectPane(myPane);
+      myOriginalManualOrder = myProjectView.isManualOrder(myPane.getId());
+      myOriginalSortByType = myProjectView.isSortByType(myPane.getId());
+      myOriginalFoldersAlwaysOnTop = myProjectView.isFoldersAlwaysOnTop(myPane.getId());
 
-    myProjectView = ProjectView.getInstance(myProject);
-    myProjectView.addProjectPane(myPane);
-    myOriginalManualOrder = myProjectView.isManualOrder(myPane.getId());
-    myOriginalSortByType = myProjectView.isSortByType(myPane.getId());
-    myOriginalFoldersAlwaysOnTop = myProjectView.isFoldersAlwaysOnTop(myPane.getId());
-
-    TreeUtil.expand(myPane.getTree(), 2);
+      TreeUtil.expand(myPane.getTree(), 2);
+    });
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
+  @AfterEach
+  void tearDown() {
+    if (myProjectView == null || myPane == null) {
+      return;
+    }
+    EdtTestUtil.runInEdtAndWait(() -> {
       myProjectView.setManualOrder(myPane.getId(), myOriginalManualOrder);
       myProjectView.setSortByType(myPane.getId(), myOriginalSortByType);
       ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(myOriginalFoldersAlwaysOnTop);
       myProjectView.removeProjectPane(myPane);
-      myProjectView = null;
-      myPane = null;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    });
+    myProjectView = null;
+    myPane = null;
   }
 
+  @Test
   public void testSortByName() {
-    myProjectView.setSortByType(myPane.getId(), false);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), false));
     assertTree("""
                  -sortByName
                   a.java
@@ -88,8 +100,9 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                  """);
   }
 
+  @Test
   public void testSortByType() {
-    myProjectView.setSortByType(myPane.getId(), false);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), false));
     assertTree("""
                  -sortByType
                   a.java
@@ -98,7 +111,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b.txt
                  """);
 
-    myProjectView.setSortByType(myPane.getId(), true);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), true));
     assertTree("""
                  -sortByType
                   a.java
@@ -108,13 +121,15 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                  """);
   }
 
+  @Test
   public void testSortByTime() {
+    ProjectViewFixture fixture = projectViewFixture.get();
     setModificationTime("a.java", LocalDateTime.of(2023, Month.MAY, 8, 0, 0));
     setModificationTime("a.txt", LocalDateTime.of(2023, Month.MAY, 8, 0, 1));
     setModificationTime("b.java", LocalDateTime.of(2023, Month.MAY, 7, 0, 1));
     setModificationTime("b.txt", LocalDateTime.of(2023, Month.MAY, 7, 0, 0));
-    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_NAME);
-    myStructure.setSortKey(NodeSortKey.BY_NAME);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_NAME));
+    fixture.getStructure().setSortKey(NodeSortKey.BY_NAME);
     assertTree("""
                  -sortByTime
                   +dir1
@@ -125,8 +140,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b.txt
                  """);
 
-    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING);
-    myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING));
+    fixture.getStructure().setSortKey(NodeSortKey.BY_TIME_ASCENDING);
     assertTree("""
                  -sortByTime
                   +dir1
@@ -137,8 +152,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   a.txt
                  """);
 
-    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING);
-    myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING));
+    fixture.getStructure().setSortKey(NodeSortKey.BY_TIME_DESCENDING);
     assertTree("""
                  -sortByTime
                   +dir1
@@ -149,12 +164,12 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b.txt
                  """);
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false));
 
     // Check that folders are still on top because they are considered to have no timestamps:
 
-    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING);
-    myStructure.setSortKey(NodeSortKey.BY_TIME_ASCENDING);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_ASCENDING));
+    fixture.getStructure().setSortKey(NodeSortKey.BY_TIME_ASCENDING);
     assertTree("""
                  -sortByTime
                   +dir1
@@ -165,8 +180,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   a.txt
                  """);
 
-    myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING);
-    myStructure.setSortKey(NodeSortKey.BY_TIME_DESCENDING);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortKey(myPane.getId(), NodeSortKey.BY_TIME_DESCENDING));
+    fixture.getStructure().setSortKey(NodeSortKey.BY_TIME_DESCENDING);
     assertTree("""
                  -sortByTime
                   +dir1
@@ -179,19 +194,21 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
   }
 
   private void setModificationTime(String fileName, LocalDateTime time) {
+    ProjectViewFixture fixture = projectViewFixture.get();
     try {
-      Files.setLastModifiedTime(getContentRoot().toNioPath().resolve(fileName), FileTime.from(time.toInstant(ZoneOffset.UTC)));
+      Files.setLastModifiedTime(fixture.getContentRoot().toNioPath().resolve(fileName), FileTime.from(time.toInstant(ZoneOffset.UTC)));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
+  @Test
   public void testFoldersOnTop() {
     // first, check with 'sort by type' disabled
-    myProjectView.setSortByType(myPane.getId(), false);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), false));
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true));
     assertTree("""
                  -foldersOnTop
                   +b.java
@@ -202,7 +219,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   c.txt
                  """);
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false));
     assertTree("""
                  -foldersOnTop
                   a.java
@@ -214,9 +231,9 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                  """);
 
     // now let's check the behavior, when sortByType is enabled
-    myProjectView.setSortByType(myPane.getId(), true);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), true));
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true));
     assertTree("""
                  -foldersOnTop
                   +b.java
@@ -227,7 +244,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   c.txt
                  """);
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false));
     assertTree("""
                  -foldersOnTop
                   a.java
@@ -239,9 +256,10 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                  """);
   }
 
+  @Test
   public void testSortByTypeBetweenFilesAndFolders() {
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
-    myProjectView.setSortByType(myPane.getId(), false);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false));
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), false));
     assertTree("""
                  -sortByTypeBetweenFilesAndFolders
                   a.java
@@ -254,7 +272,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   +b_folder
                  """);
 
-    myProjectView.setSortByType(myPane.getId(), true);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), true));
     assertTree("""
                  -sortByTypeBetweenFilesAndFolders
                   a.java
@@ -268,21 +286,23 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                  """);
   }
 
+  @Test
   public void testManualOrder() {
-    MyOrderProvider provider = new MyOrderProvider(myProject);
+    ProjectViewFixture fixture = projectViewFixture.get();
+    MyOrderProvider provider = new MyOrderProvider(fixture.getProject());
     provider.setOrder("b_ordered.java",
                       "a_folder_ordered",
                       "b_ordered.txt",
                       "a_ordered.txt",
                       "b_folder_ordered",
                       "a_ordered.java");
-    getProjectTreeStructure().setProviders(provider);
+    fixture.getStructure().setProviders(provider);
 
-    myProjectView.setManualOrder(myPane.getId(), true);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setManualOrder(myPane.getId(), true));
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(true));
 
-    myProjectView.setSortByType(myPane.getId(), false);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), false));
     assertTree("""
                  -manualOrder
                   b_ordered.java
@@ -299,7 +319,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b_unordered.txt
                  """);
 
-    myProjectView.setSortByType(myPane.getId(), true);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), true));
     assertTree("""
                  -manualOrder
                   b_ordered.java
@@ -316,9 +336,9 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b_unordered.txt
                  """);
 
-    ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
+    EdtTestUtil.runInEdtAndWait(() -> ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false));
 
-    myProjectView.setSortByType(myPane.getId(), false);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), false));
     assertTree("""
                  -manualOrder
                   b_ordered.java
@@ -335,7 +355,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                   b_unordered.txt
                  """);
 
-    myProjectView.setSortByType(myPane.getId(), true);
+    EdtTestUtil.runInEdtAndWait(() -> myProjectView.setSortByType(myPane.getId(), true));
     assertTree("""
                  -manualOrder
                   b_ordered.java
@@ -354,12 +374,15 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
   }
 
   private void assertTree(String expected) {
-    PlatformTestUtil.waitWhileBusy(myPane.getTree());
-    TreePath path = PlatformTestUtil.waitForPromise(myPane.promisePathToElement(getContentDirectory()));
-    PlatformTestUtil.waitWhileBusy(myPane.getTree());
-    Object element = path.getLastPathComponent();
-    assertNotNull("Element for " + getContentDirectory() + " not found", element);
-    assertEquals(expected.trim(), PlatformTestUtil.print(myPane.getTree(), path, new Queryable.PrintInfo(), false));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ProjectViewFixture fixture = projectViewFixture.get();
+      PlatformTestUtil.waitWhileBusy(myPane.getTree());
+      TreePath path = PlatformTestUtil.waitForPromise(myPane.promisePathToElement(fixture.getContentRootDirectory()));
+      PlatformTestUtil.waitWhileBusy(myPane.getTree());
+      Object element = path.getLastPathComponent();
+      assertNotNull(element, "Element for " + fixture.getContentRootDirectory() + " not found");
+      assertEquals(expected.trim(), PlatformTestUtil.print(myPane.getTree(), path, new Queryable.PrintInfo(), false));
+    });
   }
 
   static class MyOrderProvider implements TreeStructureProvider {

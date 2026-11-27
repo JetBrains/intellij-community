@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.module.ModuleGroupTestsKt;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -13,23 +14,29 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectView.BaseProjectViewTestCase;
+import com.intellij.projectView.ProjectViewFixture;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.function.Function;
 
-public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPrintInfo = new Queryable.PrintInfo();
-  }
+import static com.intellij.projectView.ProjectViewFixture.checkContainsMethod;
+import static com.intellij.projectView.ProjectViewFixture.projectViewFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class ProjectTreeStructureTest {
+  private final TestFixture<ProjectViewFixture> projectViewFixture = projectViewFixture(new Queryable.PrintInfo());
+
+  @Test
   public void test1() {
-    getProjectTreeStructure().setProviders(new SameNamesJoiner(), new ClassNameConvertor(myProject));
-    assertStructureEqual(getPackageDirectory(), """
+    ProjectViewFixture fixture = projectViewFixture.get();
+    fixture.getStructure().setProviders(new SameNamesJoiner(), new ClassNameConvertor(fixture.getProject()));
+    fixture.assertStructureEqual(fixture.getPackageDirectory(), """
       package1
        Class2.java converted
        Form1 joined
@@ -39,10 +46,12 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
       """);
   }
 
+  @Test
   public void testStandardProviders() {
-    useStandardProviders();
+    ProjectViewFixture fixture = projectViewFixture.get();
+    fixture.useStandardProviders();
 
-    assertStructureEqual(getPackageDirectory(), """
+    fixture.assertStructureEqual(fixture.getPackageDirectory(), """
       package1
        Class1
        Class2.java
@@ -54,9 +63,9 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
        Form2.form
       """);
 
-    getProjectTreeStructure().setProviders();
+    fixture.getStructure().setProviders();
 
-    assertStructureEqual(getPackageDirectory(),
+    fixture.assertStructureEqual(fixture.getPackageDirectory(),
                          """
                            package1
                             Class1.java
@@ -69,18 +78,20 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
   }
 
+  @Test
   public void testShowClassMembers() {
-    useStandardProviders();
+    ProjectViewFixture fixture = projectViewFixture.get();
+    fixture.useStandardProviders();
 
-    myStructure.setShowMembers(false);
-    assertStructureEqual(getPackageDirectory(), """
+    fixture.getStructure().setShowMembers(false);
+    fixture.assertStructureEqual(fixture.getPackageDirectory(), """
       package1
        Class1
        Class2
       """);
 
-    myStructure.setShowMembers(true);
-    assertStructureEqual(getPackageDirectory(), """
+    fixture.getStructure().setShowMembers(true);
+    fixture.assertStructureEqual(fixture.getPackageDirectory(), """
       package1
        Class1
         InnerClass
@@ -117,10 +128,12 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
       """, 100);
   }
 
+  @Test
   public void testGetParentObject() {
-    useStandardProviders();
-    myStructure.setShowMembers(true);
-    assertStructureEqual(getContentDirectory(), """
+    ProjectViewFixture fixture = projectViewFixture.get();
+    fixture.useStandardProviders();
+    fixture.getStructure().setShowMembers(true);
+    fixture.assertStructureEqual(fixture.getContentRootDirectory(), """
       getParentObject
        src
         com
@@ -138,26 +151,28 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
           Form2.form
       """);
 
-    checkContainsMethod(myStructure.getRootElement(), myStructure);
+    ReadAction.runBlocking(() -> checkContainsMethod(fixture.getStructure().getRootElement(), fixture.getStructure()));
   }
 
+  @Test
   public void testNoDuplicateModules() {
-    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+    ProjectViewFixture fixture = projectViewFixture.get();
+    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(fixture.getModule()).getContentRoots()[0];
 
-    PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("src/com/package1/p2"));
+    PsiTestUtil.addExcludedRoot(fixture.getModule(), mainModuleRoot.findFileByRelativePath("src/com/package1/p2"));
 
-    Module module = createModule("nested_module");
+    Module module = fixture.createModule("nested_module");
 
-    ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    ModifiableModuleModel moduleModel = ModuleManager.getInstance(fixture.getProject()).getModifiableModel();
     moduleModel.setModuleGroupPath(module, new String[]{"modules"});
     WriteAction.runAndWait(() -> moduleModel.commit());
 
     PsiTestUtil.addContentRoot(module, mainModuleRoot.findFileByRelativePath("src/com/package1/p2/p3"));
 
-    myStructure.setShowLibraryContents(false);
-    myStructure.hideExcludedFiles();
+    fixture.getStructure().setShowLibraryContents(false);
+    fixture.getStructure().hideExcludedFiles();
 
-    assertStructureEqual("""
+    fixture.assertStructureEqual("""
                            Project
                             noDuplicateModules
                              src
@@ -167,16 +182,18 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                            """);
   }
 
+  @Test
   public void testContentRootUnderExcluded() {
-    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+    ProjectViewFixture fixture = projectViewFixture.get();
+    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(fixture.getModule()).getContentRoots()[0];
 
-    PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("exc"));
+    PsiTestUtil.addExcludedRoot(fixture.getModule(), mainModuleRoot.findFileByRelativePath("exc"));
 
-    PsiTestUtil.addContentRoot(myModule, mainModuleRoot.findFileByRelativePath("exc/gen"));
+    PsiTestUtil.addContentRoot(fixture.getModule(), mainModuleRoot.findFileByRelativePath("exc/gen"));
 
-    myStructure.setShowLibraryContents(false);
+    fixture.getStructure().setShowLibraryContents(false);
 
-    assertStructureEqual("""
+    fixture.assertStructureEqual("""
                            Project
                             contentRootUnderExcluded
                              B.txt
@@ -186,8 +203,8 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                A.java
                            """);
 
-    myStructure.hideExcludedFiles();
-    assertStructureEqual("""
+    fixture.getStructure().hideExcludedFiles();
+    fixture.assertStructureEqual("""
                            Project
                             Module
                              contentRootUnderExcluded
@@ -197,23 +214,25 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                            """);
   }
 
+  @Test
   public void testQualifiedModuleNames() {
-    VirtualFile testDataRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
-    Module a = createModule("a");
+    ProjectViewFixture fixture = projectViewFixture.get();
+    VirtualFile testDataRoot = ModuleRootManager.getInstance(fixture.getModule()).getContentRoots()[0];
+    Module a = fixture.createModule("a");
     PsiTestUtil.addContentRoot(a, testDataRoot.findFileByRelativePath("a"));
 
-    Module main = createModule("a.main");
+    Module main = fixture.createModule("a.main");
     PsiTestUtil.addContentRoot(main, testDataRoot.findFileByRelativePath("a/main"));
 
-    Module foo = createModule("a.foo");
+    Module foo = fixture.createModule("a.foo");
     PsiTestUtil.addContentRoot(foo, testDataRoot.findFileByRelativePath("a/Foo"));
 
-    Module util = createModule("util");
+    Module util = fixture.createModule("util");
     PsiTestUtil.addContentRoot(util, testDataRoot.findFileByRelativePath("a/util"));
 
-    Module b = createModule("x.b");
+    Module b = fixture.createModule("x.b");
     PsiTestUtil.addContentRoot(b, testDataRoot.findFileByRelativePath("a/b"));
-    myStructure.setShowLibraryContents(false);
+    fixture.getStructure().setShowLibraryContents(false);
 
     //todo this function is generic enough, it can be moved to testFramework
     Function<Object, String> nodePresenter = o -> {
@@ -226,7 +245,8 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
       }
       return StringUtil.join(fragments, PresentableNodeDescriptor.ColoredFragment::getText, "");
     };
-    String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> PlatformTestUtil.print(myStructure, myStructure.getRootElement(), nodePresenter));
+    String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(
+      () -> ReadAction.computeBlocking(() -> PlatformTestUtil.print(fixture.getStructure(), fixture.getStructure().getRootElement(), nodePresenter)));
     assertEquals("""
                    testQualifiedModuleNames
                     qualifiedModuleNames [testQualifiedModuleNames]
