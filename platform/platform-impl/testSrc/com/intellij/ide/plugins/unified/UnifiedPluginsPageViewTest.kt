@@ -322,14 +322,26 @@ internal class UnifiedPluginsPageViewTest {
     val installedList = sectionList(view, title)
     val header = sectionHeader(view, title)
     val headerButton = componentsOfType(header, JToggleButton::class.java).single()
-    val expansionTextLabel = componentsOfType(headerButton, JBLabel::class.java)
-      .single { it.text == IdeBundle.message("plugins.configurable.show.more") }
-    val expansionChevronLabel = componentsOfType(headerButton, JBLabel::class.java)
-      .single { it.icon === AllIcons.General.ChevronDown }
+    val labels = componentsOfType(headerButton, JBLabel::class.java)
+    val titleLabel = labels.single { it.text == title }
+    val countLabel = labels.single { it.text == "5" }
+    val expansionTextLabel = labels.single { it.text == IdeBundle.message("plugins.configurable.show.more") }
+    val expansionChevronLabel = labels.single { it.icon === AllIcons.General.ChevronDown }
     val expansionControl = expansionTextLabel.parent as JComponent
+
+    fun baseline(label: JBLabel): Int {
+      return SwingUtilities.convertPoint(label, Point(0, label.getBaseline(label.width, label.height)), header).y
+    }
+
+    fun assertAlignedHeaderText(height: Int) {
+      header.setSize(JBUI.scale(320), height)
+      layoutRecursively(header)
+      assertThat(baseline(countLabel)).isEqualTo(baseline(titleLabel))
+      assertThat(baseline(expansionTextLabel)).isEqualTo(baseline(countLabel))
+    }
+
     headerButton.model.isRollover = true
-    header.setSize(JBUI.scale(320), JBUI.scale(40))
-    layoutRecursively(header)
+    assertAlignedHeaderText(JBUI.scale(40))
     assertThat(installedList.model.size).isEqualTo(PluginSectionState.COLLAPSED_ITEM_LIMIT)
     assertThat(expansionTextLabel.foreground).isEqualTo(com.intellij.util.ui.UIUtil.getContextHelpForeground())
     assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronDown)
@@ -348,6 +360,7 @@ internal class UnifiedPluginsPageViewTest {
     assertThat(installedList.model.size).isEqualTo(5)
     assertThat(expansionTextLabel.text).isEqualTo(IdeBundle.message("plugins.configurable.show.less"))
     assertThat(expansionChevronLabel.icon).isSameAs(AllIcons.General.ChevronUp)
+    assertAlignedHeaderText(JBUI.scale(40) + 1)
 
     headerButton.doClick()
     assertThat(expansionChanges).containsExactly(

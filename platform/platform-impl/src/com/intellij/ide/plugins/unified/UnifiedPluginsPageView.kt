@@ -845,7 +845,7 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
       horizontalAlignment = SwingConstants.CENTER
       verticalAlignment = SwingConstants.CENTER
     }
-    private val expansionControl = JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP, SwingConstants.CENTER)).apply {
+    private val expansionControl = JPanel(HorizontalLayout(EXPANSION_CONTROL_GAP)).apply {
       isOpaque = false
       border = JBUI.Borders.emptyLeft(SECTION_HEADER_TEXT_GAP)
       add(expansionTextLabel)

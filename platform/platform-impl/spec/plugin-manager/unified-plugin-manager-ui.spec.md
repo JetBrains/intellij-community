@@ -782,10 +782,12 @@ Untested: No focused test verifies Shift-selection across sections.
 
 - The count must remain visible when the title is shortened and in both expansion states.
 - The gap before the expansion action must be at least the gap between the title and the count.
+- The title, count, and expansion action text must share a baseline.
 - The title must use a trailing ellipsis if the full title does not fit beside the count and any visible action.
 - A shortened title must expose its full value as its accessible name and tooltip.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
     `repository header gives the title room until it reveals Show more`;
+    `expansion control projects all items and emits semantic intent`;
     `long non-repository section title uses trailing ellipsis`
   )
 
