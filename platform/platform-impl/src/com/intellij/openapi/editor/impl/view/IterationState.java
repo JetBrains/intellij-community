@@ -407,8 +407,11 @@ public final class IterationState {
     return getFillingLayers(layers);
   }
 
+  /**
+   * Says that the selection continues past the line end, or past the soft wrap at the end of the visual line.
+   */
   @ApiStatus.Internal
-  public boolean hasPastLineEndExtension() {
+  public boolean isSelectionPastLineEnd() {
     return isInSelection(hasSoftWrap());
   }
 

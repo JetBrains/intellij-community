@@ -302,7 +302,10 @@ public final class EditorPainter implements TextDrawingCallback {
     private final boolean myHuggingHighlighting;
     private final int myFillStartX;
     private final int myFillEndX;
-    private final float mySelectionExtensionWidth;
+    /**
+     * Gives the width of the stub. The stub shows that a hugging background covers a line break.
+     */
+    private final float myStubWidth;
     private final BackgroundFill myBackgroundFill;
     private boolean myBrokenFragmentRangeReported;
 
@@ -354,7 +357,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myHuggingHighlighting = myEditor.isHuggingHighlighting(myRegistry);
       myFillStartX = fillStartX();
       myFillEndX = fillEndX();
-      mySelectionExtensionWidth = selectionExtensionWidth();
+      myStubWidth = stubWidth();
       if (myRoundedHighlighting) {
         myBackgroundFill = new HighlighterVisualModel(myEditor, myYShift, myHuggingHighlighting);
       } else {
@@ -522,7 +525,7 @@ public final class EditorPainter implements TextDrawingCallback {
       return myCorrector.startX(visualLine) + widthAtVisualLine;
     }
 
-    private float selectionExtensionWidth() {
+    private float stubWidth() {
       // We need a singular width since otherwise end-of-line selections don't align
       // Choose `M` as it is generally considered the widest letter of the font
       // https://en.wikipedia.org/wiki/Em_(typography)
@@ -593,9 +596,7 @@ public final class EditorPainter implements TextDrawingCallback {
             for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
               Rectangle bounds = blockInlay.getBounds();
               if (bounds == null) continue;
-              float left = bounds.x - (myEditor.isRightAligned() ? mySelectionExtensionWidth : 0f);
-              float right = bounds.x + bounds.width + (myEditor.isRightAligned() ? 0f : mySelectionExtensionWidth);
-              paintSelectionBlock(new Rectangle2D.Double(left, bounds.y + myYShift, right - left, bounds.height));
+              paintSelectionBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height));
             }
           } else {
             paintBackgroundLayer(betweenLinesLayer, startX, prevY, endX - startX, y - prevY);
@@ -619,8 +620,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (myHuggingHighlighting
                 && it.isInSelection(true)
                 && myEditor.isRightAligned()) {
-              Rectangle2D block = new Rectangle2D.Double(xEnd - mySelectionExtensionWidth, y, mySelectionExtensionWidth, myLineHeight);
-              paintSelectionBlock(block);
+              paintSelectionBlock(withStub(xEnd, xEnd, y, myLineHeight));
             }
             if (softWrap == null) {
               return;
@@ -706,8 +706,8 @@ public final class EditorPainter implements TextDrawingCallback {
               if (myHuggingHighlighting && isSelected(cfr)) {
                 paintWidth = cfr.getWidthInPixels();
                 backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
-                float start = startX - (myEditor.isRightAligned() ? mySelectionExtensionWidth : 0.0f);
-                float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : mySelectionExtensionWidth);
+                float start = startX - (myEditor.isRightAligned() ? myStubWidth : 0.0f);
+                float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : myStubWidth);
                 paintSelectionBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
               } else {
                 paintLayeredBackground(layers, startX, y, paintWidth, cfr.getHeightInPixels());
@@ -727,7 +727,7 @@ public final class EditorPainter implements TextDrawingCallback {
             SoftWrapEx softWrap = visLinesIterator.getEndSoftWrap();
             if (softWrap == null) {
               if (dryRun) {
-                paintHuggingBlockPastLineEnd(it, x, y);
+                paintStubPastLineEnd(it, x, y);
                 paintVirtualSelectionIfNecessary(visualLine, columnStart, x, y);
                 return;
               }
@@ -736,7 +736,7 @@ public final class EditorPainter implements TextDrawingCallback {
               float extensionsStartX = getExtensionsStartX(x, inlays);
               List<LineExtensionLayout> lineExtensions = myEditor.getLineExtensions().getLayout(logicalLine);
               paintLineExtensionsBackground(lineExtensions, extensionsStartX, y);
-              paintHuggingBlockPastLineEnd(it, x, y);
+              paintStubPastLineEnd(it, x, y);
               paintVirtualSelectionIfNecessary(visualLine, columnStart, x, y);
               myTextDrawingTasks.add(g -> {
                 paintAfterLineEndInlays(x, y, g, inlays, backgroundAttributes);
@@ -744,7 +744,7 @@ public final class EditorPainter implements TextDrawingCallback {
               });
             }
             else {
-              paintHuggingBlockPastLineEnd(it, x, y);
+              paintStubPastLineEnd(it, x, y);
               paintSelectionOnFirstSoftWrapLineIfNecessary(visualLine, columnStart, x, y, primarySelectionStart, primarySelectionEnd);
               if (!dryRun && paintSoftWraps && softWrap.isPaintable()) {
                 myTextDrawingTasks.add(g -> {
@@ -868,13 +868,22 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     /**
-     * Paints the hugging block past the line end, where the selection of a left-aligned editor continues past the line end.
-     * The caller paints it after the backgrounds of the line extensions, so the block covers them.
+     * Paints the stub past the line end, where the selection of a left-aligned editor continues past the line end.
+     * The caller paints it after the backgrounds of the line extensions, so the stub covers them.
      */
-    private void paintHuggingBlockPastLineEnd(IterationState it, float x, int y) {
-      if (it.hasPastLineEndExtension() && myHuggingHighlighting && !myEditor.isRightAligned()) {
-        paintSelectionBlock(new Rectangle2D.Double(x, y, mySelectionExtensionWidth, myLineHeight));
+    private void paintStubPastLineEnd(IterationState it, float x, int y) {
+      if (it.isSelectionPastLineEnd() && myHuggingHighlighting && !myEditor.isRightAligned()) {
+        paintSelectionBlock(withStub(x, x, y, myLineHeight));
       }
+    }
+
+    /**
+     * Gives the block from {@code start} to {@code end}, widened by the stub on the side where a line ends.
+     * In a right-aligned editor, that side is the left one.
+     */
+    private @NotNull Rectangle2D withStub(float start, float end, int y, int height) {
+      float left = myEditor.isRightAligned() ? start - myStubWidth : start;
+      return new Rectangle2D.Double(left, y, end - start + myStubWidth, height);
     }
 
     private void paintVirtualSelectionIfNecessary(int visualLine, int columnStart, float xStart, int y) {
@@ -1275,7 +1284,7 @@ public final class EditorPainter implements TextDrawingCallback {
     /**
      * Paints the backgrounds of the line extensions of this visual line.
      * The order is the same in both modes. They cover the highlighter backgrounds and the filling selection at the line end.
-     * The virtual selection, the hugging block past the line end, the backgrounds after the end of a line and the right
+     * The virtual selection, the stub past the line end, the backgrounds after the end of a line and the right
      * margin cover them.
      */
     private void paintLineExtensionsBackground(List<LineExtensionLayout> lineExtensions, float x, int y) {
