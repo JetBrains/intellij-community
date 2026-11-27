@@ -117,7 +117,12 @@ jvm_library(
     ),
     module_name = "intellij.maven.testFramework.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/maven/testFramework"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/maven/testFramework",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "//plugins/maven",
