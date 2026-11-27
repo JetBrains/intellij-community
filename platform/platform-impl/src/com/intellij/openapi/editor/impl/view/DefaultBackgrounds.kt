@@ -15,8 +15,9 @@ internal class DefaultBackgrounds(
   /**
    * Says that a background of this color is no background.
    */
+  @Suppress("ReplaceCallWithBinaryOperator")
   fun isDefault(color: Color): Boolean {
-    return color == schemeBackground || color == editorBackground
+    return color.equals(schemeBackground) || color.equals(editorBackground)
   }
 
   /**

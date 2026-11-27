@@ -13,9 +13,9 @@ import java.awt.geom.Rectangle2D
  */
 internal interface BackgroundFill {
   /**
-   * Fills one block with several [layers]. The list starts at the top layer.
+   * Fills one block with the first [count] of these [layers]. The list starts at the top layer.
    */
-  fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>)
+  fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>, count: Int)
 
   /**
    * Fills one block with one [layer].
@@ -23,10 +23,10 @@ internal interface BackgroundFill {
   fun fillBlock(block: Rectangle2D, layer: BackgroundLayer)
 
   /**
-   * Fills the stub of a line break with these [layers] of the line break. The list starts at the top layer.
-   * The stub shows a hugging layer that the fill of the line leaves out. A filling layer above it stays on top.
+   * Fills the stub of a line break with the first [count] of these [layers] of the line break. The list starts at the
+   * top layer. The stub shows a hugging layer that the fill of the line leaves out. A filling layer above it stays on top.
    */
-  fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>)
+  fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>, count: Int)
 
   /**
    * Fills the background of a line extension.

@@ -43,10 +43,11 @@ internal class HighlighterVisualModel(private val yShift: Int) : BackgroundFill 
    * Adds one block with several [layers]. The list starts at the top layer.
    * The block records which of its styles lies directly above which, and [paint] keeps this order.
    */
-  override fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>) {
+  override fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>, count: Int) {
     chain.clear()
     var lowest: BackgroundLayer? = null
-    for (layer in layers) {
+    for (index in 0 until count) {
+      val layer = layers[index]
       if (layer.forcesBackground) {
         fillBlock(block, layer)
         continue
@@ -62,8 +63,8 @@ internal class HighlighterVisualModel(private val yShift: Int) : BackgroundFill 
   /**
    * Adds the stub as one block with all [layers]. A style of a filling layer covers the stub already, so its shape keeps.
    */
-  override fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>) {
-    fillLayeredBlock(block, layers)
+  override fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>, count: Int) {
+    fillLayeredBlock(block, layers, count)
   }
 
   override fun fillBlock(block: Rectangle2D, layer: BackgroundLayer) {

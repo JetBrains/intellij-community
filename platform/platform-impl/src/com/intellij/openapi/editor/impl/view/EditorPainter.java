@@ -74,7 +74,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatConsumer;
@@ -630,7 +629,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (myEditor.isRightAligned()) {
               paintLayeredBackground(IterationState.getFillingLayers(backgroundLayers), myFillStartX, y, xEnd - myFillStartX);
               if (myHuggingHighlighting) {
-                paintStub(backgroundLayers, withStub(xEnd, xEnd, y, myLineHeight));
+                paintStub(backgroundLayers, xEnd, xEnd, y, myLineHeight);
               }
             } else {
               paintLayeredBackground(backgroundLayers, myFillStartX, y, xEnd - myFillStartX);
@@ -711,8 +710,8 @@ public final class EditorPainter implements TextDrawingCallback {
             if (!collectBackgrounds) {
               return;
             }
-            TextAttributes backgroundAttributes = it.getPastLineEndBackgroundAttributes().clone();
             List<BackgroundLayer> layers = it.getPastLineEndBackgroundLayers();
+            TextAttributes backgroundAttributes = it.getPastLineEndBackgroundAttributes(layers).clone();
             CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
             if (cfr != null) {
               paintCustomFoldRegion(cfr, backgroundAttributes, layers, it.getLineBreakLayers(), x, y, dryRun, textTasks);
@@ -822,7 +821,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (myHuggingHighlighting) {
         paintHuggingRegion(cfr, layers, backgroundAttributes, new Rectangle2D.Double(x, y, width, height));
         if (!myEditor.isRightAligned()) {
-          paintStub(breakLayers, withStub(x + width, x + width, y, height));
+          paintStub(breakLayers, x + width, x + width, y, height);
         }
       }
       if (dryRun) {
@@ -859,7 +858,9 @@ public final class EditorPainter implements TextDrawingCallback {
       if (count > 0 && regionLayers.getFirst().getHugs()) {
         backgroundAttributes.setBackgroundColor(regionLayers.getFirst().getColor());
       }
-      paintStub(regionLayers, region);
+      if (hasHuggingLayer(regionLayers, count)) {
+        myBackgroundFill.fillStub(region, regionLayers, count);
+      }
     }
 
     /**
@@ -990,19 +991,31 @@ public final class EditorPainter implements TextDrawingCallback {
      */
     private void paintStubPastLineEnd(IterationState it, float x, int y) {
       if (myHuggingHighlighting && !myEditor.isRightAligned()) {
-        paintStub(it.getLineBreakLayers(), withStub(x, x, y, myLineHeight));
+        paintStub(it.getLineBreakLayers(), x, x, y, myLineHeight);
       }
     }
 
     /**
-     * Paints the {@code stub} with these layers of a line break, when one of them hugs.
+     * Paints the block from {@code start} to {@code end}, widened by the stub, with these layers of a line break, when one
+     * of them hugs.
      */
-    private void paintStub(List<BackgroundLayer> breakLayers, Rectangle2D stub) {
+    private void paintStub(List<BackgroundLayer> breakLayers, float start, float end, int y, int height) {
       int count = myDefaultBackgrounds.visibleCount(breakLayers);
-      List<BackgroundLayer> layers = breakLayers.subList(0, count);
-      if (ContainerUtil.exists(layers, BackgroundLayer::getHugs)) {
-        myBackgroundFill.fillStub(stub, layers);
+      if (hasHuggingLayer(breakLayers, count)) {
+        myBackgroundFill.fillStub(withStub(start, end, y, height), breakLayers, count);
       }
+    }
+
+    /**
+     * Says that one of the first {@code count} of these layers hugs.
+     */
+    private static boolean hasHuggingLayer(List<BackgroundLayer> layers, int count) {
+      for (int i = 0; i < count; i++) {
+        if (layers.get(i).getHugs()) {
+          return true;
+        }
+      }
+      return false;
     }
 
     /**
@@ -1083,7 +1096,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (count == 0) {
         return;
       }
-      myBackgroundFill.fillLayeredBlock(new Rectangle2D.Float(x, y, width, height), layers.subList(0, count));
+      myBackgroundFill.fillLayeredBlock(new Rectangle2D.Float(x, y, width, height), layers, count);
     }
 
     private void paintBackgroundLayer(@Nullable BackgroundLayer layer, float x, int y, float width, int height) {

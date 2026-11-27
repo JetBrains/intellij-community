@@ -380,10 +380,22 @@ public final class IterationState {
 
   @ApiStatus.Internal
   public @NotNull TextAttributes getPastLineEndBackgroundAttributes() {
-    List<BackgroundLayer> layers = getPastLineEndBackgroundLayers();
-    BackgroundLayer layer = ContainerUtil.find(layers, BackgroundLayer::getForcesBackground);
-    if (layer == null) {
-      layer = ContainerUtil.getFirstItem(layers);
+    return getPastLineEndBackgroundAttributes(getPastLineEndBackgroundLayers());
+  }
+
+  /**
+   * Gives the attributes after the line end, with the background of these {@link #getPastLineEndBackgroundLayers()}.
+   */
+  @ApiStatus.Internal
+  public @NotNull TextAttributes getPastLineEndBackgroundAttributes(@NotNull List<BackgroundLayer> layers) {
+    BackgroundLayer layer = null;
+    for (int i = 0; i < layers.size() && layer == null; i++) {
+      if (layers.get(i).getForcesBackground()) {
+        layer = layers.get(i);
+      }
+    }
+    if (layer == null && !layers.isEmpty()) {
+      layer = layers.getFirst();
     }
     myMergedAttributes.setBackgroundColor(layer == null ? myDefaultBackground : layer.getColor());
     return myMergedAttributes;

@@ -156,7 +156,7 @@ data class BackgroundLayer(
       roundedAllowed: Boolean,
       huggingAllowed: Boolean,
     ): BackgroundLayer {
-      val exactRange = highlighter.targetArea == HighlighterTargetArea.EXACT_RANGE
+      val exactRange = highlighter.targetArea === HighlighterTargetArea.EXACT_RANGE
       return BackgroundLayer(
         color = color,
         layer = highlighter.layer,

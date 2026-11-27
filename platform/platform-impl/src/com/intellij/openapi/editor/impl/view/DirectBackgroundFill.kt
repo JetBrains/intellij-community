@@ -16,8 +16,8 @@ internal class DirectBackgroundFill(
   /**
    * Fills the block with the one layer that the user sees.
    */
-  override fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>) {
-    fill(block, topOf(layers).color)
+  override fun fillLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>, count: Int) {
+    fill(block, topOf(layers, count).color)
   }
 
   override fun fillBlock(block: Rectangle2D, layer: BackgroundLayer) {
@@ -27,8 +27,8 @@ internal class DirectBackgroundFill(
   /**
    * Fills the stub only when the layer that the user sees hugs. The fill of the line already shows a filling one.
    */
-  override fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>) {
-    val top = topOf(layers)
+  override fun fillStub(block: Rectangle2D, layers: List<BackgroundLayer>, count: Int) {
+    val top = topOf(layers, count)
     if (top.hugs) {
       fill(block, top.color)
     }
@@ -46,12 +46,13 @@ internal class DirectBackgroundFill(
   }
 
   /**
-   * Gives the one layer that the user sees in a block of these layers.
+   * Gives the one layer that the user sees in a block of the first [count] of these layers.
    * A layer that forces the background wins over every other layer.
    */
-  private fun topOf(layers: List<BackgroundLayer>): BackgroundLayer {
-    var top = layers.first()
-    for (layer in layers) {
+  private fun topOf(layers: List<BackgroundLayer>, count: Int): BackgroundLayer {
+    var top = layers[0]
+    for (index in 1 until count) {
+      val layer = layers[index]
       if (layer.forcesBackground && layer > top) {
         top = layer
       }
