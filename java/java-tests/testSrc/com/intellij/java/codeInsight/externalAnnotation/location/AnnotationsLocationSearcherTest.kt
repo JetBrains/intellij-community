@@ -9,12 +9,26 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.containers.MultiMap
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
+@TestApplication
+class AnnotationsLocationSearcherTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
+
+  private val project get() = projectFixture.get().project
+
+  @TestDisposable
+  lateinit var testRootDisposable: Disposable
 
   private fun configureExtensionPoint(secondProvider: AnnotationsLocationProvider? = null) {
     val testAnnotationProvider = TestAnnotationProvider()
@@ -30,7 +44,7 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
     configureExtensionPoint()
 
     val library = createLibrary("unknown-library")
-    assertEmpty(AnnotationsLocationSearcher.findAnnotationsLocation(project, library, null, null, null))
+    assertThat(AnnotationsLocationSearcher.findAnnotationsLocation(project, library, null, null, null)).isEmpty()
   }
 
   @Test
@@ -38,7 +52,7 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
     configureExtensionPoint()
 
     val library = createLibrary("known-library-name")
-    assertSize(1, AnnotationsLocationSearcher.findAnnotationsLocation(project, library, null, null, null))
+    assertThat(AnnotationsLocationSearcher.findAnnotationsLocation(project, library, null, null, null)).hasSize(1)
   }
 
   @Test
@@ -53,13 +67,13 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
 
     configureExtensionPoint(secondProvider)
     val library = createLibrary("known-library-name")
-    assertSize(2, AnnotationsLocationSearcher.findAnnotationsLocation(project, library, null, null, null))
+    assertThat(AnnotationsLocationSearcher.findAnnotationsLocation(project, library, null, null, null)).hasSize(2)
   }
 
   private fun createLibrary(libraryName: String): Library {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
     val library = runWriteActionAndWait { libraryTable.createLibrary(libraryName) }
-    disposeOnTearDown(object : Disposable {
+    Disposer.register(testRootDisposable, object : Disposable {
       override fun dispose() {
         runWriteActionAndWait { libraryTable.removeLibrary(library) }
       }

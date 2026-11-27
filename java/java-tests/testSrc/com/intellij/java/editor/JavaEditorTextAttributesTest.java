@@ -12,12 +12,13 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -25,9 +26,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
+@TestApplication
+public class JavaEditorTextAttributesTest {
 
   private static List<AttributesDescriptor> getDescriptors() {
     JavaColorSettingsPage page = new JavaColorSettingsPage();
@@ -103,6 +106,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
   /**
    * Ensures that Java attributes are not affected by changes in EditorColorScheme or these changes are planned and intentional.
    */
+  @Test
   public void testDefaultColorScheme() {
     assertEquals(
       """
@@ -163,6 +167,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
       dumpDefaultColorScheme(EditorColorsScheme.getDefaultSchemeName()));
   }
 
+  @Test
   public void testDarculaColorScheme() {
     assertEquals(
       """
@@ -224,6 +229,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
     );
   }
 
+  @Test
   public void testInheritanceFlagCanBeOverwrittenWithDefaultAttributes() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorScheme = (EditorColorsScheme)defaultScheme.clone();

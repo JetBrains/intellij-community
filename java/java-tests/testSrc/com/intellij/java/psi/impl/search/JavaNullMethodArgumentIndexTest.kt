@@ -16,13 +16,27 @@
 package com.intellij.java.psi.impl.search
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.FileContentImpl
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class JavaNullMethodArgumentIndexTest : BasePlatformTestCase() {
+@TestApplication
+class JavaNullMethodArgumentIndexTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
 
-  fun testIndex() {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testIndex(): Unit = timeoutRunBlocking {
     val file = myFixture.configureByText(JavaFileType.INSTANCE, """
             package org.some;
 
@@ -86,19 +100,18 @@ class JavaNullMethodArgumentIndexTest : BasePlatformTestCase() {
                 }
             }
     """).virtualFile
-    val content = FileContentImpl.createByFile(file, project)
-    val data = JavaNullMethodArgumentIndex().indexer.map(content).keys
+    val content = FileContentImpl.createByFile(file, myFixture.project)
+    val data = readAction { JavaNullMethodArgumentIndex().indexer.map(content).keys }
 
-    assertSize(8, data)
-    assertContainsElements(data,
-                           JavaNullMethodArgumentIndex.MethodCallData("staticMethod", 0),
-                           JavaNullMethodArgumentIndex.MethodCallData("staticMethod", 2),
-                           JavaNullMethodArgumentIndex.MethodCallData("someMethod", 0),
-                           JavaNullMethodArgumentIndex.MethodCallData("someMethod", 2),
-                           JavaNullMethodArgumentIndex.MethodCallData("Main111", 0),
-                           JavaNullMethodArgumentIndex.MethodCallData("SubClass", 0),
-                           JavaNullMethodArgumentIndex.MethodCallData("SubClass2", 0),
-                           JavaNullMethodArgumentIndex.MethodCallData("ParametrizedRunnable", 0))
+    assertThat(data).hasSize(8)
+    assertThat(data).contains(JavaNullMethodArgumentIndex.MethodCallData("staticMethod", 0),
+                              JavaNullMethodArgumentIndex.MethodCallData("staticMethod", 2),
+                              JavaNullMethodArgumentIndex.MethodCallData("someMethod", 0),
+                              JavaNullMethodArgumentIndex.MethodCallData("someMethod", 2),
+                              JavaNullMethodArgumentIndex.MethodCallData("Main111", 0),
+                              JavaNullMethodArgumentIndex.MethodCallData("SubClass", 0),
+                              JavaNullMethodArgumentIndex.MethodCallData("SubClass2", 0),
+                              JavaNullMethodArgumentIndex.MethodCallData("ParametrizedRunnable", 0))
 
   }
 }

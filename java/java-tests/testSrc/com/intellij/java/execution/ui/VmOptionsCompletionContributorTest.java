@@ -13,22 +13,37 @@ import com.intellij.execution.vmOptions.VMOptionsService;
 import com.intellij.execution.vmOptions.VMOptionsServiceImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.platform.backend.documentation.DocumentationData;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsightFixture4TestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class VmOptionsCompletionContributorTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
   @Test
   public void testEmptyPrompt() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
@@ -41,6 +56,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testSimpleOptions() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
@@ -53,6 +69,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testSimpleOptionsAfterDot() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-Duser.<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("-Duser.dir", "-Duser.home", "-Duser.name"), myFixture.getLookupElementStrings());
@@ -60,6 +77,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testSimpleOptionsAfterDash() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-add-<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens"), myFixture.getLookupElementStrings());
@@ -67,14 +85,16 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testSimpleOptionsBeforeAnother() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-<caret> -ea");
     myFixture.completeBasic();
     List<String> strings = myFixture.getLookupElementStrings();
-    assertContainsElements(strings, "-Duser.dir", "-Duser.home", "-Duser.name");
+    assertThat(strings).contains("-Duser.dir", "-Duser.home", "-Duser.name");
   }
 
   @Test
   public void testDoubleDash() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("--<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens"), myFixture.getLookupElementStrings());
@@ -83,6 +103,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXX() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("+MinusFlag", "-Flag", "Diagnostic", "Experimental", "Value"), myFixture.getLookupElementStrings());
@@ -98,7 +119,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   private static void checkPresentation(LookupElement element, String expected) {
     LookupElementPresentation presentation = new LookupElementPresentation();
-    element.renderElement(presentation);
+    ReadAction.runBlocking(() -> element.renderElement(presentation));
     Icon icon = presentation.getIcon();
     String iconTag = icon == AllIcons.General.ShowInfos ? "[d] " :
                      icon == AllIcons.General.ShowWarning ? "[e] " : "";
@@ -108,6 +129,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXXValue() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:Val<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("-XX:Value=");
@@ -115,6 +137,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXXDiagnostic() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:Diag<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("""
@@ -124,6 +147,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXXExperimental() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:+Flag -XX:Exper<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("""
@@ -133,6 +157,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXXExperimentalAlready() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:+Flag -XX:+UnlockExperimentalVMOptions -XX:Exper<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("-XX:+Flag -XX:+UnlockExperimentalVMOptions -XX:Experimental");
@@ -140,6 +165,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXXPlus() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:+<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("Flag", "MinusFlag"), myFixture.getLookupElementStrings());
@@ -147,6 +173,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testXXAlreadyPresent() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-XX:+Flag -XX:+<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("MinusFlag"), myFixture.getLookupElementStrings());
@@ -168,6 +195,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testSimpleOptionCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-Duser.di<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("-Duser.dir=<caret>");
@@ -175,16 +203,18 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
 
   @Test
   public void testSimpleOptionTailReplace() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("-Duser.di<caret>=");
     myFixture.completeBasic();
     myFixture.checkResult("-Duser.dir=<caret>");
   }
 
   private void configure(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(PlainTextFileType.INSTANCE, text);
     ServiceContainerUtil
-      .replaceService(ApplicationManager.getApplication(), VMOptionsService.class, new TestVMOptionService(), getTestRootDisposable());
-    ApplicationConfiguration configuration = new ApplicationConfiguration("Hello", getProject());
+      .replaceService(ApplicationManager.getApplication(), VMOptionsService.class, new TestVMOptionService(), myFixture.getTestRootDisposable());
+    ApplicationConfiguration configuration = new ApplicationConfiguration("Hello", myFixture.getProject());
     configuration.setAlternativeJrePathEnabled(true);
     configuration.setAlternativeJrePath("/my/jre");
     Document document = myFixture.getEditor().getDocument();

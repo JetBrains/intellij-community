@@ -20,47 +20,70 @@ import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaSourceRootDetectionTest extends LightPlatformTestCase {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaSourceRootDetectionTest {
+  private String myTestName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    myTestName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), true);
+  }
+
+  @Test
   public void testSimple() {
     doTest("src", "");
   }
 
+  @Test
   public void testWithPrefix() {
     doTest("", "xxx.yyy");
   }
 
+  @Test
   public void testTwoRoots() {
     doTest("src1", "", "src2", "xyz");
   }
 
+  @Test
   public void testDefaultPackage() {
     doTest("src", "");
   }
 
+  @Test
   public void testDefaultPackageWithImport() {
     doTest("src", "");
   }
 
+  @Test
   public void testGarbage() {
     doTest();
   }
 
+  @Test
   public void testFileWithBom() {
     doTest("src", "");
   }
 
+  @Test
   public void testPackageWithAnnotation() {
     doTest("src", "");
   }
 
   private void doTest(String... expected) {
-    final String dirPath = JavaTestUtil.getJavaTestDataPath() + FileUtil.toSystemDependentName("/ide/sourceRootDetection/" + getTestName(true));
+    final String dirPath = JavaTestUtil.getJavaTestDataPath() + FileUtil.toSystemDependentName("/ide/sourceRootDetection/" + myTestName);
     final File dir = new File(dirPath);
     assertTrue(dir.isDirectory());
     final List<Pair<File, String>> actual = new ArrayList<>();
@@ -71,6 +94,6 @@ public class JavaSourceRootDetectionTest extends LightPlatformTestCase {
     for (int i = 0; i < expected.length / 2; i++) {
       expectedList.add(Pair.create(new File(dir, expected[2 * i]), expected[2 * i + 1]));
     }
-    assertSameElements(actual, expectedList);
+    assertThat(actual).containsExactlyInAnyOrderElementsOf(expectedList);
   }
 }

@@ -8,10 +8,12 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.CustomDif
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class IntentionPreviewDiffResultTest {
   @Test
   fun testSingleWord() {
     val diffs = createDiffs("""

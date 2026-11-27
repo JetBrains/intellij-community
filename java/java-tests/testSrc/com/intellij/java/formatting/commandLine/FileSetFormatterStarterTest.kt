@@ -7,10 +7,27 @@ import com.intellij.formatting.commandLine.FileSetFormatValidator
 import com.intellij.formatting.commandLine.FileSetFormatter
 import com.intellij.formatting.commandLine.createBuilder
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.io.File
 
-class FileSetFormatterStarterTest : LightPlatformTestCase() {
+@TestApplication
+class FileSetFormatterStarterTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
+
+  private val project get() = projectFixture.get().project
+
   private inline fun <reified T : Exception> expectExceptionsOnArgs(vararg args: String) {
     try {
       createBuilder(args.toList()).build(project).let {
@@ -18,35 +35,45 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
       }
     }
     catch (e: Exception) {
-      assertInstanceOf(e, T::class.java)
+      assertInstanceOf(T::class.java, e)
     }
   }
 
-  fun testHelp_noArgs0() = expectExceptionsOnArgs<ShowUsageException>()
-  fun testHelp_noArgs1() = expectExceptionsOnArgs<ShowUsageException>("format")
-  fun testHelp_explicit_only() = expectExceptionsOnArgs<ShowUsageException>("format", "-help")
-  fun testHelp_explicit_withOthers() = expectExceptionsOnArgs<ShowUsageException>("format", "-r", "src", "-h")
+  @Test
+  fun testHelp_noArgs0(): Unit = expectExceptionsOnArgs<ShowUsageException>()
+  @Test
+  fun testHelp_noArgs1(): Unit = expectExceptionsOnArgs<ShowUsageException>("format")
+  @Test
+  fun testHelp_explicit_only(): Unit = expectExceptionsOnArgs<ShowUsageException>("format", "-help")
+  @Test
+  fun testHelp_explicit_withOthers(): Unit = expectExceptionsOnArgs<ShowUsageException>("format", "-r", "src", "-h")
 
-  fun testUnknownArgumentFails() = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-unknown_arg")
-  fun testMissingParamForMasks() = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-m")
-  fun testMissingParamForSettings() = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-s")
-  fun testMissingSettingsFile() = expectExceptionsOnArgs<ArgumentsException>("format", "-s",
+  @Test
+  fun testUnknownArgumentFails(): Unit = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-unknown_arg")
+  @Test
+  fun testMissingParamForMasks(): Unit = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-m")
+  @Test
+  fun testMissingParamForSettings(): Unit = expectExceptionsOnArgs<ArgumentsException>("format", "-r", "src", "-s")
+  @Test
+  fun testMissingSettingsFile(): Unit = expectExceptionsOnArgs<ArgumentsException>("format", "-s",
                                                                              "really_hope_noone_adds_file_with_this_name_in_future", "src")
 
+  @Test
   fun testDefaultArgs() {
     createBuilder(listOf("format", ".")).build(project).let { processor ->
-      assertInstanceOf(processor, FileSetFormatter::class.java)
+      assertInstanceOf(FileSetFormatter::class.java, processor)
       assertFalse(processor.isRecursive)
-      assertEmpty(processor.getFileMasks())
+      assertThat(processor.getFileMasks()).isEmpty()
       assertNull(processor.defaultCodeStyle)
       assertEquals(1, processor.getEntries().size)
       assertEquals(File(".").absolutePath, processor.getEntries()[0].absolutePath)
     }
   }
 
+  @Test
   fun testNonDefaultArgs() {
     createBuilder(listOf("format", "-r", "-d", "-m", "*.java, ,*.kt,", ".", "..")).build(project).let { processor ->
-      assertInstanceOf(processor, FileSetFormatValidator::class.java)
+      assertInstanceOf(FileSetFormatValidator::class.java, processor)
       assertTrue(processor.isRecursive)
 
       assertEquals(2, processor.getFileMasks().size)
@@ -59,9 +86,10 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun testNonDefaultArgs2() {
     createBuilder(listOf("format", "-d", "-allowDefaults", ".")).build(project).let { processor ->
-      assertInstanceOf(processor, FileSetFormatValidator::class.java)
+      assertInstanceOf(FileSetFormatValidator::class.java, processor)
       assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.defaultCodeStyle)
     }
   }

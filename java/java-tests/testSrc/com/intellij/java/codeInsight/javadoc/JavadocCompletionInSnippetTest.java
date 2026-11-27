@@ -2,56 +2,39 @@
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.TestIndexingModeSupporter;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.testFramework.fixtures.IndexingModeCodeInsightTestFixture;
-import org.jetbrains.annotations.NotNull;
-
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class JavadocCompletionInSnippetTest extends BasePlatformTestCase implements TestIndexingModeSupporter {
-  private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
+@TestApplication
+public class JavadocCompletionInSnippetTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_20);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for overriding method completion)")
+  @Test
   public void testOverrideMethod() {
     // nikita.eshkeev@jetbrains.com will fix it later
     //doTest();
   }
 
   private void doTest() {
-    myFixture.configureByFile("before" + getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("before" + myFixture.getTestName(false) + ".java");
     myFixture.completeBasic();
-    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
+    myFixture.checkResultByFile("after" + myFixture.getTestName(false) + ".java");
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadoc/snippet/completion/";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
-  }
-
-  @Override
-  public void setIndexingMode(@NotNull IndexingMode mode) {
-    myIndexingMode = mode;
-  }
-
-  @Override
-  public @NotNull IndexingMode getIndexingMode() {
-    return myIndexingMode;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture = IndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, getIndexingMode());
-    myIndexingMode.setUpTest(getProject(), getTestRootDisposable());
+  @BeforeEach
+  void setUp() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadoc/snippet/completion/");
   }
 }

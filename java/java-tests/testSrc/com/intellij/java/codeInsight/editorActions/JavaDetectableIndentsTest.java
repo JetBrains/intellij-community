@@ -24,40 +24,52 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class JavaDetectableIndentsTest extends BasePlatformTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class JavaDetectableIndentsTest {
   private static final String BASE_PATH = "/codeInsight/editorActions/detectableIndents/";
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath());
     DetectableIndentOptionsProvider.getInstance().setEnabledInTest(true);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      DetectableIndentOptionsProvider.getInstance().setEnabledInTest(false);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    DetectableIndentOptionsProvider.getInstance().setEnabledInTest(false);
   }
 
+  @Test
   public void testSpaceIndent() {
     doTest();
   }
 
+  @Test
   public void testTabIndent() {
     doTest();
   }
 
+  @Test
   public void testWithFullReformat() {
-    String testName = getTestName(true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String testName = myFixture.getTestName(true);
     myFixture.configureByFile(BASE_PATH + testName + ".java");
     CommonCodeStyleSettings javaSettings =
       CodeStyle.getSettings(myFixture.getEditor()).getCommonSettings(JavaLanguage.INSTANCE);
@@ -81,20 +93,18 @@ public class JavaDetectableIndentsTest extends BasePlatformTestCase {
       }
     };
     FileInEditorProcessor processor = new FileInEditorProcessor(myFixture.getFile(), myFixture.getEditor(), options);
-    processor.processCode();
-    EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    EdtTestUtil.runInEdtAndWait(() -> {
+      processor.processCode();
+      EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    });
     myFixture.checkResultByFile(BASE_PATH + testName + "_after.java");
   }
 
   private void doTest() {
-    String testName = getTestName(true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String testName = myFixture.getTestName(true);
     myFixture.configureByFile(BASE_PATH + testName + ".java");
-    EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n');
+    EdtTestUtil.runInEdtAndWait(() -> EditorTestUtil.performTypingAction(myFixture.getEditor(), '\n'));
     myFixture.checkResultByFile(BASE_PATH + testName + "_after.java");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
   }
 }

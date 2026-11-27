@@ -7,11 +7,25 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
-class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
+@TestApplication
+class JBBundledAnnotationsProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
+
+  private val project get() = projectFixture.get().project
+
+  @TestDisposable
+  lateinit var testRootDisposable: Disposable
+
   @Test
   fun `test missing annotation is not provided`() {
     val provider = JBBundledAnnotationsProvider()
@@ -67,7 +81,7 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
   private fun createLibrary(): Library {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
     val library = runWriteActionAndWait { libraryTable.createLibrary("test-library") }
-    disposeOnTearDown(object : Disposable {
+    Disposer.register(testRootDisposable, object : Disposable {
       override fun dispose() {
         runWriteActionAndWait { libraryTable.removeLibrary(library) }
       }

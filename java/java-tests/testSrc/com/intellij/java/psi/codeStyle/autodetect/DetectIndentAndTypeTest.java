@@ -18,16 +18,30 @@ package com.intellij.java.psi.codeStyle.autodetect;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-public class DetectIndentAndTypeTest extends BasePlatformTestCase {
+@TestApplication
+public class DetectIndentAndTypeTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private CodeStyleSettings mySettings;
   private static final String myText = """
@@ -37,11 +51,10 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
     \t}
     }""";
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(CodeStyle.createTestSettings());
-    mySettings = CodeStyle.getSettings(getProject());
+  @BeforeEach
+  void setUp() {
+    CodeStyleSettingsManager.getInstance(codeInsightFixture.get().getProject()).setTemporarySettings(CodeStyle.createTestSettings());
+    mySettings = CodeStyle.getSettings(codeInsightFixture.get().getProject());
     mySettings.AUTODETECT_INDENTS = true;
     DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
     if (optionsProvider != null) {
@@ -49,24 +62,22 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
     }
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     try {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+      CodeStyleSettingsManager.getInstance(codeInsightFixture.get().getProject()).dropTemporarySettings();
+    }
+    finally {
       DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
       if (optionsProvider != null) {
         optionsProvider.setEnabledInTest(false);
       }
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
+  @Test
   public void testWhenTabsDetected_SetIndentSizeToTabSize() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
 
@@ -94,7 +105,9 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
                             """);
   }
 
+  @Test
   public void testContinuationTab_AsTabSize() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
     common.ALIGN_MULTILINE_BINARY_OPERATION = false;
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
@@ -118,7 +131,9 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
         }""");
   }
 
+  @Test
   public void testContinuationTabs_AsDoubleTabSize() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
     common.ALIGN_MULTILINE_BINARY_OPERATION = false;
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
@@ -141,7 +156,9 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
         }""");
   }
 
+  @Test
   public void testWhenTabsDetected_SetContinuationIndentSizeToDoubleTabSize() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
 
@@ -170,7 +187,9 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
                             """);
   }
   
+  @Test
   public void testDoNotIndentOptions_WhenTabsDetected_AndUseTabsWasSetByDefault() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
     CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
 
@@ -184,7 +203,7 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
 
     myFixture.configureByText(JavaFileType.INSTANCE, myText);
     PsiFile file = myFixture.getFile();
-    CommonCodeStyleSettings.IndentOptions options = mySettings.getIndentOptionsByFile(file);
+    CommonCodeStyleSettings.IndentOptions options = ReadAction.computeBlocking(() -> mySettings.getIndentOptionsByFile(file));
 
     assertThat(options.INDENT_SIZE).isEqualTo(4);
     assertThat(indentOptions.CONTINUATION_INDENT_SIZE).isEqualTo(8);

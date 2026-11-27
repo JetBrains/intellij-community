@@ -11,46 +11,57 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixT
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaEditablePostfixTemplateTest {
   private static final JavaPostfixTemplateProvider PROVIDER = new JavaPostfixTemplateProvider();
 
+  @Test
   public void testId() {
     JavaEditablePostfixTemplate template = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),
                                                                            LanguageLevel.JDK_1_8, true, PROVIDER);
     assertEquals("myId", reloadJavaTemplate(template).getId());
   }
 
+  @Test
   public void testTemplateKey() {
     JavaEditablePostfixTemplate template = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),
                                                                            LanguageLevel.JDK_1_8, true, PROVIDER);
     assertEquals(".myKey", reloadJavaTemplate(template).getKey());
   }
 
+  @Test
   public void testChangedBuiltinTemplate() {
     JavaEditablePostfixTemplate customTemplate = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),
                                                                                  LanguageLevel.JDK_1_8, true, PROVIDER);
     AssertStatementPostfixTemplate builtinTemplate = new AssertStatementPostfixTemplate(PROVIDER);
     PostfixChangedBuiltinTemplate template = new PostfixChangedBuiltinTemplate(customTemplate, builtinTemplate);
     PostfixTemplate reloaded = reloadTemplate(template);
-    assertInstanceOf(reloaded, PostfixChangedBuiltinTemplate.class);
+    assertInstanceOf(PostfixChangedBuiltinTemplate.class, reloaded);
     assertEquals("myId", reloaded.getId());
     assertEquals("assert", ((PostfixChangedBuiltinTemplate)reloaded).getBuiltinTemplate().getId());
     assertTrue(reloaded.isBuiltin());
   }
 
+  @Test
   public void testRenamedNonEditableTemplate() {
     NotExpressionPostfixTemplate builtinTemplate = new NotExpressionPostfixTemplate();
     PostfixTemplateWrapper customTemplate = new PostfixTemplateWrapper("renamed", "renamed", ".renamed", builtinTemplate, PROVIDER);
     PostfixChangedBuiltinTemplate template = new PostfixChangedBuiltinTemplate(customTemplate, builtinTemplate);
     PostfixTemplate reloaded = reloadTemplate(template);
-    assertInstanceOf(reloaded, PostfixChangedBuiltinTemplate.class);
+    assertInstanceOf(PostfixChangedBuiltinTemplate.class, reloaded);
     assertEquals("renamed", reloaded.getId());
     assertEquals(".renamed", reloaded.getKey());
     assertEquals("com.intellij.codeInsight.template.postfix.templates.NotExpressionPostfixTemplate#.not",
@@ -58,12 +69,14 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
     assertTrue(reloaded.isBuiltin());
   }
 
+  @Test
   public void testLanguageLevel() {
     JavaEditablePostfixTemplate template = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),
                                                                            LanguageLevel.JDK_1_8, true, PROVIDER);
     assertEquals(LanguageLevel.JDK_1_8, reloadJavaTemplate(template).getMinimumLanguageLevel());
   }
 
+  @Test
   public void testTopmost() {
     JavaEditablePostfixTemplate template = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),
                                                                            LanguageLevel.JDK_1_8, true, PROVIDER);
@@ -72,54 +85,62 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
     assertFalse(reloadJavaTemplate(template).isUseTopmostExpression());
   }
 
+  @Test
   public void testArrayCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testNonVoidCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testVoidCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateVoidExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testBooleanCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testNumberCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testNotPrimitiveTypeCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testArrayNotPrimitiveTypeCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayReferenceExpressionCondition();
-    assertSameElements(reloadConditions(templateWithCondition(condition)), condition);
+    assertEquals(Set.of(condition), Set.copyOf(reloadConditions(templateWithCondition(condition))));
   }
 
+  @Test
   public void testFqnCondition() {
     JavaPostfixTemplateExpressionCondition condition =
       new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition("test.class.Name");
     Set<? extends JavaPostfixTemplateExpressionCondition> conditions = reloadConditions(templateWithCondition(condition));
     JavaPostfixTemplateExpressionCondition reloadedCondition = ContainerUtil.getFirstItem(conditions);
-    assertSameElements(conditions, condition);
+    assertEquals(Set.of(condition), Set.copyOf(conditions));
     assertEquals("test.class.Name",
                  ((JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition)reloadedCondition).getFqn());
   }

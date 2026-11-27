@@ -16,142 +16,168 @@
 package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
+import org.junit.jupiter.api.Test;
 
-public class JavadocParamTagsTest extends LightIdeaTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class JavadocParamTagsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
+
+  @Test
   public void testDeleteTag1() {
     final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
+    final PsiDocComment docComment = ReadAction.computeBlocking(() -> factory.createMethodFromText(
       """
         /**
          * Javadoc
          * @param p1
          * @param p2
-         */  void m() {}""", null);
-    final PsiDocComment docComment = method.getDocComment();
+         */  void m() {}""", null).getDocComment());
     assertNotNull(docComment);
-    final PsiDocTag[] tags = docComment.getTags();
+    final PsiDocTag[] tags = ReadAction.computeBlocking(() -> docComment.getTags());
     WriteCommandAction.runWriteCommandAction(null, () -> tags[0].delete());
 
     assertEquals("""
                    /**
                     * Javadoc
                     * @param p2
-                    */""", docComment.getText());
+                    */""", ReadAction.computeBlocking(() -> docComment.getText()));
 
   }
 
+  @Test
   public void testDeleteTag2() {
     final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
+    final PsiDocComment docComment = ReadAction.computeBlocking(() -> factory.createMethodFromText(
       """
         /**
          * Javadoc
          * @param p1
          * @param p2
-         */  void m() {}""", null);
-    final PsiDocComment docComment = method.getDocComment();
+         */  void m() {}""", null).getDocComment());
     assertNotNull(docComment);
-    final PsiDocTag[] tags = docComment.getTags();
-    ApplicationManager.getApplication().runWriteAction(() -> tags[1].delete());
+    final PsiDocTag[] tags = ReadAction.computeBlocking(() -> docComment.getTags());
+    WriteAction.runAndWait(() -> tags[1].delete());
 
     assertEquals("""
                    /**
                     * Javadoc
                     * @param p1
-                    */""", docComment.getText());
+                    */""", ReadAction.computeBlocking(() -> docComment.getText()));
 
   }
 
+  @Test
   public void testDeleteTag3() {
     final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
+    final PsiDocComment docComment = ReadAction.computeBlocking(() -> factory.createMethodFromText(
       """
         /**
          * Javadoc
          * @param p1
          * @param p2
          * @param p3
-         */  void m() {}""", null);
-    final PsiDocComment docComment = method.getDocComment();
+         */  void m() {}""", null).getDocComment());
     assertNotNull(docComment);
-    final PsiDocTag[] tags = docComment.getTags();
-    ApplicationManager.getApplication().runWriteAction(() -> tags[1].delete());
+    final PsiDocTag[] tags = ReadAction.computeBlocking(() -> docComment.getTags());
+    WriteAction.runAndWait(() -> tags[1].delete());
 
     assertEquals("""
                    /**
                     * Javadoc
                     * @param p1
                     * @param p3
-                    */""", docComment.getText());
+                    */""", ReadAction.computeBlocking(() -> docComment.getText()));
   }
 
+  @Test
   public void testTagCreation() {
     createAndTestTag("@param p1 Text", "p1", "Text");
     createAndTestTag("@param p2", "p2", "");
     createAndTestTag("@param p2 FirstLine\n * SecondLine", "p2", "FirstLine\nSecondLine");
   }
 
+  @Test
   public void testAddTag1() {
-    final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
-      """
-        /**
-         * Javadoc
-         * @param p1
-         */
-        void m();""", null);
-    final PsiDocComment docComment = method.getDocComment();
-    assertNotNull(docComment);
-    final PsiDocTag[] tags = docComment.getTags();
-    final PsiDocTag tag2 = factory.createParamTag("p2", "");
-    docComment.addAfter(tag2, tags[0]);
-    assertEquals(
-      """
-        /**
-         * Javadoc
-         * @param p1
-         * @param p2
-         */""", docComment.getText());
+    ReadAction.runBlocking(() -> {
+      final PsiElementFactory factory = getFactory();
+      final PsiMethod method = factory.createMethodFromText(
+        """
+          /**
+           * Javadoc
+           * @param p1
+           */
+          void m();""", null);
+      final PsiDocComment docComment = method.getDocComment();
+      assertNotNull(docComment);
+      final PsiDocTag[] tags = docComment.getTags();
+      final PsiDocTag tag2 = factory.createParamTag("p2", "");
+      docComment.addAfter(tag2, tags[0]);
+      assertEquals(
+        """
+          /**
+           * Javadoc
+           * @param p1
+           * @param p2
+           */""", docComment.getText());
+    });
   }
 
+  @Test
   public void testAddTag2() {
-    final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
-      """
-        /**
-         * Javadoc
-         * @param p1
-         */
-        void m();""", null);
-    final PsiDocComment docComment = method.getDocComment();
-    assertNotNull(docComment);
-    final PsiDocTag[] tags = docComment.getTags();
-    final PsiDocTag tag2 = factory.createParamTag("p2", "");
-    docComment.addBefore(tag2, tags[0]);
-    assertEquals(
-      """
-        /**
-         * Javadoc
-         * @param p2
-         * @param p1
-         */""", docComment.getText());
+    ReadAction.runBlocking(() -> {
+      final PsiElementFactory factory = getFactory();
+      final PsiMethod method = factory.createMethodFromText(
+        """
+          /**
+           * Javadoc
+           * @param p1
+           */
+          void m();""", null);
+      final PsiDocComment docComment = method.getDocComment();
+      assertNotNull(docComment);
+      final PsiDocTag[] tags = docComment.getTags();
+      final PsiDocTag tag2 = factory.createParamTag("p2", "");
+      docComment.addBefore(tag2, tags[0]);
+      assertEquals(
+        """
+          /**
+           * Javadoc
+           * @param p2
+           * @param p1
+           */""", docComment.getText());
+    });
   }
 
+  @Test
   public void testAddTag3() {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(projectFixture.get().getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       final PsiElementFactory factory = getFactory();
       final PsiJavaFile psiFile;
       try {
@@ -180,82 +206,93 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
            */""", docComment.getText());
       }
       catch (IncorrectOperationException e) {}
-    }), "", null);
+    }), "", null));
   }
 
+  @Test
   public void testAddTag4() {
-    final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
-      """
-        /**
-         * Javadoc
-         */
-        void m();""", null);
-    final PsiDocComment docComment = method.getDocComment();
-    assertNotNull(docComment);
-    final PsiDocTag tag2 = factory.createParamTag("p2", "");
-    docComment.add(tag2);
-    assertEquals(
-      """
-        /**
-         * Javadoc
-         * @param p2
-         */""", docComment.getText());
+    ReadAction.runBlocking(() -> {
+      final PsiElementFactory factory = getFactory();
+      final PsiMethod method = factory.createMethodFromText(
+        """
+          /**
+           * Javadoc
+           */
+          void m();""", null);
+      final PsiDocComment docComment = method.getDocComment();
+      assertNotNull(docComment);
+      final PsiDocTag tag2 = factory.createParamTag("p2", "");
+      docComment.add(tag2);
+      assertEquals(
+        """
+          /**
+           * Javadoc
+           * @param p2
+           */""", docComment.getText());
+    });
   }
 
+  @Test
   public void testMarkdownRemoveTags() {
     final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
+    final PsiDocComment docComment = ReadAction.computeBlocking(() -> factory.createMethodFromText(
       """
         /// @param p1
         /// @param p2
         /// @param p3
-        void m() {}""", null);
-    final PsiDocComment docComment = method.getDocComment();
+        void m() {}""", null).getDocComment());
     assertNotNull(docComment);
 
     WriteCommandAction.runWriteCommandAction(null, () -> docComment.getTags()[1].delete());
     assertEquals("""
                    /// @param p1
-                   /// @param p3""", docComment.getText());
+                   /// @param p3""", ReadAction.computeBlocking(() -> docComment.getText()));
 
     WriteCommandAction.runWriteCommandAction(null, () -> docComment.getTags()[0].delete());
     assertEquals("""
-                   /// @param p3""", docComment.getText());
+                   /// @param p3""", ReadAction.computeBlocking(() -> docComment.getText()));
 
     WriteCommandAction.runWriteCommandAction(null, () -> docComment.getTags()[0].delete());
     assertEquals("""
-                  ///""", docComment.getText());
+                  ///""", ReadAction.computeBlocking(() -> docComment.getText()));
   }
 
+  @Test
   public void testMarkdownAddTags() {
-    final PsiElementFactory factory = getFactory();
-    final PsiMethod method = factory.createMethodFromText(
-      """
-        /// Javadoc
-        /// @param first
-        void m(int first, int second, int third);""", null);
-    final PsiDocComment docComment = method.getDocComment();
-    assertNotNull(docComment);
+    ReadAction.runBlocking(() -> {
+      final PsiElementFactory factory = getFactory();
+      final PsiMethod method = factory.createMethodFromText(
+        """
+          /// Javadoc
+          /// @param first
+          void m(int first, int second, int third);""", null);
+      final PsiDocComment docComment = method.getDocComment();
+      assertNotNull(docComment);
 
-    final PsiDocTag[] tags = docComment.getTags();
-    final PsiDocTag tag2 = factory.createParamTag("second", "");
-    docComment.addAfter(tag2, tags[0]);
-    assertEquals(
-      """
-         /// Javadoc
-         /// @param first
-         /// @param second""", docComment.getText());
+      final PsiDocTag[] tags = docComment.getTags();
+      final PsiDocTag tag2 = factory.createParamTag("second", "");
+      docComment.addAfter(tag2, tags[0]);
+      assertEquals(
+        """
+           /// Javadoc
+           /// @param first
+           /// @param second""", docComment.getText());
+    });
   }
 
-  private PsiElementFactory getFactory() {
-    final PsiManager manager = getPsiManager();
+  private static PsiElementFactory getFactory() {
+    final PsiManager manager = PsiManager.getInstance(projectFixture.get().getProject());
     return JavaPsiFacade.getElementFactory(manager.getProject());
   }
 
-  private void createAndTestTag(String expectedText, String parameterName, String description) throws IncorrectOperationException {
+  private static PsiFile createFile(String fileName, String text) {
+    return PsiFileFactory.getInstance(projectFixture.get().getProject())
+      .createFileFromText(fileName, JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), true, false);
+  }
+
+  private static void createAndTestTag(String expectedText, String parameterName, String description) throws IncorrectOperationException {
     PsiElementFactory factory = getFactory();
-    final PsiDocTag paramTag = factory.createParamTag(parameterName, description);
-    assertEquals(expectedText, paramTag.getText());
+    final String text = ReadAction.computeBlocking(() -> factory.createParamTag(parameterName, description).getText());
+    assertEquals(expectedText, text);
   }
 }

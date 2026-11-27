@@ -15,6 +15,7 @@
  */
 package com.intellij.java.find.findUsages;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
@@ -23,9 +24,20 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class FindParameterTest extends LightIdeaTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class FindParameterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
+
+  @Test
   public void testMethod() {
     String text =
       "void method(final int i) {" +
@@ -36,12 +48,13 @@ public class FindParameterTest extends LightIdeaTestCase {
       "  };" +
       "  System.out.println(i);" +
       "}";
-    PsiManager psiManager = PsiManager.getInstance(getProject());
+    PsiManager psiManager = PsiManager.getInstance(projectFixture.get().getProject());
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiManager.getProject());
-    PsiMethod methodFromText = elementFactory.createMethodFromText(text, null);
-    PsiParameter[] parameters = methodFromText.getParameterList().getParameters();
-    PsiReference[] references =
-      ReferencesSearch.search(parameters[0], new LocalSearchScope(methodFromText), false).toArray(PsiReference.EMPTY_ARRAY);
+    PsiReference[] references = ReadAction.computeBlocking(() -> {
+      PsiMethod methodFromText = elementFactory.createMethodFromText(text, null);
+      PsiParameter[] parameters = methodFromText.getParameterList().getParameters();
+      return ReferencesSearch.search(parameters[0], new LocalSearchScope(methodFromText), false).toArray(PsiReference.EMPTY_ARRAY);
+    });
     assertEquals(2, references.length);
   }
 }

@@ -10,57 +10,78 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.jetbrains.fus.reporting.model.lion3.LogEvent;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @SuppressWarnings("KotlinInternalInJava")
-public class DaemonFusReporterTest extends BasePlatformTestCase {
+@TestApplication
+public class DaemonFusReporterTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testDaemonFUSIsReportedAfterTyping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class X {
         void f() {<caret>
         }
       }""");
 
-    boolean highlightingCompletedExists = hasFUSHighlightFinishedEventsAfter(() -> assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR)));
-    assertTrue("There must be an event with highlighting_completed=true", highlightingCompletedExists);
+    boolean highlightingCompletedExists = hasFUSHighlightFinishedEventsAfter(() -> assertThat(myFixture.doHighlighting(HighlightSeverity.ERROR)).isEmpty());
+    assertTrue(highlightingCompletedExists, "There must be an event with highlighting_completed=true");
 
     boolean highlightingCompletedExistsAfterTyping = hasFUSHighlightFinishedEventsAfter(() -> {
       myFixture.type("xxx//");
-      assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+      assertThat(myFixture.doHighlighting(HighlightSeverity.ERROR)).isNotEmpty();
     });
-    assertTrue("There must be an event with highlighting_completed=true after typing", highlightingCompletedExistsAfterTyping);
+    assertTrue(highlightingCompletedExistsAfterTyping, "There must be an event with highlighting_completed=true after typing");
 
     boolean highlightingIsReportedAfterMeaninglessRestart = hasFUSHighlightFinishedEventsAfter(() -> {
-      DaemonCodeAnalyzerEx.getInstanceEx(myFixture.getProject()).restart(getTestName(false));
-      assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+      DaemonCodeAnalyzerEx.getInstanceEx(myFixture.getProject()).restart(myFixture.getTestName(false));
+      assertThat(myFixture.doHighlighting(HighlightSeverity.ERROR)).isNotEmpty();
     });
-    assertFalse("highlighting_completed=true should not be reported after meaningless restart", highlightingIsReportedAfterMeaninglessRestart);
+    assertFalse(highlightingIsReportedAfterMeaninglessRestart, "highlighting_completed=true should not be reported after meaningless restart");
   }
 
+  @Test
   public void testDaemonFUSIsReportedAfterDumbMode() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {}");
     var stamp = myFixture.getEditor().getDocument().getModificationStamp();
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, myFixture.getTestRootDisposable());
 
-    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-      var events = collectFUSEvents(() -> assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR)));
-      assertTrue("Highlighting in dumb mode must be reported", hasCompletedHighlightingEvent(events, true));
+    DumbModeTestUtils.runInDumbModeSynchronously(myFixture.getProject(), () -> {
+      var events = collectFUSEvents(() -> assertThat(myFixture.doHighlighting(HighlightSeverity.ERROR)).isEmpty());
+      assertTrue(hasCompletedHighlightingEvent(events, true), "Highlighting in dumb mode must be reported");
     });
 
-    var events = collectFUSEvents(() -> assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR)));
-    assertTrue("Highlighting after dumb mode must be reported", hasCompletedHighlightingEvent(events, false));
+    var events = collectFUSEvents(() -> assertThat(myFixture.doHighlighting(HighlightSeverity.ERROR)).isEmpty());
+    assertTrue(hasCompletedHighlightingEvent(events, false), "Highlighting after dumb mode must be reported");
     assertEquals(stamp, myFixture.getEditor().getDocument().getModificationStamp());
 
-    assertFalse("A restart without changes must not be reported", hasFUSHighlightFinishedEventsAfter(() -> {
-      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
-      assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
-    }));
+    assertFalse(hasFUSHighlightFinishedEventsAfter(() -> {
+      DaemonCodeAnalyzerEx.getInstanceEx(myFixture.getProject()).restart(myFixture.getTestName(false));
+      assertThat(myFixture.doHighlighting(HighlightSeverity.ERROR)).isEmpty();
+    }), "A restart without changes must not be reported");
   }
 
   private static boolean hasCompletedHighlightingEvent(List<? extends LogEvent> events, boolean dumbMode) {

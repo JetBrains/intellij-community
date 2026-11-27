@@ -7,15 +7,29 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.projectView.TestProjectTreeStructure;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class NestedFilesInProjectViewTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   public static void doTest(@NotNull CodeInsightTestFixture fixture,
                             @NotNull List<NestingRule> rules,
                             boolean showMembers,
@@ -24,7 +38,7 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
     List<NestingRule> originalRules = new ArrayList<>(nestingService.getRules());
     try {
       nestingService.setRules(rules);
-      checkProjectView(fixture, showMembers, expectedTree);
+      EdtTestUtil.runInEdtAndWait(() -> checkProjectView(fixture, showMembers, expectedTree));
     }
     finally {
       nestingService.setRules(originalRules);
@@ -46,7 +60,9 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
     projectView.removeProjectPane(pane);
   }
 
+  @Test
   public void testJavaAndGroovyAsChildren() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Foo.java", "public class Foo {}");
     myFixture.addFileToProject("Foo.groovy", "");
     myFixture.addFileToProject("Foo.txt", "");
@@ -61,7 +77,9 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
              """);
   }
 
+  @Test
   public void testJavaAndGroovyAsParents() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Foo.java", "public class Foo {}");
     myFixture.addFileToProject("FooImpl.java", "public class FooImpl {}");
     myFixture.addFileToProject("Foo.groovy", "");
@@ -80,7 +98,9 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
              """);
   }
 
+  @Test
   public void testWithMembers() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Foo.java", "public class Foo {int foo;}");
     myFixture.addFileToProject("Bar.java", "class Baz {int baz;}");
     myFixture.addFileToProject("Foo.txt", "");

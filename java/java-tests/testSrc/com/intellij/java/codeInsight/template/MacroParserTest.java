@@ -10,17 +10,25 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.impl.MacroParser;
 import com.intellij.codeInsight.template.impl.VariableNode;
 import com.intellij.codeInsight.template.macro.VariableOfTypeMacro;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-public class MacroParserTest extends LightIdeaTestCase {
+@TestApplication
+public class MacroParserTest {
 
+  @Test
   public void testEmpty() {
     Expression e = MacroParser.parse("");
     assertTrue(e instanceof ConstantNode);
     assertEquals("", e.calculateResult(null).toString());
   }
 
+  @Test
   public void testFunction() {
     Expression e = MacroParser.parse("  variableOfType(  \"java.util.Collection\"  )   ");
     assertTrue(e instanceof MacroCallNode);
@@ -33,6 +41,7 @@ public class MacroParserTest extends LightIdeaTestCase {
     assertEquals("java.util.Collection", cn.calculateResult(null).toString());
   }
 
+  @Test
   public void testVariable() {
     Expression e = MacroParser.parse("variableOfType(E=\"t\")");
     Expression[] parameters = ((MacroCallNode) e).getParameters();
@@ -43,11 +52,13 @@ public class MacroParserTest extends LightIdeaTestCase {
     assertTrue(vn.getInitialValue() instanceof ConstantNode);
   }
 
+  @Test
   public void testEnd() {
     Expression e = MacroParser.parse("END");
     assertTrue(e instanceof EmptyNode);
   }
 
+  @Test
   public void testMultipleParams() {
     Expression e = MacroParser.parse("variableOfType(\"A\", \"B\")");
     assertTrue(e instanceof MacroCallNode);
@@ -59,15 +70,17 @@ public class MacroParserTest extends LightIdeaTestCase {
     assertTrue(parameters [1] instanceof ConstantNode);
   }
 
+  @Test
   public void testSlashEscape() {
     Expression e = MacroParser.parse("\"test\\\\test\\n\\t\\f\\x\"");
-    Result result = assertInstanceOf(e, ConstantNode.class).calculateResult(null);
-    assertEquals("test\\test\n\t\fx", assertInstanceOf(result, TextResult.class).getText());
+    Result result = assertInstanceOf(ConstantNode.class, e).calculateResult(null);
+    assertEquals("test\\test\n\t\fx", assertInstanceOf(TextResult.class, result).getText());
   }
 
+  @Test
   public void testSingleQuote() {
     Expression e = MacroParser.parse("\"");
-    Result result = assertInstanceOf(e, ConstantNode.class).calculateResult(null);
-    assertEquals("", assertInstanceOf(result, TextResult.class).getText());
+    Result result = assertInstanceOf(ConstantNode.class, e).calculateResult(null);
+    assertEquals("", assertInstanceOf(TextResult.class, result).getText());
   }
 }

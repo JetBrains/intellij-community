@@ -9,50 +9,69 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.junit.Test
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.util.function.Function
 
-class LookupPreviewHandlerTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class LookupPreviewHandlerTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   @Test
-  fun testPreviewUpdatedWhenItemBecomesNull() {
+  fun testPreviewUpdatedWhenItemBecomesNull(): Unit = timeoutRunBlocking {
     myFixture.configureByText("Test.java", "class Test {}")
+    val project = myFixture.project
 
     val settings = EditorSettingsExternalizable.getInstance()
     val originalPreviewSetting = settings.isShowIntentionPreview
     try {
       settings.isShowIntentionPreview = true
 
-      val realItem = LookupElementBuilder.create("format")
-      val lookup = LookupManager.getInstance(project).createLookup(
-        myFixture.editor, arrayOf(realItem), "", LookupArranger.DefaultArranger()
-      ) as LookupImpl
+      withContext(Dispatchers.EDT) {
+        val realItem = LookupElementBuilder.create("format")
+        val lookup = LookupManager.getInstance(project).createLookup(
+          myFixture.editor, arrayOf(realItem), "", LookupArranger.DefaultArranger()
+        ) as LookupImpl
 
-      val mapperCalls = mutableListOf<Any?>()
+        val mapperCalls = mutableListOf<Any?>()
 
-      val handler = LookupPreviewHandler<LookupElement>(project, lookup,
-        Function { obj: Any? -> mapperCalls.add(obj); obj as? LookupElement },
-        Function { _: LookupElement -> IntentionPreviewInfo.EMPTY },
-      )
+        val handler = LookupPreviewHandler<LookupElement>(project, lookup,
+          Function { obj: Any? -> mapperCalls.add(obj); obj as? LookupElement },
+          Function { _: LookupElement -> IntentionPreviewInfo.EMPTY },
+        )
 
-      handler.showInitially()
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        handler.showInitially()
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
-      assertTrue("Mapper should have been called during showInitially", mapperCalls.isNotEmpty())
-      assertInstanceOf(mapperCalls.last(), LookupElement::class.java)
+        assertTrue(mapperCalls.isNotEmpty(), "Mapper should have been called during showInitially")
+        assertInstanceOf(LookupElement::class.java, mapperCalls.last())
 
-      mapperCalls.clear()
-      lookup.setCurrentItem(null)
+        mapperCalls.clear()
+        lookup.setCurrentItem(null)
 
-      handler.currentItemChanged(LookupEvent(lookup, false))
+        handler.currentItemChanged(LookupEvent(lookup, false))
 
-      assertTrue("Mapper should have been called on item change", mapperCalls.isNotEmpty())
-      assertNull("Mapper should receive null when no suggestions are available", mapperCalls.last())
+        assertTrue(mapperCalls.isNotEmpty(), "Mapper should have been called on item change")
+        assertNull(mapperCalls.last(), "Mapper should receive null when no suggestions are available")
 
-      handler.close()
+        handler.close()
+      }
     }
     finally {
       settings.isShowIntentionPreview = originalPreviewSetting

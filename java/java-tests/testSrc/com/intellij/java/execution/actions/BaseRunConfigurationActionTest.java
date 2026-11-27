@@ -5,11 +5,22 @@ import com.intellij.execution.actions.BaseRunConfigurationAction;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class BaseRunConfigurationActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
+
+  @Test
   public void testRunApplicationName() {
-    ApplicationConfiguration configuration = new ApplicationConfiguration(null, getProject());
+    ApplicationConfiguration configuration = new ApplicationConfiguration(null, projectFixture.get().getProject());
 
     configuration.setMainClassName("com.comp.AClass");
     configuration.setGeneratedName();
@@ -27,8 +38,9 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     checkSuggestedName("A234567810A234567820A234567830A234567840A234567850A234....main()", configuration);
   }
 
+  @Test
   public void testRunTestMethodName() {
-    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject());
+    JUnitConfiguration configuration = new JUnitConfiguration(null, projectFixture.get().getProject());
     JUnitConfiguration.Data data = configuration.getPersistentData();
 
     data.MAIN_CLASS_NAME = "com.comp.ATestClass";

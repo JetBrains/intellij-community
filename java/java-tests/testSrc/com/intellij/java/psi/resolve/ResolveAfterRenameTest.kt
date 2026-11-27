@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaCodeReferenceElement
@@ -11,89 +12,128 @@ import com.intellij.psi.impl.source.resolve.RenamedClassView
 import com.intellij.psi.impl.source.resolve.ResolveAfterRenameUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class ResolveAfterRenameTest : LightJavaCodeInsightFixtureTestCase() {
-  fun testRenamedClassIsSeenThroughItsImportOnDemand() {
+@TestApplication
+class ResolveAfterRenameTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  private val project get() = myFixture.project
+
+  @Test
+  fun testRenamedClassIsSeenThroughItsImportOnDemand(): Unit = timeoutRunBlocking {
     myFixture.addClass("package p; public class Old {}")
     val usage = myFixture.addFileToProject("q/Use.java", "package q; import p.*; class Use { Old o; }") as PsiJavaFile
 
-    val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
+    readAction {
+      val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, target.kind())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, target.kind())
+    }
   }
 
-  fun testMemberClassOfTheNewNameIsFoundFirst() {
+  @Test
+  fun testMemberClassOfTheNewNameIsFoundFirst(): Unit = timeoutRunBlocking {
     myFixture.addClass("package p; public class Old {}")
     val usage = myFixture.addFileToProject("q/Use.java", "package q; import p.*; class Use { Old o; class New {} }") as PsiJavaFile
 
-    val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
+    readAction {
+      val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
-    assertEquals(findClass("q.Use.New"), target.element())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
+      assertEquals(findClass("q.Use.New"), target.element())
+    }
   }
 
-  fun testTwoClassesOfImportsOnDemandAreAmbiguous() {
+  @Test
+  fun testTwoClassesOfImportsOnDemandAreAmbiguous(): Unit = timeoutRunBlocking {
     myFixture.addClass("package p; public class Old {}")
     myFixture.addClass("package r; public class New {}")
     val usage = myFixture.addFileToProject("q/Use.java", "package q; import p.*; import r.*; class Use { Old o; }") as PsiJavaFile
 
-    val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
+    readAction {
+      val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.AMBIGUOUS, target.kind())
-    assertSameElements(target.elements(), findClass("p.Old"), findClass("r.New"))
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.AMBIGUOUS, target.kind())
+      assertThat(target.elements()).containsExactlyInAnyOrder(findClass("p.Old"), findClass("r.New"))
+    }
   }
 
-  fun testSingleImportOfAnotherClassWinsUnlessTheChangeDeletesIt() {
+  @Test
+  fun testSingleImportOfAnotherClassWinsUnlessTheChangeDeletesIt(): Unit = timeoutRunBlocking {
     myFixture.addClass("package p; public class Old {}")
     myFixture.addClass("package r; public class New {}")
     val usage = myFixture.addFileToProject("q/Use.java", "package q; import r.New; import p.*; class Use { Old o; }") as PsiJavaFile
-    val singleImport = usage.importList!!.findSingleClassImportStatement("r.New")!!
+    readAction {
+      val singleImport = usage.importList!!.findSingleClassImportStatement("r.New")!!
 
-    val kept = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
-    val deleted = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(singleImport), null),
-                                                      referenceTo("Old", usage))
+      val kept = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
+      val deleted = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(singleImport), null),
+                                                        referenceTo("Old", usage))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, kept.kind())
-    assertEquals(singleImport, kept.fileContext())
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, deleted.kind())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, kept.kind())
+      assertEquals(singleImport, kept.fileContext())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, deleted.kind())
+    }
   }
 
-  fun testClassNotSeenByItsShortNameIsNothing() {
+  @Test
+  fun testClassNotSeenByItsShortNameIsNothing(): Unit = timeoutRunBlocking {
     myFixture.addClass("package p; public class Old {}")
     val usage = myFixture.addFileToProject("q/Use.java", "package q; class Use { p.Old o; }") as PsiJavaFile
-    // The use is qualified, and its file has no import of p. So the short name New resolves to no class there, not even the renamed one.
-    val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
+    readAction {
+      // The use is qualified, and its file has no import of p. So the short name New resolves to no class there, not even the renamed one.
+      val target = ResolveAfterRenameUtil.resolveClass(RenamedClassView(findClass("p.Old"), "New", listOf(), null), referenceTo("Old", usage))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.NONE, target.kind())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.NONE, target.kind())
+    }
   }
 
-  fun testLocalVariableOfTheNewNameHidesTheField() {
+  @Test
+  fun testLocalVariableOfTheNewNameHidesTheField(): Unit = timeoutRunBlocking {
     val file = myFixture.addFileToProject("A.java", "class A { int count; void f() { int total = 0; count++; } }") as PsiJavaFile
-    val field = findClass("A").findFieldByName("count", false)!!
+    readAction {
+      val field = findClass("A").findFieldByName("count", false)!!
 
-    val target = ResolveAfterRenameUtil.resolveField(field, "total", expressionOf("count", file))
+      val target = ResolveAfterRenameUtil.resolveField(field, "total", expressionOf("count", file))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.OTHER, target.kind())
+    }
   }
 
-  fun testFieldIsFoundUnderItsNewName() {
+  @Test
+  fun testFieldIsFoundUnderItsNewName(): Unit = timeoutRunBlocking {
     val file = myFixture.addFileToProject("A.java", "class A { int count; void f() { count++; } }") as PsiJavaFile
-    val field = findClass("A").findFieldByName("count", false)!!
+    readAction {
+      val field = findClass("A").findFieldByName("count", false)!!
 
-    val target = ResolveAfterRenameUtil.resolveField(field, "total", expressionOf("count", file))
+      val target = ResolveAfterRenameUtil.resolveField(field, "total", expressionOf("count", file))
 
-    assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, target.kind())
+      assertEquals(ResolveAfterRenameUtil.Target.Kind.RENAMED, target.kind())
+    }
   }
 
-  fun testInheritorOfTheRenamedMethodIsTheClassOfTheCall() {
+  @Test
+  fun testInheritorOfTheRenamedMethodIsTheClassOfTheCall(): Unit = timeoutRunBlocking {
     myFixture.addClass("class Base { void run() {} }")
     val file = myFixture.addFileToProject("Outer.java",
                                           "class Outer { void execute() {} class Inner extends Base { void f() { run(); } } }") as PsiJavaFile
-    val run = findClass("Base").findMethodsByName("run", false).single()
-    val call = PsiTreeUtil.findChildrenOfType(file, PsiMethodCallExpression::class.java).single()
+    readAction {
+      val run = findClass("Base").findMethodsByName("run", false).single()
+      val call = PsiTreeUtil.findChildrenOfType(file, PsiMethodCallExpression::class.java).single()
 
-    assertEquals(findClass("Outer.Inner"), ResolveAfterRenameUtil.methodClass(listOf(run), "execute", call.methodExpression))
+      assertEquals(findClass("Outer.Inner"), ResolveAfterRenameUtil.methodClass(listOf(run), "execute", call.methodExpression))
+    }
   }
 
   private fun referenceTo(name: String, file: PsiJavaFile): PsiJavaCodeReferenceElement =

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.unscramble
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.CompoundDumpItem
@@ -11,10 +11,14 @@ import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.MergeableToken
 import com.intellij.unscramble.toDumpItems
 import com.intellij.util.ui.EmptyIcon
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.util.Objects
 import javax.swing.Icon
 
-class DumpItemMergeTest : BasePlatformTestCase() {
+@TestApplication
+class DumpItemMergeTest {
+  @Test
   fun testMergingDoesNotBreakParents() {
     val a1 = TestDumpItem("A1", "axaaaaa", 0, null)
     val a2 = TestDumpItem("A2", "bbbbbb", 1, 0) // This item should not be merged with b2, their parents are different
@@ -39,6 +43,7 @@ class DumpItemMergeTest : BasePlatformTestCase() {
                             "--A4 [and 1 similar]\n", printTree(mergedItems))
   }
 
+  @Test
   fun testMergingJavaThreadDumpItems() {
     val threadState1 = ThreadState("A1", "aaaaaaa").also { it.uniqueId = 0; it.threadContainerUniqueId = null }
     val threadState2 = ThreadState("A2", "bbbbbb").also { it.uniqueId = 1; it.threadContainerUniqueId = 0 }
@@ -63,6 +68,7 @@ class DumpItemMergeTest : BasePlatformTestCase() {
                  "--A4 [and 1 similar]\n", printTree(mergedItems))
   }
 
+  @Test
   fun testMergingJavaThreadDumpItemsIgnoresVirtualThreadMountLines() {
     val threadState1 = ThreadState("carrier-1", "runnable").also {
       it.uniqueId = 0
@@ -93,6 +99,7 @@ class DumpItemMergeTest : BasePlatformTestCase() {
     assertEquals("carrier-1 [and 1 similar]", mergedItems.single().name)
   }
 
+  @Test
   fun testThreadContainerStackTraceContainsContainerName() {
     val dumpItems = toDumpItems(
       emptyList(),

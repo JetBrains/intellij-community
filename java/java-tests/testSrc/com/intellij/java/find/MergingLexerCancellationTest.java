@@ -7,14 +7,19 @@ import com.intellij.lexer.XmlLexerKt;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * A merging lexer collapses a run of same-type tokens into one, so a large enough comment or character data run is
  * produced by a single {@code getTokenType()} call. Callers count tokens, which makes such a run invisible to them --
  * the merge loop has to check cancellation itself, or lexing a file with one huge run cannot be interrupted at all.
  */
-public class MergingLexerCancellationTest extends LightPlatformTestCase {
+@TestApplication
+public class MergingLexerCancellationTest {
 
   /**
    * A long comment. The flex lexer emits XML_COMMENT_CHARACTERS in small pieces and the merging adapter collapses the
@@ -39,6 +44,7 @@ public class MergingLexerCancellationTest extends LightPlatformTestCase {
   }
 
   /** {@link com.intellij.platform.syntax.util.lexer.MergingLexerAdapter}, reached through the syntax XML lexer. */
+  @Test
   public void testHugeMergedTokenIsInterruptible() {
     String text = oneHugeComment();
     assertLexingIsCancelled("syntax adapter", () -> {
@@ -51,6 +57,7 @@ public class MergingLexerCancellationTest extends LightPlatformTestCase {
   }
 
   /** {@link com.intellij.lexer.MergingLexerAdapter}, which the obsolete {@link XmlLexer} still extends. */
+  @Test
   public void testHugeMergedTokenIsInterruptibleInPsiLexer() {
     String text = oneHugeComment();
     assertLexingIsCancelled("psi adapter", () -> {
@@ -62,6 +69,7 @@ public class MergingLexerCancellationTest extends LightPlatformTestCase {
     });
   }
 
+  @Test
   public void testLexingIsNotDisturbedWhenNothingIsCancelled() {
     String text = oneHugeComment();
     Lexer lexer = XmlLexerKt.createXmlLexer(false);

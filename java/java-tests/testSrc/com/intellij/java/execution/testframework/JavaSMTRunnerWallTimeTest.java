@@ -17,10 +17,25 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class JavaSMTRunnerWallTimeTest extends LightPlatformTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class JavaSMTRunnerWallTimeTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
 
   private static final String TEST_FRAMEWORK_NAME = "JavaSMTRunnerWallTimeTest";
 
@@ -28,14 +43,13 @@ public class JavaSMTRunnerWallTimeTest extends LightPlatformTestCase {
   private SMRootTestProxy myRootNode;
   private ProcessHandler myProcessHandler;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    createConsole(true);
+  @BeforeEach
+  void setUp() {
+    EdtTestUtil.runInEdtAndWait(() -> createConsole(true));
   }
 
   private void createConsole(boolean idBasedTestTree) {
-    SMTRunnerConsoleProperties properties = new WallTimeAwareConsoleProperties(getProject());
+    SMTRunnerConsoleProperties properties = new WallTimeAwareConsoleProperties(projectFixture.get().getProject());
     properties.setIdBasedTestTree(idBasedTestTree);
     JavaAwareTestConsoleProperties.USE_WALL_TIME.primSet(properties, true);
     myConsole = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createConsole(TEST_FRAMEWORK_NAME, properties);
@@ -45,20 +59,21 @@ public class JavaSMTRunnerWallTimeTest extends LightPlatformTestCase {
     myProcessHandler.startNotify();
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     try {
-      myProcessHandler.destroyProcess();
-      Disposer.dispose(myConsole);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
+      if (myProcessHandler != null) {
+        myProcessHandler.destroyProcess();
+      }
     }
     finally {
-      super.tearDown();
+      if (myConsole != null) {
+        EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(myConsole));
+      }
     }
   }
 
+  @Test
   public void testSuiteFinishedWithWallTimeDuration() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
@@ -77,10 +92,13 @@ public class JavaSMTRunnerWallTimeTest extends LightPlatformTestCase {
     assertEquals(500L, suiteDuration.longValue());
   }
 
+  @Test
   public void testNameBasedSuiteFinishedWithWallTimeDuration() {
     myProcessHandler.destroyProcess();
-    Disposer.dispose(myConsole);
-    createConsole(false);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Disposer.dispose(myConsole);
+      createConsole(false);
+    });
 
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
@@ -99,6 +117,7 @@ public class JavaSMTRunnerWallTimeTest extends LightPlatformTestCase {
     assertEquals(501L, suiteDuration.longValue());
   }
 
+  @Test
   public void testRootSuiteWithExplicitDuration_reportsWallTime() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");

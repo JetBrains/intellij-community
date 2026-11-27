@@ -2,13 +2,28 @@
 package com.intellij.java.psi.impl.search
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.FileContentImpl
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
-  fun testIndex() {
+@TestApplication
+class JavaBinaryPlusExpressionIndexTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testIndex(): Unit = timeoutRunBlocking {
     @Language("JAVA")
     val file = myFixture.configureByText(JavaFileType.INSTANCE, """
             package org.some;
@@ -25,8 +40,8 @@ class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
                 }
             }
     """).virtualFile
-    val content = FileContentImpl.createByFile(file, project)
-    val data = JavaBinaryPlusExpressionIndex().indexer.map(content).entries.first().value.offsets!!
+    val content = FileContentImpl.createByFile(file, myFixture.project)
+    val data = readAction { JavaBinaryPlusExpressionIndex().indexer.map(content).entries.first().value.offsets!! }
 
     assertEquals(5, data.size)
     assertEquals(190, data[0])
