@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.writeCommandAction
-import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -311,20 +310,10 @@ internal class LspTextDocumentProtocolTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1) { regions ->
+      codeInsightFixture.checkFoldRegionsRetrying(1) { regions ->
         val document = codeInsightFixture.editor.document
         assertEquals(0, document.getLineNumber(regions[0].startOffset))
         assertEquals(2, document.getLineNumber(regions[0].endOffset))
-      }
-    }
-
-    private suspend fun checkFoldRegionsRetrying(expectedCount: Int, check: ((Array<FoldRegion>) -> Unit)? = null) {
-      waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
-        readAction {
-          val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-          assertEquals(expectedCount, regions.size)
-          check?.invoke(regions)
-        }
       }
     }
   }

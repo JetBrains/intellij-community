@@ -6,6 +6,7 @@ import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -59,7 +60,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1) { regions ->
+      codeInsightFixture.checkFoldRegionsRetrying(1) { regions ->
         val document = codeInsightFixture.editor.document
         assertEquals(0, document.getLineNumber(regions[0].startOffset))
         assertEquals(2, document.getLineNumber(regions[0].endOffset))
@@ -79,7 +80,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1)
+      codeInsightFixture.checkFoldRegionsRetrying(1)
     }
   }
 
@@ -97,7 +98,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1) { regions ->
+      codeInsightFixture.checkFoldRegionsRetrying(1) { regions ->
         assertEquals("...", regions[0].placeholderText)
       }
     }
@@ -114,7 +115,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1) { regions ->
+      codeInsightFixture.checkFoldRegionsRetrying(1) { regions ->
         assertEquals("...", regions[0].placeholderText)
       }
     }
@@ -134,7 +135,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1) { regions ->
+      codeInsightFixture.checkFoldRegionsRetrying(1) { regions ->
         val document = codeInsightFixture.editor.document
         assertEquals(1, document.getLineNumber(regions[0].startOffset))
         assertEquals(3, document.getLineNumber(regions[0].endOffset))
@@ -156,7 +157,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(1)
+      codeInsightFixture.checkFoldRegionsRetrying(1)
     }
   }
 
@@ -177,7 +178,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(2)
+      codeInsightFixture.checkFoldRegionsRetrying(2)
     }
   }
 
@@ -195,7 +196,7 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(0)
+      codeInsightFixture.checkFoldRegionsRetrying(0)
     }
 
     @Test
@@ -210,27 +211,27 @@ internal class LspFoldingRangeTest {
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
 
-      checkFoldRegionsRetrying(0)
+      codeInsightFixture.checkFoldRegionsRetrying(0)
     }
   }
+}
 
-  private suspend fun checkFoldRegionsRetrying(
-    expectedCount: Int,
-    check: ((Array<FoldRegion>) -> Unit)? = null,
-  ) {
-    waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
-      try {
-        readAction {
-          val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-          assertEquals(expectedCount, regions.size)
-          check?.invoke(regions)
-        }
+internal suspend fun CodeInsightTestFixture.checkFoldRegionsRetrying(
+  expectedCount: Int,
+  check: ((Array<FoldRegion>) -> Unit)? = null,
+) {
+  waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
+    try {
+      readAction {
+        val regions = editor.foldingModel.allFoldRegions
+        assertEquals(expectedCount, regions.size)
+        check?.invoke(regions)
       }
-      catch (e: AssertionError) {
-        // A response that arrives after the last highlighting only restarts the daemon, which doesn't run by itself in tests.
-        codeInsightFixture.doHighlighting()
-        throw e
-      }
+    }
+    catch (e: AssertionError) {
+      // A response that arrives after the last highlighting only restarts the daemon, which doesn't run by itself in tests.
+      doHighlighting()
+      throw e
     }
   }
 }
