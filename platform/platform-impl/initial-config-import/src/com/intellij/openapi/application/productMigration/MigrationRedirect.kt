@@ -27,10 +27,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import java.awt.Dialog
 import java.awt.FlowLayout
 import java.awt.Frame
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.Toolkit
 import java.awt.event.KeyEvent
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -317,6 +319,16 @@ private fun showRedirectWindow(content: MigrationRedirectContent, sourceLogo: Ic
 }
 
 /**
+ * The modality that makes the redirect window block until the user selects an action.
+ * The Wayland toolkit of the runtime does not support a toolkit-modal dialog, and such a dialog returns at once there.
+ * No other window exists at that time, so both types block the same windows.
+ */
+private fun redirectWindowModality(): Dialog.ModalityType {
+  val isToolkitModal = Toolkit.getDefaultToolkit().isModalityTypeSupported(Dialog.ModalityType.TOOLKIT_MODAL)
+  return if (isToolkitModal) Dialog.ModalityType.TOOLKIT_MODAL else Dialog.ModalityType.APPLICATION_MODAL
+}
+
+/**
  * The redirect window after the migration. The server gives all texts and images. The client defines the actions.
  * It is a plain Swing window, because it shows before the application services exist.
  */
@@ -324,7 +336,7 @@ private class MigrationRedirectWindow(
   content: MigrationRedirectContent,
   sourceLogo: Icon,
   targetLogo: Icon,
-) : JDialog(null as Frame?, content.texts.windowTitle, ModalityType.TOOLKIT_MODAL) {
+) : JDialog(null as Frame?, content.texts.windowTitle, redirectWindowModality()) {
   var choice: MigrationRedirectChoice = MigrationRedirectChoice.EXIT
     private set
 
