@@ -16,13 +16,16 @@
 //!   ([`Groups::single`]) and forces [`SINGLE_SHARDS`].
 //! - A Rust test target is a single-shard target, whatever its record says. libtest runs the tests of one process in
 //!   parallel threads, and each shard pays the shared setup of the target again.
+//! - A JVM test target with the tag [`JUNIT_PARALLEL_TAG`] is a single-shard target for the same reason, whatever its
+//!   record says. The JUnit runner runs its classes in parallel threads, as many as the plan gives the target shards.
 //!
 //! A run of one target has one invocation, and it forces the count of the group of the target.
 //!
 //! A plan entry is a hint, because the plan keeps the targets of each branch that ran in the repository. A target that
 //! the current tree does not have fails each invocation that names it, also as a negative pattern. So
 //! [`ShardPlan::groups`] names only the targets that `bazel query` finds for the patterns of the run ([`TreeTargets`]).
-//! The same query gives the rule kind of each target, and so the Rust test targets.
+//! The same query gives the rule kind of each target, and so the Rust test targets. A second query
+//! ([`TreeTargets::parallel_query`]) gives the targets with the tag [`JUNIT_PARALLEL_TAG`].
 //!
 //! The plan keeps the day of the last run of each target. A run gives this day to each target that ran a shard, also a
 //! cached or a failed target ([`ShardPlan::mark_seen`]). The update then removes each target that no run named for
@@ -154,6 +157,10 @@ pub struct Groups {
 /// `community/build/rust-tools/rust_test_junit.bzl`.
 const RUST_TEST_KINDS: [&str; 2] = ["rust_test", "_rust_test_junit_test"];
 
+/// The tag of a JVM test target whose classes run in parallel threads: `jps_test(junit_parallel = True)` of
+/// `community/build/tests-options.bzl`.
+pub const JUNIT_PARALLEL_TAG: &str = "junit-parallel";
+
 /// The test targets that the target patterns of a run name in the current tree, as `bazel query` answers them.
 ///
 /// A query names a target of another repository by the apparent name of the repository, such as `@community//x:t`. The
@@ -164,6 +171,9 @@ pub struct TreeTargets {
     targets: BTreeSet<(String, String, String)>,
     /// The label of each Rust test target as the query names it, by its repository, package and name.
     rust_tests: BTreeMap<(String, String, String), String>,
+    /// The label of each target with the tag [`JUNIT_PARALLEL_TAG`] as the query names it, by its repository, package and
+    /// name.
+    parallel_tests: BTreeMap<(String, String, String), String>,
 }
 
 impl TreeTargets {
@@ -195,6 +205,25 @@ impl TreeTargets {
         format!("tests({expression})")
     }
 
+    /// The query expression of the targets of [`Self::query`] with the tag [`JUNIT_PARALLEL_TAG`].
+    pub fn parallel_query(patterns: &[String]) -> String {
+        format!(r#"attr(tags, "\b{JUNIT_PARALLEL_TAG}\b", {})"#, Self::query(patterns))
+    }
+
+    /// Reads the answer of [`Self::parallel_query`], a label a line, and marks each target of the tree that it names as a
+    /// parallel test target. A line that is no label of the tree is skipped.
+    pub fn add_parallel_tests(&mut self, lines: impl IntoIterator<Item = String>) {
+        for line in lines {
+            let label = line.trim();
+            let Some(key) = split_label(label).map(|label| label.key()) else {
+                continue;
+            };
+            if self.targets.contains(&key) {
+                self.parallel_tests.insert(key, label.to_owned());
+            }
+        }
+    }
+
     /// Reads the answer of the query in the `label_kind` output, `<kind> rule <label>` a line. A line with only a label
     /// is a target of an unknown kind. A line that is no label is skipped.
     pub fn parse(lines: impl IntoIterator<Item = String>) -> Self {
@@ -222,9 +251,21 @@ impl TreeTargets {
         split_label(label).is_some_and(|label| self.targets.contains(&label.key()))
     }
 
-    /// Whether the target with this label is a Rust test target of the tree.
-    pub fn is_rust_test(&self, label: &str) -> bool {
-        split_label(label).is_some_and(|label| self.rust_tests.contains_key(&label.key()))
+    /// Whether the target with this label runs its tests in parallel threads of one process: a Rust test target, or a
+    /// target with the tag [`JUNIT_PARALLEL_TAG`]. Such a target is a single-shard target.
+    pub fn is_parallel_test(&self, label: &str) -> bool {
+        split_label(label).is_some_and(|label| {
+            let key = label.key();
+            self.rust_tests.contains_key(&key) || self.parallel_tests.contains_key(&key)
+        })
+    }
+
+    /// The labels of [`Self::is_parallel_test`], as the query names them.
+    fn parallel_test_labels(&self) -> impl Iterator<Item = &String> {
+        let mut labels: Vec<&String> = self.rust_tests.values().chain(self.parallel_tests.values()).collect();
+        labels.sort();
+        labels.dedup();
+        labels.into_iter()
     }
 }
 
@@ -352,10 +393,10 @@ impl ShardPlan {
     }
 
     /// The heavy and the single-shard targets of the plan that the target patterns of a run cover and that the current
-    /// tree has, and each Rust test target of the tree as a single-shard target.
+    /// tree has, and each parallel test target of the tree ([`TreeTargets::is_parallel_test`]) as a single-shard target.
     ///
     /// `tree` gives the test targets of the patterns in the current tree, `None` for a query without an answer, or the
-    /// error that stops the run. Without an answer, no target is in a group or gone. A Rust test target can have no
+    /// error that stops the run. Without an answer, no target is in a group or gone. A parallel test target can have no
     /// record, so each call asks for the tree.
     pub fn groups<E>(&self, patterns: &[String], tree: impl FnOnce() -> Result<Option<TreeTargets>, E>) -> Result<Groups, E> {
         let unchecked = self.unchecked_groups(patterns);
@@ -367,19 +408,19 @@ impl ShardPlan {
             for label in labels {
                 if !tree.has(&label) {
                     groups.gone.push(label);
-                } else if !tree.is_rust_test(&label) {
+                } else if !tree.is_parallel_test(&label) {
                     kept.push(label);
                 }
             }
         }
-        groups.single.extend(tree.rust_tests.values().cloned());
+        groups.single.extend(tree.parallel_test_labels().cloned());
         groups.single.sort();
         Ok(groups)
     }
 
     /// The heavy and the single-shard targets of the plan that the target patterns of a run cover, without a check
     /// against the current tree. A dry run shows them, because it starts no bazel command. So a dry run cannot see the
-    /// Rust test targets that [`Self::groups`] adds.
+    /// parallel test targets that [`Self::groups`] adds.
     pub fn unchecked_groups(&self, patterns: &[String]) -> Groups {
         Groups {
             heavy: self.heavy_targets(patterns),

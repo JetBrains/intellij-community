@@ -152,15 +152,16 @@ fn the_fast_lane_builds_the_excluded_targets_before_it_runs_anything() {
     let fake = fake_air_tree();
     run(&["--lane", "fast"], &fake);
     let spawned = fake.spawned();
-    assert_eq!(spawned.len(), 3, "{spawned:?}");
+    assert_eq!(spawned.len(), 4, "{spawned:?}");
     assert!(spawned[0].join(" ").contains(" query "), "{:?}", spawned[0]);
-    let build = spawned[1].join(" ");
+    assert!(spawned[1].join(" ").contains(" query "), "{:?}", spawned[1]);
+    let build = spawned[2].join(" ");
     assert!(build.contains(" build "), "{build}");
     assert!(
         build.contains("//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib"),
         "{build}"
     );
-    assert!(spawned[2].join(" ").contains(" test "), "{:?}", spawned[2]);
+    assert!(spawned[3].join(" ").contains(" test "), "{:?}", spawned[3]);
 }
 
 /// A target that does not compile is the answer, not a footnote after a green lane.
@@ -701,6 +702,10 @@ const HEAVY_BEP_PATH: &str = "/tmp/air-bazel-test-bep-heavy.json";
 const TREE_QUERY_PATH: &str = "/tmp/bt-tree-query.json";
 const TREE_TARGETS_PATH: &str = "/tmp/bt-tree-targets.json";
 
+/// The query file and the answer file of the query of the test targets with the tag `junit-parallel`.
+const PARALLEL_QUERY_PATH: &str = "/tmp/bt-tree-parallel-query.json";
+const PARALLEL_TARGETS_PATH: &str = "/tmp/bt-tree-parallel-targets.json";
+
 /// The current tree has these test targets: `bazel query` answers them for the patterns of the run.
 fn tree_has(fake: &FakeRuntime, labels: &[&str]) {
     query_answers(fake, 0, labels);
@@ -767,6 +772,41 @@ fn line_of(text: &str, prefix: &str) -> String {
         .find(|line| line.starts_with(prefix))
         .unwrap_or_else(|| panic!("no {prefix:?} in:\n{text}"))
         .to_owned()
+}
+
+/// A heavy target with the tag `junit-parallel` runs its classes in parallel threads of one JVM, so it runs with the
+/// single-shard targets and the run has no heavy invocation.
+#[test]
+fn a_parallel_heavy_target_runs_in_the_single_shard_invocation() {
+    let fake = heavy_plan_tree();
+    fake.put_absolute(PARALLEL_TARGETS_PATH, CORE_LABEL);
+    run(&["--lane", "fast"], &fake);
+
+    let queries: Vec<String> = fake
+        .spawned()
+        .iter()
+        .map(|argv| argv.join(" "))
+        .filter(|command| command.contains(" query "))
+        .collect();
+    assert_eq!(queries.len(), 2, "{queries:#?}");
+    assert_mentions(
+        &queries[1],
+        &[
+            &format!("--query_file={PARALLEL_QUERY_PATH}"),
+            &format!("--output_file={PARALLEL_TARGETS_PATH}"),
+            "--output=label",
+        ],
+    );
+    let parallel_query = fake.state().files.get(PARALLEL_QUERY_PATH).cloned().unwrap_or_default();
+    assert!(
+        parallel_query.starts_with(r#"attr(tags, "\bjunit-parallel\b", tests("#),
+        "{parallel_query}"
+    );
+    let tests = test_commands(&fake);
+    assert_eq!(tests.len(), 2, "{tests:#?}");
+    assert!(!tests.iter().any(|command| command.contains("forced=8")), "{tests:#?}");
+    assert!(tests[0].ends_with(&format!("-- -{CORE_LABEL}")), "{}", tests[0]);
+    assert!(tests[1].contains("forced=1") && tests[1].ends_with(CORE_LABEL), "{}", tests[1]);
 }
 
 /// One forced count for a whole invocation: the heavy targets get an invocation of their own with the heavy count,
@@ -934,6 +974,50 @@ fn a_query_without_a_verdict_starts_no_other_bazel_command() {
         assert_eq!(payload.status, RunStatus::Infra);
         assert_eq!(payload.errors, [message]);
         assert_eq!(fake.spawned().len(), 1, "{code}: {:#?}", fake.spawned());
+    }
+}
+
+/// The query of the parallel targets answers in place of the query of the tree, for its own file names.
+fn parallel_query_answers(fake: &FakeRuntime, exit_code: i32) {
+    fake.state().spawn_rules.insert(
+        0,
+        (
+            PARALLEL_QUERY_PATH.to_owned(),
+            SpawnResult {
+                exit_code,
+                output: String::new(),
+            },
+        ),
+    );
+}
+
+/// A verdict of the query of the parallel targets that is no answer leaves each target with the shards of its record.
+#[test]
+fn a_parallel_query_without_an_answer_keeps_the_shards_of_the_record() {
+    let fake = heavy_plan_tree();
+    fake.put_absolute(PARALLEL_TARGETS_PATH, CORE_LABEL);
+    parallel_query_answers(&fake, 1);
+    run(&["--lane", "fast"], &fake);
+
+    let tests = test_commands(&fake);
+    assert!(tests[0].contains("forced=8") && tests[0].ends_with(CORE_LABEL), "{tests:#?}");
+    assert_mentions(
+        &fake.state().stderr.join("\n"),
+        &["bazel query exited with 1, so each target with the tag junit-parallel runs with the shards of its record"],
+    );
+}
+
+/// The query of the parallel targets ends the run on an exit code that is no verdict, as the query of the tree does: an
+/// interrupt stops the run.
+#[test]
+fn a_parallel_query_without_a_verdict_starts_no_test() {
+    for code in NO_VERDICT_CODES {
+        let fake = heavy_plan_tree();
+        parallel_query_answers(&fake, code);
+        let outcome = run(&["--lane", "fast"], &fake);
+        assert_eq!(outcome.exit_code, exit::INFRA, "{code}: {}", outcome.text);
+        assert!(test_commands(&fake).is_empty(), "{code}: {:#?}", fake.spawned());
+        assert_eq!(fake.spawned().len(), 2, "{code}: {:#?}", fake.spawned());
     }
 }
 
@@ -1123,23 +1207,23 @@ fn the_heavy_planned_and_single_invocations_read_as_one_run() {
     assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
     assert_mentions(&outcome.text, &["PASS  4 tests  3 targets"]);
     let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
-    // the query of the current test targets, the build of the excluded targets, and the three invocations
-    assert_eq!(spawned.len(), 5, "{spawned:#?}");
-    assert!(spawned[0].contains(" query "), "{}", spawned[0]);
+    // the two queries of the current test targets, the build of the excluded targets, and the three invocations
+    assert_eq!(spawned.len(), 6, "{spawned:#?}");
+    assert!(spawned[0].contains(" query ") && spawned[1].contains(" query "), "{spawned:#?}");
     assert!(
-        spawned[2].contains("forced=8") && spawned[2].ends_with(CORE_LABEL),
-        "{}",
-        spawned[2]
-    );
-    assert!(
-        spawned[3].contains("forced=2") && spawned[3].ends_with(&format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")),
+        spawned[3].contains("forced=8") && spawned[3].ends_with(CORE_LABEL),
         "{}",
         spawned[3]
     );
     assert!(
-        spawned[4].contains("forced=1") && spawned[4].ends_with(SINGLE_LABEL),
+        spawned[4].contains("forced=2") && spawned[4].ends_with(&format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")),
         "{}",
         spawned[4]
+    );
+    assert!(
+        spawned[5].contains("forced=1") && spawned[5].ends_with(SINGLE_LABEL),
+        "{}",
+        spawned[5]
     );
     let plan = fake.state().files.get(SHARD_PLAN).cloned().unwrap_or_default();
     assert_mentions(
@@ -1175,8 +1259,8 @@ fn an_interrupted_heavy_invocation_starts_no_lane_invocation() {
     fake.state().spawn_results = [answer(0), answer(8)].into();
     let outcome = run(&["--lane", "fast"], &fake);
     assert_eq!(outcome.exit_code, exit::INFRA, "{}", outcome.text);
-    // the query, the build of the excluded targets, and the heavy invocation
-    assert_eq!(fake.spawned().len(), 3, "{:#?}", fake.spawned());
+    // the two queries, the build of the excluded targets, and the heavy invocation
+    assert_eq!(fake.spawned().len(), 4, "{:#?}", fake.spawned());
 }
 
 /// The tag filters of a lane can leave out every heavy target, and then the heavy invocation exits 4 with no test.

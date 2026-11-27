@@ -226,6 +226,48 @@ fn a_rust_test_target_is_a_single_shard_target_whatever_its_record() {
     );
 }
 
+/// The JUnit runner runs the classes of a target with the tag `junit-parallel` in parallel threads of one JVM, so such a
+/// target is a single-shard target, with a record or without, under the label of the query. The tag counts only for a
+/// target of the tree.
+#[test]
+fn a_parallel_jvm_target_is_a_single_shard_target_whatever_its_record() {
+    let mut plan = ShardPlan::default();
+    plan.record(&classes("//p/a:heavy_test", &[100.0; 4]));
+    plan.record(&classes("//p/a:medium_test", &[60.0, 60.0]));
+    plan.record(&classes("//p/a:sequential_test", &[100.0; 4]));
+    let mut tree = TreeTargets::parse(
+        [
+            "java_test rule //p/a:heavy_test",
+            "java_test rule //p/a:medium_test",
+            "java_test rule //p/a:sequential_test",
+            "java_test rule //p/b:new_test",
+        ]
+        .map(str::to_owned),
+    );
+    tree.add_parallel_tests(["//p/a:heavy_test", "//p/b:new_test", "//p/gone:parallel_test", "", "no label"].map(str::to_owned));
+    let patterns = vec!["//p/...".to_owned()];
+    assert_eq!(
+        plan.groups(&patterns, || Ok::<_, ()>(Some(tree.clone()))),
+        Ok(Groups {
+            heavy: vec!["//p/a:sequential_test".to_owned()],
+            single: vec!["//p/a:heavy_test".to_owned(), "//p/b:new_test".to_owned()],
+            gone: Vec::new(),
+        })
+    );
+    assert!(tree.is_parallel_test("//p/a:heavy_test"));
+    assert!(!tree.is_parallel_test("//p/a:medium_test"));
+    assert!(!tree.is_parallel_test("//p/gone:parallel_test"));
+}
+
+#[test]
+fn the_parallel_query_names_the_tagged_targets_of_the_tree_query() {
+    let patterns = vec!["//p/...".to_owned(), "-//p/x:t".to_owned()];
+    assert_eq!(
+        TreeTargets::parallel_query(&patterns),
+        format!(r#"attr(tags, "\bjunit-parallel\b", {})"#, TreeTargets::query(&patterns))
+    );
+}
+
 /// A Rust test target can have no record, so a plan without a covered heavy or single-shard target still asks for the
 /// tree.
 #[test]
@@ -333,11 +375,11 @@ fn the_tree_reads_the_rule_kind_of_each_target() {
     ] {
         assert!(tree.has(label), "{label}");
     }
-    assert!(tree.is_rust_test("//p:junit_rust"));
-    assert!(tree.is_rust_test("@@community+//tools/bt:plain_rust"));
-    assert!(!tree.is_rust_test("//p:clippy"));
-    assert!(!tree.is_rust_test("//p:java"));
-    assert!(!tree.is_rust_test("//p:unknown"));
+    assert!(tree.is_parallel_test("//p:junit_rust"));
+    assert!(tree.is_parallel_test("@@community+//tools/bt:plain_rust"));
+    assert!(!tree.is_parallel_test("//p:clippy"));
+    assert!(!tree.is_parallel_test("//p:java"));
+    assert!(!tree.is_parallel_test("//p:unknown"));
 }
 
 #[test]

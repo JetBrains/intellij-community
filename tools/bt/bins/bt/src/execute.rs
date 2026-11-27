@@ -886,22 +886,57 @@ fn gone_targets_line(gone: &[String]) -> String {
 /// `None`. So is a verdict other than 0 and 3, which no query gives today. Then each target runs in the invocation of
 /// the patterns, which is slower and still correct.
 ///
+/// A second query names the targets with the tag `junit-parallel` ([`TreeTargets::parallel_query`]), because the
+/// `label_kind` output names no tag. It runs only after the first query answered. Without its answer, the tree has no
+/// such target, and each of them runs with the shards of its record.
+///
 /// The query gets no flag of the run, because most of them are flags of `bazel test` that a query refuses. So a run
 /// with `-- --override_repository=...` or `-- --config=...` queries the tree without that flag.
 fn tree_targets(runtime: &dyn Runtime, patterns: &[String]) -> Result<Option<TreeTargets>, QueryStopped> {
-    const NO_ANSWER: &str = "so no target of the shard plan runs in an invocation of its own";
-    let expression = TreeTargets::query(patterns);
+    let tree_query = TreeQuery {
+        name: "bt-tree",
+        output: "label_kind",
+        no_answer: "so no target of the shard plan runs in an invocation of its own",
+    };
+    let Some(lines) = query_lines(runtime, &tree_query, &TreeTargets::query(patterns))? else {
+        return Ok(None);
+    };
+    let mut tree = TreeTargets::parse(lines);
+    let parallel_query = TreeQuery {
+        name: "bt-tree-parallel",
+        output: "label",
+        no_answer: "so each target with the tag junit-parallel runs with the shards of its record",
+    };
+    if let Some(lines) = query_lines(runtime, &parallel_query, &TreeTargets::parallel_query(patterns))? {
+        tree.add_parallel_tests(lines);
+    }
+    Ok(Some(tree))
+}
+
+/// A query of [`tree_targets`].
+struct TreeQuery {
+    /// The prefix of the temporary files of the query.
+    name: &'static str,
+    /// The `--output` format of the answer.
+    output: &'static str,
+    /// The end of the stderr line of a query without an answer: what the run does without it.
+    no_answer: &'static str,
+}
+
+/// The lines that `bazel query` answers for the expression, or `None` for no answer; see [`tree_targets`].
+fn query_lines(runtime: &dyn Runtime, query: &TreeQuery, expression: &str) -> Result<Option<Vec<String>>, QueryStopped> {
+    let TreeQuery { name, output, no_answer } = query;
     let query_file = TempFile {
         runtime,
-        path: runtime.temp_file("bt-tree-query"),
+        path: runtime.temp_file(&format!("{name}-query")),
     };
     let answer_file = TempFile {
         runtime,
-        path: runtime.temp_file("bt-tree-targets"),
+        path: runtime.temp_file(&format!("{name}-targets")),
     };
-    if let Err(error) = runtime.write_text_file(&query_file.path, &expression) {
+    if let Err(error) = runtime.write_text_file(&query_file.path, expression) {
         runtime.write_error(&format!(
-            "cannot write the query file {}: {error}, {NO_ANSWER}",
+            "cannot write the query file {}: {error}, {no_answer}",
             query_file.path.display()
         ));
         return Ok(None);
@@ -910,7 +945,7 @@ fn tree_targets(runtime: &dyn Runtime, patterns: &[String]) -> Result<Option<Tre
         "query".to_owned(),
         format!("--query_file={}", query_file.path.to_string_lossy()),
         format!("--output_file={}", answer_file.path.to_string_lossy()),
-        "--output=label_kind".to_owned(),
+        format!("--output={output}"),
         "--keep_going".to_owned(),
         "--noshow_progress".to_owned(),
         "--curses=no".to_owned(),
@@ -923,14 +958,14 @@ fn tree_targets(runtime: &dyn Runtime, patterns: &[String]) -> Result<Option<Tre
     };
     let spawned = runtime.spawn(&bazel_command(runtime.repo_root(), runtime.platform(), &args), Some(&heartbeat));
     match spawned.exit_code {
-        0 | 3 => Ok(Some(TreeTargets::parse(runtime.read_lines(&answer_file.path)))),
+        0 | 3 => Ok(Some(runtime.read_lines(&answer_file.path).collect())),
         code if !is_verdict(code) => {
             runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
             Err(QueryStopped { code })
         }
         code => {
             runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
-            runtime.write_error(&format!("bazel query exited with {code}, {NO_ANSWER}"));
+            runtime.write_error(&format!("bazel query exited with {code}, {no_answer}"));
             Ok(None)
         }
     }
