@@ -32,7 +32,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
 
@@ -97,28 +96,27 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
       .measureVirtualFormattingInlineInlays(vfmtInlaysInfo, editor, startOffset, startOffset);
 
     final int lineHeight = editor.getLineHeight();
-    Point start = editor.visualPositionToXY(lineStartPosition);
-    start.x += vfmtRightShift;
-    start.y += lineHeight;
-    Point end = editor.visualPositionToXY(lineEndPosition);
-    int maxY = end.y;
-    if (lineEndPosition.line == editor.offsetToVisualPosition(doc.getTextLength()).line) {
+    int minY = editor.visualLineToY(lineStartPosition.line) + lineHeight;
+    int maxY = editor.visualLineToY(lineEndPosition.line);
+    if (lineEndPosition.line == editor.offsetToVisualLine(doc.getTextLength(), false)) {
       maxY += lineHeight;
     }
 
-    int targetX = Math.max(0, start.x + EditorPainter.getIndentGuideShift(editor));
     Rectangle clip = g.getClipBounds();
     if (clip != null) {
-      if (clip.y >= maxY || clip.y + clip.height <= start.y) {
-        return;
-      }
-      if (isLineOutsideClip(g, targetX, clip)) {
+      if (clip.y >= maxY || clip.y + clip.height <= minY) {
         return;
       }
       maxY = Math.min(maxY, clip.y + clip.height);
     }
 
-    if (start.y >= maxY) return;
+    if (minY >= maxY) return;
+
+    int startX = editor.visualPositionToXY(lineStartPosition).x + vfmtRightShift;
+    int targetX = Math.max(0, startX + EditorPainter.getIndentGuideShift(editor));
+    if (clip != null && isLineOutsideClip(g, targetX, clip)) {
+      return;
+    }
 
     final boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
     final boolean stickyPainting = editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting();
@@ -144,10 +142,10 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     //     2. Show indent as is if it doesn't intersect with soft wrap-introduced text;
     List<? extends SoftWrap> softWraps = ((EditorEx)editor).getSoftWrapModel().getRegisteredSoftWraps();
     if (selected || softWraps.isEmpty()) {
-      drawLine((Graphics2D)g, targetX, start.y, targetX, maxY - 1);
+      drawLine((Graphics2D)g, targetX, minY, targetX, maxY - 1);
     }
     else {
-      int startY = start.y;
+      int startY = minY;
       int startVisualLine = lineStartPosition.line + 1;
       if (clip != null && startY < clip.y) {
         startY = clip.y;
