@@ -1435,7 +1435,10 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private static float getWhiteSpaceScale(@NotNull Editor editor) {
-      return ((float)editor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
+      int fontSize = editor instanceof EditorImpl editorImpl
+                     ? editorImpl.getView().getEditorFontSize()
+                     : editor.getColorsScheme().getEditorFontSize();
+      return ((float)fontSize) / FontPreferences.DEFAULT_FONT_SIZE;
     }
 
     /**

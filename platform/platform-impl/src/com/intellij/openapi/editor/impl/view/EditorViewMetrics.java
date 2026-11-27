@@ -3,8 +3,14 @@ package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * The font-derived metrics of an editor view.
+ *
+ * @param editorFontSize the editor font size of the colors scheme that the metrics were measured with
+ */
 @ApiStatus.Internal
 public record EditorViewMetrics(
+  int editorFontSize,
   float plainSpaceWidth,
   int lineHeight,
   int descent,
@@ -18,6 +24,6 @@ public record EditorViewMetrics(
   int caretTopOverhang
 ) {
   public static final EditorViewMetrics UNINITIALIZED = new EditorViewMetrics(
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
   );
 }

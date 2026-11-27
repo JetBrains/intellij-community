@@ -864,6 +864,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return getSnapshotWithMetrics().plainSpaceWidth();
   }
 
+  /**
+   * Returns the editor font size of the colors scheme that the current metrics were measured with.
+   */
+  int getEditorFontSize() {
+    return getSnapshotWithMetrics().metrics().editorFontSize();
+  }
+
   public int getCaretHeight() {
     return getSnapshotWithMetrics().caretHeight();
   }
@@ -1119,6 +1126,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     int newCapHeight = (int)font.createGlyphVector(fontRenderContext, "H").getVisualBounds().getHeight();
 
     return new EditorViewMetrics(
+      /* editorFontSize= */ colorsScheme.getEditorFontSize(),
       /* plainSpaceWidth= */ newPlainSpaceWidth,
       /* lineHeight= */ newLineHeight,
       /* descent= */ newDescent,
