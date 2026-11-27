@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.toolWindow.ToolWindowLeftToolbar
@@ -484,8 +485,7 @@ private fun doColorGradientPaint(project: Project, projectWindowCustomizer: Proj
   // on other platforms they are filled with a single color picked from the gradient
   @Suppress("UseJBColor")
   if (isToolWindowColor && !SystemInfo.isMac) {
-    g.color = Color(image.getRGB(bounds.centerX.toInt(), bounds.centerY.toInt()))
-    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
+    fillToolWindowTint(g, Color(image.getRGB(bounds.centerX.toInt(), bounds.centerY.toInt())), bounds)
   }
   else {
     UIUtil.drawImage(g, image, bounds, bounds, null)
@@ -494,6 +494,33 @@ private fun doColorGradientPaint(project: Project, projectWindowCustomizer: Proj
   g.composite = initialComposite
   islandsInactiveFrameGraphics2D?.preserveComposite = false
 }
+
+/**
+ * Fills [bounds] with [tint] through the alpha composite of [g] over the tool window background.
+ *
+ * The fill under the painter often leaves one opaque color in the whole clip, see [IdeBackgroundUtil.BASE_COLOR_HINT].
+ * Then this function blends the two colors itself and fills the result without alpha.
+ * The pixels stay the same, but a software pipeline fills an opaque color much faster than it blends a translucent one.
+ */
+@Suppress("UseJBColor")
+internal fun fillToolWindowTint(g: Graphics2D, tint: Color, bounds: Rectangle) {
+  val baseColor = g.getRenderingHint(IdeBackgroundUtil.BASE_COLOR_HINT) as? Color
+  val initialComposite = g.composite
+  if (baseColor != null && initialComposite is AlphaComposite && initialComposite.rule == AlphaComposite.SRC_OVER) {
+    val alpha = initialComposite.alpha
+    g.composite = AlphaComposite.SrcOver
+    g.color = Color(blendChannel(baseColor.red, tint.red, alpha),
+                    blendChannel(baseColor.green, tint.green, alpha),
+                    blendChannel(baseColor.blue, tint.blue, alpha))
+  }
+  else {
+    g.color = tint
+  }
+  g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
+  g.composite = initialComposite
+}
+
+private fun blendChannel(base: Int, tint: Int, alpha: Float): Int = (base + (tint - base) * alpha).roundToInt()
 
 private fun doColorGradientPaintLegacy(project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, frame: IdeFrame,
                                        component: Component, g: Graphics2D) {

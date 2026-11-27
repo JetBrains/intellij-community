@@ -308,9 +308,10 @@ public final class IdeBackgroundUtil {
 
   /**
    * The opaque color that the current fill painted under the background painters.
-   * The first painter can use it to draw a precomposed opaque image instead of a translucent one.
+   * The first painter can use it to draw a precomposed opaque image or color instead of a translucent one.
    */
-  static final RenderingHints.Key BASE_COLOR_HINT = new RenderingHints.Key(3) {
+  @ApiStatus.Internal
+  public static final RenderingHints.Key BASE_COLOR_HINT = new RenderingHints.Key(3) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val == null || val instanceof Color;
