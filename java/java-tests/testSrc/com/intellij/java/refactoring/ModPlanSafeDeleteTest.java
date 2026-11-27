@@ -6,10 +6,15 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.testFramework.SafeDeleteTestSupport;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * The tests of the interactive safe delete, run through the headless safe delete on the ModPlan engine, as the MCP tool runs it. A test
@@ -17,6 +22,7 @@ import java.util.Map;
  * <p>
  * The answers are the ones of the legacy unit-test mode, as in {@link InteractiveFlowModPlanSafeDeleteTest}.
  */
+@TestApplication
 public class ModPlanSafeDeleteTest extends SafeDeleteTest {
   @Override
   protected @NotNull Map<ModPlanOption<?>, Object> defaultAnswers() {
@@ -32,12 +38,13 @@ public class ModPlanSafeDeleteTest extends SafeDeleteTest {
   protected void performSafeDelete(@NotNull List<PsiElement> elements,
                                    @NotNull Map<ModPlanOption<?>, Object> answers,
                                    @NotNull SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsageRecorder) {
-    SafeDeleteTestSupport.headlessSafeDelete(getProject(), elements, SafeDeleteTestSupport.withAll(ModPlanOptionValues.EMPTY, answers),
+    SafeDeleteTestSupport.headlessSafeDelete(heavyFixture.get().getProject(), elements, SafeDeleteTestSupport.withAll(ModPlanOptionValues.EMPTY, answers),
                                              BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore(), nonCodeUsageRecorder);
   }
 
   /** A usage in generated code is a conflict for the user to confirm, where the legacy flow deletes without a question. */
   @Override
+  @Test
   public void testUsageInGenerated() {
     try {
       super.testUsageInGenerated();

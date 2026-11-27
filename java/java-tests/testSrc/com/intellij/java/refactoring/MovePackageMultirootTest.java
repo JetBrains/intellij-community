@@ -16,6 +16,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,78 +26,79 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-public class MovePackageMultirootTest extends MultiFileTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+@TestApplication
+public class MovePackageMultirootTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
 
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/movePackageMultiroot/";
-  }
-
+  @Test
   public void testMovePackage() {
     doTest((rootDir, rootAfter) -> {
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(heavyFixture.get().getProject());
 
       PsiPackage pack1 = facade.findPackage("pack1");
-      assertSize(2, pack1.getDirectories());
-      assertSize(1, facade.findPackage("pack1.inside").getDirectories());
-      assertSize(1, facade.findPackage("pack1Unrelated").getDirectories());
+      assertEquals(2, pack1.getDirectories().length);
+      assertEquals(1, facade.findPackage("pack1.inside").getDirectories().length);
+      assertEquals(1, facade.findPackage("pack1Unrelated").getDirectories().length);
 
       PsiPackage[] sourcePackages = new PsiPackage[]{pack1};
       PsiPackage targetPackage = facade.findPackage("target");
-      new MoveClassesOrPackagesProcessor(myProject, sourcePackages,
+      new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), sourcePackages,
                                          new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
                                          true, true, null).run();
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      assertSize(2, facade.findPackage("target.pack1").getDirectories());
-      assertSize(1, facade.findPackage("target.pack1.inside").getDirectories());
-      assertSize(1, facade.findPackage("pack1Unrelated").getDirectories());
+      assertEquals(2, facade.findPackage("target.pack1").getDirectories().length);
+      assertEquals(1, facade.findPackage("target.pack1.inside").getDirectories().length);
+      assertEquals(1, facade.findPackage("pack1Unrelated").getDirectories().length);
     });
   }
 
+  @Test
   public void testMoveFilesToEmptyPkg1() {
     doMovementTest(Set.of("pack1.S1"), "pack1.pack2");
   }
 
+  @Test
   public void testMoveFilesToEmptyPkg2() {
     doMovementTest(Set.of("pack1.S1", "pack1.S2"), "pack1.pack2");
   }
 
+  @Test
   public void testMoveFilesToNonEmptyPkg1() {
     doMovementTestWithConflicts(Set.of("pack1.S1"), "pack1.pack2",
                                 "Changing exports/opens statements of package <b><code>pack1.pack2</code></b> grants access to other types and its members in the same package");
   }
 
+  @Test
   public void testMoveFilesToNonEmptyPkg2() {
     doMovementTest(Set.of("pack1.S1"), "pack1.pack2");
   }
 
+  @Test
   public void testMoveFilesToNonEmptyPkg3() {
     doMovementTest(Set.of("pack1.S1", "pack3.S4", "pack4.S6", "pack5.S7"), "pack1.pack2");
   }
 
-  @Override
-  protected void prepareProject(VirtualFile rootDir) {
-    PsiTestUtil.addContentRoot(myModule, rootDir);
+  private void prepareProject(VirtualFile rootDir) {
+    PsiTestUtil.addContentRoot(heavyFixture.get().getModule(), rootDir);
     final VirtualFile[] children = rootDir.getChildren();
     for (VirtualFile child : children) {
       String name = child.getName();
@@ -104,21 +106,21 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
         String prefix = name.equals("srcPrefix1") ? "pack1.inside" :
                         name.equals("srcPrefix2") ? "pack1Unrelated" :
                         "";
-        PsiTestUtil.addSourceRoot(myModule, child, JavaSourceRootType.SOURCE,
+        PsiTestUtil.addSourceRoot(heavyFixture.get().getModule(), child, JavaSourceRootType.SOURCE,
                                   JpsJavaExtensionService.getInstance().createSourceRootProperties(prefix, false));
       }
     }
   }
 
   private void doMovementTest(@NotNull Set<String> sourceClassNames, @NotNull String targetPackageName) {
-    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_9);
+    IdeaTestUtil.setProjectLanguageLevel(heavyFixture.get().getProject(), LanguageLevel.JDK_1_9);
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> {
       doTest((rootDir, rootAfter) -> {
-        JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
-        PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name, GlobalSearchScope.allScope(myProject)))
+        JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(heavyFixture.get().getProject());
+        PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name, GlobalSearchScope.allScope(heavyFixture.get().getProject())))
           .toArray(PsiClass[]::new);
         PsiPackage targetPackage = facade.findPackage(targetPackageName);
-        new MoveClassesOrPackagesProcessor(myProject, sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
+        new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
                                            true, false, null).run();
         FileDocumentManager.getInstance().saveAllDocuments();
       });
@@ -128,13 +130,13 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
   private void doMovementTestWithConflicts(@NotNull Set<String> sourceClassNames,
                                            @NotNull String targetPackageName,
                                            @NotNull String message) {
-    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_9);
+    IdeaTestUtil.setProjectLanguageLevel(heavyFixture.get().getProject(), LanguageLevel.JDK_1_9);
     doTest((rootDir, rootAfter) -> {
-      JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
+      JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(heavyFixture.get().getProject());
       PsiClass[] sourceClasses = sourceClassNames.stream().map(name -> facade.findClass(name)).toArray(PsiClass[]::new);
       PsiPackage targetPackage = facade.findPackage(targetPackageName);
       try {
-        new MoveClassesOrPackagesProcessor(myProject, sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
+        new MoveClassesOrPackagesProcessor(heavyFixture.get().getProject(), sourceClasses, new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
                                            true, false, null).run();
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
@@ -143,5 +145,13 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
       }
       fail("Unreachable statement");
     });
+  }
+
+  /**
+   * Runs the test of {@code MultiFileTestCase.doTest} with the test data directory of the test name.
+   */
+  private void doTest(@NotNull HeavyJavaCodeInsightFixture.MultiFileAction action) {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    fixture.doMultiFileTest("/refactoring/movePackageMultiroot/" + fixture.getTestName(true), this::prepareProject, true, action);
   }
 }

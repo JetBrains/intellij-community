@@ -6,11 +6,16 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public abstract class AbstractBasicLayeredLexerTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+public abstract class AbstractBasicLayeredLexerTest {
+  @Test
   public void testInTheMiddle() {
     Lexer lexer = setupLexer("s=\"abc\\ndef\";");
 
@@ -23,6 +28,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
     assertNull(lexer.getTokenType());
   }
 
+  @Test
   public void testModification() {
     Lexer lexer = setupLexer("s=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";");
     assertEquals("s", nextToken(lexer));
@@ -38,6 +44,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
   }
 
 
+  @Test
   public void testInTheAtStartup() {
     Lexer lexer = setupLexer("s=\"\\ndef\";");
 
@@ -50,6 +57,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
     assertNull(lexer.getTokenType());
   }
 
+  @Test
   public void testInTheAtEnd() {
     Lexer lexer = setupLexer("s=\"abc\\n\";");
 
@@ -62,6 +70,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
     assertNull(lexer.getTokenType());
   }
 
+  @Test
   public void testNonTerminated() {
     Lexer lexer = setupLexer("s=\"abc\\n");
 
@@ -72,6 +81,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
     assertNull(lexer.getTokenType());
   }
 
+  @Test
   public void testNonTerminated2() {
     Lexer lexer = setupLexer("s=\"abc\\");
 
@@ -82,6 +92,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
     assertNull(lexer.getTokenType());
   }
 
+  @Test
   public void testUnicode() {
     Lexer lexer = setupLexer("s=\"\\uFFFF\";");
     assertEquals("s", nextToken(lexer));
@@ -93,6 +104,7 @@ public abstract class AbstractBasicLayeredLexerTest extends TestCase {
     assertNull(lexer.getTokenType());
   }
 
+  @Test
   public void testDelegatesWithBigStates() {
     final LayeredLexer lexer = new LayeredLexer(new SimpleStateSteppingLexer());
     lexer.registerSelfStoppingLayer(new SimpleStateSteppingLexer(),

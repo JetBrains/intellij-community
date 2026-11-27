@@ -5,6 +5,8 @@ import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effec
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import junit.framework.TestCase
+import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.Assertions
 
 abstract class BaseSignatureChangePresentationTest : TestCase() {
   protected abstract val refactoringSupport: SuggestedRefactoringSupport
@@ -14,9 +16,22 @@ abstract class BaseSignatureChangePresentationTest : TestCase() {
     newSignature: Signature,
     expectedDump: String
   ) {
-    val model = refactoringSupport.ui.buildSignatureChangePresentation(oldSignature, newSignature)
-    assertEquals(expectedDump, model.dump().trim())
+    refactoringSupport.checkSignatureChangePresentation(oldSignature, newSignature, expectedDump)
   }
+}
+
+/**
+ * Builds the presentation of the change from [oldSignature] to [newSignature] and compares its [dump] with [expectedDump].
+ * It is `doTest` of [BaseSignatureChangePresentationTest] for a JUnit 6 test.
+ */
+@TestOnly
+fun SuggestedRefactoringSupport.checkSignatureChangePresentation(
+  oldSignature: Signature,
+  newSignature: Signature,
+  expectedDump: String,
+) {
+  val model = ui.buildSignatureChangePresentation(oldSignature, newSignature)
+  Assertions.assertEquals(expectedDump, model.dump().trim())
 }
 
 fun SignatureChangePresentationModel.dump(): String {

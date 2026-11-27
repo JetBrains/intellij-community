@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.HeavyJavaCodeInsightFixture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,53 +16,55 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.refactoring.rename.RenamePsiPackageProcessor;
 import com.intellij.testFramework.PsiTestUtil;
-import junit.framework.Assert;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class MovePackageAsDirectoryTest extends MultiFileTestCase {
+import static com.intellij.codeInsight.HeavyJavaCodeInsightFixture.heavyJavaCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
+@TestApplication
+public class MovePackageAsDirectoryTest {
+  private final TestFixture<HeavyJavaCodeInsightFixture> heavyFixture = heavyJavaCodeInsightFixture(JavaTestUtil.getJavaTestDataPath());
 
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/movePackageAsDir/";
-  }
-
+  @Test
   public void testMovePackage() {
     doTest(createMoveAction("pack1", "target"));
   }
 
+  @Test
   public void testRenamePackage() {
     doTest(createRenameAction("pack1", "pack1.pack2"));
   }
 
+  @Test
   public void testRenamePackageUp() {
     doTest(createRenameAction("pack1.pack2", "pack1"));
   }
 
+  @Test
   public void testRenamePackageStaticImportsToNestedClasses() {
     doTest(createRenameAction("pack1.pack2", "pack0.pack2"));
   }
 
+  @Test
   public void testDeepRenamePackage() {
     doTest(createRenameAction("c.d", "x.y"));
   }
 
-  private @NotNull PerformAction createRenameAction(String oldName, String newName) {
+  private @NotNull HeavyJavaCodeInsightFixture.MultiFileAction createRenameAction(String oldName, String newName) {
     return (rootDir, rootAfter) -> {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(heavyFixture.get().getProject());
       final PsiPackage sourcePackage = psiFacade.findPackage(oldName);
       assertNotNull(sourcePackage);
 
@@ -70,10 +73,12 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     };
   }
 
+  @Test
   public void testMovePackageWithTxtFilesInside() {
     doTest(createMoveAction("pack1", "target"));
   }
 
+  @Test
   public void testMultipleClassesInOneFile() {
     final boolean [] fileWasDeleted = new boolean[]{false};
     final VirtualFileListener fileAdapter = new VirtualFileListener() {
@@ -89,19 +94,22 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     finally {
       VirtualFileManager.getInstance().removeVirtualFileListener(fileAdapter);
     }
-    Assert.assertFalse("Deleted instead of moved", fileWasDeleted[0]);
+    assertFalse(fileWasDeleted[0], "Deleted instead of moved");
   }
 
 
+  @Test
   public void testRemoveUnresolvedImports() {
     doTest(createMoveAction("pack1", "target"));
   }
 
+  @Test
   public void testXmlDirRefs() {
     doTest(createMoveAction("pack1", "target"));
   }
 
   private static final String EMPTY_TXT = "empty.txt";
+  @Test
   public void testXmlEmptyDirRefs() {
     final String packageName = "pack1";
     doTest(new MyPerformAction(packageName, "target"){
@@ -123,13 +131,14 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     });
   }
 
+  @Test
   public void testEmptySubDirs() {
     final String packageName = "pack1";
     doTest(new MyPerformAction(packageName, "target"){
       private static final String FOO = "pack1.subPack.Foo";
       @Override
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
-        final PsiClass empty = JavaPsiFacade.getInstance(getProject()).findClass(FOO, GlobalSearchScope.projectScope(getProject()));
+        final PsiClass empty = JavaPsiFacade.getInstance(heavyFixture.get().getProject()).findClass(FOO, GlobalSearchScope.projectScope(heavyFixture.get().getProject()));
         assert empty != null;
         ApplicationManager.getApplication().runWriteAction(empty::delete);
       }
@@ -151,18 +160,17 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     return new MyPerformAction(packageName, targetPackageName);
   }
 
-  @Override
-  protected void prepareProject(VirtualFile rootDir) {
-    PsiTestUtil.addContentRoot(myModule, rootDir);
+  private void prepareProject(VirtualFile rootDir) {
+    PsiTestUtil.addContentRoot(heavyFixture.get().getModule(), rootDir);
     final VirtualFile[] children = rootDir.getChildren();
     for (VirtualFile child : children) {
       if (child.getName().startsWith("src")) {
-        PsiTestUtil.addSourceRoot(myModule, child);
+        PsiTestUtil.addSourceRoot(heavyFixture.get().getModule(), child);
       }
     }
   }
 
-  private class MyPerformAction implements PerformAction {
+  private class MyPerformAction implements HeavyJavaCodeInsightFixture.MultiFileAction {
     private final String myPackageName;
     private final String myTargetPackageName;
 
@@ -173,7 +181,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
     @Override
     public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(heavyFixture.get().getProject());
       final Comparator<PsiDirectory> directoryComparator = Comparator.comparing(o -> o.getVirtualFile().getPresentableUrl());
 
       final PsiPackage sourcePackage = psiFacade.findPackage(myPackageName);
@@ -188,7 +196,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       Arrays.sort(targetDirectories, directoryComparator);
       assertTrue(targetDirectories.length > 0);
       preprocessSrcDir(srcDirectories[0]);
-      new MoveDirectoryWithClassesProcessor(getProject(), new PsiDirectory[]{srcDirectories[0]}, targetDirectories[0], false, false, true, null).run();
+      new MoveDirectoryWithClassesProcessor(heavyFixture.get().getProject(), new PsiDirectory[]{srcDirectories[0]}, targetDirectories[0], false, false, true, null).run();
       postProcessTargetDir(targetDirectories[0]);
       FileDocumentManager.getInstance().saveAllDocuments();
     }
@@ -198,5 +206,13 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
     protected void preprocessSrcDir(PsiDirectory srcDirectory) {
     }
+  }
+
+  /**
+   * Runs the test of {@code MultiFileTestCase.doTest} with the test data directory of the test name.
+   */
+  private void doTest(@NotNull HeavyJavaCodeInsightFixture.MultiFileAction action) {
+    HeavyJavaCodeInsightFixture fixture = heavyFixture.get();
+    fixture.doMultiFileTest("/refactoring/movePackageAsDir/" + fixture.getTestName(true), this::prepareProject, true, action);
   }
 }

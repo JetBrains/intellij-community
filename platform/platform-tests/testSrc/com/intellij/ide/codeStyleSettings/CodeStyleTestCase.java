@@ -1,19 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.codeStyleSettings;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.editor.EditorColorSchemeTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Element;
@@ -56,50 +48,18 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
   @NotNull
   protected CodeStyleSettings importSettings() throws SchemeImportException {
-    final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
-    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<>() {
-      @NotNull
-      @Override
-      public CodeStyleScheme createNewScheme(@Nullable String name) {
-        return targetScheme;
-      }
-    };
     File ioFile = new File(getTestDataPath() + getTestName(true) + ".xml");
     assertExists(ioFile);
-    VirtualFile vFile = VfsUtil.findFileByIoFile(ioFile, true);
-    CodeStyleSchemeXmlImporter importer = new CodeStyleSchemeXmlImporter();
-    return importer.importScheme(getProject(), vFile, targetScheme, schemeFactory).getCodeStyleSettings();
+    return CodeStyleTestUtil.importSettings(getProject(), ioFile.getPath());
   }
 
   protected void compareWithExpected(String actual, String fileName) throws IOException {
     String filePath = getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + fileName;
-    String expected = FileUtilRt.loadFile(new File(filePath), true);
-    if (!expected.equals(actual)) {
-      throw new FileComparisonFailedError("Settings don't match", expected, actual, filePath);
-    }
+    CodeStyleTestUtil.compareWithExpected(actual, filePath);
   }
 
   protected CodeStyleScheme createTestScheme() {
-    return new CodeStyleScheme() {
-      private final CodeStyleSettings mySettings = CodeStyle.createTestSettings();
-
-      @NotNull
-      @Override
-      public String getName() {
-        return "Test";
-      }
-
-      @Override
-      public boolean isDefault() {
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public CodeStyleSettings getCodeStyleSettings() {
-        return mySettings;
-      }
-    };
+    return CodeStyleTestUtil.createTestScheme();
   }
 
   protected String getBasePath() {

@@ -6,7 +6,7 @@ import com.intellij.testIntegration.RunConfigurationEntry
 import com.intellij.testIntegration.SuiteEntry
 import com.intellij.testIntegration.TestConfigurationCollector
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class RecentTestsStepTest : RecentTestsTestCase() {
   @Test fun `test all tests passed`() {

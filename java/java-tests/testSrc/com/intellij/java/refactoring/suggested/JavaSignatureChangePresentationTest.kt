@@ -2,13 +2,14 @@
 
 package com.intellij.java.refactoring.suggested
 
-import com.intellij.refactoring.suggested.BaseSignatureChangePresentationTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.refactoring.suggested.checkSignatureChangePresentation
+import org.junit.jupiter.api.Test
 
-class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest() {
-  override val refactoringSupport = JavaSuggestedRefactoringSupport()
+class JavaSignatureChangePresentationTest {
+  private val refactoringSupport = JavaSuggestedRefactoringSupport()
 
   private fun signature(
     name: String,
@@ -19,6 +20,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     return Signature.create(name, type, parameters, additionalData)
   }
 
+  @Test
   fun testAddParameters() {
     val oldSignature = signature(
       "foo",
@@ -34,7 +36,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(Any(), "p2", "Long")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -78,6 +80,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapParameters() {
     val oldSignature = signature(
       "foo",
@@ -95,7 +98,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1", "Int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -139,6 +142,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapParametersAndRenameFirst() {
     val oldSignature = signature(
       "foo",
@@ -156,7 +160,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1New", "Int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -200,6 +204,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapParametersAndRenameSecond() {
     val oldSignature = signature(
       "foo",
@@ -217,7 +222,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1", "Int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -261,6 +266,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapParametersAndAddNewOne() {
     val oldSignature = signature(
       "foo",
@@ -279,7 +285,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(2, "pNew", "String")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -329,6 +335,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapParametersAndRemoveParameter() {
     val oldSignature = signature(
       "foo",
@@ -347,7 +354,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1", "Int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -397,6 +404,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapParametersAndAddRemoveAnnotations() {
     val oldSignature = signature(
       "foo",
@@ -426,7 +434,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(6, "p7", "Int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -550,10 +558,11 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testChangeFunctionName() {
     val oldSignature = signature("foo", "void", emptyList())!!
     val newSignature = signature("bar", "void", emptyList())!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -575,10 +584,11 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testChangeReturnType() {
     val oldSignature = signature("foo", "Object", emptyList())!!
     val newSignature = signature("foo", "String", emptyList())!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -600,6 +610,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testChangeParameterName() {
     val oldSignature = signature(
       "foo",
@@ -617,7 +628,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(1, "p2", "long")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -661,6 +672,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testChangeTwoParameterNames() {
     val oldSignature = signature(
       "foo",
@@ -678,7 +690,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(1, "p2New", "long")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -722,6 +734,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testMoveAndRenameParameter() {
     val oldSignature = signature(
       "foo",
@@ -741,7 +754,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1New", "int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -797,6 +810,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testMoveParameterAndAddAnnotation() {
     val oldSignature = signature(
       "foo",
@@ -816,7 +830,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(1, "p2", "long")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -874,6 +888,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testMoveParameterAndRemoveAnnotation() {
     val oldSignature = signature(
       "foo",
@@ -893,7 +908,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(1, "p2", "long")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -951,6 +966,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testAddParameterToConstructor() {
     val oldSignature = signature(
       "Foo",
@@ -965,7 +981,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
         Parameter(0, "p1", "Int")
       )
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -999,6 +1015,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testAnnotations() {
     val oldSignature = signature(
       "foo",
@@ -1020,7 +1037,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
       ),
       JavaDeclarationAdditionalData("public", "@NotNull", emptyList())
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -1086,6 +1103,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testReorderExceptions() {
     val oldSignature = signature(
       "foo",
@@ -1099,7 +1117,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
       emptyList(),
       JavaDeclarationAdditionalData("public", "", listOf("NumberFormatException", "IOException", "SQLException"))
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """
@@ -1141,6 +1159,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
     )
   }
 
+  @Test
   fun testSwapExceptionsAndParameters() {
     val oldSignature = signature(
       "foo",
@@ -1160,7 +1179,7 @@ class JavaSignatureChangePresentationTest : BaseSignatureChangePresentationTest(
       ),
       JavaDeclarationAdditionalData("public", "", listOf("SQLException", "IOException"))
     )!!
-    doTest(
+    refactoringSupport.checkSignatureChangePresentation(
       oldSignature,
       newSignature,
       """

@@ -7,9 +7,15 @@ import com.intellij.refactoring.modplan.ModPlanOptionValues;
 import com.intellij.refactoring.modplan.ModPlanOption;
 import com.intellij.refactoring.modplan.safeDelete.impl.ModPlanSafeDeleteFlow;
 import com.intellij.refactoring.safeDelete.ModPlanJavaSafeDeleteOptions;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * The tests of the interactive safe delete, run with the flow on the ModPlan engine. A test that fails here is a difference of the
@@ -18,12 +24,12 @@ import java.util.Map;
  * The answers are the ones of the legacy unit-test mode: all the unused callees are deleted, and the parameter is deleted in all the
  * callers that only pass it on.
  */
+@TestApplication
 public class InteractiveFlowModPlanSafeDeleteTest extends SafeDeleteTest {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Registry.get("refactoring.safeDelete.modPlan").setValue(true, getTestRootDisposable());
-    ModPlanSafeDeleteFlow.INSTANCE.failOnLegacyInTests(getTestRootDisposable());
+  @BeforeEach
+  void setUpModPlanFlow() {
+    Registry.get("refactoring.safeDelete.modPlan").setValue(true, heavyFixture.get().getTestRootDisposable());
+    ModPlanSafeDeleteFlow.INSTANCE.failOnLegacyInTests(heavyFixture.get().getTestRootDisposable());
   }
 
   @Override
@@ -38,6 +44,7 @@ public class InteractiveFlowModPlanSafeDeleteTest extends SafeDeleteTest {
 
   /** A usage in generated code is a conflict for the user to confirm, where the legacy flow deletes without a question. */
   @Override
+  @Test
   public void testUsageInGenerated() {
     try {
       super.testUsageInGenerated();

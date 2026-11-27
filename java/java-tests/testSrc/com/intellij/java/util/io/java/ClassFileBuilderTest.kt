@@ -1,15 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.util.io.java
 
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.AccessModifier
 import com.intellij.util.io.java.classFile
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertSame
-import junit.framework.TestCase.assertTrue
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.Modifier
@@ -22,8 +21,8 @@ class ClassFileBuilderTest {
     }.generateInTempDir().toFile()
     val aClass = loadClass("A", File(dir, "A.class"))
     assertSame(Object::class.java, aClass.superclass)
-    assertEmpty(aClass.interfaces)
-    assertEmpty(aClass.declaredFields)
+    assertThat(aClass.interfaces).isEmpty()
+    assertThat(aClass.declaredFields).isEmpty()
   }
 
   @Test
@@ -36,8 +35,8 @@ class ClassFileBuilderTest {
     }.generateInTempDir().toFile()
     val aClass = loadClass("A", File(dir, "A.class"))
     assertSame(ArrayList::class.java, aClass.superclass)
-    assertSame(Serializable::class.java, assertOneElement(aClass.interfaces))
-    assertEmpty(aClass.declaredFields)
+    assertThat(aClass.interfaces).containsExactly(Serializable::class.java)
+    assertThat(aClass.declaredFields).isEmpty()
   }
 
   @Test

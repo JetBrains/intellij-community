@@ -91,6 +91,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiFunction
+import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 
@@ -338,6 +339,46 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     val result = HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots)
     runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
     return result
+  }
+
+  /**
+   * The action of [doMultiFileTest]. It gets the copy of the `before` directory and the `after` directory of the test data.
+   */
+  fun interface MultiFileAction {
+    @Throws(Exception::class)
+    fun performAction(rootDir: VirtualFile, rootAfter: VirtualFile?)
+  }
+
+  /**
+   * Runs a test of [com.intellij.refactoring.MultiFileTestCase] with the test data directory [path] in [testDataPath].
+   *
+   * The fixture copies `<path>/before` to a new temporary directory with [createTestProjectStructure], without project roots.
+   * Then [prepareProject] adds the roots of the copy. Without [prepareProject], the copy becomes a content root and a source root of
+   * [module]. Then the fixture waits for the indexes.
+   * On the EDT, in one block, it runs [action], the postponed formatting and the save of all documents.
+   * When [compareResults] is `true`, it compares the copy with `<path>/after` in the same block.
+   */
+  fun doMultiFileTest(path: String, prepareProject: Consumer<VirtualFile>?, compareResults: Boolean, action: MultiFileAction) {
+    val fullPath = testDataPath + path
+    val rootDir = createTestProjectStructure("$fullPath/before", false)
+    if (prepareProject == null) {
+      addSourceContentToRoots(module, rootDir)
+    }
+    else {
+      prepareProject.accept(rootDir)
+    }
+    runInEdtAndWait { PsiDocumentManager.getInstance(project).commitAllDocuments() }
+
+    val rootAfter = LocalFileSystem.getInstance().findFileByPath("$fullPath/after".replace(File.separatorChar, '/'))
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    runInEdtAndWait {
+      action.performAction(rootDir, rootAfter)
+      WriteCommandAction.runWriteCommandAction(project) { PostprocessReformattingAspect.getInstance(project).doPostponedFormatting() }
+      FileDocumentManager.getInstance().saveAllDocuments()
+      if (compareResults) {
+        PlatformTestUtil.assertDirectoriesEqual(rootAfter!!, rootDir)
+      }
+    }
   }
 
   /**
@@ -692,8 +733,16 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
    * Returns the reference at the marker. The new file becomes [file].
    * It is `configureByFile` of [com.intellij.testFramework.JavaResolveTestCase].
    */
-  fun configureReferenceByFile(filePath: String): PsiReference {
-    val offset = configureByFileWithoutMarker(filePath, REFERENCE_MARKER)
+  fun configureReferenceByFile(filePath: String): PsiReference = configureReferenceByFile(filePath, null)
+
+  /**
+   * Writes the file [filePath] of the test data without its [REFERENCE_MARKER] to a new file in [parentDir], as [createFile] does.
+   * Without [parentDir], it works as the overload without it.
+   * Returns the reference at the marker. The new file becomes [file].
+   * It is `configureByFile(filePath, parentDir)` of [com.intellij.testFramework.JavaResolveTestCase] for a file that [parentDir] does not have.
+   */
+  fun configureReferenceByFile(filePath: String, parentDir: VirtualFile?): PsiReference {
+    val offset = configureByFileWithoutMarker(filePath, REFERENCE_MARKER, parentDir)
     val psiFile = file!!
     return checkNotNull(ReadAction.computeBlocking<PsiReference?, RuntimeException> { psiFile.findReferenceAt(offset) }) {
       "No reference at $offset in $filePath"
@@ -711,14 +760,23 @@ open class HeavyJavaCodeInsightFixture(context: Context, val testDataPath: Strin
     return ReadAction.computeBlocking<PsiElement?, RuntimeException> { psiFile.findElementAt(offset) }
   }
 
-  private fun configureByFileWithoutMarker(filePath: String, marker: String): Int {
+  private fun configureByFileWithoutMarker(filePath: String, marker: String, parentDir: VirtualFile? = null): Int {
     val vFile = VfsTestUtil.findFileByCaseSensitivePath(testDataPath + filePath)
     val fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile))
     val offset = fileText.indexOf(marker)
     check(offset >= 0) { "Expected to find $marker marker in file but was none" }
     val text = fileText.substring(0, offset) + fileText.substring(offset + marker.length)
-    file = createFile(vFile.name, text)
+    file = if (parentDir == null) createFile(vFile.name, text) else createFile(module, parentDir, vFile.name, text)
     return offset
+  }
+
+  /**
+   * Creates a non-physical file [fileName] with [text], of the file type of [fileName].
+   * It is `createDummyFile` of [com.intellij.testFramework.JavaPsiTestCase]. Call it in a read action.
+   */
+  fun createDummyFile(fileName: String, text: String): PsiFile {
+    val type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)
+    return PsiFileFactory.getInstance(project).createFileFromText(fileName, type, text)
   }
 
   /**

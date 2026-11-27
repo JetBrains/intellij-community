@@ -5,11 +5,11 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
-import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
+import com.intellij.ide.codeStyleSettings.CodeStyleTestUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -18,12 +18,21 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.RegistryKey;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -31,11 +40,34 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("SameParameterValue")
-public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("SameParameterValue")
+@TestApplication
+public class JavaCodeStyleSettingsTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
+
+  private String testName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), true);
+    EdtTestUtil.runInEdtAndWait(() -> CodeStyle.setTemporarySettings(projectFixture.get(), CodeStyle.createTestSettings()));
+  }
+
+  @AfterEach
+  void tearDown() {
+    EdtTestUtil.runInEdtAndWait(() -> CodeStyle.dropTemporarySettings(projectFixture.get()));
+  }
+
+  @Test
   public void testSettingsClone() {
-    JavaCodeStyleSettings original = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings original = JavaCodeStyleSettings.getInstance(projectFixture.get());
     original.getImportLayoutTable().addEntry(new PackageEntry(false, "test", true));
     List<String> annotations = Arrays.asList("anno1", "anno2");
     original.setRepeatAnnotations(annotations);
@@ -43,33 +75,36 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
     JavaCodeStyleSettings copy = (JavaCodeStyleSettings)original.clone();
     assertEquals(annotations, copy.getRepeatAnnotations());
-    assertEquals("Import tables do not match", original.getImportLayoutTable(), copy.getImportLayoutTable());
-    assertEquals("On demand packages do not match", original.getPackagesToUseImportOnDemand(), copy.getPackagesToUseImportOnDemand());
+    assertEquals(original.getImportLayoutTable(), copy.getImportLayoutTable(), "Import tables do not match");
+    assertEquals(original.getPackagesToUseImportOnDemand(), copy.getPackagesToUseImportOnDemand(), "On demand packages do not match");
 
     copy.setRepeatAnnotations(Collections.singletonList("anno1"));
-    assertNotSame("Changed repeated annotations should reflect the equality relation", original, copy);
+    assertNotSame(original, copy, "Changed repeated annotations should reflect the equality relation");
   }
 
+  @Test
   public void testSettingsCloneNotReferencingOriginal() throws IllegalAccessException {
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings original = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     CodeStyleSettings clonedRoot = CodeStyle.createTestSettings(originalRoot);
     JavaCodeStyleSettings copy = clonedRoot.getCustomSettings(JavaCodeStyleSettings.class);
     assertSame(clonedRoot, copy.getContainer());
     for (Field field : copy.getClass().getDeclaredFields()) {
       if (!isPrimitiveOrString(field.getType()) && (field.getModifiers() & Modifier.PUBLIC) != 0) {
-        assertNotSame("Fields '" + field.getName() + "' reference the same value", field.get(original), field.get(copy));
+        assertNotSame(field.get(original), field.get(copy), "Fields '" + field.getName() + "' reference the same value");
       }
     }
   }
 
+  @Test
   public void testImportPre173Settings() throws SchemeImportException {
-    CodeStyleSettings imported = importSettings();
+    CodeStyleSettings imported = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
     assertEquals("testprefix", imported.getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX);
   }
 
+  @Test
   public void testJsonExport() throws IOException {
-    CodeStyleScheme testScheme = createTestScheme();
+    CodeStyleScheme testScheme = CodeStyleTestUtil.createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11, 22));
@@ -85,13 +120,15 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    compareWithExpected(outputStream.toString(), "json");
+    CodeStyleTestUtil.compareWithExpected(outputStream.toString(), getBasePath() + File.separator + File.separator + testName + ".json");
   }
 
+  @Test
   public void testNotFirstImportModule() throws IOException {
     importFromXmlToJson();
   }
 
+  @Test
   public void testNotFirstImportModuleAfterMigration() throws IOException {
     importFromXmlToJson();
   }
@@ -115,7 +152,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       @Override
       public CodeStyleSettings getCodeStyleSettings() {
         try {
-          return importSettings();
+          return CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
         }
         catch (SchemeImportException e) {
           throw new RuntimeException(e);
@@ -125,11 +162,12 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    compareWithExpected(outputStream.toString(), "json");
+    CodeStyleTestUtil.compareWithExpected(outputStream.toString(), getBasePath() + File.separator + File.separator + testName + ".json");
   }
 
+  @Test
   public void testFirstNotImportedImportModule() throws IOException, JDOMException {
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     String text = """
       <root>
@@ -167,9 +205,10 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
+  @Test
+  @RegistryKey(key = "code.style.package.entry.table.check.compatibility", value = "true")
   public void testSkipUnknownAttributeForImportLayout() throws IOException, JDOMException {
-    Registry.get("code.style.package.entry.table.check.compatibility").setValue(true, getTestRootDisposable());
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     String text = """
       <root>
@@ -206,8 +245,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
+  @Test
   public void testMovedFirstNotImportedImportModule() throws IOException, JDOMException {
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     String text = """
       <root>
@@ -247,8 +287,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
+  @Test
   public void testMovedFirstImportedImportModule() throws IOException, JDOMException {
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     String text = """
       <root>
@@ -289,8 +330,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
+  @Test
   public void testMovedNotFirstImportedImportModule() throws IOException, JDOMException {
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     String text = """
       <root>
@@ -331,8 +373,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
+  @Test
   public void testFirstImportedImportModule() throws IOException, JDOMException {
-    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(projectFixture.get());
     JavaCodeStyleSettings settings = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
     String text = """
       <root>
@@ -352,7 +395,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
     Element root = new Element("root");
     PackageEntryTable table = settings.IMPORT_LAYOUT_TABLE;
-    assertSize(4,table.getEntries());
+    assertEquals(4, table.getEntries().length);
     PackageEntry moduleEntry = table.getEntryAt(0);
     assertSame(PackageEntry.ALL_MODULE_IMPORTS, moduleEntry);
     table.addEntry(new PackageEntry(true, "org.foo", true));
@@ -374,8 +417,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(actual, JDOMUtil.writeElement(root));
   }
 
+  @Test
   public void testSetProperties() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(projectFixture.get());
     AbstractCodeStylePropertyMapper mapper =
       LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE).getPropertyMapper(settings);
     setSimple(mapper, "align_group_field_declarations", "true");
@@ -408,19 +452,20 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
-    assertNotNull(name + " not found", accessor);
+    assertNotNull(accessor, name + " not found");
     accessor.setFromString(value);
   }
 
   private static void setList(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull List<String> value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
-    assertNotNull(name + " not found", accessor);
+    assertNotNull(accessor, name + " not found");
     //noinspection unchecked
     accessor.set(value);
   }
 
+  @Test
   public void testFirstMigration() throws SchemeImportException {
-    CodeStyleSettings initialSettings = createTestScheme().getCodeStyleSettings();
+    CodeStyleSettings initialSettings = CodeStyleTestUtil.createTestScheme().getCodeStyleSettings();
 
     CommonCodeStyleSettings initialCommonCodeStyleSettings = initialSettings.getCommonSettings(JavaLanguage.INSTANCE);
     JavaCodeStyleSettings initialCustomCodeStyleSettings = initialSettings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -428,7 +473,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(0, initialCommonCodeStyleSettings.BLANK_LINES_AROUND_FIELD);
     assertEquals(0, initialCustomCodeStyleSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
 
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -437,13 +482,14 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(7, customSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
   }
 
+  @Test
   public void testWithoutModulesAndOtherImport() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(8, table.getEntries());
+    assertEquals(8, table.getEntries().length);
 
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
@@ -455,13 +501,14 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
   }
 
+  @Test
   public void testWithoutModulesAndOtherImportAndStaticImport() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(8, table.getEntries());
+    assertEquals(8, table.getEntries().length);
 
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
@@ -473,13 +520,14 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(7));
   }
 
+  @Test
   public void testWithoutModules() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(8, table.getEntries());
+    assertEquals(8, table.getEntries().length);
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
     assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
@@ -490,25 +538,27 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
   }
 
+  @Test
   public void testOnlyModules() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(3, table.getEntries());
+    assertEquals(3, table.getEntries().length);
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(2));
   }
 
+  @Test
   public void testWithoutOtherImportWithModule() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(8, table.getEntries());
+    assertEquals(8, table.getEntries().length);
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(0));
     assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
     assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
@@ -519,13 +569,14 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
   }
 
+  @Test
   public void testWithoutStaticImportWithoutModule() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(8, table.getEntries());
+    assertEquals(8, table.getEntries().length);
 
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(1));
@@ -537,13 +588,14 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(7));
   }
 
+  @Test
   public void testWithoutStaticImportWithoutModuleAndStaticNotSeparate() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(7, table.getEntries());
+    assertEquals(7, table.getEntries().length);
 
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
@@ -554,13 +606,14 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(6));
   }
 
+  @Test
   public void testEmptyConfigImport() throws SchemeImportException {
-    CodeStyleSettings settings = importSettings();
+    CodeStyleSettings settings = CodeStyleTestUtil.importSettings(projectFixture.get(), getTestDataPath() + testName + ".xml");
 
     JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
-    assertSize(7, table.getEntries());
+    assertEquals(7, table.getEntries().length);
     assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
     assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
     assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
@@ -574,14 +627,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     return type.isPrimitive() || type.equals(String.class);
   }
 
-  @Override
-  protected String getBasePath() {
+  private static String getBasePath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeStyle";
   }
 
-  @Nullable
-  @Override
-  protected String getTestDir() {
-    return "";
+  private static String getTestDataPath() {
+    return getBasePath() + File.separator;
   }
 }
