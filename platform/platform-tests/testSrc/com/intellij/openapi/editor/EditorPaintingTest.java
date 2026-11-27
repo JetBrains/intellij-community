@@ -239,6 +239,29 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testIndentGuideAtCaret() {
+    myFixture.runTest(() -> {
+      myFixture.initText("  parent\n    child\n    child\n  next");
+      EditorColorsScheme scheme = myFixture.getEditor().getColorsScheme();
+      scheme.setColor(EditorColors.INDENT_GUIDE_COLOR, Color.red);
+      scheme.setColor(EditorColors.SELECTED_INDENT_GUIDE_COLOR, Color.blue);
+      RangeHighlighter guide = addRangeHighlighter(0, myFixture.getEditor().getDocument().getLineStartOffset(3), 0, null);
+      guide.setCustomRenderer(new IndentGuideRenderer());
+      CaretModel caretModel = myFixture.getEditor().getCaretModel();
+      caretModel.moveToLogicalPosition(new LogicalPosition(1, 2));
+      assertTrue(containsRed(paintEditor(false, null, null)), "the indents model has no guide at the caret");
+
+      myFixture.getEditor().getIndentsModel().assumeIndents(List.of(new IndentGuideDescriptor(2, 0, 3)));
+      BufferedImage selected = paintEditor(false, null, null);
+      assertTrue(containsColor(selected, Color.blue));
+      assertFalse(containsRed(selected));
+
+      caretModel.moveToLogicalPosition(new LogicalPosition(1, 4));
+      assertTrue(containsRed(paintEditor(false, null, null)), "the caret is not in the column of the guide");
+    });
+  }
+
+  @Test
   public void testIndentGuideOfMatchedBraces() {
     myFixture.runTest(() -> {
       addIndentGuideWithLineMarker(0);

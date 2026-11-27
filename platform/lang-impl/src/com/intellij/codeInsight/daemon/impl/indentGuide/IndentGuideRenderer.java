@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -253,14 +252,15 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
   }
 
   protected boolean isSelected(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
-    IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
-    if (guide == null) return false;
-    return isCaretOnGuide(editor, endOffset, off, indentColumn);
+    return isCaretOnGuide(editor, endOffset, off, indentColumn) && editor.getIndentsModel().getCaretIndentGuide() != null;
   }
 
   protected static boolean isCaretOnGuide(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
     CaretModel caretModel = editor.getCaretModel();
+    if (caretModel.getLogicalPosition().column != indentColumn) {
+      return false;
+    }
     int caretOffset = caretModel.getOffset();
-    return caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == indentColumn;
+    return caretOffset >= off && caretOffset < endOffset;
   }
 }
