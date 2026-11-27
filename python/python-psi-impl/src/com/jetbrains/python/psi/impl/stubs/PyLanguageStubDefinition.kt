@@ -17,6 +17,6 @@ internal class PyLanguageStubDefinition : LanguageStubDefinition {
      * The version of the Python stub tree. `PyFileElementType` returns it for the file of a dialect.
      * After a change of the number, update the version of each index that uses the changed stub elements.
      */
-    const val STUB_VERSION: Int = 126
+    const val STUB_VERSION: Int = 127
   }
 }
