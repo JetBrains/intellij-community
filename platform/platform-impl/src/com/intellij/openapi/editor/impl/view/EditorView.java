@@ -4,6 +4,8 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Editor;
@@ -804,16 +806,34 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Reports an error when the snapshot insets differ from the content component insets.
+   * Describes how the snapshot insets differ from the content component insets.
+   * Returns null when they are equal.
    */
-  public void checkSnapshotInsets() {
+  public @Nullable String findInsetsMismatch() {
     EditorInsets snapshotInsets = mySnapshot.insets();
     EditorInsets componentInsets = readInsets();
-    if (!snapshotInsets.equals(componentInsets)) {
-      LOG.error("The content component insets changed without an event that updates the snapshot." +
-                " Snapshot: " + snapshotInsets +
-                ", component: " + componentInsets +
-                ", border: " + describeBorder(myEditor.getContentComponent().getBorder()));
+    if (snapshotInsets.equals(componentInsets)) {
+      return null;
+    }
+    return "The content component insets changed without an event that updates the snapshot." +
+           " Snapshot: " + snapshotInsets +
+           ", component: " + componentInsets +
+           ", border: " + describeBorder(myEditor.getContentComponent().getBorder());
+  }
+
+  /**
+   * Reports a result of {@link #findInsetsMismatch}.
+   * It is an error in tests and in the internal mode, and a warning elsewhere.
+   */
+  public static void reportInsetsMismatch(@Nullable String mismatch) {
+    if (mismatch == null) {
+      return;
+    }
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isInternal()) {
+      LOG.error(mismatch);
+    } else {
+      LOG.warn(mismatch);
     }
   }
 

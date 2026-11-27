@@ -19,6 +19,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -307,6 +308,20 @@ class EditorViewSnapshotTest {
       componentInsets,
       view.insets,
       "The opacity change puts the gap into the snapshot",
+    )
+  }
+
+  @Test
+  fun `test the release of an editor ignores insets that the release changes`(): Unit = fixture.runTest {
+    val editorFactory = EditorFactory.getInstance()
+    val otherEditor = editorFactory.createEditor(editorFactory.createDocument("text")) as EditorEx
+    val scrollBar = otherEditor.scrollPane.verticalScrollBar
+    scrollBar.isOpaque = true
+    otherEditor.contentComponent.border = ScrollBarGapBorder { !scrollBar.isOpaque }
+    editorFactory.releaseEditor(otherEditor)
+    assertFalse(
+      scrollBar.isOpaque,
+      "The release installs the default UI, which makes the scroll bar transparent",
     )
   }
 

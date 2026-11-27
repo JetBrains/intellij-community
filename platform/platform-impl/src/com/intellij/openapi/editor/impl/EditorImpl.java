@@ -1517,6 +1517,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (isReleased) {
         throwDisposalError("Double release of editor:");
       }
+      String insetsMismatchBeforeRelease = myView.findInsetsMismatch();
       RMTreeReference.processQueue(); // document maybe stuck in RangeMarkerTree queue
       myTraceableDisposable.kill(null);
 
@@ -1563,7 +1564,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createDefaultUI());
       mouseSelectionStateAlarm.dispose();
       errorStripeDelayedRepaintAlarm.dispose();
-      myView.checkSnapshotInsets();
+      EditorView.reportInsetsMismatch(insetsMismatchBeforeRelease);
     });
   }
 
@@ -2972,11 +2973,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   /**
    * Puts the current content insets into the view snapshot, and repaints the content when they change.
-   * It does nothing before the view exists.
+   * It does nothing before the view exists and after the release.
    */
   private void updateContentInsets() {
     EditorView view = myView;
-    if (view != null && view.updateInsets()) {
+    if (view != null && !isReleased && view.updateInsets()) {
       myEditorComponent.repaint();
     }
   }
