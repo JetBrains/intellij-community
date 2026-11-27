@@ -17,7 +17,8 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_MERGE_REQUEST_COMMITS("graphql/query/getMergeRequestCommits.graphql"),
   @SinceGitLab("12.0")
   GET_PROJECT("graphql/query/getProject.graphql"),
-  @SinceGitLab("13.1", note = "No exact version")
+
+  @SinceGitLab("13.9", note = "'includeAncestorGroups' argument is available since 13.9")
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
   @SinceGitLab("15.2")
   GET_PROJECT_WORK_ITEMS("graphql/query/getProjectWidgets.graphql"),

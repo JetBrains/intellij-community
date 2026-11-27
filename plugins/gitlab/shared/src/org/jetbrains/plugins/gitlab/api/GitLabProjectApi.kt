@@ -93,7 +93,7 @@ suspend fun GitLabApi.isProjectForked(projectPath: GitLabProjectPath): Boolean =
   }
 
 
-@SinceGitLab("13.1", note = "No exact version")
+@SinceGitLab("13.9", note = "'includeAncestorGroups' argument is available since 13.9")
 fun GitLabApi.GraphQL.createAllProjectLabelsFlow(projectPath: GitLabProjectPath): Flow<List<GitLabLabelGQLDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
