@@ -265,7 +265,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final CaretData myCaretData;
     /**
      * Gives the start and the end column of each caret selection that lies on one visual line, by that visual line.
-     * The map covers the visual lines of the clip, and with {@link #myDryRunRows} also the two dry-run rows.
+     * The map covers the visual lines from {@link #myFirstVisitedLine} to {@link #myLastVisitedLine}.
      */
     private final Int2ObjectMap<IntPair> myVirtualSelectionMap;
     private final Int2ObjectMap<TextAttributes> myBetweenLinesAttributes = new Int2ObjectOpenHashMap<>(); // key is bottom visual line
@@ -294,6 +294,16 @@ public final class EditorPainter implements TextDrawingCallback {
      * The rounded paint has dry-run rows, except on the sticky lines panel, which shows no neighbor line.
      */
     private final boolean myDryRunRows;
+    /**
+     * Gives the first visual line that the paint of the backgrounds visits: the first line of the clip, or the dry-run row
+     * above it.
+     */
+    private final int myFirstVisitedLine;
+    /**
+     * Gives the last visual line that the paint of the backgrounds visits: the last line of the clip, or the dry-run row
+     * below it.
+     */
+    private final int myLastVisitedLine;
     /**
      * Gives how far the paint of the backgrounds visits a visual line past each side of the clip.
      * While the editor rounds, it is twice the corner radius, rounded up. Otherwise, it is zero.
@@ -357,9 +367,9 @@ public final class EditorPainter implements TextDrawingCallback {
       myRoundedHighlighting = myEditor.isRoundedHighlighting();
       myDryRunRows = myRoundedHighlighting && !myEditor.isStickyLinePainting();
       myVisitMargin = myRoundedHighlighting ? (int)Math.ceil(2 * HighlighterVisualModel.cornerRadius(myLineHeight)) : 0;
-      myVirtualSelectionMap = myDryRunRows
-                              ? createVirtualSelectionMap(myCaretModel, myStartVisualLine - 1, myEndVisualLine + 1)
-                              : createVirtualSelectionMap(myCaretModel, myStartVisualLine, myEndVisualLine);
+      myFirstVisitedLine = myDryRunRows ? Math.max(0, myStartVisualLine - 1) : myStartVisualLine;
+      myLastVisitedLine = myDryRunRows ? myEndVisualLine + 1 : myEndVisualLine;
+      myVirtualSelectionMap = createVirtualSelectionMap(myCaretModel, myFirstVisitedLine, myLastVisitedLine);
       myHuggingHighlighting = myEditor.isHuggingHighlighting(myRegistry);
       myFillStartX = fillStartX();
       myFillEndX = fillEndX();
@@ -590,8 +600,7 @@ public final class EditorPainter implements TextDrawingCallback {
       }
 
       int prevY = Math.max(myInsets.top, myClip.y) + myYShift;
-      int firstVisualLine = myDryRunRows ? Math.max(0, myStartVisualLine - 1) : myStartVisualLine;
-      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myDocument, myView, firstVisualLine);
+      VisualLinesIterator visLinesIterator = new VisualLinesIterator(myDocument, myView, myFirstVisitedLine);
       while (!visLinesIterator.atEnd()) {
         int visualLine = visLinesIterator.getVisualLine();
         if (visualLine > myEndVisualLine + 1) {
@@ -1446,11 +1455,11 @@ public final class EditorPainter implements TextDrawingCallback {
      * In both modes, the backgrounds cover all other backgrounds, also the selection and the backgrounds of the line extensions.
      * Without rounding, it paints each background at once. While the editor rounds, the model fills each one as a box of
      * its own. {@link #myAfterLineEndEffects} gets the effects of the highlighters that start in the clip.
-     * With {@link #myDryRunRows}, it also takes the backgrounds of the highlighters that start on the two dry-run rows.
+     * It also takes the backgrounds of the highlighters that start on the dry-run rows.
      */
     private void addHighlightersAfterEndOfLine(MarkupModelEx markupModel) {
-      int startOffset = myDryRunRows ? myView.visualLineToOffset(myStartVisualLine - 1) : myStartOffset;
-      int endOffset = myDryRunRows ? myView.visualLineToOffset(myEndVisualLine + 2) : myEndOffset;
+      int startOffset = myView.visualLineToOffset(myFirstVisitedLine);
+      int endOffset = myView.visualLineToOffset(myLastVisitedLine + 1);
       markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
         addHighlighterAfterEndOfLine(highlighter, startOffset);
         return true;
@@ -1889,6 +1898,13 @@ public final class EditorPainter implements TextDrawingCallback {
       return new BetweenLinesLayers(processor.top, processor.filling);
     }
 
+    /**
+     * Gives an iteration over the attributes from {@code start} to {@code end}, with all highlighters and no fold region.
+     */
+    private @NotNull IterationState iterationState(int start, int end, @Nullable CaretData caretData, boolean backwards) {
+      return new IterationState(myEditor, start, end, caretData, false, false, false, backwards);
+    }
+
     private interface MarginWidthConsumer {
       void process(float width);
     }
@@ -1919,9 +1935,8 @@ public final class EditorPainter implements TextDrawingCallback {
           SoftWrapEx softWrap = visLineIterator.getStartSoftWrap();
           if (softWrap != null || myEditor.isRightAligned()) {
             prevEndOffset = offset;
-            it = new IterationState(myEditor, offset == 0 ? 0 : DocumentTextUtil.getPreviousCodePointOffset(myDocument, offset),
-                                    visualLineEndOffset,
-                                    myCaretData, false, false, false, false);
+            int previousOffset = offset == 0 ? 0 : DocumentTextUtil.getPreviousCodePointOffset(myDocument, offset);
+            it = iterationState(previousOffset, visualLineEndOffset, myCaretData, false);
             if (it.getEndOffset() <= offset) {
               it.advance();
             }
@@ -1939,8 +1954,7 @@ public final class EditorPainter implements TextDrawingCallback {
         FoldRegion foldRegion = fragment.getFoldRegion();
         if (foldRegion == null) {
           if (start != prevEndOffset) {
-            it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset,
-                                    myCaretData, false, false, false, fragment.isRtl());
+            it = iterationState(start, fragment.isRtl() ? offset : visualLineEndOffset, myCaretData, fragment.isRtl());
           }
           prevEndOffset = end;
           assert it != null;
@@ -2009,25 +2023,18 @@ public final class EditorPainter implements TextDrawingCallback {
         maxColumn = fragment.getEndVisualColumn();
       }
       if (firstFragment && myEditor.isRightAligned()) {
-        it = new IterationState(myEditor, offset, visualLineEndOffset, myCaretData, false, false, false, false);
+        it = iterationState(offset, visualLineEndOffset, myCaretData, false);
         if (it.getEndOffset() <= offset) {
           it.advance();
         }
         painter.paintBeforeLineStart(it, it.getBreakBackgroundLayers(false), null, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
-        it = new IterationState(
-          myEditor,
-          visualLineEndOffset == offset
-            ? visualLineEndOffset
-            : DocumentTextUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
-          visualLineEndOffset,
-          CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() && !myRegistry.isCaretLineHighlightedAtCustomFold()),
-          false,
-          false,
-          false,
-          false
-        );
+        int lastOffset = visualLineEndOffset == offset
+                         ? visualLineEndOffset
+                         : DocumentTextUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset);
+        boolean omitCaretRowData = visLineIterator.isCustomFoldRegionLine() && !myRegistry.isCaretLineHighlightedAtCustomFold();
+        it = iterationState(lastOffset, visualLineEndOffset, CaretData.copyOf(myCaretData, omitCaretRowData), false);
       }
       if (!it.atEnd()) {
         it.advance();
@@ -2136,10 +2143,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private @Nullable Color getFoldedTextBackground(FoldRegion foldRegion) {
-      IterationState state = new IterationState(
-        myEditor, foldRegion.getStartOffset(), foldRegion.getEndOffset(), myCaretData,
-        false, false, false, false
-      );
+      IterationState state = iterationState(foldRegion.getStartOffset(), foldRegion.getEndOffset(), myCaretData, false);
       return state.getMergedAttributes().getBackgroundColor();
     }
 
