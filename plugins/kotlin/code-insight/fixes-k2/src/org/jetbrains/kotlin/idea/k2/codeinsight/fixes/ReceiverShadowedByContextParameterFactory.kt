@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
@@ -25,6 +26,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.util.withShortNames
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -33,22 +37,27 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ReceiverShadowedByContextParameterFactory {
     val addReceiverFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReceiverShadowedByContextParameter ->
-        val chain = diagnostic.psi
-            .parents(withSelf = true)
-            .takeWhile { it is KtCallableReferenceExpression || it is KtNameReferenceExpression || it is KtCallExpression || it is KtQualifiedExpression }
-            .toList()
-        // Rewriting the enclosing qualified chain
-        // would attach the receiver as a dot-qualifier (`f.::bar.invoke()`), which does not
-        // parse. For calls, the whole chain is the right unit: `bar().baz()` -> `f.bar().baz()`.
-        val expression = (chain.firstOrNull { it is KtCallableReferenceExpression } ?: chain.lastOrNull())
-                as? KtExpression
-            ?: return@ModCommandBased emptyList()
+        val operatorCall = diagnostic.psi.operatorCall()
+        val expression = operatorCall ?: run {
+            val chain = diagnostic.psi
+                .parents(withSelf = true)
+                .takeWhile { it is KtCallableReferenceExpression || it is KtNameReferenceExpression || it is KtCallExpression || it is KtQualifiedExpression }
+                .toList()
+            // Rewriting the enclosing qualified chain
+            // would attach the receiver as a dot-qualifier (`f.::bar.invoke()`), which does not
+            // parse. For calls, the whole chain is the right unit: `bar().baz()` -> `f.bar().baz()`.
+            (chain.firstOrNull { it is KtCallableReferenceExpression } ?: chain.lastOrNull()) as? KtExpression
+        } ?: return@ModCommandBased emptyList()
+        // An operator, infix or indexed call cannot take an explicit receiver, so its fix always uses `with`.
+        val surroundWithWith = diagnostic.isDispatchOfMemberExtension || operatorCall != null
 
         buildList {
             val calleeSymbol = diagnostic.calleeSymbol as? KaCallableSymbol
@@ -57,7 +66,7 @@ internal object ReceiverShadowedByContextParameterFactory {
                 // otherwise fall back to the context-parameter fixes below.
                 thisTextForShadowedReceiver(expression, calleeSymbol, diagnostic.isDispatchOfMemberExtension)
                     ?.let { thisText ->
-                        add(AddExplicitReceiverFix(expression, diagnostic.isDispatchOfMemberExtension, thisText))
+                        add(AddExplicitReceiverFix(expression, surroundWithWith, thisText))
                     }
             }
             for (symbol in diagnostic.contextParameterSymbols) {
@@ -69,11 +78,30 @@ internal object ReceiverShadowedByContextParameterFactory {
                     } else {
                         symbol.name.identifier
                     }
-                    add(AddExplicitReceiverFix(expression, diagnostic.isDispatchOfMemberExtension, nameOrContextOfCall))
+                    add(AddExplicitReceiverFix(expression, surroundWithWith, nameOrContextOfCall))
                 }
             }
         }
     }
+}
+
+/**
+ * The operator, infix or indexed call that this diagnostic element belongs to, or null for another call.
+ * An indexed call on the left side of an assignment gives the whole assignment, because the assignment calls `set`.
+ */
+private fun PsiElement.operatorCall(): KtExpression? {
+    val call = when (this) {
+        is KtOperationReferenceExpression -> parent as? KtOperationExpression
+        is KtOperationExpression, is KtArrayAccessExpression -> this
+        else -> null
+    } as? KtExpression ?: return null
+    val assignment = call.parent as? KtBinaryExpression
+    if (call is KtArrayAccessExpression && assignment != null && assignment.left == call &&
+        assignment.operationToken in KtTokens.ALL_ASSIGNMENTS
+    ) {
+        return assignment
+    }
+    return call
 }
 
 /**
@@ -146,8 +174,8 @@ private fun KtLambdaExpression.implicitCalleeLabel(): String? {
  * Rewrites the shadowed usage with an explicit receiver ([receiverText] is `this`, `this@label`,
  * a context parameter name, or a `contextOf<T>()` call):
  * - callable reference: `::bar` -> `<receiver>::bar`
- * - member extension call: `bar()` -> `with(<receiver>) { bar() }`
- *   (the dispatch receiver of a member extension cannot be written explicitly)
+ * - member extension call, or operator, infix or indexed call: `bar()` -> `with(<receiver>) { bar() }`
+ *   (the dispatch receiver of a member extension and the receiver of an operator call cannot be written explicitly)
  * - other calls: `bar()` -> `<receiver>.bar()`
  *
  * The member-extension case cannot occur for callable references: the compiler rejects them
@@ -155,7 +183,7 @@ private fun KtLambdaExpression.implicitCalleeLabel(): String? {
  */
 private class AddExplicitReceiverFix(
     expression: KtExpression,
-    private val isDispatchOfMemberExtension: Boolean,
+    private val surroundWithWith: Boolean,
     private val receiverText: String,
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(expression) {
 
@@ -167,7 +195,7 @@ private class AddExplicitReceiverFix(
         val factory = KtPsiFactory(context.project)
         val newText = when {
             element is KtCallableReferenceExpression -> "$receiverText${element.text}"
-            isDispatchOfMemberExtension -> "with($receiverText) { ${element.text} }"
+            surroundWithWith -> "with($receiverText) { ${element.text} }"
             else -> "$receiverText.${element.text}"
         }
         element.replace(factory.createExpression(newText))
@@ -176,7 +204,7 @@ private class AddExplicitReceiverFix(
     override fun getActionPresentation(context: ActionContext, element: KtExpression): Presentation {
         return Presentation.of(
             KotlinBundle.message(
-                if (isDispatchOfMemberExtension) {
+                if (surroundWithWith) {
                     "fix.receiver.shadowed.by.context.add.explicit.receiver.surround.with"
                 } else {
                     "fix.receiver.shadowed.by.context.add.explicit.receiver.use.receiver"

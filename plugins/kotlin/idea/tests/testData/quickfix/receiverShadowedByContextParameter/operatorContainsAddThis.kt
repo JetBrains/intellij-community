@@ -1,0 +1,19 @@
+// "Surround with 'with(this) { ... }'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Bag
+
+class Foo {
+    operator fun Bag.contains(o: Int): Boolean = true
+}
+
+fun withFoo(f: context(Foo) () -> Unit) {}
+
+fun Foo.test() {
+    withFoo {
+        val c = 1 <caret>in Bag()
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix

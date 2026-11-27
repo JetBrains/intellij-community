@@ -1,0 +1,19 @@
+// "Surround with 'with(this) { ... }'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Bag
+
+class Foo {
+    operator fun String.unaryMinus(): String = ""
+}
+
+fun withFoo(f: context(Foo) () -> Unit) {}
+
+fun Foo.test() {
+    withFoo {
+        <caret>-""
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix
