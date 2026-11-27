@@ -3,16 +3,28 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
 /**
  * Is intended to hold java formatting indentation-specific tests.
  */
-public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
+@TestApplication
+public class JavaFormatterIndentationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
+  @Test
   public void testClassInitializationBlockIndentation() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Checking that initialization block body is correctly indented.
-    doMethodTest(
+    formatter.doMethodTest(
       """
         checking(new Expectations() {{
         one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining("a-c")));
@@ -24,7 +36,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
 
     // Checking that closing curly brace of initialization block that is not the first block on a line is correctly indented.
-    doTextTest("""
+    formatter.doTextTest("""
                  class Class {
                      private Type field; {
                      }
@@ -36,7 +48,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                      {
                      }
                  }""");
-    doTextTest(
+    formatter.doTextTest(
       """
         class T {
             private final DecimalFormat fmt = new DecimalFormat(); {
@@ -56,12 +68,14 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testNestedMethodsIndentation() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-43962
 
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 4;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 4;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         BigDecimal.ONE
               .add(BigDecimal.ONE
@@ -87,11 +101,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testShiftedChainedIfElse() {
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
-    getSettings().ELSE_ON_NEW_LINE = true;
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
+    formatter.getSettings().ELSE_ON_NEW_LINE = true;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
+    formatter.doMethodTest(
       """
         long a = System.currentTimeMillis();
             if (a == 0){
@@ -128,12 +144,14 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlignedSubBlockIndentation() {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8;
 
     // Inspired by IDEA-54671
-    doTextTest(
+    formatter.doTextTest(
       """
         class Test {
             public void foo() {
@@ -161,9 +179,10 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEnumIndentation() throws IncorrectOperationException {
     // Inspired by IDEADEV-2840
-    doTextTest("""
+    formatterFixture.get().doTextTest("""
                  enum Xyz {
                  FOO,
                  BAR,
@@ -174,11 +193,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                  }""");
   }
 
+  @Test
   public void testFirstColumnComment() throws IncorrectOperationException {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEADEV-14116
-    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+    formatter.getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
 
-    doTextTest("""
+    formatter.doTextTest("""
                  class Foo{
                  private int foo;     // this is a foo
                  }""",
@@ -188,10 +209,12 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                  }""");
   }
 
+  @Test
   public void testCaseFromSwitch() throws IncorrectOperationException {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEADEV-22920
-    getSettings().INDENT_CASE_FROM_SWITCH = false;
-    doTextTest(
+    formatter.getSettings().INDENT_CASE_FROM_SWITCH = false;
+    formatter.doTextTest(
       """
         class Foo{
         void foo () {
@@ -227,12 +250,14 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testBinaryExpressionsWithRelativeIndents() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-21795
-    getIndentOptions().USE_RELATIVE_INDENTS = true;
-    getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
+    formatter.getIndentOptions().USE_RELATIVE_INDENTS = true;
+    formatter.getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class FormattingTest {
 
@@ -295,9 +320,11 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
   
+  @Test
   public void testBracesShiftedOnNextLineOnMethodWithJavadoc() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-62997
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     
     String precededByJavadoc =
       """
@@ -327,15 +354,17 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
             return foo;
             }""";
     
-    doClassTest(precededByJavadoc, precededByJavadoc);
-    doClassTest(precededBySingleLineComment, precededBySingleLineComment);
-    doClassTest(precededByMultiLineComment, precededByMultiLineComment);
+    formatter.doClassTest(precededByJavadoc, precededByJavadoc);
+    formatter.doClassTest(precededBySingleLineComment, precededBySingleLineComment);
+    formatter.doClassTest(precededByMultiLineComment, precededByMultiLineComment);
   }
   
+  @Test
   public void testAnonymousClassInstancesAsMethodCallArguments() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-65987
     
-    doMethodTest(
+    formatter.doMethodTest(
       """
         foo("long string as the first argument", new Runnable() {
         public void run() {                        \s
@@ -358,7 +387,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
         );"""
     );
     
-    doMethodTest(
+    formatter.doMethodTest(
       """
         foo(1,
         2, new Runnable() {
@@ -375,7 +404,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                 });"""
     );
     
-    doMethodTest(
+    formatter.doMethodTest(
       """
         foo(new Runnable() {
         @Override
@@ -401,10 +430,12 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAnonymousClassInstancesAsAlignedMethodCallArguments() {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         foo(new Runnable() {
         @Override
@@ -429,7 +460,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
             });"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         foo(123456789, new Runnable() {
         @Override
@@ -454,7 +485,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
             });"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         foo(new Runnable() {
         @Override
@@ -469,8 +500,9 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAnonymousClassesOnSameLineAtMethodCallExpression() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         foo(new Runnable() {
                 public void run() {
@@ -490,6 +522,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlignMultipleAnonymousClasses_PassedAsMethodParameters() {
     String text = """
       test(new Runnable() {
@@ -504,9 +537,10 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
           }
       });
       """;
-    doMethodTest(text, text);
+    formatterFixture.get().doMethodTest(text, text);
   }
 
+  @Test
   public void testAlignmentAdditionalParamsWithMultipleAnonymousClasses_PassedAsMethodParameters() {
     String text = """
       foo(1221, new Runnable() {
@@ -520,11 +554,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
               System.out.println("BB");
           }
       });""";
-    doMethodTest(text, text);
+    formatterFixture.get().doMethodTest(text, text);
   }
 
+  @Test
   public void testAlignmentMultipleParamsWithAnonymousClass_PassedAsMethodParams() {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text = """
       test(1000,
            new Runnable() {
@@ -534,11 +570,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                }
            }
       );""";
-    doMethodTest(text, text);
+    formatter.doMethodTest(text, text);
   }
 
+  @Test
   public void testAlignmentMultipleAnonymousClassesOnNewLines() {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text = """
       test(1000,
            new Runnable() {
@@ -554,11 +592,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                }
            }
       );""";
-    doMethodTest(text, text);
+    formatter.doMethodTest(text, text);
   }
 
+  @Test
   public void testEnforceChildrenIndent_OfAnonymousClasses_IfAnyOfParamsIsLocatedOnNewLine() {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text = """
       test("Suuuuuuuuuuuuuuuuuper loooooooooooong string",
            "Next loooooooooooooooooooooong striiiiiiiiiiing", new Runnable() {
@@ -574,9 +614,10 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
               }
       );
       """;
-    doMethodTest(text, text);
+    formatter.doMethodTest(text, text);
   }
 
+  @Test
   public void testPackagePrivateAnnotation() {
     // Inspired by IDEA-67294
     
@@ -587,13 +628,14 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
         @interface MyAnnotation {
 
         }""";
-    doTextTest(text, text);
+    formatterFixture.get().doTextTest(text, text);
   }
 
+  @Test
   public void testIncompleteMethodCall() {
     // Inspired by IDEA-79836.
 
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         test(new Runnable() {
                  public void run() {
@@ -613,9 +655,10 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testCStyleCommentIsNotMoved() {
     // IDEA-87087
-    doClassTest(
+    formatterFixture.get().doClassTest(
       """
                         /*
                            this is a c-style comment
@@ -630,6 +673,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testMultilineCommentAtFileStart() {
     // IDEA-90860
     String text =
@@ -641,10 +685,12 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
         class Test {
         }""";
-    doTextTest(text, text);
+    formatterFixture.get().doTextTest(text, text);
   }
 
+  @Test
   public void testMultilineCommentAndTabsIndent() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // IDEA-91703
     String initial =
       """
@@ -662,25 +708,28 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
         class Test {
         }""";
     
-    getIndentOptions().USE_TAB_CHARACTER = true;
-    doTextTest(initial, expected);
+    formatter.getIndentOptions().USE_TAB_CHARACTER = true;
+    formatter.doTextTest(initial, expected);
   }
 
+  @Test
   public void testLambdaIndentation() {
     String before = """
       Runnable r = () ->
       {
           System.out.println("olo");
       };""";
-    doMethodTest(before, before);
+    formatterFixture.get().doMethodTest(before, before);
   }
   
+  @Test
   public void testAnnotatedParameters() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // it is supposed that this
-    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = true;
-    getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().RIGHT_MARGIN = 120;
-    getSettings().WRAP_LONG_LINES = true;
+    formatter.getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = true;
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.getSettings().RIGHT_MARGIN = 120;
+    formatter.getSettings().WRAP_LONG_LINES = true;
     String before = """
       public class Formatting {
         @RequestMapping(value = "/", method = GET)
@@ -699,9 +748,10 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
           }
       }""";
     
-    doTextTest(before, after);
+    formatter.doTextTest(before, after);
   }
 
+  @Test
   public void testTextBlock() {
     String before = """
       class Formatting {
@@ -722,16 +772,18 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                       block""\";
           }
       }""";
-    doTextTest(before, after);
+    formatterFixture.get().doTextTest(before, after);
   }
 
 
+  @Test
   public void testKeepBuilderMethodsIndents() {
-    getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().BUILDER_METHODS = "wrap,flowPanel,widget,builder,end";
-    getSettings().KEEP_BUILDER_METHODS_INDENTS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.getSettings().BUILDER_METHODS = "wrap,flowPanel,widget,builder,end";
+    formatter.getSettings().KEEP_BUILDER_METHODS_INDENTS = true;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         class Test {
             public static void main(String[] args) {
@@ -780,8 +832,9 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea158691() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         context.start(
                     first,
@@ -798,9 +851,11 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea274755() {
-    getSettings().getIndentOptions().USE_RELATIVE_INDENTS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().getIndentOptions().USE_RELATIVE_INDENTS = true;
+    formatter.doMethodTest(
       """
         public class Test {
         void test() {
@@ -823,8 +878,9 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDanglingDotInMethodCallChain() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         foo()
         .bar()
@@ -838,8 +894,9 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDotAtLineEndInMethodCallChain() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         foo().
         bar().

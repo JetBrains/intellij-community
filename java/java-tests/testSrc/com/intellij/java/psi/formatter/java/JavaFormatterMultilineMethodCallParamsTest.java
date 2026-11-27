@@ -15,11 +15,23 @@
  */
 package com.intellij.java.psi.formatter.java;
 
-public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaFormatterTest {
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
+
+@TestApplication
+public class JavaFormatterMultilineMethodCallParamsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
 
+  @Test
   public void testChainedMethodInsideCall() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         call(new StringBuilder()
         .append("aaa")
@@ -31,8 +43,9 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
+  @Test
   public void testChainedMethodInsideCall_WithRParenOnNewLine() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         call(new StringBuilder()
         .append("aaa")
@@ -46,8 +59,9 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
   
+  @Test
   public void testLambdas() {
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         public class Main {
             public static void main(String... args) throws Exception {
@@ -73,8 +87,9 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
+  @Test
   public void testChainedMethodInsideCall_Shifted() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         call(new StringBuilder()
         .append("aaa")
@@ -88,8 +103,9 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
+  @Test
   public void testChainedMethodInsideCall_Shifted_WithRParentOnNewLine() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         call(new StringBuilder()
         .append("aaa")
@@ -105,8 +121,9 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
+  @Test
   public void testAnonClassAsParameter() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         call(new Runnable() {
         @Override
@@ -122,8 +139,9 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
 
+  @Test
   public void testAnonClassWithRParent_OnNextLine() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         foo(new Runnable() {
             @Override
@@ -143,9 +161,11 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
     );
   }
   
+  @Test
   public void testMethodBracketsAlignment() {
-    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
+    formatter.doTextTest(
       """
         public class Foo {
           private IntPredicate example1() {

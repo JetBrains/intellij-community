@@ -3,40 +3,57 @@ package com.intellij.java.psi.formatter.java
 
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
-  override fun setUp() {
-    super.setUp()
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_9)
+@TestApplication
+class JavaModuleFormatterTest {
+  companion object {
+    private val projectFixture = javaFormatterProjectFixture()
   }
 
+  private val formatter by javaFormatterFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
+    IdeaTestUtil.setProjectLanguageLevel(formatter.project, LanguageLevel.JDK_1_9)
+  }
+
+  @Test
   fun testEmpty() {
-    doTextTest("module A.B { }", "module A.B {\n}")
+    formatter.doTextTest("module A.B { }", "module A.B {\n}")
   }
 
+  @Test
   fun testCommentBody() {
-    doTextTest("module m { /* comment */ }", "module m { /* comment */\n}")
+    formatter.doTextTest("module m { /* comment */ }", "module m { /* comment */\n}")
   }
 
+  @Test
   fun testStatements() {
-    doTextTest("module m { requires java.base; exports a.b; }", "module m {\n    requires java.base;\n    exports a.b;\n}")
+    formatter.doTextTest("module m { requires java.base; exports a.b; }", "module m {\n    requires java.base;\n    exports a.b;\n}")
   }
 
+  @Test
   fun testQualifiedExports() {
-    doTextTest("module m { exports a.b to m1,m2,m3; }", "module m {\n    exports a.b to m1, m2, m3;\n}")
+    formatter.doTextTest("module m { exports a.b to m1,m2,m3; }", "module m {\n    exports a.b to m1, m2, m3;\n}")
   }
 
+  @Test
   fun testProvidesWith() {
-    doTextTest("module m { provides I with C1,C2,C3; }", "module m {\n    provides I with C1, C2, C3;\n}")
+    formatter.doTextTest("module m { provides I with C1,C2,C3; }", "module m {\n    provides I with C1, C2, C3;\n}")
   }
 
+  @Test
   fun testAnnotatedModule() {
-    doTextTest("@Deprecated\nmodule m { }", "@Deprecated\nmodule m {\n}")
-    doTextTest("@Deprecated(forRemoval = true)  module m { }", "@Deprecated(forRemoval = true)\nmodule m {\n}")
+    formatter.doTextTest("@Deprecated\nmodule m { }", "@Deprecated\nmodule m {\n}")
+    formatter.doTextTest("@Deprecated(forRemoval = true)  module m { }", "@Deprecated(forRemoval = true)\nmodule m {\n}")
   }
 
+  @Test
   fun testComposedModulesNamesAreCollapsed() {
-    doTextTest("""
+    formatter.doTextTest("""
       module m   .  b   .
          c { exports a  .  b to m1  .
             m2 ,m2  .  m3, m3
@@ -52,8 +69,9 @@ class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
                """.trimIndent())
   }
 
+  @Test
   fun testComposedImportModuleNamesAreCollapsed() {
-    doTextTest("""
+    formatter.doTextTest("""
       import module m   .  b . c
       import module m2 . b  .
                    c

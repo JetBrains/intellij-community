@@ -17,16 +17,28 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.formatting.FormatterTestUtils;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class JavaIndenterTest extends AbstractJavaFormatterTest {
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class JavaIndenterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
   private static final String CARET_TOKEN = "<caret>";
 
+  @Test
   public void testIndentAlignedMethodParameter() {
     // Inspired by IDEA-22020
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatterFixture.get().getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
     String initial =
       """
@@ -40,7 +52,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
 
     int start = initial.indexOf("        String d");
     int end = initial.indexOf("\n", start);
-    myTextRange = new TextRange(start, end);
+    formatterFixture.get().setTextRange(new TextRange(start, end));
 
     doTextTest(initial,
                """
@@ -54,6 +66,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testMethodBodyShiftedToComment() {
     // Inspired by IDEA-53778
 
@@ -73,9 +86,8 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
                 }}""");
   }
 
-  @Override
-  public void doTextTest(@NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
-    doTextTest(FormatterTestUtils.Action.INDENT, adjustTextIfNecessary(text), textAfter);
+  private void doTextTest(@NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
+    formatterFixture.get().doTextTest(FormatterTestUtils.Action.INDENT, adjustTextIfNecessary(text), textAfter);
   }
 
   private String adjustTextIfNecessary(String text) {
@@ -88,7 +100,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
       fail(String.format("Invalid indentation test 'before' text - it contains more than one caret meta-token (%s). Text: %n%s",
                          CARET_TOKEN, text));
     }
-    myTextRange = new TextRange(caretIndex, caretIndex);
+    formatterFixture.get().setTextRange(new TextRange(caretIndex, caretIndex));
     return text.substring(0, caretIndex) + text.substring(caretIndex + CARET_TOKEN.length());
   }
 }

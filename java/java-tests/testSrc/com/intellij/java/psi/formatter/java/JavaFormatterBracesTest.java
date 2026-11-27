@@ -16,16 +16,27 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
 /**
  * Is intended to hold specific java formatting tests for 'braces placement' settings (
  * {@code Project Settings - Code Style - Alignment and Braces}).
  */
-public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
+@TestApplication
+public class JavaFormatterBracesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
+  @Test
   public void testBracePositioningAtPreviousLine() {
     // Inspired by IDEADEV-18529
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         public class TestBed
         {
@@ -61,24 +72,28 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testSimpleBlockInOneLinesAndForceBraces() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-19328
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "if (x > y) System.out.println(\"foo!\");",
 
       "if (x > y) { System.out.println(\"foo!\"); }"
     );
   }
 
+  @Test
   public void testEnforcingBracesForExpressionEndingWithLineComment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-57936
-    getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    formatter.getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "if (true) i = 1; // Cool if\n" +
       "else i = 2;",
 
@@ -91,12 +106,14 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testMoveBraceOnNextLineForAnnotatedMethod() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-59336
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
 
-    doClassTest(
+    formatter.doClassTest(
       """
         @Override
         public int hashCode() {
@@ -117,9 +134,11 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     );
   }
   
+  @Test
   public void testKeepSimpleClassesAndInterfacesInOneLine() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-65433
-    getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     
     String[] tests = {
       "class Test {}",
@@ -142,14 +161,16 @@ class Test {
     };
 
     for (String test : tests) {
-      doTextTest(test, test);
+      formatter.doTextTest(test, test);
     }
   }
 
+  @Test
   public void testKeepSimpleClassesInOneLineAndLeftBraceOnNextLine() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-75053.
-    getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
-    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    formatter.getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    formatter.getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     
     String text =
       """
@@ -159,35 +180,41 @@ class Test {
                 bind(new TypeLiteral<MyType>() {}).toProvider(MyProvider.class);
             }
         }""";
-    doTextTest(text, text);
+    formatter.doTextTest(text, text);
   }
 
+  @Test
   public void testSimpleMethodsInOneLineEvenIfExceedsRightMargin() {
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().RIGHT_MARGIN = 90;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().RIGHT_MARGIN = 90;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
     String text = """
       public class Repr2 {
           public void start() { System.out.println("kfjsdkfjsdkfjskdjfslkdjfklsdjfklsdjfksjdfkljsdkfjsd!"); }
       }""";
-    doTextTest(text, text);
+    formatter.doTextTest(text, text);
   }
 
+  @Test
   public void testKeepSimpleBlocksInOneLine_OnIfStatementsThenBlock() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
     String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); }";
 
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    doMethodTest(singleLine, singleLine);
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    formatter.doMethodTest(singleLine, singleLine);
 
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    doMethodTest(singleLine, singleLine);
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    formatter.doMethodTest(singleLine, singleLine);
   }
 
+  @Test
   public void testKeepSimpleBlocksInOneLine_OnIfStatementsElseBlock() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = """
       if (2 > 3) {
@@ -200,16 +227,18 @@ class Test {
           System.out.println("AA!");
       } else { int a = 3; }""";
 
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    doMethodTest(before, afterNextLineOption);
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    formatter.doMethodTest(before, afterNextLineOption);
 
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    doMethodTest(before, before);
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    formatter.doMethodTest(before, before);
   }
 
+  @Test
   public void testIfStatement_WhenBraceOnNextLine_AndKeepSimpleBlockInOneLineEnabled() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     String before = """
       if (2 > 3) {
           System.out.println("AA!");
@@ -219,12 +248,14 @@ class Test {
       {
           System.out.println("AA!");
       }""";
-    doMethodTest(before, after);
+    formatter.doMethodTest(before, after);
   }
 
+  @Test
   public void testIfStatementElseBranchIsOnNewLine() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     String before = """
       if (2 > 3) {
           System.out.println("AA!");
@@ -239,32 +270,36 @@ class Test {
       {
           int a = 3;
       }""";
-    doMethodTest(before, after);
+    formatter.doMethodTest(before, after);
   }
 
+  @Test
   public void testIfElseBranchesKeepedInOneLine() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
     String singleLine = "if (2 > 3) { System.out.println(\"AA!\"); } else { System.out.println(\"BBB!!\"); }";
     String multiLine = "if (2 > 3) { System.out.println(\"AA!\"); }\n" +
                        "else { System.out.println(\"BBB!!\"); }";
 
-    getSettings().ELSE_ON_NEW_LINE = false;
-    doMethodTest(singleLine, singleLine);
-    doMethodTest(multiLine, singleLine);
+    formatter.getSettings().ELSE_ON_NEW_LINE = false;
+    formatter.doMethodTest(singleLine, singleLine);
+    formatter.doMethodTest(multiLine, singleLine);
 
-    getSettings().ELSE_ON_NEW_LINE = true;
-    doMethodTest(singleLine, multiLine);
-    doMethodTest(multiLine, multiLine);
+    formatter.getSettings().ELSE_ON_NEW_LINE = true;
+    formatter.doMethodTest(singleLine, multiLine);
+    formatter.doMethodTest(multiLine, multiLine);
   }
 
+  @Test
   public void testMethodBraceOnNextLineIfWrapped() {
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().RIGHT_MARGIN = 50;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    formatter.getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().RIGHT_MARGIN = 50;
+    formatter.doClassTest(
       """
         public static void main(int state, int column, int width, int rate) {
         }
@@ -278,10 +313,12 @@ class Test {
     );
   }
 
+  @Test
   public void testIDEA127110() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    formatter.doMethodTest(
       """
         if (   1 > 2) {
 
@@ -313,9 +350,11 @@ class Test {
     );
   }
 
+  @Test
   public void testConstructorLeftBraceWithComment() {
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    formatter.doClassTest(
       """
         /**
          *
@@ -333,9 +372,11 @@ class Test {
     );
   }
 
+  @Test
   public void testConstructorLeftBraceWithAnnotation() {
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    formatter.doClassTest(
       """
            @Deprecated
         public Test() {
@@ -349,9 +390,11 @@ class Test {
     );
   }
 
+  @Test
   public void testConstructorLeftBraceWithEndLineComment() {
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    formatter.doClassTest(
       """
         // comment
           public Test() {
@@ -365,9 +408,11 @@ class Test {
     );
   }
 
+  @Test
   public void testAnonClassCodeBlock_BracesIndented() {
-    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    formatter.doTextTest(
       """
         class X {
             public void run() {
@@ -396,9 +441,11 @@ class Test {
     );
   }
 
+  @Test
   public void testMethodIsSimple_IfCodeBlockHasNoLinefeeds() {
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.doClassTest(
       """
         public ModelAndView handleRequestInternalEmptyMulti(
                 final HttpServletRequest httpServletRequest,
@@ -412,9 +459,11 @@ class Test {
     );
   }
   
+  @Test
   public void testLambdaBrace() {
-    getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    formatter.doMethodTest(
       "Runnable r = () -> {\n" +
       "};",
       """
@@ -424,10 +473,12 @@ class Test {
     );
   }
   
+  @Test
   public void testLambdaBraceMoveToPrevLine() {
-    getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    getSettings().KEEP_LINE_BREAKS = false;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.doMethodTest(
       """
         Runnable r = () ->
         {
@@ -436,9 +487,11 @@ class Test {
       "};");
   }
 
+  @Test
   public void testIdea149711() {
-    getSettings().WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    formatter.doMethodTest(
       "while (true);",
 
       "while (true) ;"

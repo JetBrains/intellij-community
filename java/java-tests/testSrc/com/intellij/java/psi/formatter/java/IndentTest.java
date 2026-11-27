@@ -19,28 +19,51 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class IndentTest extends LightIdeaTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class IndentTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/indent";
 
   private CommonCodeStyleSettings getJavaSettings() {
-    return  CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return  CodeStyle.getSettings(codeInsightFixture.get().getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
+  @Test
   public void testSCR3681() throws Exception {
     doTest("SCR3681.java", "SCR3681_after.java");
   }
 
+  @Test
   public void testBinaryOperation() throws Exception {
 
     defaultSettings();
@@ -50,6 +73,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("BinaryOperation.java", "BinaryOperation_after.java");
   }
 
+  @Test
   public void testBinaryOperationSignMoved() throws Exception {
 
     defaultSettings();
@@ -59,6 +83,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("BinaryOperationSignMoved.java", "BinaryOperationSignMoved_after.java");
   }
 
+  @Test
   public void testTernaryOperation() throws Exception {
     defaultSettings();
     CommonCodeStyleSettings settings = getJavaSettings();
@@ -67,6 +92,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("TernaryOperation.java", "TernaryOperation_after.java");
   }
 
+  @Test
   public void testTernaryOperationSignMoved() throws Exception {
     defaultSettings();
     CommonCodeStyleSettings settings = getJavaSettings();
@@ -75,6 +101,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("TernaryOperationSignMoved.java", "TernaryOperationSignMoved_after.java");
   }
 
+  @Test
   public void testImplementsList() throws Exception {
 
     defaultSettings();
@@ -84,6 +111,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("ImplementsList.java", "ImplementsList_after.java");
   }
 
+  @Test
   public void testImplementsList2() throws Exception {
 
     defaultSettings();
@@ -93,6 +121,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("ImplementsList2.java", "ImplementsList2_after.java");
   }
 
+  @Test
   public void testParenthesizedBinop() throws Exception {
     defaultSettings();
     CommonCodeStyleSettings settings = getJavaSettings();
@@ -102,6 +131,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("ParenthesizedBinop.java", "ParenthesizedBinop_after.java");
   }
 
+  @Test
   public void testParenthesizedContinuation() throws Exception {
 
     defaultSettings();
@@ -111,6 +141,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("ParenthesizedContinuation.java", "ParenthesizedContinuation_after.java");
   }
 
+  @Test
   public void testParenthesizedContinuation2() throws Exception {
 
     defaultSettings();
@@ -120,6 +151,7 @@ public class IndentTest extends LightIdeaTestCase {
     doTest("ParenthesizedContinuation2.java", "ParenthesizedContinuation2_after.java");
   }
 
+  @Test
   public void testDoNotIndentTopLevelClassMembers() throws Exception {
 
     defaultSettings();
@@ -131,19 +163,22 @@ public class IndentTest extends LightIdeaTestCase {
 
   private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
     String text = loadFile(fileNameBefore);
-    final PsiFile file = createFile(fileNameBefore, text);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+    Project project = codeInsightFixture.get().getProject();
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileNameBefore);
+    final PsiFile file = ReadAction.computeBlocking(
+      () -> PsiFileFactory.getInstance(project).createFileFromText(fileNameBefore, fileType, text, LocalTimeCounter.currentTime(), true, false));
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        CodeStyleManager.getInstance(getProject()).reformat(file);
+        CodeStyleManager.getInstance(project).reformat(file);
       }
       catch (IncorrectOperationException e) {
         throw new AssertionError(e);
       }
-    }), null, null);
+    }), null, null));
 
 
     String textAfter = loadFile(fileNameAfter);
-    String fileText = file.getText();
+    String fileText = ReadAction.computeBlocking(() -> file.getText());
     textAfter = StringUtil.trimStart(textAfter, "\n");
     fileText = StringUtil.trimStart(fileText, "\n");
 
@@ -172,16 +207,8 @@ public class IndentTest extends LightIdeaTestCase {
     settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      defaultSettings();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    defaultSettings();
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -27,23 +28,38 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ref.GCUtil;
+import org.junit.jupiter.api.Test;
 
-public class JavaPsiFormattingTest extends AbstractJavaFormatterTest {
-  
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class JavaPsiFormattingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
+
+  @Test
   public void testReferenceExpressionSpaceInsertion() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String text = "if(x&y);";
-    PsiFile file = createFile("A.java", "class C{{\n" + text + "\n}}");
-    PsiElement element = file.findElementAt(file.getText().indexOf(text));
-    PsiIfStatement statement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
+    PsiFile file = formatter.createFile("A.java", "class C{{\n" + text + "\n}}");
+    PsiElement element = ReadAction.computeBlocking(() -> file.findElementAt(file.getText().indexOf(text)));
+    PsiIfStatement statement = ReadAction.computeBlocking(() -> PsiTreeUtil.getParentOfType(element, PsiIfStatement.class));
     assertNotNull(statement);
 
     Ref<PsiElement> result = Ref.create();
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> WriteAction.run(
-      () -> result.set(CodeStyleManager.getInstance(getProject()).reformat(statement))
-    ), "", null);
+    EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().executeCommand(formatter.getProject(), () -> WriteAction.run(
+      () -> result.set(CodeStyleManager.getInstance(formatter.getProject()).reformat(statement))
+    ), "", null));
 
-    PsiExpression expr = ((PsiIfStatement)result.get()).getCondition();
+    PsiExpression expr = ReadAction.computeBlocking(() -> ((PsiIfStatement)result.get()).getCondition());
     assertEquals("""
                    PsiBinaryExpression:x & y
                      PsiReferenceExpression:x
@@ -58,17 +74,19 @@ public class JavaPsiFormattingTest extends AbstractJavaFormatterTest {
                          <empty list>
                        PsiIdentifier:y('y')
                    """,
-                 DebugUtil.psiToString(expr, true));
+                 ReadAction.computeBlocking(() -> DebugUtil.psiToString(expr, true)));
   }
 
+  @Test
   public void testPostponedFormattingNotAffectedByGc() {
-    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class A {}\nclass B{}");
+    JavaFormatterFixture formatter = formatterFixture.get();
+    PsiJavaFile file = (PsiJavaFile)formatter.createFile("a.java", "class A {}\nclass B{}");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(formatter.getProject(), () -> {
       file.getClasses()[0].delete();
       GCUtil.tryGcSoftlyReachableObjects();
     });
     
-    assertEquals("class B{}", file.getText());
+    assertEquals("class B{}", ReadAction.computeBlocking(() -> file.getText()));
   }
 }

@@ -15,15 +15,28 @@
  */
 package com.intellij.java.psi.formatter.java
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.IndentRangesCalculator
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-class IndentRangesCalculatorTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class IndentRangesCalculatorTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
   
-  fun `test simple ranges calculation`() {
-    configureFromFileText(
+  @Test
+  fun `test simple ranges calculation`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
         "test.txt", 
 """class Test {
   void foo() {
@@ -34,9 +47,9 @@ class IndentRangesCalculatorTest: LightPlatformCodeInsightTestCase() {
 }
 """)
     
-    val document = editor.document
+    val document = myFixture.editor.document
     val calculator = IndentRangesCalculator(document, TextRange(32, 67))
-    val ranges = calculator.calcIndentRanges()
+    val ranges = readAction { calculator.calcIndentRanges() }
     
     assertThat(ranges).hasSize(3)
     assertThat(ranges[0]).isEqualTo(TextRange(28, 32))

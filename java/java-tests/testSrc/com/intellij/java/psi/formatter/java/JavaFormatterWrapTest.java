@@ -18,16 +18,29 @@ package com.intellij.java.psi.formatter.java;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
  */
 @SuppressWarnings("SpellCheckingInspection")
-public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
+@TestApplication
+public class JavaFormatterWrapTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
+
+  @Test
   public void testWrappingAnnotationArrayParameters() {
-    getSettings().RIGHT_MARGIN = 80;
-    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RIGHT_MARGIN = 80;
+    formatter.getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.doTextTest(
       """
         @AttributeOverrides( { @AttributeOverride(name = "id", column = @Column(name = "recovery_id")),@AttributeOverride(name = "transactionReference", column = @Column(name = "deal_reference")),@AttributeOverride(name = "eventDate", column = @Column(name = "recovery_date")),@AttributeOverride(name = "amount", column = @Column(name = "recovery_amount")),@AttributeOverride(name = "currency", column = @Column(name = "local_currency")),@AttributeOverride(name = "exchangeRate", column = @Column(name = "exchange_rate")),@AttributeOverride(name = "exchangeRateDate", column = @Column(name = "recovery_date", insertable = false, updatable = false)),@AttributeOverride(name = "exchangeRateAlterationJustification", column = @Column(name = "exchange_rate_justification")),@AttributeOverride(name = "systemExchangeRate", column = @Column(name = "system_exchange_rate")) })
         class Foo {
@@ -49,10 +62,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAnnotationParamValueExceedingRightMargin() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-18051
-    getSettings().RIGHT_MARGIN = 80;
-    doTextTest(
+    formatter.getSettings().RIGHT_MARGIN = 80;
+    formatter.doTextTest(
       """
         package formatting;
 
@@ -112,19 +127,21 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
+  @Test
   public void testEnumConstantsWrapping() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-54667
-    getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().RIGHT_MARGIN = 80;
+    formatter.getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().RIGHT_MARGIN = 80;
 
     // Don't expect the constants to be placed on new line.
-    doTextTest(
+    formatter.doTextTest(
       "enum Test {FIRST, SECOND}",
       "enum Test {FIRST, SECOND}"
     );
 
     // Expect not only enum constants to be wrapped but line break inside enum-level curly braces as well.
-    doTextTest(
+    formatter.doTextTest(
       "enum Test {FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH}",
 
       """
@@ -134,11 +151,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEnumCommentsWrapping() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-130575
-    getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public enum Test {
 
@@ -176,11 +195,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEnumConstantsMixedWithCommentsWrapping() {
     // IDEA-180049
 
     // Expect comments to be wrapped
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         public enum FormatTest {
             FOO, /**
@@ -198,8 +218,10 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIDEA123074() {
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     String before = "final GeoZone geoZone1 = new GeoZone(APPROACHING, new Polygon(point(\"0.0\", \"0.0\"), point(\"10.0\", \"0.0\")," +
                     "point(\"10.0\", \"10.0\"), point(\"0.0\", \"10.0\")));";
     String after = """
@@ -212,12 +234,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                               "10.0"),
                       point("0.0",
                               "10.0")));""";
-    doMethodTest(before, after);
+    formatter.doMethodTest(before, after);
   }
 
+  @Test
   public void testMethodAnnotationFollowedBySingleLineComment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-22808
-    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     String text =
       """
@@ -226,52 +250,60 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         }""";
 
     // Expecting the code to be left as-is
-    doClassTest(text, text);
+    formatter.doClassTest(text, text);
   }
 
+  @Test
   public void testClassAnnotationsWithoutModifier() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-178795
-    getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    getSettings().KEEP_LINE_BREAKS = true;
+    formatter.getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
 
     // Expecting the code to be left as-is
     String text = """
       @Test
       class MyClass {
       }""";
-    doTextTest(text, text);
+    formatter.doTextTest(text, text);
   }
 
+  @Test
   public void testClassAnnotationsWithoutModifierSameLine() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-178795
-    getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    getSettings().KEEP_LINE_BREAKS = true;
+    formatter.getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
 
     // Expecting the code to be left as-is
     String text = "@Test class MyClass {\n" +
                   "}";
-    doTextTest(text, text);
+    formatter.doTextTest(text, text);
   }
 
+  @Test
   public void testWrapCompoundStringLiteralThatEndsAtRightMargin() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-82398
-    getSettings().RIGHT_MARGIN = 30;
-    getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 30;
+    formatter.getSettings().WRAP_LONG_LINES = true;
 
     final String text = """
       class Test {
           String s = "first line " +
                   +"second line";
       }""";
-    doTextTest(text, text);
+    formatter.doTextTest(text, text);
   }
 
+  @Test
   public void testWrapLongLine() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-55782
-    getSettings().RIGHT_MARGIN = 50;
-    getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 50;
+    formatter.getSettings().WRAP_LONG_LINES = true;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         class TestClass {
             // Single line comment that is long enough to exceed right margin
@@ -296,14 +328,16 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testWrapLongLineWithTabs() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-55782
-    getSettings().RIGHT_MARGIN = 20;
-    getSettings().WRAP_LONG_LINES = true;
-    getIndentOptions().USE_TAB_CHARACTER = true;
-    getIndentOptions().TAB_SIZE = 4;
+    formatter.getSettings().RIGHT_MARGIN = 20;
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getIndentOptions().USE_TAB_CHARACTER = true;
+    formatter.getIndentOptions().TAB_SIZE = 4;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         class TestClass {
         \t \t   //This is a comment
@@ -316,10 +350,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testWrapLongLineWithSelection() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-55782
-    getSettings().RIGHT_MARGIN = 20;
-    getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 20;
+    formatter.getSettings().WRAP_LONG_LINES = true;
 
     String initial =
       """
@@ -333,8 +369,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     //myTextRange = new TextRange(start, end);
     //doTextTest(initial, initial);
 
-    myLineRange = new TextRange(1, 1);
-    doTextTest(
+    formatter.setLineRange(new TextRange(1, 1));
+    formatter.doTextTest(
       initial,
       """
         class TestClass {
@@ -345,13 +381,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testWrapMethodAnnotationBeforeParams() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-59536
-    getSettings().RIGHT_MARGIN = 90;
-    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().RIGHT_MARGIN = 90;
+    formatter.getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-    doClassTest(
+    formatter.doClassTest(
         "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
         """
           @SuppressWarnings({"SomeInspectionIWantToIgnore"})
@@ -360,44 +398,50 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testMultipleExpressionInSameLine() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-64975.
 
-    getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
-    doMethodTest(
+    formatter.getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
+    formatter.doMethodTest(
       "int i = 1; int j = 2;",
       "int i = 1; int j = 2;"
     );
 
-    getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
-    doMethodTest(
+    formatter.getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
+    formatter.doMethodTest(
         "int i = 1; int j = 2;",
         "int i = 1;\n" +
         "int j = 2;"
     );
   }
 
+  @Test
   public void testIncompleteFieldAndAnnotationWrap() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-64725
 
-    getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    doClassTest(
+    formatter.getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.doClassTest(
         "@NotNull Comparable<String>",
         "@NotNull Comparable<String>"
     );
   }
 
+  @Test
   public void testResourceListWrap() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().RIGHT_MARGIN = 40;
-    getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
+    formatter.getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
                  "     MyResource r2 = null) {}");
 
-    getSettings().RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
-    getSettings().RESOURCE_LIST_RPAREN_ON_NEXT_LINE = true;
-    doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
+    formatter.getSettings().RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().RESOURCE_LIST_RPAREN_ON_NEXT_LINE = true;
+    formatter.doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
                  """
                    try (
                            MyResource r1 = null;
@@ -405,13 +449,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                    ) {}""");
   }
 
+  @Test
   public void testLineLongEnoughToExceedAfterFirstWrapping() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-103624
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     // No wrapping for now
-    doMethodTest(
+    formatter.doMethodTest(
       """
         test(1,
              2,
@@ -428,11 +474,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
+  @Test
   public void testNoUnnecessaryWrappingIsPerformedForLongLine() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-103624
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text =
       """
         test(1,
@@ -442,14 +490,16 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         );
         int i = 1;
         int j = 2;""";
-    doMethodTest(text, text);
+    formatter.doMethodTest(text, text);
   }
 
+  @Test
   public void testEnforceIndentMethodCallParamWrap() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 140;
-    getSettings().PREFER_PARAMETERS_WRAP = true;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 140;
+    formatter.getSettings().PREFER_PARAMETERS_WRAP = true;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
 
     String before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, " +
                     "String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString()));";
@@ -472,11 +522,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
               )
       );""";
 
-    doMethodTest(afterFirstReformat, after);
+    formatter.doMethodTest(afterFirstReformat, after);
 
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    doMethodTest(before,
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    formatter.doMethodTest(before,
                  """
                    processingEnv.getMessenger().printMessage(
                            Diagnostic.Kind.ERROR,
@@ -490,35 +540,40 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
             "        call(" + literal + ")\n" +
             ");\n";
 
-    doMethodTest(before, after);
+    formatter.doMethodTest(before, after);
   }
 
   @SuppressWarnings("SpellCheckingInspection")
+  @Test
   public void testDoNotWrapMethodsWithMethodCallAsParameters() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 140;
-    getSettings().PREFER_PARAMETERS_WRAP = true;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 140;
+    formatter.getSettings().PREFER_PARAMETERS_WRAP = true;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
 
     String before = "   processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage());";
     String after = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage());";
 
-    doMethodTest(before, after);
+    formatter.doMethodTest(before, after);
 
     before = "   processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage(loooooooooooooooooongParamName));";
     after = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, getMessage(loooooooooooooooooongParamName));";
 
-    doMethodTest(before, after);
+    formatter.doMethodTest(before, after);
   }
 
+  @Test
   public void testFieldAnnotationWithoutModifier() {
-    doClassTest("@NotNull String myFoo = null;", "@NotNull\nString myFoo = null;");
+    formatterFixture.get().doClassTest("@NotNull String myFoo = null;", "@NotNull\nString myFoo = null;");
   }
 
+  @Test
   public void testTypeAnnotationsInModifierList() {
-    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
 
     String prefix =
       """
@@ -531,7 +586,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
         """;
 
-    doTextTest(
+    formatter.doTextTest(
         prefix + "interface C {\n" +
         "    @TA(0)String m();\n" +
         "    @A  @TA(1)  @TA(2)String m();\n" +
@@ -550,9 +605,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         "}");
   }
 
+  @Test
   public void testKeepSingleFieldAnnotationOnSameLine() {
-    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
+    formatter.doClassTest(
       """
         @NotNull public String result = "OK"
         @NotNull String newResult = "OK"
@@ -568,10 +625,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testMoveSingleAnnotationOnSameLine() {
-    getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
-    getSettings().KEEP_LINE_BREAKS = false;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.doClassTest(
       """
         @NotNull
         public String test = "tst";
@@ -584,9 +643,11 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Wrap_On_Method_Parameter_Declaration() {
-    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.doClassTest(
       """
               public static void main(String[] args) {
             boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;
@@ -599,8 +660,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    doClassTest(
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.doClassTest(
       """
               public static void main(String[] args) {
             boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;
@@ -615,19 +676,23 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Do_Not_Wrap_On_Nested_Call_Arguments_If_Not_Needed() {
-    getSettings().PREFER_PARAMETERS_WRAP = true;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().PREFER_PARAMETERS_WRAP = true;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-    doMethodTest("call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb, 1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));",
+    formatter.doMethodTest("call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb, 1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));",
                  "call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb,\n" +
                  "        1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));");
   }
 
+  @Test
   public void test_PlaceOnNewLineParenth_DoNotWork_IfLineNotExceedsRightMargin() {
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
 
-    doMethodTest("""
+    formatter.doMethodTest("""
                    run(new Runnable() {
                    public void run() {
                    }
@@ -638,7 +703,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                        }
                    });""");
 
-    doMethodTest("""
+    formatter.doMethodTest("""
                    run(() -> {
                    int a = 2;
                    });""",
@@ -648,11 +713,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                    });""");
   }
 
+  @Test
   public void test_WrapIfLong_ActivatesPlaceNewLineAfterParenthesis() {
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccccccccccccccccccccccc\");",
+    formatter.doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccccccccccccccccccccccc\");",
                  """
                    fuun(
                            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -660,22 +727,26 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   }
 
+  @Test
   public void test_WrapIfLong_On_Second_Parameter_ActivatesPlaceNewLineAfterParenthesis() {
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+    formatter.doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
                  """
                    fuun(
                            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "cccccccccccccc");""");
   }
 
+  @Test
   public void test_LParen_OnNextLine_IfWrapped() {
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
 
-    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+    formatter.doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
                  """
                    fuun(
                            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -683,8 +754,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                            "cccccccccccccc");""");
 
 
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
-    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+    formatter.doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
                  """
                    fuun("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -692,11 +763,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   }
 
+  @Test
   public void test_RParen_OnNextLine_IfWrapped() {
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
 
-    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+    formatter.doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
                  """
                    fuun("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -704,8 +777,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                    );""");
 
 
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
-    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+    formatter.doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
                  """
                    fuun("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -713,11 +786,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   }
 
+  @Test
   public void test_ChainedCalls_FirstOnNewLine() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "obj.call().call().call().call();",
       """
         obj
@@ -727,7 +802,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                 .call();"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       "call().call().call().call();",
       """
         call()
@@ -736,7 +811,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                 .call();"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       "nestedCall(call().call().call().call());",
       """
         nestedCall(call()
@@ -746,21 +821,25 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_ChainedCalls_NoWrapOnSingleCall() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "obj.call(    )",
       "obj.call()"
     );
   }
   
+  @Test
   public void test_TryWithResource_NextLineIfWrapped() {
-    getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().ALIGN_MULTILINE_RESOURCES = false;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().ALIGN_MULTILINE_RESOURCES = false;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    formatter.doMethodTest(
       """
         try (Foo foo = createAFoo(); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo); Bar bar = createABar(foo)) {
             useThem();
@@ -774,24 +853,28 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
   
+  @Test
   public void test_KeepSimpleLambdasInOneLine() {
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
-    doMethodTest("      execute(  () -> {});", 
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    formatter.doMethodTest("      execute(  () -> {});", 
                  "execute(() -> {});");
     
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
-    doMethodTest("execute(() -> {});", 
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    formatter.doMethodTest("execute(() -> {});", 
                  "execute(() -> {\n" +
                  "});");
   }
 
 
+  @Test
   public void testDisableWrapLongLinesInFormatterMarkers() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
-    getSettings().RIGHT_MARGIN = 80;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    formatter.getSettings().RIGHT_MARGIN = 80;
     
-    doTextTest(
+    formatter.doTextTest(
       """
         package com.acme;
 
@@ -851,11 +934,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testNoImportWrap() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         package com.company;
 
@@ -886,11 +971,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testNoWrapOnEllipsis() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 35;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 35;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         package org.example.sandbox;
 
@@ -910,11 +997,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testNoWrapInDouble() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 35;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 35;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         package org.example.sandbox;
 
@@ -936,15 +1025,17 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea186225() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 100;
-    getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().BINARY_OPERATION_SIGN_ON_NEXT_LINE = true;
-    getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 100;
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().BINARY_OPERATION_SIGN_ON_NEXT_LINE = true;
+    formatter.getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         interface Test {
             @SuppressWarnings("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + " "
@@ -962,12 +1053,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea110902() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 50;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().WRAP_COMMENTS = true;
+    formatter.getSettings().RIGHT_MARGIN = 50;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Main {
 
@@ -996,11 +1089,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBuilderMethods() {
-    getSettings().BUILDER_METHODS = "flowPanel,widget,wrap,builder,end";
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BUILDER_METHODS = "flowPanel,widget,wrap,builder,end";
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         class Test {
             public static void main(String[] args) {
@@ -1033,10 +1128,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea248594() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Test {
             void foo() {
@@ -1059,11 +1156,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testWrapMixedBuilderAndNonBuilderChainedCalls() {
-    getSettings().BUILDER_METHODS = "start,addInt,addText,end";
-    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BUILDER_METHODS = "start,addInt,addText,end";
+    formatter.getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Test {
 
@@ -1087,11 +1186,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
   }
 
 
+  @Test
   public void testIdea189817_noWrap() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Cls {
          public void foo () {
@@ -1108,11 +1209,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea189817_wrapAfterUrl() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Cls {
          public void foo () {
@@ -1130,13 +1233,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea186208() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
-    getSettings().RIGHT_MARGIN = 60;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
+    formatter.getSettings().RIGHT_MARGIN = 60;
 
-    doClassTest(
+    formatter.doClassTest(
       "final ImmutableMap<String, String> map = ImmutableMap.of(\"content\", \"value\", \"content\", \"value\",\"content\", \"value\"," +
       "\"content\", \"value\",\"content\", \"value\",\"content\", \"value\");",
 
@@ -1148,10 +1253,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSwitchLabelBracesWrapping() {
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
-    doClassTest(
+    formatter.doClassTest(
       """
         static boolean test(String name){
             switch (name){
@@ -1183,8 +1290,9 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testExprInSwitchWrapping() {
-    doClassTest(
+    formatterFixture.get().doClassTest(
       """
           String process(E e) {
             return switch (e) {
@@ -1205,11 +1313,13 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testPermitsListWrapping() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
 
-    doTextTest(
+    formatter.doTextTest(
       "class A permits Class1, Class2, Class3, Class4, Class5 {}",
 
       """
@@ -1219,13 +1329,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDeconstructionPatternWrappingNotAligned() {
-    getSettings().WRAP_LONG_LINES = true;
-    getSettings().RIGHT_MARGIN = 40;
-    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getJavaSettings().ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = false;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().WRAP_LONG_LINES = true;
+    formatter.getSettings().RIGHT_MARGIN = 40;
+    formatter.getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getJavaSettings().ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = false;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         switch (a) {
           case Rec(String s, int i) -> {}
@@ -1242,10 +1354,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testCaseLabelElementListEnum() {
-    getSettings().RIGHT_MARGIN = 50;
-    getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RIGHT_MARGIN = 50;
+    formatter.getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    formatter.doClassTest("""
           boolean isWeekend(DayOfWeek day) {
                 return switch (day) {
                     case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> false;
@@ -1264,10 +1378,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
           }""");
   }
 
+  @Test
   public void testCaseLabelElementListConditionalExpression() {
-    getSettings().RIGHT_MARGIN = 30;
-    getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RIGHT_MARGIN = 30;
+    formatter.getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    formatter.doClassTest("""
           boolean isMagicNumber(Integer b) {
               return switch (b) {     // Exhaustive!
                   case true ? 10 : 20, false ? 11 : 12 -> true;
@@ -1284,10 +1400,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
           }""");
   }
 
+  @Test
   public void testCaseLabelElementListNumbers() {
-    getSettings().RIGHT_MARGIN = 30;
-    getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RIGHT_MARGIN = 30;
+    formatter.getSettings().SWITCH_EXPRESSIONS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    formatter.doClassTest("""
           int getMagicNumber(Integer b) {
               return switch (b) {     // Exhaustive!
                   case 10, 100, 1000, 10000 -> 1;

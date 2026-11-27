@@ -4,22 +4,35 @@ package com.intellij.java.psi.formatter.java;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  */
-public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IdeaTestUtil.setProjectLanguageLevel(getProject(), JavaTestUtil.getMaxRegisteredLanguageLevel());
+@TestApplication
+public class JavaFormatterSpaceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    IdeaTestUtil.setProjectLanguageLevel(formatterFixture.get().getProject(), JavaTestUtil.getMaxRegisteredLanguageLevel());
   }
 
+  @Test
   public void testSpacingBetweenTypeParameters() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Implied by IDEADEV-3666
-    getSettings().SPACE_AFTER_COMMA = true;
+    formatter.getSettings().SPACE_AFTER_COMMA = true;
 
-    doTextTest("""
+    formatter.doTextTest("""
                  class Foo {
                  Map<String,String> map() {}
                  }""",
@@ -31,9 +44,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
+  @Test
   public void testDoNotPlaceStatementsOnOneLineIfFirstEndsWithSingleLineComment() {
-    getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
-    getSettings().KEEP_LINE_BREAKS = false;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
     String before = """
       public class Reproduce {
           public void start() {
@@ -58,12 +73,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
               }
           }
       }""";
-    doTextTest(before, after);
+    formatter.doTextTest(before, after);
   }
 
+  @Test
   public void testSpaceBeforeAnnotationParamArray() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-24329
-    getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
+    formatter.getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
 
     String text =
       """
@@ -72,14 +89,16 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""";
 
     // Don't expect the space to be 'ate'
-    doTextTest(text, text);
+    formatter.doTextTest(text, text);
   }
 
+  @Test
   public void testCommaInTypeArguments() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-31681
-    getSettings().SPACE_AFTER_COMMA = false;
+    formatter.getSettings().SPACE_AFTER_COMMA = false;
 
-    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
+    formatter.getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
     String initial =
       """
         interface TestInterface<A,B> {
@@ -94,9 +113,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
             }
         }""";
 
-    doTextTest(initial, initial); // Don't expect the comma to be inserted
+    formatter.doTextTest(initial, initial); // Don't expect the comma to be inserted
 
-    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
+    formatter.getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
     String formatted =
       """
         interface TestInterface<A,B> {
@@ -110,12 +129,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                 Map<String, Integer> map = new HashMap<String, Integer>();
             }
         }""";
-    doTextTest(initial, formatted); // Expect the comma to be inserted between type arguments
+    formatter.doTextTest(initial, formatted); // Expect the comma to be inserted between type arguments
   }
 
+  @Test
   public void testUnaryOperators() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-52127
-    getSettings().SPACE_AROUND_UNARY_OPERATOR = false;
+    formatter.getSettings().SPACE_AROUND_UNARY_OPERATOR = false;
 
     String initial =
       """
@@ -133,9 +154,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
             }
         }""";
 
-    doTextTest(initial, initial); // Don't expect spaces to be inserted after unary operators
+    formatter.doTextTest(initial, initial); // Don't expect spaces to be inserted after unary operators
 
-    getSettings().SPACE_AROUND_UNARY_OPERATOR = true;
+    formatter.getSettings().SPACE_AROUND_UNARY_OPERATOR = true;
     String formatted =
       """
         public class FormattingTest {
@@ -151,15 +172,16 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                 System.out.println(! b);
             }
         }""";
-    doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
+    formatter.doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
   }
 
   @SuppressWarnings("unused")
   public void _testJavadocMethodParams() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-42167
     // Disabled because the contents of the {@code tag} is not necessarily Java code and
     // therefore it's incorrect to modify it when formatting
-    getSettings().SPACE_AFTER_COMMA = false;
+    formatter.getSettings().SPACE_AFTER_COMMA = false;
 
     String initial =
       """
@@ -172,7 +194,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""";
 
     // Expect single space to left between 'new' and Object[0].
-    doTextTest(initial,
+    formatter.doTextTest(initial,
                """
                  public class FormattingTest {
                      /**
@@ -183,8 +205,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  }""");
 
     // Expect space to be inserted between ',' and 'new'.
-    getSettings().SPACE_AFTER_COMMA = true;
-    doTextTest(initial,
+    formatter.getSettings().SPACE_AFTER_COMMA = true;
+    formatter.doTextTest(initial,
                """
                  public class FormattingTest {
                      /**
@@ -195,8 +217,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  }""");
 
     // Expect space to be inserted between 'test' and ','.
-    getSettings().SPACE_BEFORE_COMMA = true;
-    doTextTest(initial,
+    formatter.getSettings().SPACE_BEFORE_COMMA = true;
+    formatter.doTextTest(initial,
                """
                  public class FormattingTest {
                      /**
@@ -207,10 +229,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  }""");
   }
 
+  @Test
   public void testSpaceWithArrayBrackets() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-58510
-    getSettings().SPACE_WITHIN_BRACKETS = true;
-    doMethodTest(
+    formatter.getSettings().SPACE_WITHIN_BRACKETS = true;
+    formatter.doMethodTest(
       """
         int[] i = new int[1]
         i[0] = 1;
@@ -222,12 +246,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSpaceBeforeElse() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-58068
-    getSettings().ELSE_ON_NEW_LINE = false;
+    formatter.getSettings().ELSE_ON_NEW_LINE = false;
 
-    getSettings().SPACE_BEFORE_ELSE_KEYWORD = false;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_ELSE_KEYWORD = false;
+    formatter.doMethodTest(
       """
         if (true) {
         } else {
@@ -238,8 +264,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    getSettings().SPACE_BEFORE_ELSE_KEYWORD = true;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_ELSE_KEYWORD = true;
+    formatter.doMethodTest(
       """
         if (true) {
         }else {
@@ -251,20 +277,22 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSpaceBeforeWhile() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-58068
-    getSettings().WHILE_ON_NEW_LINE = false;
+    formatter.getSettings().WHILE_ON_NEW_LINE = false;
 
-    getSettings().SPACE_BEFORE_WHILE_KEYWORD = false;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_WHILE_KEYWORD = false;
+    formatter.doMethodTest(
       "do {\n" +
       "} while (true);",
       "do {\n" +
       "}while (true);"
     );
 
-    getSettings().SPACE_BEFORE_WHILE_KEYWORD = true;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_WHILE_KEYWORD = true;
+    formatter.doMethodTest(
       "do {\n" +
       "}while (true);",
       "do {\n" +
@@ -273,12 +301,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
 
+  @Test
   public void testSpaceBeforeCatch() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-58068
-    getSettings().CATCH_ON_NEW_LINE = false;
+    formatter.getSettings().CATCH_ON_NEW_LINE = false;
 
-    getSettings().SPACE_BEFORE_CATCH_KEYWORD = false;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_CATCH_KEYWORD = false;
+    formatter.doMethodTest(
       """
         try {
         } catch (Exception e) {
@@ -289,8 +319,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    getSettings().SPACE_BEFORE_CATCH_KEYWORD = true;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_CATCH_KEYWORD = true;
+    formatter.doMethodTest(
       """
         try {
         }catch (Exception e) {
@@ -302,12 +332,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSpaceBeforeFinally() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-58068
-    getSettings().FINALLY_ON_NEW_LINE = false;
+    formatter.getSettings().FINALLY_ON_NEW_LINE = false;
 
-    getSettings().SPACE_BEFORE_FINALLY_KEYWORD = false;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_FINALLY_KEYWORD = false;
+    formatter.doMethodTest(
       """
         try {
         } finally {
@@ -318,8 +350,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    getSettings().SPACE_BEFORE_FINALLY_KEYWORD = true;
-    doMethodTest(
+    formatter.getSettings().SPACE_BEFORE_FINALLY_KEYWORD = true;
+    formatter.doMethodTest(
       """
         try {
         }finally {
@@ -331,133 +363,153 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEmptyIterationAtFor() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-58293
 
-    getSettings().SPACE_AFTER_SEMICOLON = true;
-    getSettings().SPACE_WITHIN_FOR_PARENTHESES = false;
+    formatter.getSettings().SPACE_AFTER_SEMICOLON = true;
+    formatter.getSettings().SPACE_WITHIN_FOR_PARENTHESES = false;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "for (   ; ;         )",
       "for (; ; )"
     );
   }
 
+  @Test
   public void testSpacesInDisjunctiveType() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().CATCH_ON_NEW_LINE = false;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().CATCH_ON_NEW_LINE = false;
 
-    getSettings().SPACE_AROUND_BITWISE_OPERATORS = true;
-    doMethodTest("try { } catch (E1|E2 e) { }",
+    formatter.getSettings().SPACE_AROUND_BITWISE_OPERATORS = true;
+    formatter.doMethodTest("try { } catch (E1|E2 e) { }",
                  "try {} catch (E1 | E2 e) {}");
 
-    getSettings().SPACE_AROUND_BITWISE_OPERATORS = false;
-    doMethodTest("try { } catch (E1 | E2 e) { }",
+    formatter.getSettings().SPACE_AROUND_BITWISE_OPERATORS = false;
+    formatter.doMethodTest("try { } catch (E1 | E2 e) { }",
                  "try {} catch (E1|E2 e) {}");
   }
 
+  @Test
   public void testSpacesInsideLambda() {
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
-    getSettings().SPACE_AROUND_LAMBDA_ARROW = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_AROUND_LAMBDA_ARROW = true;
 
-    doMethodTest("()->{}",
+    formatter.doMethodTest("()->{}",
                  "() -> {}");
 
-    getSettings().SPACE_AROUND_LAMBDA_ARROW = false;
-    doMethodTest("() -> {}",
+    formatter.getSettings().SPACE_AROUND_LAMBDA_ARROW = false;
+    formatter.doMethodTest("() -> {}",
                  "()->{}");
   }
 
+  @Test
   public void testSpacesInsideMethodRef() {
-    getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = true;
 
     //expr
-    doMethodTest("Runnable r = this::foo",
+    formatter.doMethodTest("Runnable r = this::foo",
                  "Runnable r = this :: foo");
 
     //class ref
-    doMethodTest("Runnable r = Foo::foo",
+    formatter.doMethodTest("Runnable r = Foo::foo",
                  "Runnable r = Foo :: foo");
 
-    getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = false;
-    doMethodTest("Runnable r = this::foo",
+    formatter.getSettings().SPACE_AROUND_METHOD_REF_DBL_COLON = false;
+    formatter.doMethodTest("Runnable r = this::foo",
                  "Runnable r = this::foo");
   }
 
+  @Test
   public void testSpacesBeforeResourceList() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
-    getSettings().SPACE_BEFORE_TRY_PARENTHESES = true;
-    getSettings().SPACE_BEFORE_TRY_LBRACE = true;
-    doMethodTest("try(AutoCloseable r = null){ }",
+    formatter.getSettings().SPACE_BEFORE_TRY_PARENTHESES = true;
+    formatter.getSettings().SPACE_BEFORE_TRY_LBRACE = true;
+    formatter.doMethodTest("try(AutoCloseable r = null){ }",
                  "try (AutoCloseable r = null) {}");
 
-    getSettings().SPACE_BEFORE_TRY_PARENTHESES = false;
-    getSettings().SPACE_BEFORE_TRY_LBRACE = false;
-    doMethodTest("try (AutoCloseable r = null) { }",
+    formatter.getSettings().SPACE_BEFORE_TRY_PARENTHESES = false;
+    formatter.getSettings().SPACE_BEFORE_TRY_LBRACE = false;
+    formatter.doMethodTest("try (AutoCloseable r = null) { }",
                  "try(AutoCloseable r = null){}");
   }
 
+  @Test
   public void testSpacesWithinResourceList() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
-    getSettings().SPACE_WITHIN_TRY_PARENTHESES = false;
-    doMethodTest("try (  R r = null  ) { }",
+    formatter.getSettings().SPACE_WITHIN_TRY_PARENTHESES = false;
+    formatter.doMethodTest("try (  R r = null  ) { }",
                  "try (R r = null) {}");
-    getSettings().SPACE_AFTER_SEMICOLON = false;
-    doMethodTest("try (  R r1 = null    ; R r2 = null; ) { }",
+    formatter.getSettings().SPACE_AFTER_SEMICOLON = false;
+    formatter.doMethodTest("try (  R r1 = null    ; R r2 = null; ) { }",
                  "try (R r1 = null;R r2 = null;) {}");
 
-    getSettings().SPACE_WITHIN_TRY_PARENTHESES = true;
-    doMethodTest("try (R r = null) { }",
+    formatter.getSettings().SPACE_WITHIN_TRY_PARENTHESES = true;
+    formatter.doMethodTest("try (R r = null) { }",
                  "try ( R r = null ) {}");
-    getSettings().SPACE_AFTER_SEMICOLON = true;
-    doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
+    formatter.getSettings().SPACE_AFTER_SEMICOLON = true;
+    formatter.doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
                  "try ( R r1 = null; R r2 = null; ) {}");
   }
 
+  @Test
   public void testSpacesBetweenResources() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
-    getSettings().SPACE_BEFORE_SEMICOLON = false;
-    getSettings().SPACE_AFTER_SEMICOLON = true;
-    doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
+    formatter.getSettings().SPACE_BEFORE_SEMICOLON = false;
+    formatter.getSettings().SPACE_AFTER_SEMICOLON = true;
+    formatter.doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
                  "try (R r1 = null; R r2 = null;) {}");
 
-    getSettings().SPACE_BEFORE_SEMICOLON = true;
-    getSettings().SPACE_AFTER_SEMICOLON = false;
-    doMethodTest("try (R r1 = null;   R r2 = null;) { }",
+    formatter.getSettings().SPACE_BEFORE_SEMICOLON = true;
+    formatter.getSettings().SPACE_AFTER_SEMICOLON = false;
+    formatter.doMethodTest("try (R r1 = null;   R r2 = null;) { }",
                  "try (R r1 = null ;R r2 = null ;) {}");
   }
 
+  @Test
   public void testSpacesInResourceAssignment() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
-    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
-    doMethodTest("try (R r=null) { }",
+    formatter.getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
+    formatter.doMethodTest("try (R r=null) { }",
                  "try (R r = null) {}");
 
-    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
-    doMethodTest("try (R r =  null) { }",
+    formatter.getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
+    formatter.doMethodTest("try (R r =  null) { }",
                  "try (R r=null) {}");
   }
 
+  @Test
   public void testBetweenMethodCallArguments() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-71823
-    getSettings().SPACE_AFTER_COMMA = false;
+    formatter.getSettings().SPACE_AFTER_COMMA = false;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "foo(1, 2, 3);",
       "foo(1,2,3);"
     );
   }
 
+  @Test
   public void testBeforeAnonymousClassConstructor() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-72321.
-    getSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
+    formatter.getSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         actions.add(new Action(this) {
             public void run() {
@@ -471,12 +523,14 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBeforeAnnotationArrayInitializer() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-72317
-    getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
-    getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
+    formatter.getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false;
+    formatter.getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
 
-    doClassTest(
+    formatter.doClassTest(
       """
         @SuppressWarnings({"HardCodedStringLiteral"})
         void test() {
@@ -490,13 +544,15 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBetweenParenthesesOfNoArgsMethod() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-74751
-    getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
-    getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
-    getSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
-    getSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
-    doClassTest(
+    formatter.getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
+    formatter.getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
+    formatter.getSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    formatter.getSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
+    formatter.doClassTest(
       """
         void test() {
             foo();
@@ -507,11 +563,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-    getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
-    getSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
-    getSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
-    doClassTest(
+    formatter.getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    formatter.getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
+    formatter.getSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
+    formatter.getSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
+    formatter.doClassTest(
       """
         void test() {
             foo();
@@ -523,65 +579,75 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIncompleteCastExpression() {
     // Inspired by IDEA-75043.
     String text = """
       void test(int i) {
           (() i)
       }""";
-    doClassTest(text, text);
+    formatterFixture.get().doClassTest(text, text);
   }
 
+  @Test
   public void testSpacesWithinAngleBrackets() {
-    getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = true;
 
     String beforeMethod = "static <      T             > void    fromArray(  T  [   ]   a ,   Collection<  T  >  c) {\n}";
-    doClassTest(beforeMethod, "static < T > void fromArray(T[] a, Collection< T > c) {\n}");
+    formatter.doClassTest(beforeMethod, "static < T > void fromArray(T[] a, Collection< T > c) {\n}");
 
     String beforeLocal = "Map<    String,   String     > map = new HashMap<   String,   String   >();";
-    doMethodTest(beforeLocal, "Map< String, String > map = new HashMap< String, String >();");
+    formatter.doMethodTest(beforeLocal, "Map< String, String > map = new HashMap< String, String >();");
 
     String beforeClass = "class  A <   U    > {\n}";
-    doTextTest(beforeClass, "class A< U > {\n}");
+    formatter.doTextTest(beforeClass, "class A< U > {\n}");
 
-    getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = false;
-    doMethodTest(beforeLocal, "Map<String, String> map = new HashMap<String, String>();");
-    doClassTest(beforeMethod, "static <T> void fromArray(T[] a, Collection<T> c) {\n}");
-    doTextTest(beforeClass, "class A<U> {\n}");
+    formatter.getJavaSettings().SPACES_WITHIN_ANGLE_BRACKETS = false;
+    formatter.doMethodTest(beforeLocal, "Map<String, String> map = new HashMap<String, String>();");
+    formatter.doClassTest(beforeMethod, "static <T> void fromArray(T[] a, Collection<T> c) {\n}");
+    formatter.doTextTest(beforeClass, "class A<U> {\n}");
   }
 
+  @Test
   public void testSpaceAfterClosingAngleBracket_InTypeArgument() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String before = "Bar.<String, Integer>    mess(null);";
 
-    getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = false;
-    doMethodTest(before, "Bar.<String, Integer>mess(null);");
+    formatter.getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = false;
+    formatter.doMethodTest(before, "Bar.<String, Integer>mess(null);");
 
-    getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = true;
-    doMethodTest(before, "Bar.<String, Integer> mess(null);");
+    formatter.getJavaSettings().SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = true;
+    formatter.doMethodTest(before, "Bar.<String, Integer> mess(null);");
   }
 
+  @Test
   public void testSpaceBeforeOpeningAngleBracket_InTypeParameter() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String before = "class        A<T> {\n}";
 
-    getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
-    doTextTest(before, "class A<T> {\n}");
+    formatter.getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
+    formatter.doTextTest(before, "class A<T> {\n}");
 
-    getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = true;
-    doTextTest(before, "class A <T> {\n}");
+    formatter.getJavaSettings().SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = true;
+    formatter.doTextTest(before, "class A <T> {\n}");
   }
 
+  @Test
   public void testSpaceAroundTypeBounds() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String before = "public class     Foo<T extends Bar & Abba, U> {\n}";
 
-    getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
-    doTextTest(before, "public class Foo<T extends Bar & Abba, U> {\n}");
+    formatter.getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
+    formatter.doTextTest(before, "public class Foo<T extends Bar & Abba, U> {\n}");
 
-    getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = false;
-    doTextTest(before, "public class Foo<T extends Bar&Abba, U> {\n}");
+    formatter.getJavaSettings().SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = false;
+    formatter.doTextTest(before, "public class Foo<T extends Bar&Abba, U> {\n}");
   }
 
+  @Test
   public void testInnerTypeAnnotations() {
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         class C<@TA(1)T> {
             L<@TA(2)A> f = (@TA(3)  A) new @TA(4)  A() {
@@ -600,28 +666,33 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testClassObjectAccessExpression_BeforeDot() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String before = "Test       \n         .class";
 
-    getSettings().KEEP_LINE_BREAKS = true;
-    doMethodTest(before, "Test\n        .class");
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
+    formatter.doMethodTest(before, "Test\n        .class");
 
-    getSettings().KEEP_LINE_BREAKS = false;
-    doMethodTest(before, "Test.class");
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.doMethodTest(before, "Test.class");
   }
 
+  @Test
   public void testClassObjectAccessExpression_AfterDot() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String before = "Test.      \n     class";
 
-    getSettings().KEEP_LINE_BREAKS = true;
-    doMethodTest(before, "Test.\n        class");
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
+    formatter.doMethodTest(before, "Test.\n        class");
 
-    getSettings().KEEP_LINE_BREAKS = false;
-    doMethodTest(before, "Test.class");
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.doMethodTest(before, "Test.class");
   }
 
+  @Test
   public void testMultipleFieldDeclaration_InAnonymousClass() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         new Object() {
         boolean one, two;
@@ -633,10 +704,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testCommentBetweenAnnotationAndModifierList() {
-    getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+    formatter.doClassTest("""
                   @Override
                   //FIX me this stupid stuff
                   public void run() {
@@ -651,9 +724,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                   }""");
   }
 
+  @Test
   public void testSpace_BeforeSemicolon_InsideFor() {
-    getSettings().SPACE_BEFORE_SEMICOLON = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_BEFORE_SEMICOLON = true;
+    formatter.doMethodTest(
       """
         int i = 0;
         for (; i < 10 ; i++) {
@@ -667,9 +742,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSpace_BeforeSemicolon_InsideFor_IfSpacesWithinForIsOn() {
-    getSettings().SPACE_WITHIN_FOR_PARENTHESES = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_WITHIN_FOR_PARENTHESES = true;
+    formatter.doMethodTest(
       """
         int i = 0;
         for (; i < 10 ; i++) {
@@ -683,37 +760,43 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSpaceBeforeTypeArgumentList() {
-    getSettings().SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
+    formatter.doMethodTest(
       "Map<Int, String> map = new HashMap<Int, String>();",
       "Map <Int, String> map = new HashMap <Int, String>();"
     );
-    doMethodTest(
+    formatter.doMethodTest(
       "Bar.<Int, String>call();",
       "Bar. <Int, String>call();"
     );
   }
 
+  @Test
   public void testKeepLineBreaksWorks_InsidePolyExpression() {
-    getSettings().KEEP_LINE_BREAKS = false;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_LINE_BREAKS = false;
+    formatter.doMethodTest(
       "int x = (1 + 2 + 3) *\n" +
       "        (1 + 2 + 2) * (1 + 2);",
       "int x = (1 + 2 + 3) * (1 + 2 + 2) * (1 + 2);"
     );
   }
 
+  @Test
   public void testKeepFinalOnLine() {
-    doClassTest(
+    formatterFixture.get().doClassTest(
       "public    static void bar(@NonNls final String[] args) {\n" +
       "}",
       "public static void bar(@NonNls final String[] args) {\n" +
       "}");
   }
 
+  @Test
   public void testEnumAnnotations() {
-    doTextTest("""
+    formatterFixture.get().doTextTest("""
                  enum SampleEnum {
                      @Annotation("1")ONE,
                      @Annotation("2")TWO,
@@ -727,9 +810,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  }""");
   }
 
+  @Test
   public void testSpaceBeforeComma() {
-    getSettings().SPACE_BEFORE_COMMA = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_BEFORE_COMMA = true;
+    formatter.doClassTest(
       """
         public void main(String[] args, String xxx) {
           foo(100, 200);
@@ -740,26 +825,33 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testSpacingAroundVarKeyword() {
-    doMethodTest("for (  var  path :  paths) ;", "for (var path : paths) ;");
-    doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.doMethodTest("for (  var  path :  paths) ;", "for (var path : paths) ;");
+    formatter.doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
   }
 
+  @Test
   public void testSpacingBeforeColonInForeach() {
-    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = false;
-    doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
-    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
-    doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = false;
+    formatter.doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
+    formatter.getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
+    formatter.doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
   }
 
+  @Test
   public void testOneLineEnumSpacing() {
-    getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
-    doTextTest("enum E {E1, E2}",
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
+    formatter.doTextTest("enum E {E1, E2}",
                "enum E { E1, E2 }");
   }
 
+  @Test
   public void testSwitchLabelSpacing() {
-    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break; }",
+    formatterFixture.get().doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break; }",
                  """
                    switch (i) {
                        case 1:
@@ -769,8 +861,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                    }""");
   }
 
+  @Test
   public void testSwitchLabeledRuleSpacing() {
-    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception(); }",
+    formatterFixture.get().doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception(); }",
                  """
                    switch (i) {
                        case 1 -> foo();
@@ -781,8 +874,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                    }""");
   }
 
+  @Test
   public void testMultiValueLabel() {
-    doMethodTest("switch(i) { case 1,2,  3: break; }",
+    formatterFixture.get().doMethodTest("switch(i) { case 1,2,  3: break; }",
                  """
                    switch (i) {
                        case 1, 2, 3:
@@ -790,25 +884,29 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                    }""");
   }
 
+  @Test
   public void testMultiValueLabeledRule() {
-    doMethodTest("switch(i) { case 1,2,  3 -> foo(); }",
+    formatterFixture.get().doMethodTest("switch(i) { case 1,2,  3 -> foo(); }",
                  """
                    switch (i) {
                        case 1, 2, 3 -> foo();
                    }""");
   }
 
+  @Test
   public void testSwitchExpression() {
-    doMethodTest("String s = switch\n(i   ){default -> null;}",
+    formatterFixture.get().doMethodTest("String s = switch\n(i   ){default -> null;}",
                  """
                    String s = switch (i) {
                        default -> null;
                    }""");
   }
 
+  @Test
   public void testBreakStatementSpacing() {
-    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    formatter.doMethodTest("""
                    String s = switch (i) {
                        case 1: break
                            label ;
@@ -823,9 +921,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                    }""");
   }
 
+  @Test
   public void testYieldStatementSpacing() {
-    getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
+    formatter.doMethodTest("""
                    String s = switch (i) {
                        case 0: yield(foo) ;
                        case 1: yield
@@ -842,43 +942,53 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                    }""");
   }
 
+  @Test
   public void testSpaceAfterCommaInRecordHeader() {
-    getSettings().SPACE_AFTER_COMMA = true;
-    doMethodTest("record R(String s,int i){}",
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_AFTER_COMMA = true;
+    formatter.doMethodTest("record R(String s,int i){}",
                  "record R(String s, int i) {\n" +
                  "}");
   }
 
+  @Test
   public void testSpaceBeforeCommaInRecordHeader() {
-    getSettings().SPACE_AFTER_COMMA = false;
-    getSettings().SPACE_BEFORE_COMMA = true;
-    doMethodTest("record R(String s,int i){}",
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_AFTER_COMMA = false;
+    formatter.getSettings().SPACE_BEFORE_COMMA = true;
+    formatter.doMethodTest("record R(String s,int i){}",
                  "record R(String s ,int i) {\n" +
                  "}");
   }
 
+  @Test
   public void testSpaceBetweenGenericsAndName() {
-    doTextTest("record A(List<String> string){}",
+    formatterFixture.get().doTextTest("record A(List<String> string){}",
                "record A(List<String> string) {\n" +
                "}");
   }
 
+  @Test
   public void testSpaceWithinRecordHeader() {
-    getJavaSettings().SPACE_WITHIN_RECORD_HEADER = true;
-    doTextTest("record A(String string){}",
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().SPACE_WITHIN_RECORD_HEADER = true;
+    formatter.doTextTest("record A(String string){}",
                "record A( String string ) {\n" +
                "}");
   }
 
+  @Test
   public void testSpaceBetweenAnnotationAndType() {
-    doTextTest("record A(@Foo()String string) {}",
+    formatterFixture.get().doTextTest("record A(@Foo()String string) {}",
                "record A(@Foo() String string) {\n" +
                "}");
   }
 
+  @Test
   public void testSpacesAroundRelationalOperators() {
-    getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = true;
+    formatter.doMethodTest(
       """
         if (x >= 1 && y < 100) {
                  if (x<=5 && y>50) {
@@ -893,8 +1003,8 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
             }
         }"""
     );
-    getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = false;
-    doMethodTest(
+    formatter.getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = false;
+    formatter.doMethodTest(
       """
         if (x   >=   1 && y    <  100) {
                  if (x  <=  5 && y   >   50) {
@@ -911,18 +1021,21 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIdea250968() {
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doClassTest(
       "public Long getId (){return id;}",
 
       "public Long getId() { return id; }"
     );
   }
 
+  @Test
   public void testSnippet() {
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         /**
          * {@snippet lang=java}
@@ -936,28 +1049,34 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         class {}""");
   }
 
+  @Test
   public void testLeftShiftExpressionSpacing() {
-    getSettings().SPACE_AROUND_SHIFT_OPERATORS = false;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_AROUND_SHIFT_OPERATORS = false;
+    formatter.doMethodTest(
       "int x = a << 2;",
       "int x = a<<2;");
   }
 
+  @Test
   public void testRightShiftExpressionSpacing() {
-    getSettings().SPACE_AROUND_SHIFT_OPERATORS = false;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_AROUND_SHIFT_OPERATORS = false;
+    formatter.doMethodTest(
       "int x = a >> 2;",
       "int x = a>>2;");
   }
 
+  @Test
   public void testNamedRecordPatternSpacing() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       "return o instanceof Rec(int i)r",
       "return o instanceof Rec(int i) r");
   }
 
+  @Test
   public void testDeconstructionPatternSpacing() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         switch (a) {
          case R  ( int x , String y  , char [ ] chs, List < A > list) -> {}
@@ -969,9 +1088,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testDeconstructionPatternSpacingBeforeComma() {
-    getSettings().SPACE_BEFORE_COMMA = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_BEFORE_COMMA = true;
+    formatter.doMethodTest(
       """
         switch (a) {
          case R  (int x,String y,char [ ] chs,List < A > list) -> {}
@@ -983,9 +1104,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testDeconstructionPatternSpacingWithin() {
-    getJavaSettings().SPACE_WITHIN_DECONSTRUCTION_LIST = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().SPACE_WITHIN_DECONSTRUCTION_LIST = true;
+    formatter.doMethodTest(
       """
         switch (a) {
          case R(int x,String y) -> {}
@@ -997,9 +1120,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testDeconstructionPatternSpacingBefore() {
-    getJavaSettings().SPACE_BEFORE_DECONSTRUCTION_LIST = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().SPACE_BEFORE_DECONSTRUCTION_LIST = true;
+    formatter.doMethodTest(
       """
         switch (a) {
          case R(int x,String y) -> {}
@@ -1011,10 +1136,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testDeconstructionPatternNewLineAfterLpar() {
-    getJavaSettings().NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = true;
-    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = true;
+    formatter.getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.doMethodTest(
       """
         switch (a) {
          case R(int x, String y) -> {}
@@ -1029,10 +1156,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testDeconstructionPatternNewLineBeforeRpar() {
-    getJavaSettings().RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = true;
-    getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = true;
+    formatter.getJavaSettings().DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.doMethodTest(
       """
         switch (a) {
          case R(int x, String y) -> {}
@@ -1047,8 +1176,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testSpaceBetweenWhenAndPattern() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       """
         switch (xx) {
               case S(int x)when   true -> y();
@@ -1059,9 +1189,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testEmptyCaseinSwitch() {
-    getSettings().RIGHT_MARGIN = 30;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RIGHT_MARGIN = 30;
+    formatter.doMethodTest("""
                    switch (b) {
                        case   
                                         -> 1;
@@ -1075,9 +1207,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  );
   }
 
+  @Test
   public void testUnfinishedCaseinSwitch() {
-    getSettings().RIGHT_MARGIN = 30;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().RIGHT_MARGIN = 30;
+    formatter.doMethodTest("""
                    switch (b) {
                        case 1,   
                                      -> 1;
@@ -1091,17 +1225,20 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testForeachPatternInside() {
-    doMethodTest(
+    formatterFixture.get().doMethodTest(
       "for (Rec(): foo)",
       "for (Rec() : foo)");
   }
 
+  @Test
   public void testSemicolOnNewLineInLongCallChainWithWrapping() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
 
-    doTextTest("""
+    formatter.doTextTest("""
                  class Foo {
                      int x = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
                                   
@@ -1135,10 +1272,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
   }
 
+  @Test
   public void testSemicolonOnNewLineInLongCallChainNoWrapping() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
-    doTextTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    formatter.doTextTest("""
                  class Foo {
                      int x = new Summator().reallyLongLongLongAddOperation(1).reallyLongLongLongAddOperation(1).get();
                                   
@@ -1162,10 +1301,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  """);
   }
 
+  @Test
   public void testSemicolonOnNewLineInShortCallChainWithWrapping() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
-    doTextTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    formatter.doTextTest("""
                  class Foo {
                      int x = new Summator().reallyLongLongLongAddOperation(1).get();
                                   
@@ -1192,10 +1333,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  """);
   }
 
+  @Test
   public void testSemicolonOnNewLineInLongCallChainWithWrappingInForStatement() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getJavaSettings().WRAP_SEMICOLON_AFTER_CALL_CHAIN = true;
+    formatter.doMethodTest("""
                    for (int i = new Summator().add(1).add(1).get(); i < new Summator().add(1).add(10).get(); ++i) {}
                    """,
                  """

@@ -15,10 +15,20 @@
  */
 package com.intellij.java.psi.formatter.java
 
-class JavaInvalidCodeFormatterTest: AbstractJavaFormatterTest() {
-  
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+
+@TestApplication
+class JavaInvalidCodeFormatterTest {
+  companion object {
+    private val projectFixture = javaFormatterProjectFixture()
+  }
+
+  private val formatter by javaFormatterFixture(projectFixture)
+
+  @Test
   fun `test do not collapse space after error element`() {
-    doClassTest(
+    formatter.doClassTest(
         """
 public void some(String m) {
 File mFile = new File(m);

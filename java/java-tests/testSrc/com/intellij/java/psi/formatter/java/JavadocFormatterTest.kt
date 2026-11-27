@@ -1,26 +1,36 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavadocFormatterTest : AbstractJavaFormatterTest() {
-  
+@TestApplication
+class JavadocFormatterTest {
+  companion object {
+    private val projectFixture = javaFormatterProjectFixture()
+  }
+
+  private val formatter by javaFormatterFixture(projectFixture)
+
   private fun doTextTestIdempotent(before: String, after: String) {
-    doTextTest(before, after)
-    doTextTest(after, after)
+    formatter.doTextTest(before, after)
+    formatter.doTextTest(after, after)
   }
   
   
+  @Test
   fun testRIGHT_MARGIN() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_LONG_LINES = true
       RIGHT_MARGIN = 35
     }
-    doTextTest(
+    formatter.doTextTest(
       "/** Here is one-line java-doc comment */" +
       "class Foo {\n" +
       "}",
@@ -33,8 +43,9 @@ class JavadocFormatterTest : AbstractJavaFormatterTest() {
       "}")
   }
 
+  @Test
   fun testNoFormattingIfStartsWithLotsOfAsterisks() {
-    doTextTest(
+    formatter.doTextTest(
       """/****
  * description
  *
@@ -53,13 +64,14 @@ class X {
 }""")
   }
 
+  @Test
   fun testDoNotWrapLink() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_LONG_LINES = true
       RIGHT_MARGIN = 70
     }
 
-    doTextTest(
+    formatter.doTextTest(
       "/**\n" +
       " * Some of the usl contained {@link sdfsdf.test.ttttttt.ssss.stttt.tttttttcom}\n" +
       " */\n" +
@@ -74,13 +86,14 @@ class X {
       "}")
   }
 
+  @Test
   fun testNoWrapInALink() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_LONG_LINES = true
       RIGHT_MARGIN = 70
     }
 
-    doTextTest(
+    formatter.doTextTest(
       "/**\n" +
       " * Some of the usl contained <a href=\"http://martinfowler.com/articles/replaceThrowWithNotification.html\">\n" +
       " */\n" +
@@ -95,8 +108,9 @@ class X {
       "}")
   }
 
+  @Test
   fun testPackageJavadoc() {
-    doTextTest(
+    formatter.doTextTest(
       """/**
  *              super auper
  */
@@ -110,8 +124,9 @@ package com;
 """)
   }
 
+  @Test
   fun testDoWrapOnAsterisks() {
-    doTextTest(
+    formatter.doTextTest(
       """/***********
  *
  *********************/
@@ -130,8 +145,9 @@ public class Test {
 """)
   }
 
+  @Test
   fun testWrapAfterAsterisks() {
-    doTextTest(
+    formatter.doTextTest(
       """/** hollla la
  * I am javadoc comment
  * heey ***********/
@@ -148,8 +164,9 @@ class T {
 """)
   }
 
+  @Test
   fun testStrangeComment() {
-    doTextTest(
+    formatter.doTextTest(
       """/**F*****/
 public class T {
 }""",
@@ -161,18 +178,20 @@ public class T {
 }""")
   }
 
+  @Test
   fun testIncompleteJavadoc() {
-    doTextTest("/**\n", "/**\n")
+    formatter.doTextTest("/**\n", "/**\n")
   }
 
+  @Test
   fun testEA49739() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_LONG_LINES = true
       RIGHT_MARGIN = 35
       WRAP_COMMENTS = true
     }
 
-    doTextTest(
+    formatter.doTextTest(
       "class A {\n" +
       "    /**\n" +
       "     * @return a is one line javadoc\n" +
@@ -193,15 +212,16 @@ public class T {
       "}")
   }
 
+  @Test
   fun testOneLineCommentWrappedByRIGHT_MARGINIntoMultiLine() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 35
     }
-    javaSettings.ENABLE_JAVADOC_FORMATTING = true
-    javaSettings.JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
+    formatter.javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    formatter.javaSettings.JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
 
-    doTextTest(
+    formatter.doTextTest(
       """/** Here is one-line java-doc comment */class Foo {
 }""",
 
@@ -213,15 +233,16 @@ class Foo {
 }""")
   }
 
+  @Test
   fun testLineFeedsArePreservedDuringWrap() {
     // Inspired by IDEA-61895
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 48
     }
-    javaSettings.JD_PRESERVE_LINE_FEEDS = true
+    formatter.javaSettings.JD_PRESERVE_LINE_FEEDS = true
 
-    doTextTest(
+    formatter.doTextTest(
       """/**
  * This is a long comment that spans more than one
  * line
@@ -238,27 +259,29 @@ class Test {
 }""")
   }
 
+  @Test
   fun testSCR11296() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 50
       WRAP_COMMENTS = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_P_AT_EMPTY_LINES = false
       JD_KEEP_EMPTY_LINES = false
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR2632() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 20
     }
-    javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    formatter.javaSettings.ENABLE_JAVADOC_FORMATTING = true
 
-    doTextTest(
+    formatter.doTextTest(
       """/**
  * <p />
  * Another paragraph of the description placed after blank line.
@@ -277,11 +300,12 @@ class A {
 }""")
   }
 
+  @Test
   fun testPreserveExistingSelfClosingTagsAndGenerateOnlyPTag() {
-    javaSettings.ENABLE_JAVADOC_FORMATTING = true
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
+    formatter.javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    IdeaTestUtil.setProjectLanguageLevel(formatter.project, LanguageLevel.JDK_1_7)
 
-    doTextTest(
+    formatter.doTextTest(
       """/**
  * My test comment
  * <p/>
@@ -301,15 +325,16 @@ class T {
 }""")
   }
 
+  @Test
   fun testParagraphTagGeneration() {
     // Inspired by IDEA-61811
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_P_AT_EMPTY_LINES = true
     }
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
+    IdeaTestUtil.setProjectLanguageLevel(formatter.project, LanguageLevel.JDK_1_7)
 
-    doTextTest(
+    formatter.doTextTest(
       """/**
  * line 1
  *
@@ -337,14 +362,15 @@ class Test {
 }""")
   }
 
+  @Test
   fun testParameterDescriptionNotOnNewLine() {
     // IDEA-107383
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_ALIGN_PARAM_COMMENTS = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  @param protocolId protocol id
  @param connectedUserIdHandlerFromServer user id
@@ -362,15 +388,16 @@ public void register(int protocolId, int connectedUserIdHandlerFromServer) {
 }""")
   }
 
+  @Test
   fun testWrappedParameterDescription() {
     // Inspired by IDEA-13072
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_PARAM_DESCRIPTION_ON_NEW_LINE = true
     }
-    settings.WRAP_COMMENTS = true
+    formatter.settings.WRAP_COMMENTS = true
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  * test description
  * @param first first description
@@ -398,13 +425,14 @@ void test(int first, int second, int third, int forth) {
 }""")
   }
 
+  @Test
   fun testExceptionAlignmentCorrect() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_ALIGN_EXCEPTION_COMMENTS = true
     }
 
-    doTextTest(
+    formatter.doTextTest(
       """public class Controller {
 
     /**
@@ -434,8 +462,9 @@ void test(int first, int second, int third, int forth) {
 }""")
   }
 
+  @Test
   fun testDoNotWrapMultiLineCommentIntoOneLine() {
-    javaSettings.apply{
+    formatter.javaSettings.apply{
       ENABLE_JAVADOC_FORMATTING = true
       JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
     }
@@ -446,11 +475,12 @@ void test(int first, int second, int third, int forth) {
 public Object next() {
     return new Object();
 }"""
-    doClassTest(test, test)
+    formatter.doClassTest(test, test)
   }
 
+  @Test
   fun testLeaveOneLineComment() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
     }
@@ -459,16 +489,17 @@ public Object next() {
 public Object next() {
     return new Object();
 }"""
-    doClassTest(test, test)
+    formatter.doClassTest(test, test)
   }
 
+  @Test
   fun testWrapOneLineComment() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/** foo */
 public Object next() {
     return new Object();
@@ -482,13 +513,14 @@ public Object next() {
 }""")
   }
 
+  @Test
   fun testWrapStrangeComment() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/** foo */
 public Object next() {
     return new Object();
@@ -502,12 +534,13 @@ public Object next() {
 }""")
   }
 
+  @Test
   fun testWrapStrangeCommentIfNotWrapOneLines() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
     }
-    doClassTest(
+    formatter.doClassTest(
       """/** foo
  */public Object next() {
     return new Object();
@@ -521,18 +554,19 @@ public Object next() {
 }""")
   }
 
+  @Test
   fun testReturnTagAlignment() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 80
       WRAP_COMMENTS = true
       WRAP_LONG_LINES = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """    /**
      * @return this is a return value documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters, which should be greater than any sane right margin.
      */
@@ -553,18 +587,19 @@ public int method(int parameter) {
 """)
   }
 
+  @Test
   fun testReturnTagAlignmentWithPreTagOnFirstLine() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 80
       WRAP_COMMENTS = true
       WRAP_LONG_LINES = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """
       /**
        * @return <pre>this is a return value documentation with a very long description
@@ -584,17 +619,18 @@ public int method(int parameter) {
       }""".trimIndent())
   }
 
+  @Test
   fun testDoNotMergeCommentLines() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_PRESERVE_LINE_FEEDS = true
       JD_KEEP_EMPTY_LINES = false
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  * Some comment
  * 2016
@@ -613,18 +649,19 @@ public class TestCase {
 }""")
   }
 
+  @Test
   fun testSeeTagAlignment() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 80
       WRAP_COMMENTS = true
       WRAP_LONG_LINES = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """    /**
      * @see this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin
      */
@@ -643,18 +680,19 @@ public int method(int parameter) {
 }""")
   }
 
+  @Test
   fun testDummySinceTagAlignment() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 80
       WRAP_COMMENTS = true
       WRAP_LONG_LINES = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """    /**
      * @since this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin
      */
@@ -673,18 +711,19 @@ public int method(int parameter) {
 }""")
   }
 
+  @Test
   fun testDummyDeprecatedTagAlignment() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 80
       WRAP_COMMENTS = true
       WRAP_LONG_LINES = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """    /**
      * @deprecated this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin
      */
@@ -703,12 +742,13 @@ public int method(int parameter) {
 }""")
   }
 
+  @Test
   fun testJavadocFormattingIndependentOfMethodIndentation() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 50
       WRAP_COMMENTS = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
       JD_P_AT_EMPTY_LINES = false
@@ -716,7 +756,7 @@ public int method(int parameter) {
       JD_ADD_BLANK_AFTER_DESCRIPTION = false
     }
 
-    formatEveryoneAndCheckIfResultEqual(
+    formatter.formatEveryoneAndCheckIfResultEqual(
       """class A {
     /**
      * Some really great independent test approach purpose live fish
@@ -746,17 +786,18 @@ void foo() {
 }""")
   }
 
+  @Test
   fun testJavadocAlignmentForInnerClasses() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 40
       WRAP_COMMENTS = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
-    doTextTest(
+    formatter.doTextTest(
       """public class Outer {
     class Inner {
         /**
@@ -800,16 +841,17 @@ public int innerMagic() {
 }""")
   }
 
+  @Test
   fun testAlignmentWithNoTopClassMembersIndentation() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 40
       WRAP_COMMENTS = true
       DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
-    doTextTest(
+    formatter.doTextTest(
       """public class Outer {
 class Inner {
 /**
@@ -876,8 +918,9 @@ public static void main(String[] args) {
 }""")
   }
 
+  @Test
   fun testDoNotWrapLongLineCommentWithSpaceInStart() {
-    settings.apply {
+    formatter.settings.apply {
       KEEP_FIRST_COLUMN_COMMENT = true
       WRAP_LONG_LINES = true
       RIGHT_MARGIN = 200
@@ -889,16 +932,17 @@ public static void main(String[] args) {
 // AAAMIIGgIBADANBgkqhkiG9w0BAQEFAASCBugwgsdfssdflkldkflskdfsdkfjskdlfjdskjfksdjfksdjfkjsdkfjsdkfjgbkAgEAAoIBgQCZfKds4XjFWIU8D4OqCYJ0TkAkKPVV96v2l6PuMBNbON3ndHCVvwoJOJnopfbtFro9eCTCUC9MlAUZBAVdCbPVi3ioqaEN
     }
 }"""
-    doTextTest(test, test)
+    formatter.doTextTest(test, test)
   }
 
+  @Test
   fun testNotGenerateSelfClosingPTagIfLanguageLevelJava8() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_P_AT_EMPTY_LINES = true
       ENABLE_JAVADOC_FORMATTING = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  * Super method
  *
@@ -918,14 +962,15 @@ public void voo() {
 """)
   }
 
+  @Test
   fun testPTagIfLanguageLevelNotJava8() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_P_AT_EMPTY_LINES = true
       ENABLE_JAVADOC_FORMATTING = true
     }
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
+    IdeaTestUtil.setProjectLanguageLevel(formatter.project, LanguageLevel.JDK_1_7)
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  * Super method
  *
@@ -945,13 +990,14 @@ public void voo() {
 """)
   }
 
+  @Test
   fun testDoNotTouchSingleLineComments() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
       ENABLE_JAVADOC_FORMATTING = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/****** AAAAAAA *******/
 
   public void t() {
@@ -963,13 +1009,14 @@ public void t() {
 }""")
   }
 
+  @Test
   fun testKeepPTags() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_P_AT_EMPTY_LINES = true
       ENABLE_JAVADOC_FORMATTING = true
     }
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  * <pre>new
  * code</pre>
@@ -993,8 +1040,9 @@ public static void main(String[] args) {
 }""")
   }
 
+  @Test
   fun testTouchNothingInsidePreTag() {
-    doClassTest(
+    formatter.doClassTest(
       """/**
  *   Holla
  * <pre>
@@ -1016,15 +1064,16 @@ public void test() {
 }""")
   }
 
+  @Test
   fun testContinuationDescriptionFormatting() {
-    currentCodeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 40)
-    currentCodeStyleSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
-    javaSettings.JD_INDENT_ON_CONTINUATION = true
-    javaSettings.JD_ALIGN_PARAM_COMMENTS = false
-    javaSettings.JD_ALIGN_EXCEPTION_COMMENTS = false
-    settings.WRAP_COMMENTS = true
+    CodeStyle.getSettings(formatter.project).setRightMargin(JavaLanguage.INSTANCE, 40)
+    CodeStyle.getSettings(formatter.project).getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
+    formatter.javaSettings.JD_INDENT_ON_CONTINUATION = true
+    formatter.javaSettings.JD_ALIGN_PARAM_COMMENTS = false
+    formatter.javaSettings.JD_ALIGN_EXCEPTION_COMMENTS = false
+    formatter.settings.WRAP_COMMENTS = true
 
-    doClassTest(
+    formatter.doClassTest(
       """/**
  * Just some random text
  * @param aParameter randomness in life does not mean it's easy to generate random text
@@ -1061,9 +1110,10 @@ String test(int aParameter, int bParameter) {
 """)
   }
 
+  @Test
   fun testJavadocWithTabs() {
-    javaSettings.JD_KEEP_EMPTY_LINES = false
-    doClassTest(
+    formatter.javaSettings.JD_KEEP_EMPTY_LINES = false
+    formatter.doClassTest(
       "\t/**\n" +
       "\t \t *\n" +
       "\t \t *\n" +
@@ -1078,8 +1128,9 @@ String test(int aParameter, int bParameter) {
       "}")
   }
 
+  @Test
   fun testMultipleSince() {
-    doTextTest(
+    formatter.doTextTest(
       """/**
  * @since 1.7
  * @since 2.0
@@ -1095,8 +1146,9 @@ public class C {
 }""")
   }
 
+  @Test
   fun testModuleComment() {
-    doTextTest(
+    formatter.doTextTest(
       """/**
  * A module.
  * @uses SomeService
@@ -1113,13 +1165,14 @@ module M {
 }""")
   }
 
+  @Test
   fun testRichHtml() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 50
     }
-    javaSettings.JD_ADD_BLANK_AFTER_DESCRIPTION = false
-    doTextTest(
+    formatter.javaSettings.JD_ADD_BLANK_AFTER_DESCRIPTION = false
+    formatter.doTextTest(
       """public class Test {
     /**
      * <h1>A description containing HTML tags</h1>
@@ -1176,9 +1229,10 @@ module M {
   /**
    * See [IDEA-153768](https://youtrack.jetbrains.com/issue/IDEA-153768)
    */
+  @Test
   fun testPTagsBeforeTags() {
-    javaSettings.JD_P_AT_EMPTY_LINES = true
-    doTextTest(
+    formatter.javaSettings.JD_P_AT_EMPTY_LINES = true
+    formatter.doTextTest(
 """
 package com.company;
 
@@ -1224,13 +1278,14 @@ public class Test {
   /**
    * See [IDEA-21623](https://youtrack.jetbrains.com/issue/IDEA-21623)
    */
+  @Test
   fun testPreTagWithAttributes() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 60
     }
 
-    doTextTest(
+    formatter.doTextTest(
 """
 package com.company;
 
@@ -1275,14 +1330,15 @@ interface Test {
   }
 
 
+  @Test
   fun testIdea175161() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 160
       WRAP_COMMENTS = true
       KEEP_LINE_BREAKS = false
     }
 
-    doTextTest(
+    formatter.doTextTest(
 """package com.company;
 
 public class Test {
@@ -1315,11 +1371,12 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea180882() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_KEEP_EMPTY_PARAMETER = false
     }
-    doTextTest(
+    formatter.doTextTest(
 """
 public class Test {
 
@@ -1347,8 +1404,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea205110() {
-    doTextTest(
+    formatter.doTextTest(
       """
       package com.test;
 
@@ -1387,8 +1445,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea147601() {
-    doTextTest(
+    formatter.doTextTest(
       """
       public class Idea147601 {
       /**
@@ -1436,13 +1495,14 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea221827() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 40
       WRAP_LONG_LINES = true
     }
 
-    doTextTest(
+    formatter.doTextTest(
       """
       /**
        * <pre>
@@ -1464,8 +1524,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea219194() {
-    doTextTest(
+    formatter.doTextTest(
       """
       public class Test {
           /**
@@ -1496,8 +1557,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea186041() {
-    doTextTest(
+    formatter.doTextTest(
       """
       import java.util.function.Function;
 
@@ -1554,12 +1616,13 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdea198240() {
     val config = TodoConfiguration.getInstance()
     val currFlag = config.isMultiLine
     try {
       config.isMultiLine = true
-      doTextTest(
+      formatter.doTextTest(
         """
         public class Test {
             /**
@@ -1593,12 +1656,13 @@ public class Test {
     }
   }
 
+  @Test
   fun testIdea277973() {
     val config = TodoConfiguration.getInstance()
     val currFlag = config.isMultiLine
     try {
       config.isMultiLine = true
-      doTextTest(
+      formatter.doTextTest(
         """
         public class Test {
             /**
@@ -1632,12 +1696,13 @@ public class Test {
     }
   }
 
+  @Test
   fun testIdea122233() {
-    settings.apply {
+    formatter.settings.apply {
       RIGHT_MARGIN = 60
       WRAP_COMMENTS = true
     }
-      doTextTest(
+      formatter.doTextTest(
         """
         /**
          * object that can be loaded into a {@link javax.sound.midi.Synthesizer}.
@@ -1657,8 +1722,9 @@ public class Test {
       )
   }
 
+  @Test
   fun testEmptyJavadoc() {
-      doTextTest(
+      formatter.doTextTest(
         """
         /**
           */
@@ -1676,8 +1742,9 @@ public class Test {
       )
   }
 
+  @Test
   fun testJavadoc() {
-      doTextTest(
+      formatter.doTextTest(
         """
         /**
           */
@@ -1695,8 +1762,9 @@ public class Test {
       )
   }
 
+  @Test
   fun testSnippet() {
-      doTextTest(
+      formatter.doTextTest(
         """
         /** {@snippet:
           *   void foo() {
@@ -1722,8 +1790,9 @@ public class Test {
       )
   }
 
+  @Test
   fun testSnippetInBeginning() {
-      doTextTest(
+      formatter.doTextTest(
         """
         /** {@snippet:
           *   void foo() {
@@ -1755,8 +1824,9 @@ public class Test {
       )
   }
 
+  @Test
   fun testSnippet2() {
-      doTextTest(
+      formatter.doTextTest(
         """
         /** {@snippet:
           *   void foo() {
@@ -1799,8 +1869,9 @@ public class Test {
   }
 
 
+  @Test
   fun testSnippetWithEmptyLine() {
-    doTextTest(
+    formatter.doTextTest(
       """
         /** {@snippet:
           *   void foo() {
@@ -1828,8 +1899,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testSnippetHasSpacesBetweenSnippetAttributes() {
-    doTextTest(
+    formatter.doTextTest(
       """
         /** 
           * {@snippet class = ExternalSnippets region = join2}
@@ -1848,8 +1920,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testMarkdownAlignment(){
-    doTextTest("""
+    formatter.doTextTest("""
       /// Oh hello there
         /// I'm misaligned on purpose
           /// Think you can fix me ?
@@ -1863,9 +1936,10 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testJavaDocNoKeepEmptyLinesWithDescriptionAndParam() {
-    javaSettings.JD_KEEP_EMPTY_LINES = false
-    doTextTest("""
+    formatter.javaSettings.JD_KEEP_EMPTY_LINES = false
+    formatter.doTextTest("""
       /**
        *
        *
@@ -1892,8 +1966,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testJavaDocKeepEmptyLinesWithDescriptionAndParam() {
-    doTextTest("""
+    formatter.doTextTest("""
       /**
        *
        *
@@ -1926,9 +2001,10 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownNoKeepEmptyLinesWithDescriptionAndParam() {
-    javaSettings.JD_KEEP_EMPTY_LINES = false
-    doTextTest("""
+    formatter.javaSettings.JD_KEEP_EMPTY_LINES = false
+    formatter.doTextTest("""
        ///
        ///
        /// description
@@ -1952,8 +2028,9 @@ public class Test {
   }
 
 
+  @Test
   fun testMarkdownKeepEmptyLinesWithDescriptionAndParam() {
-    doTextTest("""
+    formatter.doTextTest("""
        ///
        ///
        /// description
@@ -1982,9 +2059,10 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testJavadocNoKeepEmptyLinesOnlyEmptyLines() {
-    javaSettings.JD_KEEP_EMPTY_LINES = false
-    doTextTest("""
+    formatter.javaSettings.JD_KEEP_EMPTY_LINES = false
+    formatter.doTextTest("""
       /**
        * 
        * 
@@ -2001,8 +2079,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testJavadocKeepEmptyLinesOnlyEmptyLines() {
-    doTextTest("""
+    formatter.doTextTest("""
       /**
        * 
        * 
@@ -2022,9 +2101,10 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownNoKeepEmptyLinesOnlyEmptyLines() {
-    javaSettings.JD_KEEP_EMPTY_LINES = false
-    doTextTest("""
+    formatter.javaSettings.JD_KEEP_EMPTY_LINES = false
+    formatter.doTextTest("""
       ///
       ///
       ///
@@ -2036,8 +2116,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownKeepEmptyLinesOnlyEmptyLines() {
-    doTextTest("""
+    formatter.doTextTest("""
       ///
       ///
       ///
@@ -2051,8 +2132,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownSpacing(){
-    doTextTest("""
+    formatter.doTextTest("""
       ///I'm stuck to the leading slashes !
       public class Main {}
     """.trimIndent(), """
@@ -2062,8 +2144,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownSpacing2() {
-    doTextTest("""
+    formatter.doTextTest("""
       ///
       ///     Purposefully misaaligned stuff
       public class Main {}
@@ -2075,8 +2158,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownNoTagInsert() {
-    doTextTest("""
+    formatter.doTextTest("""
     /// Method blabla bla
     /// 
     /// @param toto imagine
@@ -2101,8 +2185,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownRemoveSpaces() {
-    doTextTest("""
+    formatter.doTextTest("""
     public class Main {
       /// Method blabla bla 
       ///  
@@ -2131,8 +2216,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testBracketsInReferenceLink(){
-    doTextTest("""
+    formatter.doTextTest("""
       /// [String#copyValueOf(char\[\], int, int)]
       public class Main {
         void test(char[] foo) {}
@@ -2146,8 +2232,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testSpacesInReferenceLinkLookalike() {
-    doTextTest("""
+    formatter.doTextTest("""
       /// [Hello, world] fake link with a comma
       /// \format[WrapFileLinks(\i. \d (\p))]{\file}
       public class Main {}
@@ -2158,16 +2245,17 @@ public class Test {
       }""".trimIndent())
   }
 
+  @Test
   fun testListItemIndentBeingPreserved() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 120
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_PRESERVE_LINE_FEEDS = false
     }
 
-    doTextTest("""
+    formatter.doTextTest("""
     /// This method is
     /// supported for the benefit of hash tables such as those provided by
     /// [java.util.HashMap].
@@ -2203,16 +2291,17 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownConstructsImmuneToWrapping() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 120
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_PRESERVE_LINE_FEEDS = false
     }
 
-    doTextTest("""
+    formatter.doTextTest("""
     /// 
     ///         | Latin | Greek |
     ///         |-------|-------|
@@ -2245,16 +2334,17 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownConstructsNoAffectedInLegacy() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 120
     }
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       JD_PRESERVE_LINE_FEEDS = false
     }
 
-    doTextTest("""
+    formatter.doTextTest("""
     /**         | Latin | Greek |
      *          |-------|-------|
      *          | a     | alpha |
@@ -2279,13 +2369,14 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownTags() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 120
     }
 
-    doTextTest("""
+    formatter.doTextTest("""
       class Test {
           ///  @param  arg  description
           ///     @return   description
@@ -2304,13 +2395,14 @@ public class Test {
       }""".trimIndent())
   }
 
+  @Test
   fun testMarkdownSplitToParagraphs() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 40
     }
 
-    doTextTest("""
+    formatter.doTextTest("""
     class Main {
         /// @return Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
         public int foo() { return 0; }
@@ -2327,8 +2419,9 @@ public class Test {
     """.trimIndent())
   }
 
+  @Test
   fun testMarkdownCodeBlocksNotAffected() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 120
     }
@@ -2351,12 +2444,13 @@ public class Test {
       }
       """.trimIndent()
 
-    doTextTest(before, after)
-    doTextTest(after, after)
+    formatter.doTextTest(before, after)
+    formatter.doTextTest(after, after)
   }
 
+  @Test
   fun testMarkdownTildeCodeBlock() {
-    settings.apply {
+    formatter.settings.apply {
       WRAP_COMMENTS = true
       RIGHT_MARGIN = 120
     }
@@ -2377,10 +2471,11 @@ public class Test {
       public class Foo {
       }
       """.trimIndent()
-    doTextTest(before, after)
-    doTextTest(after, after)
+    formatter.doTextTest(before, after)
+    formatter.doTextTest(after, after)
   }
   
+  @Test
   fun `test markdown inside tags`() {
     // One line is misaligned on purpose. With Markdown the spaces have meaning
     val before = """
@@ -2394,10 +2489,11 @@ public class Test {
         }
     }
     """.trimIndent()
-    doTextTest(before, before)
+    formatter.doTextTest(before, before)
   }
 
   /** See IDEA-389658 */
+  @Test
   fun testMarkdownSnippetWithAnnotation() {
     doTextTestIdempotent("""
       /// {@snippet :
@@ -2423,6 +2519,7 @@ public class Test {
   }
   
   /** See IDEA-389658 */
+  @Test
   fun testSnippetWithAnnotation() {
     doTextTestIdempotent("""
       /**

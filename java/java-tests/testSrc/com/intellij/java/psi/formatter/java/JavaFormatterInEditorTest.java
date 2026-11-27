@@ -25,17 +25,31 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Is intended to test formatting in editor behavior, i.e. check how formatting affects things like caret position, selection etc.
  */
-public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase {
+@TestApplication
+public class JavaFormatterInEditorTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testCaretPositionOnLongLineWrapping() {
     // Inspired by IDEA-70242
-    CommonCodeStyleSettings javaCommonSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaCommonSettings = CodeStyle.getSettings(codeInsightFixture.get().getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     javaCommonSettings.WRAP_LONG_LINES = true;
     javaCommonSettings.RIGHT_MARGIN = 40;
     doTest(
@@ -60,6 +74,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     );
   }
 
+  @Test
   public void testCaretPositionPreserved_WhenOnSameLineWithWhiteSpacesOnly() {
     String text = """
       class Test {
@@ -78,6 +93,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, text);
   }
 
+  @Test
   public void testCaretPositionPreserved_WhenSomeFormattingNeeded() {
     String before = """
       public class Test {
@@ -114,6 +130,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, after);
   }
 
+  @Test
   public void testCaretLineAndPositionPreserved_WhenBracketOnNextLineWillBeFormatted() {
     String before = """
       public class Test {
@@ -150,9 +167,10 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     doTest(before, after);
   }
 
+  @Test
   public void testKeepIndentsOnBlankLinesCaretPosition() {
     CommonCodeStyleSettings.IndentOptions indentOptions =
-      CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+      CodeStyle.getSettings(codeInsightFixture.get().getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
     assertNotNull(indentOptions);
     indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
     final String initial =
@@ -185,9 +203,10 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     );
   }
   
+  @Test
   public void testKeepWhitespacesOnEmptyLines() {
     CommonCodeStyleSettings.IndentOptions indentOptions =
-      CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+      CodeStyle.getSettings(codeInsightFixture.get().getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
     assertNotNull(indentOptions);
     boolean keepIndents = indentOptions.KEEP_INDENTS_ON_EMPTY_LINES;
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
@@ -221,14 +240,17 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
              \s
           }""";
 
-      configureFromFileText(getTestName(false) + ".java", initial);
+      LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+      myFixture.configureByText(myFixture.getTestName(false) + ".java", initial);
       //WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject())
       //  .reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
-       Document doc = getEditor().getDocument();
-      EditorTestUtil.performTypingAction(getEditor(), ' ');
-      PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
-      FileDocumentManager.getInstance().saveAllDocuments();
-      checkResultByText(expected);
+      myFixture.runInCommand(() -> {
+        Document doc = myFixture.getEditor().getDocument();
+        EditorTestUtil.performTypingAction(myFixture.getEditor(), ' ');
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(doc);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        myFixture.checkResult(expected);
+      });
     }
     finally {
       indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = keepIndents;
@@ -236,10 +258,11 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
     }
   } 
 
-  public void doTest(@NotNull String before, @NotNull String after) {
-    configureFromFileText(getTestName(false) + ".java", before);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
+  private void doTest(@NotNull String before, @NotNull String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText(myFixture.getTestName(false) + ".java", before);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> CodeStyleManager.getInstance(myFixture.getProject()).reformatText(myFixture.getFile(), 0, myFixture.getEditor().getDocument().getTextLength()));
 
-    checkResultByText(after);
+    myFixture.checkResult(after);
   }
 }

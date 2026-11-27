@@ -4,29 +4,42 @@ package com.intellij.java.psi.formatter.java;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CONTEXT;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
 /**
  * Is intended to hold specific java formatting tests for alignment settings (
  * {@code Project Settings - Code Style - Alignment and Braces}).
  */
-public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
+@TestApplication
+public class JavaFormatterAlignmentTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
+  @Test
   public void testChainedMethodsAlignment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-30369
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8;
-    doTest();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8;
+    formatter.doTest();
   }
 
+  @Test
   public void testMethodAndChainedField() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-79806
 
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doMethodTest(
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.doMethodTest(
       "Holder.INSTANCE\n" +
       "                .foo();",
       "Holder.INSTANCE\n" +
@@ -34,9 +47,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDanglingDotInAlignedMethodCallChain() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.doMethodTest(
       """
         foo.bar()
         .
@@ -48,9 +63,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testChainedMethodWithComments() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.doMethodTest("""
                    AAAAA.b()
                    .c() // comment after line
                    .d()
@@ -63,9 +80,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                         .e();""");
   }
 
+  @Test
   public void testChainedMethodWithBlockComment() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doTextTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.doTextTest("""
                  class X {
                      public void test() {
                          AAAAAA.b()
@@ -87,12 +106,14 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                  }""");
   }
 
+  @Test
   public void testMultipleMethodAnnotationsCommentedInTheMiddle() {
-    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
 
     // Inspired by IDEA-53942
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Test {
                   @Override
@@ -114,19 +135,23 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testTernaryOperator() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEADEV-13018
-    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
+    formatter.getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
 
-    doMethodTest("int i = a ? x\n" + ": y;", "int i = a ? x\n" + "          : y;");
+    formatter.doMethodTest("int i = a ? x\n" + ": y;", "int i = a ? x\n" + "          : y;");
   }
 
+  @Test
   public void testMethodCallArgumentsAndSmartTabs() throws IncorrectOperationException {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEADEV-20144.
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
-    doTextTest("""
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    formatter.doTextTest("""
                  class Foo {
                      void foo() {
                          bar(new Object[] {
@@ -145,12 +170,14 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                  }""");
   }
 
+  @Test
   public void testArrayInitializer() throws IncorrectOperationException {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEADEV-16136
-    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
+    formatter.getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         @SuppressWarnings({"UseOfSystemOutOrSystemErr", "AssignmentToCollectionOrArrayFieldFromParameter", "ReturnOfCollectionOrArrayField"})
         public class Some {
@@ -163,16 +190,18 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testMethodBrackets() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-53013
-    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
-    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
-    getSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
-    getSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
+    formatter.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
 
-    doClassTest(
+    formatter.doClassTest(
       """
         public void foo(int i,
                           int j) {
@@ -197,8 +226,8 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
 
     // Inspired by IDEA-55306
-    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = false;
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+    formatter.getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = false;
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
     String method =
       """
         executeCommand(new Command<Boolean>() {
@@ -206,16 +235,18 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                 return doInterrupt();
             }
         });""";
-    doMethodTest(method, method);
+    formatter.doMethodTest(method, method);
   }
 
+  @Test
   public void testFieldInColumnsAlignment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-55147
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    getSettings().VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    formatter.getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.getSettings().VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class FormattingTest {
 
@@ -268,12 +299,14 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testTabsAndFieldsInColumnsAlignment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-56242
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    getIndentOptions().USE_TAB_CHARACTER = true;
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    formatter.getIndentOptions().USE_TAB_CHARACTER = true;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Test {
         \tprivate Long field2 = null;
@@ -290,9 +323,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDoNotAlignIfNotEnabled() {
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = false;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = false;
+    formatter.doTextTest(
       """
         public class Test {
         private Long field2 = null;
@@ -309,11 +344,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAnnotatedAndNonAnnotatedFieldsInColumnsAlignment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-60237
 
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    doTextTest(
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    formatter.doTextTest(
       """
         public class Test {
             @Id
@@ -336,11 +373,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlignThrowsKeyword() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-63820
 
-    getSettings().ALIGN_THROWS_KEYWORD = true;
-    doClassTest(
+    formatter.getSettings().ALIGN_THROWS_KEYWORD = true;
+    formatter.doClassTest(
       "public void test()\n" +
       "                 throws Exception {}",
       """
@@ -349,8 +388,8 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    getSettings().ALIGN_THROWS_KEYWORD = false;
-    doClassTest(
+    formatter.getSettings().ALIGN_THROWS_KEYWORD = false;
+    formatter.doClassTest(
       "public void test()\n" +
       "                 throws Exception {}",
       """
@@ -360,28 +399,32 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlignResourceList() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
-    getSettings().ALIGN_MULTILINE_RESOURCES = true;
-    doMethodTest("try (MyResource r1 = null;\n" +
+    formatter.getSettings().ALIGN_MULTILINE_RESOURCES = true;
+    formatter.doMethodTest("try (MyResource r1 = null;\n" +
                  "MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
                  "     MyResource r2 = null) {}");
 
-    getSettings().ALIGN_MULTILINE_RESOURCES = false;
-    doMethodTest("try (MyResource r1 = null;\n" +
+    formatter.getSettings().ALIGN_MULTILINE_RESOURCES = false;
+    formatter.doMethodTest("try (MyResource r1 = null;\n" +
                  "MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
                  "        MyResource r2 = null) {}");
   }
 
 
+  @Test
   public void testChainedMethodCallsAfterFieldsChain_WithAlignment() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "a.current.current.current.getThis().getThis().getThis();",
 
       """
@@ -390,7 +433,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                                  .getThis();"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       "a.current.current.current.getThis().getThis().getThis().current.getThis().getThis().getThis().getThis();",
 
       """
@@ -407,14 +450,16 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     String formatedMethodCalls = "getThis().getThis()\n" +
                                  "         .getThis();";
 
-    doMethodTest(onlyMethodCalls, formatedMethodCalls);
+    formatter.doMethodTest(onlyMethodCalls, formatedMethodCalls);
   }
 
+  @Test
   public void testChainedMethodCallsAfterFieldsChain_WithoutAlignment() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
-    doMethodTest(
+    formatter.doMethodTest(
       "a.current.current.current.getThis().getThis().getThis();",
 
       """
@@ -424,13 +469,15 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testChainedMethodCalls_WithChopDownIfLongOption() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM; // it's equal to "Chop down if long"
-    getSettings().RIGHT_MARGIN = 50;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM; // it's equal to "Chop down if long"
+    formatter.getSettings().RIGHT_MARGIN = 50;
 
     String before = "a.current.current.getThis().getThis().getThis().getThis().getThis();";
-    doMethodTest(
+    formatter.doMethodTest(
       before,
       """
         a.current.current.getThis()
@@ -440,39 +487,43 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                          .getThis();"""
     );
 
-    getSettings().RIGHT_MARGIN = 80;
-    doMethodTest(before, before);
+    formatter.getSettings().RIGHT_MARGIN = 80;
+    formatter.doMethodTest(before, before);
   }
 
+  @Test
   public void testChainedMethodCalls_WithWrapIfNeededOption() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().RIGHT_MARGIN = 50;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.getSettings().RIGHT_MARGIN = 50;
 
     String before = "a.current.current.getThis().getThis().getThis().getThis();";
 
-    doMethodTest(
+    formatter.doMethodTest(
       before,
       "a.current.current.getThis().getThis()\n" +
       "        .getThis().getThis();"
     );
 
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       before,
       "a.current.current.getThis().getThis()\n" +
       "                 .getThis().getThis();"
     );
 
-    getSettings().RIGHT_MARGIN = 75;
-    doMethodTest(before, before);
+    formatter.getSettings().RIGHT_MARGIN = 75;
+    formatter.doMethodTest(before, before);
   }
 
+  @Test
   public void testAlignMethodCalls_PassedAsParameters_InMethodCall() {
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         test(call1(),
                      call2(),
@@ -486,9 +537,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testLocalVariablesAlignment() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       "int a = 2;\n" +
       "String myString = \"my string\"",
       "int    a        = 2;\n" +
@@ -496,9 +549,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlignOnlyDeclarationStatements() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
               String s;
            int a = 2;
@@ -512,9 +567,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlignFieldDeclarations() {
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    formatter.doClassTest(
       """
         char a = '2';
         int aaaaa = 3;
@@ -525,9 +582,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         String b;""");
   }
 
+  @Test
   public void testAlignFieldsInAnonymousClass() {
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
         (new Thread() {
                     private int a = 1;
@@ -550,9 +609,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         }).start();""");
   }
 
+  @Test
   public void testAlignVarDeclarations() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
         char a = '2';
         int aaaaa = 3;
@@ -563,9 +624,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         String b;""");
   }
 
+  @Test
   public void testDoNotAlignWhenBlankLine() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
         int a = 2;
 
@@ -577,9 +640,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDoNotAlignWhenGroupInterrupted() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
         int a = 2;
         System.out.println("hi!")
@@ -591,9 +656,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDoNotAlignMultiDeclarations() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       "  int a, b = 2;\n" +
       "String myString = \"my string\"",
       "int    a, b     = 2;\n" +
@@ -601,10 +668,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDoNotAlignMultilineParams() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         int a = 12;
           Runnable runnable = new Runnable() {
@@ -624,7 +693,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         };"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
            Runnable runnable = new Runnable() {
             @Override
@@ -644,7 +713,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         int c = 12;"""
     );
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
             int ac = 99;
         Runnable runnable = new Runnable() {
@@ -667,10 +736,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testDoNotAlign_IfFirstMultiline() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         int
                i = 0;
@@ -687,9 +758,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlign_InMethod() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doClassTest(
       """
         public void run() {
 
@@ -709,7 +782,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         }"""
     );
 
-    doClassTest(
+    formatter.doClassTest(
       """
         public void run() {
 
@@ -728,10 +801,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void test_Shift_All_AlignedParameters() {
-    myLineRange = new TextRange(2, 2);
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.setLineRange(new TextRange(2, 2));
+    formatter.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.doTextTest(
       REFORMAT_WITH_CONTEXT,
       """
         public class Test {
@@ -757,10 +832,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Align_UnselectedField_IfNeeded() {
-    myLineRange = new TextRange(2, 2);
-    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.setLineRange(new TextRange(2, 2));
+    formatter.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    formatter.doTextTest(
       REFORMAT_WITH_CONTEXT,
       """
         public class Test {
@@ -775,10 +852,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Align_UnselectedVariable_IfNeeded() {
-    myLineRange = new TextRange(3, 3);
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.setLineRange(new TextRange(3, 3));
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doTextTest(
       REFORMAT_WITH_CONTEXT,
       """
         public class Test {
@@ -797,9 +876,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Align_ConsecutiveVars_InsideIfBlock() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
         if (a > 2) {
         int a=2;
@@ -815,9 +896,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Align_ConsecutiveVars_InsideForBlock() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
             for (int i = 0; i < 10; i++) {
               int a=2;
@@ -833,9 +916,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Align_ConsecutiveVars_InsideTryBlock() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
             try {
               int x = getX();
@@ -865,9 +950,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_Align_ConsecutiveVars_InsideCodeBlock() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doMethodTest(
       """
             System.out.println("AAAA");
             int a = 2;
@@ -889,9 +976,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_AlignComments_BetweenChainedMethodCalls() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.doMethodTest(
       """
         ActionBarPullToRefresh.from(getActivity())
                 // Mark the ListView as pullable
@@ -915,9 +1004,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_AlignComments_2() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    doClassTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.doClassTest(
       """
         public String returnWithBuilder2() {
             return MoreObjects
@@ -937,11 +1028,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_AlignSubsequentOneLineMethods() {
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    getSettings().ALIGN_SUBSEQUENT_SIMPLE_METHODS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.getSettings().ALIGN_SUBSEQUENT_SIMPLE_METHODS = true;
+    formatter.doTextTest(
       """
         public class Test {
 
@@ -961,9 +1054,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_alignAssignments() {
-    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    formatter.doTextTest(
       """
         public class Test {
           void foo(int a, int xyz) {
@@ -981,10 +1076,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_alignMultilineAssignments() {
-    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
-    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    formatter.getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    formatter.doTextTest(
       """
         public class Test {
           void foo(int a, int xyz) {
@@ -1005,11 +1102,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   }
 
 
+  @Test
   public void test_alignMultilineAssignmentsMixedWithDeclaration() {
-    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
-    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    formatter.getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.doTextTest(
       """
         public class Test {
           void foo(int a, int xyz, int bc) {
@@ -1035,9 +1134,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_alignAssignmentsFields() {
-    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    formatter.doTextTest(
       """
         public class Test {
           void foo(A a, int xyz) {
@@ -1055,9 +1156,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void test_alignMultilineTextBlock() {
-    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true;
+    formatter.doTextTest(
       """
         public class Test {
             void foo() {
@@ -1079,9 +1182,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAlign() {
-    getJavaSettings().MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.doTextTest(
       """
         public class Main {
 
@@ -1115,12 +1220,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   @SuppressWarnings("unused")
   public void _testIdea199677() {
-    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
-    getSettings().CALL_PARAMETERS_WRAP = 2;
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    formatter.getSettings().CALL_PARAMETERS_WRAP = 2;
+    formatter.getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    formatter.getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class Main {
 
@@ -1156,10 +1262,12 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testChainedMethodCallsInTernaryExpression_AlignMethodChain() {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.doMethodTest(
       """
         boolean unknown = true;
         final var someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongVariableName = unknown ? "string".chars().map(integer -> integer + 1).map(integer -> integer - 1).sorted().peek(System.out::println).count() : 0;""",
@@ -1174,9 +1282,11 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testChainedMethodCallsInTernaryExpression_NoAlignment() {
-    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    doMethodTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.doMethodTest(
       """
         boolean unknown = true;
         final var someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongVariableName = unknown ? "string".chars().map(integer -> integer + 1).map(integer -> integer - 1).sorted().peek(System.out::println).count() : 0;""",

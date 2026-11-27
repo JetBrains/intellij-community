@@ -16,11 +16,22 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest {
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
+@TestApplication
+public class JavaCodeBlockBracesPlacementTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
+
+  @Test
   public void testSimpleTryBlock() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatterFixture.get().getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     String before = """
       try {} catch (Exception e) {
@@ -53,9 +64,11 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleCatchBlock() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = """
       try {
@@ -88,7 +101,9 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleCatchAndTryBlock() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     String before = "try {} catch (Exception e) {      System.out.println(\"AA!\"); }";
     String after = "try {} catch (Exception e) {System.out.println(\"AA!\");}";
     String afterExpanded = """
@@ -97,13 +112,14 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
           System.out.println("AA!");
       }""";
 
-    doMethodTest(before, afterExpanded);
+    formatter.doMethodTest(before, afterExpanded);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
 
+  @Test
   public void testDoWhileStatement() {
     String before = """
       do {
@@ -135,19 +151,22 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatterFixture.get().getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleDoWhileStatement() {
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
     String before = "do {     System.out.println(\"AAA!\"); } while (1 == 1);";
     String after = "do { System.out.println(\"AAA!\"); } while (1 == 1);";
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
+  @Test
   public void testForEachStatement() {
     String before = """
       for (String arg : args) {
@@ -179,13 +198,15 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatterFixture.get().getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleForEachStatement() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "for (String arg : args) {     System.out.println(\"AAA!\"); }";
     String after = "for (String arg : args) { System.out.println(\"AAA!\"); }";
@@ -193,6 +214,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
+  @Test
   public void testForStatement() {
     String before = """
       for (int i = 0; i < 10; i = i + 3) {
@@ -229,13 +251,15 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatterFixture.get().getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleForStatement() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "for (int i = 0; i < 10; i = i + 3) {    System.out.println(\"AAA!\"); }";
     String after = "for (int i = 0; i < 10; i = i + 3) { System.out.println(\"AAA!\"); }";
@@ -244,9 +268,11 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
 
+  @Test
   public void testSwitchStatement() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
     String before = """
       switch (timeUnit) {
@@ -293,10 +319,11 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSynchronizedStatement() {
     String before = """
       synchronized (this) {
@@ -328,19 +355,22 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatterFixture.get().getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleSynchronizedStatement() {
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
     String before = "synchronized (this) {     System.out.println(\"AAA!\"); }";
     String after = "synchronized (this) { System.out.println(\"AAA!\"); }";
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
+  @Test
   public void testWhileStatement() {
     String before = """
       while (true) {
@@ -372,16 +402,18 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatterFixture.get().getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
+  @Test
   public void testSimpleWhileStatement() {
-    getSettings().SPACE_WITHIN_BRACES = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
     String before = "while (true) {    System.out.println(\"AAA\"); }";
     String after = "while (true) { System.out.println(\"AAA\"); }";
 
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
@@ -397,10 +429,12 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   private void formatAndCheck(int braceStyle, String before, String after) {
-    getSettings().BRACE_STYLE = braceStyle;
-    doMethodTest(before, after);
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BRACE_STYLE = braceStyle;
+    formatter.doMethodTest(before, after);
   }
 
+  @Test
   public void testSwitchExpression() {
     String before = """
       var x = switch (foo) {

@@ -17,18 +17,30 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
 
 /**
  * Is intended to hold specific java formatting tests for {@code 'Place on New Line'} settings (
  * {@code Project Settings - Code Style - Alignment and Braces - Place on New Line}).
  */
-public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
+@TestApplication
+public class JavaFormatterNewLineTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
+  @Test
   public void testAutomaticElseWrapping() {
-    getSettings().ELSE_ON_NEW_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ELSE_ON_NEW_LINE = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         if (b) {
         } else {
@@ -42,12 +54,14 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAutomaticElseUnwrapping() {
-    getSettings().ELSE_ON_NEW_LINE = false;
-    getSettings().KEEP_LINE_BREAKS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().ELSE_ON_NEW_LINE = false;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
 
     // Inspired by IDEA-47809
-    doMethodTest(
+    formatter.doMethodTest(
       """
         if (b) {
         }
@@ -61,10 +75,12 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAutomaticCatchWrapping() {
-    getSettings().CATCH_ON_NEW_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CATCH_ON_NEW_LINE = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         try {
         } catch (Exception e) {
@@ -78,12 +94,14 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAutomaticCatchUnwrapping() {
-    getSettings().CATCH_ON_NEW_LINE = false;
-    getSettings().KEEP_LINE_BREAKS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().CATCH_ON_NEW_LINE = false;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
 
     // Inspired by IDEA-47809
-    doMethodTest(
+    formatter.doMethodTest(
       """
         try {
         }
@@ -97,10 +115,12 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAutomaticFinallyWrapping() {
-    getSettings().FINALLY_ON_NEW_LINE = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().FINALLY_ON_NEW_LINE = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         try {
         } finally {
@@ -114,12 +134,14 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAutomaticFinallyUnwrapping() {
-    getSettings().FINALLY_ON_NEW_LINE = false;
-    getSettings().KEEP_LINE_BREAKS = true;
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().FINALLY_ON_NEW_LINE = false;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
 
     // Inspired by IDEA-47809
-    doMethodTest(
+    formatter.doMethodTest(
       """
         try {
         }
@@ -133,13 +155,15 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAutomaticCatchFinallyUnwrapping() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-47809
-    getSettings().CATCH_ON_NEW_LINE = false;
-    getSettings().FINALLY_ON_NEW_LINE = false;
-    getSettings().KEEP_LINE_BREAKS = true;
+    formatter.getSettings().CATCH_ON_NEW_LINE = false;
+    formatter.getSettings().FINALLY_ON_NEW_LINE = false;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       """
         try {
         }
@@ -156,11 +180,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testClassInitializationBlockBracesPlacement() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-54191
-    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-    doMethodTest(
+    formatter.getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+    formatter.doMethodTest(
       "new Expectations() {\n" +
       "    {foo();}};",
 
@@ -173,17 +199,20 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBlockOfMethodWithAnnotatedParameter() {
     // Inspired by IDEA-17870
-    doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
+    formatterFixture.get().doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
   }
 
+  @Test
   public void testArrayInitializer() throws IncorrectOperationException {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEADEV-6787
-    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
-    getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
-    doTextTest(
+    formatter.getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
+    formatter.getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
+    formatter.doTextTest(
       """
         public @interface Ann
         {
@@ -207,12 +236,14 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testSimpleAnnotatedMethodAndBraceOnNextLineStyle() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-53542
-    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().KEEP_LINE_BREAKS = true;
-    getSettings().KEEP_BLANK_LINES_IN_CODE = 2;
+    formatter.getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().KEEP_LINE_BREAKS = true;
+    formatter.getSettings().KEEP_BLANK_LINES_IN_CODE = 2;
 
     String methodWithAnnotation = "@Override\n" +
                                   "void foo() {}";
@@ -221,15 +252,17 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                                                "public void foo() {}";
 
     // Don't expect that simple method to be spread on multiple lines.
-    doClassTest(methodWithAnnotation, methodWithAnnotation);
-    doClassTest(methodWithAnnotationAndVisibility, methodWithAnnotationAndVisibility);
+    formatter.doClassTest(methodWithAnnotation, methodWithAnnotation);
+    formatter.doClassTest(methodWithAnnotationAndVisibility, methodWithAnnotationAndVisibility);
   }
 
+  @Test
   public void testMoveSimpleMethodBodyOnNewLineWhenPresent() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doClassTest("""
                      public void foo() {int x = 1;}
                      """,
                 """
@@ -239,11 +272,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                   """);
   }
 
+  @Test
   public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsent() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doClassTest("""
                      public void foo() {}
                      """,
                 """
@@ -251,11 +286,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                   """);
   }
 
+  @Test
   public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsentAndSettingsDisabled() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doClassTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    formatter.getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doClassTest("""
                      public void foo() {int x = 1;}
                      """,
                 """
@@ -265,10 +302,12 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
 
 
+  @Test
   public void testMoveSimpleCodeBlockOnNewLineWhenPresent() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.doMethodTest("""
                    Integer x = 1;
                    switch (x) {
                       case 1 -> {return;}
@@ -300,11 +339,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  @Test
   public void testDoNotMoveSimpleCodeBlockOnNewLineWhenAbsent() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doMethodTest("""
                    Integer x = 1;
                    switch (x) {
                       case 1 -> {}
@@ -326,11 +367,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  @Test
   public void testDoNotMoveSimpleCodeBlockOnNewLineWhenPresentAndSettingsDisabled() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    formatter.getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doMethodTest("""
                    Integer x = 1;
                    switch (x) {
                       case 1 -> {return;}
@@ -352,10 +395,12 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  @Test
   public void testMoveSimpleLambdaOnNewLineWhenPresent() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    formatter.doMethodTest("""
                    Runnable r = () -> { return; };
                    """,
                  """
@@ -365,11 +410,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  @Test
   public void testDoNotMoveSimpleLambdaOnNewLineWhenAbsent() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doMethodTest("""
                    Runnable r = () -> {};
                    """,
                  """
@@ -377,11 +424,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  @Test
   public void testDoNotMoveSimpleLambdaOnNewLineWhenPresentAndSettingsDisabled() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doMethodTest("""
                    Runnable r = () -> { return; };
                    """,
                  """
@@ -389,11 +438,13 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  @Test
   public void testDoNotMoveSimpleLambdaOnNewLineWithoutCodeBlock() {
-    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
-    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
-    getSettings().SPACE_WITHIN_BRACES = true;
-    doMethodTest("""
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    formatter.getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    formatter.getSettings().SPACE_WITHIN_BRACES = true;
+    formatter.doMethodTest("""
                    Runnable r = () -> foo();
                    """,
                  """

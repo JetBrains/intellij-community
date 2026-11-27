@@ -4,66 +4,91 @@ package com.intellij.java.psi.formatter.java
 import com.intellij.application.options.CodeStyle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCodeFragmentFactory
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.PackageEntry
 import com.intellij.psi.codeStyle.PackageEntryTable
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.IncorrectOperationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
 /**
  * **Note:** this class is too huge and hard to use. It's tests are intended to be split in multiple more fine-grained
  * java formatting test classes.
  */
-class JavaFormatterTest : AbstractJavaFormatterTest() {
-  
+@TestApplication
+class JavaFormatterTest {
+  companion object {
+    private val projectFixture = javaFormatterProjectFixture()
+  }
+
+  private val formatter by javaFormatterFixture(projectFixture)
+
+  @Test
   fun testPaymentManager() {
-    settings.KEEP_LINE_BREAKS = false
-    javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = true
-    doTest("paymentManager.java", "paymentManager_after.java")
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = true
+    formatter.doTest("paymentManager.java", "paymentManager_after.java")
   }
 
+  @Test
   fun testForEach() {
-    doTest("ForEach.java", "ForEach_after.java")
+    formatter.doTest("ForEach.java", "ForEach_after.java")
   }
 
+  @Test
   fun testDoubleCast() {
-    doTest("DoubleCast.java", "DoubleCast_after.java")
+    formatter.doTest("DoubleCast.java", "DoubleCast_after.java")
   }
 
+  @Test
   fun test1() {
-    myTextRange = TextRange(35, 46)
-    doTest("1.java", "1_after.java")
+    formatter.textRange = TextRange(35, 46)
+    formatter.doTest("1.java", "1_after.java")
   }
 
+  @Test
   fun testLabel1() {
-    indentOptions.LABEL_INDENT_SIZE = 0
-    indentOptions.LABEL_INDENT_ABSOLUTE = true
-    doTest("Label.java", "Label_after1.java")
+    formatter.indentOptions.LABEL_INDENT_SIZE = 0
+    formatter.indentOptions.LABEL_INDENT_ABSOLUTE = true
+    formatter.doTest("Label.java", "Label_after1.java")
   }
 
+  @Test
   fun testTryCatch() {
-    myTextRange = TextRange(38, 72)
-    doTest("TryCatch.java", "TryCatch_after.java")
+    formatter.textRange = TextRange(38, 72)
+    formatter.doTest("TryCatch.java", "TryCatch_after.java")
   }
 
+  @Test
   fun testNullMethodParameter() {
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    doTest("NullMethodParameter.java", "NullMethodParameter_after.java")
+    formatter.settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+    formatter.settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    formatter.doTest("NullMethodParameter.java", "NullMethodParameter_after.java")
   }
 
+  @Test
   fun test_DoNot_JoinLines_If_KeepLineBreaksIsOn() {
-    settings.KEEP_LINE_BREAKS = true
-    settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    doTextTest(
+    formatter.settings.KEEP_LINE_BREAKS = true
+    formatter.settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    formatter.doTextTest(
       "public class Test<Param> {\n" +
       "    @SuppressWarnings(\"unchecked\")\n" +
       "        void executeParallel(Param... params) {\n" +
@@ -78,10 +103,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     )
   }
 
+  @Test
   fun test_DoNot_JoinLines_If_KeepLineBreaksIsOn_WithMultipleAnnotations() {
-    settings.KEEP_LINE_BREAKS = true
-    settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    doTextTest(
+    formatter.settings.KEEP_LINE_BREAKS = true
+    formatter.settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    formatter.doTextTest(
       "public class Test<Param> {\n" +
       "    @Override @SuppressWarnings(\"unchecked\")\n" +
       "        void executeParallel(Param... params) {\n" +
@@ -95,9 +121,10 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     )
   }
 
+  @Test
   fun test_format_only_selected_range() {
-    myTextRange = TextRange(18, 19)
-    doTextTest(
+    formatter.textRange = TextRange(18, 19)
+    formatter.doTextTest(
       "public class X {\n" +
       " public int a =       2;\n" +
       "}",
@@ -107,75 +134,88 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     )
   }
 
+  @Test
   fun testNew() {
-    indentOptions.CONTINUATION_INDENT_SIZE = 8
-    doTest("New.java", "New_after.java")
+    formatter.indentOptions.CONTINUATION_INDENT_SIZE = 8
+    formatter.doTest("New.java", "New_after.java")
   }
 
+  @Test
   fun testJavaDoc() {
-    settings.BLANK_LINES_AROUND_FIELD = 1
-    doTest("JavaDoc.java", "JavaDoc_after.java")
+    formatter.settings.BLANK_LINES_AROUND_FIELD = 1
+    formatter.doTest("JavaDoc.java", "JavaDoc_after.java")
   }
 
+  @Test
   fun testBreakInsideIf() {
-    doTest("BreakInsideIf.java", "BreakInsideIf_after.java")
+    formatter.doTest("BreakInsideIf.java", "BreakInsideIf_after.java")
   }
 
+  @Test
   fun testAssert() {
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.HIGHEST)
-    doTest()
+    IdeaTestUtil.setProjectLanguageLevel(formatter.project, LanguageLevel.HIGHEST)
+    formatter.doTest()
   }
 
+  @Test
   fun testCastInsideElse() {
-    indentOptions.CONTINUATION_INDENT_SIZE = 2
-    indentOptions.INDENT_SIZE = 2
-    indentOptions.LABEL_INDENT_SIZE = 0
-    indentOptions.TAB_SIZE = 8
-    settings.SPACE_WITHIN_CAST_PARENTHESES = false
-    settings.SPACE_AFTER_TYPE_CAST = true
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
-    doTest()
+    formatter.indentOptions.CONTINUATION_INDENT_SIZE = 2
+    formatter.indentOptions.INDENT_SIZE = 2
+    formatter.indentOptions.LABEL_INDENT_SIZE = 0
+    formatter.indentOptions.TAB_SIZE = 8
+    formatter.settings.SPACE_WITHIN_CAST_PARENTHESES = false
+    formatter.settings.SPACE_AFTER_TYPE_CAST = true
+    formatter.settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
+    formatter.doTest()
   }
 
+  @Test
   fun testAlignMultiLine() {
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    doTest()
+    formatter.settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.doTest()
   }
 
+  @Test
   fun testInnerClassAsParameter() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSynchronizedBlock() {
-    settings.apply {
+    formatter.settings.apply {
       SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false
       SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = false
       SPACE_BEFORE_SYNCHRONIZED_LBRACE = false
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testMethodCallInAssignment() {
-    val settings = settings
+    val settings = formatter.settings
     settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testAnonymousInnerClasses() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testAnonymousInner2() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testWrapAssertion() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testIfElse() {
-    settings.apply {
+    formatter.settings.apply {
       IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
       FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
       WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE
@@ -201,121 +241,131 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
 
       SPACE_WITHIN_BRACES = true
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testIfBraces() {
-    settings.apply {
+    formatter.settings.apply {
       IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
       BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
       KEEP_LINE_BREAKS = false
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testTernaryExpression() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
-    doTest()
+    formatter.settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    formatter.doTest()
 
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = false
-    doTest("TernaryExpression.java", "TernaryExpression_DoNotAlign_after.java")
+    formatter.settings.ALIGN_MULTILINE_TERNARY_OPERATION = false
+    formatter.doTest("TernaryExpression.java", "TernaryExpression_DoNotAlign_after.java")
 
   }
 
+  @Test
   fun testAlignAssignment() {
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_ASSIGNMENT = true
       ALIGN_MULTILINE_BINARY_OPERATION = true
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testAlignFor() {
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_BINARY_OPERATION = true
       ALIGN_MULTILINE_FOR = true
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSwitch() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testContinue() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testIf() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTest()
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    doTest("If.java", "If.java")
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.KEEP_LINE_BREAKS = false
-    doTest("If_after.java", "If.java")
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.doTest()
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.doTest("If.java", "If.java")
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTest("If_after.java", "If.java")
 
   }
 
+  @Test
   fun test2() {
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    doTest()
+    formatter.settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    formatter.doTest()
   }
 
+  @Test
   fun testBlocks() {
-    settings.KEEP_LINE_BREAKS = false
-    doTest()
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTest()
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testBinaryOperation() {
     val text = "class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        + ccc + eee + ddd;\n" + "    }\n" + "}"
 
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_BINARY_OPERATION = true
       ALIGN_MULTILINE_ASSIGNMENT = true
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "              + ccc + eee + ddd;\n" +
                      "    }\n" +
                      "}")
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_BINARY_OPERATION = true
       ALIGN_MULTILINE_ASSIGNMENT = false
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "              + ccc + eee + ddd;\n" +
                      "    }\n" +
                      "}")
 
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_BINARY_OPERATION = false
       ALIGN_MULTILINE_ASSIGNMENT = true
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
                      "    }\n" +
                      "}")
 
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_ASSIGNMENT = false
       ALIGN_MULTILINE_BINARY_OPERATION = false
     }
 
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
                      "    }\n" +
                      "}")
 
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        xxx = aaa + bbb\n" +
                      "                + ccc + eee + ddd;\n" +
@@ -323,9 +373,9 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "}")
 
 
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
 
-    doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        - ccc + eee + ddd;\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        - ccc + eee + ddd;\n" + "    }\n" + "}",
                "class Foo {\n" +
                "    void foo() {\n" +
                "        xxx = aaa + bbb\n" +
@@ -333,7 +383,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                "    }\n" +
                "}")
 
-    doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        * ccc + eee + ddd;\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    void foo () {\n" + "        xxx = aaa + bbb \n" + "        * ccc + eee + ddd;\n" + "    }\n" + "}",
                "class Foo {\n" +
                "    void foo() {\n" +
                "        xxx = aaa + bbb\n" +
@@ -343,16 +393,19 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
 
   }
 
+  @Test
   fun testWhile() {
-    doTextTest("class A{\n" + "void a(){\n" + "do x++ while (b);\n" + "}\n}",
+    formatter.doTextTest("class A{\n" + "void a(){\n" + "do x++ while (b);\n" + "}\n}",
                "class A {\n" + "    void a() {\n" + "        do x++ while (b);\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testFor() {
-    doTextTest("class A{\n" + "void b(){\n" + "for (c) {\n" + "d();\n" + "}\n" + "}\n" + "}",
+    formatter.doTextTest("class A{\n" + "void b(){\n" + "for (c) {\n" + "d();\n" + "}\n" + "}\n" + "}",
                "class A {\n" + "    void b() {\n" + "        for (c) {\n" + "            d();\n" + "        }\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testClassComment() {
     val before = "/**\n" +
                  "* @author smbd\n" +
@@ -367,16 +420,17 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                 " */\n" +
                 "class Test<T> {\n" +
                 "}"
-    doTextTest(before, after)
+    formatter.doTextTest(before, after)
   }
 
+  @Test
   fun testStringBinaryOperation() {
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_ASSIGNMENT = false
       ALIGN_MULTILINE_BINARY_OPERATION = false
     }
 
-    doTextTest("class Foo {\n" + "    void foo () {\n" + "String s = \"abc\" +\n" + "\"def\";" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    void foo () {\n" + "String s = \"abc\" +\n" + "\"def\";" + "    }\n" + "}",
 
                "class Foo {\n" +
                "    void foo() {\n" +
@@ -387,15 +441,18 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
 
   }
 
+  @Test
   fun test3() {
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun test4() {
-    myLineRange = TextRange(2, 8)
-    doTest()
+    formatter.lineRange = TextRange(2, 8)
+    formatter.doTest()
   }
 
+  @Test
   fun testBraces() {
 
     val text = "class Foo {\n" +
@@ -406,11 +463,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                        "}\n" +
                        "}"
 
-    settings.apply {
+    formatter.settings.apply {
       BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
       METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo() {\n" +
                      "        if (a) {\n" +
                      "            int i = 0;\n" +
@@ -418,11 +475,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
-    settings.apply {
+    formatter.settings.apply {
       BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
       METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "    {\n" +
                      "        if (a)\n" +
@@ -432,11 +489,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "    }\n" +
                      "}")
 
-    settings.apply {
+    formatter.settings.apply {
       BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
       METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
                      "        if (a)\n" +
@@ -445,11 +502,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "            }\n" +
                      "        }\n" +
                      "}")
-    settings.apply {
+    formatter.settings.apply {
       METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
       BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
                      "        if (a) {\n" +
@@ -458,11 +515,11 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "        }\n" +
                      "}")
 
-    settings.apply {
+    formatter.settings.apply {
       METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
       BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
     }
-    doTextTest(text, "class Foo {\n" +
+    formatter.doTextTest(text, "class Foo {\n" +
                      "    void foo()\n" +
                      "        {\n" +
                      "            if (a)\n" +
@@ -472,24 +529,27 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                      "        }\n" +
                      "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTextTest("class Foo {\n" + "    static{\n" + "foo();\n" + "}" + "}",
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.doTextTest("class Foo {\n" + "    static{\n" + "foo();\n" + "}" + "}",
                "class Foo {\n" + "    static\n" + "    {\n" + "        foo();\n" + "    }\n" + "}")
 
   }
 
+  @Test
   fun testExtendsList() {
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
-    doTextTest("class A extends B, \n" + "C {}", "class A extends B,\n" + "                C {\n}")
+    formatter.settings.ALIGN_MULTILINE_EXTENDS_LIST = true
+    formatter.doTextTest("class A extends B, \n" + "C {}", "class A extends B,\n" + "                C {\n}")
   }
 
+  @Test
   fun testBlockWithoutBraces() {
-    doTextTest("class A {\n" + "void foo(){\n" + "if(a)\n" + "return;\n" + "}\n" + "}",
+    formatter.doTextTest("class A {\n" + "void foo(){\n" + "if(a)\n" + "return;\n" + "}\n" + "}",
                "class A {\n" + "    void foo() {\n" + "        if (a)\n" + "            return;\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testNestedCalls() {
-    doTextTest("class A {\n" + "void foo(){\n" + "foo(\nfoo(\nfoo()\n)\n);\n" + "}\n" + "}", "class A {\n" +
+    formatter.doTextTest("class A {\n" + "void foo(){\n" + "foo(\nfoo(\nfoo()\n)\n);\n" + "}\n" + "}", "class A {\n" +
                                                                                              "    void foo() {\n" +
                                                                                              "        foo(\n" +
                                                                                              "                foo(\n" +
@@ -501,13 +561,15 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
 
   }
 
+  @Test
   fun testSpacesAroundMethod() {
-    doTextTest("class Foo {\n" + "    abstract void a();\n" + "    {\n" + "        a();\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    abstract void a();\n" + "    {\n" + "        a();\n" + "    }\n" + "}",
                "class Foo {\n" + "    abstract void a();\n" + "\n" + "    {\n" + "        a();\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testSpaceInIf() {
-    doTextTest("class foo {\n" +
+    formatter.doTextTest("class foo {\n" +
                "    {\n" +
                "        if (a) {\n" +
                "            if(a) {\n" +
@@ -526,16 +588,18 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                     "}")
   }
 
+  @Test
   fun testIf2() {
-    doTextTest(
+    formatter.doTextTest(
       "public class Test {\n" + "    public boolean equals(Object o) {\n" + "        if(this == o)return true;\n" + "    }\n" + "}",
       "public class Test {\n" + "    public boolean equals(Object o) {\n" + "        if (this == o) return true;\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testSpaceAroundField() {
-    settings.BLANK_LINES_AROUND_FIELD = 1
+    formatter.settings.BLANK_LINES_AROUND_FIELD = 1
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "    boolean a;\n" +
                "    {\n" +
                "        if (a) {\n" +
@@ -557,37 +621,41 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                     "}")
   }
 
+  @Test
   fun testArray() {
-    settings.apply {
+    formatter.settings.apply {
       SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true
       SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
     }
-    doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{0};\n" + " }\n" + "}",
+    formatter.doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{0};\n" + " }\n" + "}",
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[] { 0 };\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testEmptyArray() {
-    settings.apply {
+    formatter.settings.apply {
       SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = true
       SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
       SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false
     }
-    doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
+    formatter.doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[] {};\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testEmptyArrayIsntWrapped() {
-    settings.apply {
+    formatter.settings.apply {
       ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true
       ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true
       SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = true
     }
-    doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
+    formatter.doTextTest("class a {\n" + " void f() {\n" + "   final int[] i = new int[]{ };\n" + " }\n" + "}",
                "class a {\n" + "    void f() {\n" + "        final int[] i = new int[]{ };\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testTwoJavaDocs() {
-    doTextTest("""/**
+    formatter.doTextTest("""/**
  *
  */
         class Test {
@@ -606,9 +674,10 @@ class Test {
 }""")
   }
 
+  @Test
   fun testJavaDocLinksWithParameterNames() {
     // See IDEADEV-8332
-    doTextTest("/**\n" +
+    formatter.doTextTest("/**\n" +
                "* @return if ( x1 == x1 ) then return {@link #cmp(String y1,int y2)}\n" +
                "*         otherwise return {@link #cmp(int x1,int x2)}\n" +
                "*/\n" +
@@ -621,13 +690,15 @@ class Test {
                       "}\n")
   }
 
+  @Test
   fun testIncompleteField() {
-    doTextTest("public class Test {\n" + "    String s =;\n" + "}", "public class Test {\n" + "    String s = ;\n" + "}")
+    formatter.doTextTest("public class Test {\n" + "    String s =;\n" + "}", "public class Test {\n" + "    String s = ;\n" + "}")
   }
 
+  @Test
   fun testIf3() {
-    settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
-    doTextTest("public abstract class A {\n" +
+    formatter.settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    formatter.doTextTest("public abstract class A {\n" +
                "    abstract void f(boolean b);\n" +
                "\n" +
                "    A IMPL = new A() {\n" +
@@ -658,15 +729,17 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testDocComment() {
-    doTextTest("public class TestClass {\n" + "/**\n" + "* \n" + "*/\n" + "    public void f1() {\n" + "    }\n" + "}",
+    formatter.doTextTest("public class TestClass {\n" + "/**\n" + "* \n" + "*/\n" + "    public void f1() {\n" + "    }\n" + "}",
                "public class TestClass {\n" + "    /**\n" + "     *\n" + "     */\n" + "    public void f1() {\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testDocComment2() {
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
-    javaSettings.JD_KEEP_EMPTY_LINES = false
-    doTextTest("class Test {\n" +
+    formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    formatter.javaSettings.JD_KEEP_EMPTY_LINES = false
+    formatter.doTextTest("class Test {\n" +
                "/**\n" +
                "*\n" +
                "* @param a\n" +
@@ -684,12 +757,14 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testSpaceBeforeFieldName() {
-    doTextTest("class A{\n" + "public   A    myA ;\n" + "}", "class A {\n" + "    public A myA;\n" + "}")
+    formatter.doTextTest("class A{\n" + "public   A    myA ;\n" + "}", "class A {\n" + "    public A myA;\n" + "}")
   }
 
+  @Test
   fun testClass() {
-    doTextTest("    class A {\n" +
+    formatter.doTextTest("    class A {\n" +
                "        Logger LOG;\n" +
                "        class C {}\n" +
                "\n" +
@@ -710,9 +785,10 @@ class Test {
                         "}")
   }
 
+  @Test
   fun testDoNotIndentCaseFromSwitch() {
-    settings.INDENT_CASE_FROM_SWITCH = false
-    doTextTest("class A {\n" + "void foo() {\n" + "switch(a){\n" + "case 1: \n" + "break;\n" + "}\n" + "}\n" + "}", "class A {\n" +
+    formatter.settings.INDENT_CASE_FROM_SWITCH = false
+    formatter.doTextTest("class A {\n" + "void foo() {\n" + "switch(a){\n" + "case 1: \n" + "break;\n" + "}\n" + "}\n" + "}", "class A {\n" +
                                                                                                                     "    void foo() {\n" +
                                                                                                                     "        switch (a) {\n" +
                                                                                                                     "        case 1:\n" +
@@ -722,39 +798,44 @@ class Test {
                                                                                                                     "}")
   }
 
+  @Test
   fun testClass2() {
-    settings.KEEP_FIRST_COLUMN_COMMENT = false
-    doTextTest("class A {\n" + "// comment before\n" + "protected Object a;//  comment after\n" + "}",
+    formatter.settings.KEEP_FIRST_COLUMN_COMMENT = false
+    formatter.doTextTest("class A {\n" + "// comment before\n" + "protected Object a;//  comment after\n" + "}",
                "class A {\n" + "    // comment before\n" + "    protected Object a;//  comment after\n" + "}")
   }
 
+  @Test
   fun testSplitLiteral() {
-    doTextTest("class A {\n" + "void foo() {\n" + "  String s = \"abc\" +\n" + "  \"def\";\n" + "}\n" + "}",
+    formatter.doTextTest("class A {\n" + "void foo() {\n" + "  String s = \"abc\" +\n" + "  \"def\";\n" + "}\n" + "}",
                "class A {\n" + "    void foo() {\n" + "        String s = \"abc\" +\n" + "                \"def\";\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testParametersAlignment() {
-    settings.apply {
+    formatter.settings.apply {
       ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
       RIGHT_MARGIN = 140
     }
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testConditionalExpression() {
-    settings.apply {
+    formatter.settings.apply {
       SPACE_BEFORE_QUEST = true
       SPACE_AFTER_QUEST = false
       SPACE_BEFORE_COLON = true
       SPACE_AFTER_COLON = false
     }
 
-    doTextTest("class Foo{\n" + "  void foo(){\n" + "  return name   !=   null   ?   1   :   2   ;" + "}\n" + "}",
+    formatter.doTextTest("class Foo{\n" + "  void foo(){\n" + "  return name   !=   null   ?   1   :   2   ;" + "}\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        return name != null ?1 :2;\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testMethodCallChain() {
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo(){\n" +
                "       configuration = new Configuration() \n" +
                "                .setProperty(\"hibernate.dialect\", \n" +
@@ -768,7 +849,7 @@ class Test {
                     "    }\n" +
                     "}")
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo(){\n" +
                "       configuration = new Configuration(). \n" +
                "                setProperty(\"hibernate.dialect\", \n" +
@@ -782,7 +863,7 @@ class Test {
                     "    }\n" +
                     "}")
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo(){\n" +
                "       configuration = new Configuration() \n" +
                "                .setProperty(\"hibernate.dialect\", \n" +
@@ -815,8 +896,9 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testComment1() {
-    doTextTest(
+    formatter.doTextTest(
       "class Foo {\n" +
       "    public boolean mErrorFlage;\n" +
       "\n" +
@@ -838,8 +920,9 @@ class Test {
       "}")
   }
 
+  @Test
   fun testElseAfterComment() {
-    doTextTest("public class Foo {\n" +
+    formatter.doTextTest("public class Foo {\n" +
                "    public int foo() {\n" +
                "        if (a) {\n" +
                "            return;\n" +
@@ -858,9 +941,10 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testLBraceAfterComment() {
-    settings.KEEP_LINE_BREAKS = false
-    doTextTest("public class Foo {\n" +
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTextTest("public class Foo {\n" +
                "    public int foo() {\n" +
                "        if (a) \n" +
                "  //comment\n" +
@@ -879,19 +963,21 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testSpaces() {
-    val settings = settings
+    val settings = formatter.settings
     settings.SPACE_WITHIN_FOR_PARENTHESES = true
     settings.SPACE_WITHIN_IF_PARENTHESES = true
     settings.SPACE_WITHIN_METHOD_PARENTHESES = true
     settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     settings.SPACE_BEFORE_METHOD_PARENTHESES = true
     settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSpacesBeforeLBrace() {
-    val settings = settings
+    val settings = formatter.settings
     settings.SPACE_BEFORE_CLASS_LBRACE = true
     settings.SPACE_BEFORE_METHOD_LBRACE = true
     settings.SPACE_BEFORE_IF_LBRACE = true
@@ -906,7 +992,7 @@ class Test {
     settings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = true
     settings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true
 
-    doTest()
+    formatter.doTest()
 
     settings.SPACE_BEFORE_CLASS_LBRACE = false
     settings.SPACE_BEFORE_METHOD_LBRACE = false
@@ -922,26 +1008,28 @@ class Test {
     settings.SPACE_BEFORE_SYNCHRONIZED_LBRACE = false
     settings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = false
 
-    doTest("SpacesBeforeLBrace.java", "SpacesBeforeLBrace.java")
+    formatter.doTest("SpacesBeforeLBrace.java", "SpacesBeforeLBrace.java")
   }
 
+  @Test
   fun testCommentBeforeField() {
-    val settings = settings
+    val settings = formatter.settings
     settings.KEEP_LINE_BREAKS = false
     settings.KEEP_FIRST_COLUMN_COMMENT = false
     settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
     settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false
-    doTextTest("class Foo{\n" + "    //Foo a\n" + "    Foo a; \n" + "}", "class Foo {\n" + "    //Foo a\n" + "    Foo a;\n" + "}")
+    formatter.doTextTest("class Foo{\n" + "    //Foo a\n" + "    Foo a; \n" + "}", "class Foo {\n" + "    //Foo a\n" + "    Foo a;\n" + "}")
   }
 
+  @Test
   fun testLabel() {
-    val settings = settings
+    val settings = formatter.settings
     settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).LABEL_INDENT_ABSOLUTE = true
     settings.SPECIAL_ELSE_IF_TREATMENT = true
     settings.FOR_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
-    myTextRange = TextRange(59, 121)
-    doTextTest("public class Foo {\n" +
+    formatter.textRange = TextRange(59, 121)
+    formatter.doTextTest("public class Foo {\n" +
                "    public void foo() {\n" +
                "label2:\n" +
                "        for (int i = 0; i < 5; i++)\n" +
@@ -958,8 +1046,9 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testElseOnNewLine() {
-    doTextTest("class Foo{\n" + "void foo() {\n" + "if (a)\n" + "return;\n" + "else\n" + "return;\n" + "}\n" + "}", "class Foo {\n" +
+    formatter.doTextTest("class Foo{\n" + "void foo() {\n" + "if (a)\n" + "return;\n" + "else\n" + "return;\n" + "}\n" + "}", "class Foo {\n" +
                                                                                                                     "    void foo() {\n" +
                                                                                                                     "        if (a)\n" +
                                                                                                                     "            return;\n" +
@@ -969,17 +1058,19 @@ class Test {
                                                                                                                     "}")
   }
 
+  @Test
   fun testTwoClasses() {
-    doTextTest("class A {}\n" + "class B {}", "class A {\n" + "}\n" + "\n" + "class B {\n" + "}")
+    formatter.doTextTest("class A {}\n" + "class B {}", "class A {\n" + "}\n" + "\n" + "class B {\n" + "}")
   }
 
+  @Test
   fun testBraceOnNewLineIfWrapped() {
-    settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
-    settings.RIGHT_MARGIN = 35
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.settings.RIGHT_MARGIN = 35
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "    void foo(){\n" +
                "        if (veryLongCondition || veryVeryVeryVeryLongCondition) {\n" +
                "            foo();\n" +
@@ -1000,14 +1091,15 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testFirstArgumentWrapping() {
-    settings.RIGHT_MARGIN = 20
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);" + "    }\n" + "}",
+    formatter.settings.RIGHT_MARGIN = 20
+    formatter.settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(\n" + "                1);\n" + "    }\n" + "}")
 
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1,2);" + "    }\n" + "}", "class Foo {\n" +
+    formatter.settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1,2);" + "    }\n" + "}", "class Foo {\n" +
                                                                                                         "    void foo() {\n" +
                                                                                                         "        fooFooFooFoo(\n" +
                                                                                                         "                1,\n" +
@@ -1015,28 +1107,30 @@ class Test {
                                                                                                         "    }\n" +
                                                                                                         "}")
 
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFoo(1,2);" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFoo(1,2);" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        fooFooFoo(1,\n" + "                2);\n" + "    }\n" + "}")
 
   }
 
+  @Test
   fun testSpacesInsideWhile() {
-    settings.SPACE_WITHIN_WHILE_PARENTHESES = true
-    doTextTest("class Foo{\n" + "    void foo() {\n" + "        while(x != y) {\n" + "        }\n" + "    }\n" + "}",
+    formatter.settings.SPACE_WITHIN_WHILE_PARENTHESES = true
+    formatter.doTextTest("class Foo{\n" + "    void foo() {\n" + "        while(x != y) {\n" + "        }\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        while ( x != y ) {\n" + "        }\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testAssertStatementWrapping() {
-    settings.ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    settings.RIGHT_MARGIN = 40
-    val facade = javaFacade
+    formatter.settings.ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    formatter.settings.RIGHT_MARGIN = 40
+    val facade = JavaPsiFacade.getInstance(formatter.project)
     val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
     try {
       IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
-      settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
-      doTextTest("class Foo {\n" +
+      formatter.settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
+      formatter.doTextTest("class Foo {\n" +
                  "    void foo() {\n" +
                  "        assert methodWithVeryVeryLongName() : foo;\n" +
                  "        assert i + j + k + l + n + m <= 2 : \"assert description\";\n" +
@@ -1050,8 +1144,8 @@ class Test {
                         "    }\n" +
                         "}\n")
 
-      settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
-      doTextTest("class Foo {\n" +
+      formatter.settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
+      formatter.doTextTest("class Foo {\n" +
                  "    void foo() {\n" +
                  "        assert methodWithVeryVeryLongName() : foo;\n" +
                  "        assert i + j + k + l + n + m <= 2 : \"assert description\";\n" +
@@ -1071,22 +1165,23 @@ class Test {
     }
   }
 
+  @Test
   fun testAssertStatementWrapping2() {
-    settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    settings.ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.RIGHT_MARGIN = 37
+    formatter.settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    formatter.settings.ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.RIGHT_MARGIN = 37
 
-    val options = settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE)
+    val options = formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE)
     options.INDENT_SIZE = 2
     options.CONTINUATION_INDENT_SIZE = 2
 
-    settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
+    formatter.settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
 
-    val facade = javaFacade
+    val facade = JavaPsiFacade.getInstance(formatter.project)
     val effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
     try {
-      doTextTest(
+      formatter.doTextTest(
         "class Foo {\n" + "    void foo() {\n" + "        assert i + j + k + l + n + m <= 2 : \"assert description\";" + "    }\n" + "}",
         "class Foo {\n" +
         "  void foo() {\n" +
@@ -1095,9 +1190,9 @@ class Test {
         "  }\n" +
         "}")
 
-      settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
+      formatter.settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
 
-      doTextTest(
+      formatter.doTextTest(
         "class Foo {\n" + "    void foo() {\n" + "        assert i + j + k + l + n + m <= 2 : \"assert description\";" + "    }\n" + "}",
         "class Foo {\n" +
         "  void foo() {\n" +
@@ -1113,25 +1208,26 @@ class Test {
 
   }
 
+  @Test
   fun test() {
-    settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 2
-    settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
-    settings.RIGHT_MARGIN = 37
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
+    formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 2
+    formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
+    formatter.settings.RIGHT_MARGIN = 37
+    formatter.settings.ALIGN_MULTILINE_EXTENDS_LIST = true
 
-    settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
 
-    settings.ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.settings.ASSERT_STATEMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
 
-    val facade = javaFacade
+    val facade = JavaPsiFacade.getInstance(formatter.project)
     val effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
 
     try {
-      doTextTest("public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
+      formatter.doTextTest("public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
                  "  public void longerMethod() {\n" +
                  "    assert i + j + k + l + n+ m <= 2 : \"assert description\";" +
                  "  }\n" +
@@ -1150,16 +1246,18 @@ class Test {
     }
   }
 
+  @Test
   fun testLBrace() {
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.RIGHT_MARGIN = 14
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        \n" + "    }\n" + "}",
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.RIGHT_MARGIN = 14
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        \n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testJavaDocLeadingAsterisksAreDisabled() {
-    javaSettings.JD_LEADING_ASTERISKS_ARE_ENABLED = false
-    doTextTest("class Foo {\n" +
+    formatter.javaSettings.JD_LEADING_ASTERISKS_ARE_ENABLED = false
+    formatter.doTextTest("class Foo {\n" +
                "    /**\n" +
                "     @param i\n" +
                "     @param j\n" +
@@ -1176,9 +1274,10 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testBinaryExpression() {
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    doTextTest("class Foo {\n" +
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "        if (event.isConsumed() &&\n" +
                "condition2) {\n" +
@@ -1195,8 +1294,9 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testCaseBraces() {
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        switch (a) {\n" +
                "            case 0: {\n" +
@@ -1213,25 +1313,29 @@ class Test {
                     "}")
   }
 
-  fun testFormatCodeFragment() {
-    val factory = JavaCodeFragmentFactory.getInstance(project)
-    val fragment = factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true)
+  @Test
+  fun testFormatCodeFragment(): Unit = timeoutRunBlocking {
+    val factory = JavaCodeFragmentFactory.getInstance(formatter.project)
+    val fragment = readAction { factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true) }
     val result = arrayOfNulls<PsiElement>(1)
 
-    CommandProcessor.getInstance().executeCommand(project, {
-      WriteCommandAction.runWriteCommandAction(null) {
-        try {
-          result[0] = CodeStyleManager.getInstance(project).reformat(fragment)
+    withContext(Dispatchers.EDT) {
+      CommandProcessor.getInstance().executeCommand(formatter.project, {
+        WriteCommandAction.runWriteCommandAction(null) {
+          try {
+            result[0] = CodeStyleManager.getInstance(formatter.project).reformat(fragment)
+          }
+          catch (e: IncorrectOperationException) {
+            fail(e.localizedMessage)
+          }
         }
-        catch (e: IncorrectOperationException) {
-          fail(e.localizedMessage)
-        }
-      }
-    }, null, null)
+      }, null, null)
+    }
 
-    assertEquals("a = 1;\n" + "int b = 2;", result[0]!!.text)
+    assertEquals("a = 1;\n" + "int b = 2;", readAction { result[0]!!.text })
   }
 
+  @Test
   fun testNewLineAfterJavaDocs() {
     val before = "/** @noinspection InstanceVariableNamingConvention*/class Foo{\n" +
                  "/** @noinspection InstanceVariableNamingConvention*/int myFoo;\n" +
@@ -1253,15 +1357,16 @@ class Test {
                 "    }\n" +
                 "}"
 
-    doTextTest(before, after)
+    formatter.doTextTest(before, after)
   }
 
+  @Test
   fun testArrayInitializerWrapping() {
-    settings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false
-    settings.RIGHT_MARGIN = 37
+    formatter.settings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false
+    formatter.settings.RIGHT_MARGIN = 37
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    public int[] i = new int[]{1,2,3,4,5,6,7,8,9};\n" +
                "    void foo() {\n" +
                "        foo(new int[]{1,2,3,4,5,6,7,8,9});\n" +
@@ -1276,9 +1381,9 @@ class Test {
                     "    }\n" +
                     "}")
 
-    settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true
+    formatter.settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    public int[] i = new int[]{1,2,3,4,5,6,7,8,9};\n" +
                "    void foo() {\n" +
                "        foo(new int[]{1,2,3,4,5,6,7,8,9});\n" +
@@ -1298,14 +1403,15 @@ class Test {
 
   }
 
+  @Test
   fun testJavaDocIndentation() {
-    settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 2
-    settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
-    settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 4
+    formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 2
+    formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
+    formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 4
 
-    javaSettings.ENABLE_JAVADOC_FORMATTING = false
+    formatter.javaSettings.ENABLE_JAVADOC_FORMATTING = false
 
-    doTextTest("public interface PsiParser {\n" +
+    formatter.doTextTest("public interface PsiParser {\n" +
                "  /**\n" +
                "   * Parses the contents of the specified PSI builder and returns an AST tree with the\n" +
                "   * specified type of root element. The PSI builder contents is the entire file\n" +
@@ -1330,23 +1436,24 @@ class Test {
                     "}")
   }
 
+  @Test
   fun testRemoveLineBreak() {
-    settings.KEEP_LINE_BREAKS = true
-    settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.KEEP_LINE_BREAKS = true
+    formatter.settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
 
-    doTextTest("class A\n" + "{\n" + "}", "class A {\n" + "}")
+    formatter.doTextTest("class A\n" + "{\n" + "}", "class A {\n" + "}")
 
-    doTextTest("class A {\n" + "    void foo()\n" + "    {\n" + "    }\n" + "}", "class A {\n" + "    void foo() {\n" + "    }\n" + "}")
+    formatter.doTextTest("class A {\n" + "    void foo()\n" + "    {\n" + "    }\n" + "}", "class A {\n" + "    void foo() {\n" + "    }\n" + "}")
 
-    doTextTest("class A {\n" + "    void foo()\n" + "    {\n" + "        if (a)\n" + "        {\n" + "        }\n" + "    }\n" + "}",
+    formatter.doTextTest("class A {\n" + "    void foo()\n" + "    {\n" + "        if (a)\n" + "        {\n" + "        }\n" + "    }\n" + "}",
                "class A {\n" + "    void foo() {\n" + "        if (a) {\n" + "        }\n" + "    }\n" + "}")
 
   }
 
   private fun setUpImportLayoutWithJavaGroup() {
-    javaSettings.IMPORT_LAYOUT_TABLE = PackageEntryTable().apply {
+    formatter.javaSettings.IMPORT_LAYOUT_TABLE = PackageEntryTable().apply {
       addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)
       addEntry(PackageEntry.BLANK_LINE_ENTRY)
       addEntry(PackageEntry(false, "java", true))
@@ -1374,10 +1481,11 @@ import com.custom.MyClass2;
 class Foo {
 }"""
 
+  @Test
   fun testExtraBlankLinesBetweenImportsAreKeptByDefault() {
     setUpImportLayoutWithJavaGroup()
-    javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = true
-    doTextTest(importsWithExtraBlankLines,
+    formatter.javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = true
+    formatter.doTextTest(importsWithExtraBlankLines,
                """
 package com.example;
 
@@ -1395,11 +1503,12 @@ class Foo {
 }""")
   }
 
+  @Test
   fun testExtraBlankLinesBetweenImportsRemovedWhenLayoutIsAuthoritative() {
     setUpImportLayoutWithJavaGroup()
-    javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = false
+    formatter.javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = false
 
-    doTextTest(importsWithExtraBlankLines,
+    formatter.doTextTest(importsWithExtraBlankLines,
                """
 package com.example;
 
@@ -1414,22 +1523,23 @@ class Foo {
 }""")
   }
 
+  @Test
   fun testBlankLines() {
-    settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 0
-    settings.KEEP_BLANK_LINES_IN_CODE = 0
-    settings.KEEP_BLANK_LINES_BEFORE_RBRACE = 0
-    settings.BLANK_LINES_AFTER_CLASS_HEADER = 0
-    settings.BLANK_LINES_AFTER_IMPORTS = 0
-    settings.BLANK_LINES_AFTER_PACKAGE = 0
-    settings.BLANK_LINES_AROUND_CLASS = 0
-    settings.BLANK_LINES_AROUND_FIELD = 0
-    settings.BLANK_LINES_AROUND_METHOD = 0
-    settings.BLANK_LINES_BEFORE_IMPORTS = 0
-    settings.BLANK_LINES_BEFORE_PACKAGE = 0
-    settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 2
-    settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 3
+    formatter.settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 0
+    formatter.settings.KEEP_BLANK_LINES_IN_CODE = 0
+    formatter.settings.KEEP_BLANK_LINES_BEFORE_RBRACE = 0
+    formatter.settings.BLANK_LINES_AFTER_CLASS_HEADER = 0
+    formatter.settings.BLANK_LINES_AFTER_IMPORTS = 0
+    formatter.settings.BLANK_LINES_AFTER_PACKAGE = 0
+    formatter.settings.BLANK_LINES_AROUND_CLASS = 0
+    formatter.settings.BLANK_LINES_AROUND_FIELD = 0
+    formatter.settings.BLANK_LINES_AROUND_METHOD = 0
+    formatter.settings.BLANK_LINES_BEFORE_IMPORTS = 0
+    formatter.settings.BLANK_LINES_BEFORE_PACKAGE = 0
+    formatter.settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 2
+    formatter.settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 3
 
-    doTextTest("/*\n" +
+    formatter.doTextTest("/*\n" +
                " * This is a sample file.\n" +
                " */\n" +
                "package com.intellij.samples;\n" +
@@ -1471,7 +1581,7 @@ class Foo {
                "    }\n" +
                "}")
 
-    doTextTest("interface Foo {\n" +
+    formatter.doTextTest("interface Foo {\n" +
                "    int field1;\n" +
                "    int field2;\n" +
                "\n" +
@@ -1499,27 +1609,28 @@ class Foo {
 
   }
 
+  @Test
   fun testStaticBlockBraces() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
-    doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    static\n" + "    {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}")
 
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "        }\n" + "}",
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "        }\n" + "}",
                "class Foo {\n" + "    static\n" + "        {\n" + "        //comment\n" + "        i = foo();\n" + "        }\n" + "}")
 
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
-    doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}", "class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+    formatter.doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                       "    static\n" +
                                                                                                                       "        {\n" +
                                                                                                                       "            //comment\n" +
@@ -1530,9 +1641,10 @@ class Foo {
 
   }
 
+  @Test
   fun testBraces2() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
-    doTextTest("class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "         if (clientSocket == null)\n" +
                "        {\n" +
@@ -1547,7 +1659,7 @@ class Foo {
                     "    }\n" +
                     "}")
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "         for (int i = 0; i < 10; i++)\n" +
                "        {\n" +
@@ -1563,7 +1675,7 @@ class Foo {
                     "}")
 
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "         for (Object i : collection)\n" +
                "        {\n" +
@@ -1579,7 +1691,7 @@ class Foo {
                     "}")
 
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "         while (i  >0)\n" +
                "        {\n" +
@@ -1594,28 +1706,29 @@ class Foo {
                     "    }\n" +
                     "}")
 
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
 
-    doTextTest("class Foo{\n" + "    /**\n" + "     *\n" + "     */\n" + "    void foo() {\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo{\n" + "    /**\n" + "     *\n" + "     */\n" + "    void foo() {\n" + "    }\n" + "}",
                "class Foo {\n" + "    /**\n" + "     *\n" + "     */\n" + "    void foo() {\n" + "    }\n" + "}")
 
 
-    settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
 
-    doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n{\n" + "}", "/**\n" + " *\n" + " */\n" + "class Foo {\n" + "}")
+    formatter.doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n{\n" + "}", "/**\n" + " *\n" + " */\n" + "class Foo {\n" + "}")
 
-    doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n extends B\n{\n" + "}",
+    formatter.doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n extends B\n{\n" + "}",
                "/**\n" + " *\n" + " */\n" + "class Foo\n        extends B\n" + "{\n" + "}")
 
-    doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n permits B\n{\n" + "}",
+    formatter.doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n permits B\n{\n" + "}",
                "/**\n" + " *\n" + " */\n" + "class Foo\n        permits B\n" + "{\n" + "}")
 
   }
 
+  @Test
   fun testSynchronized() {
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                    "    void foo() {\n" +
                                                                                                                    "        synchronized (this) {\n" +
                                                                                                                    "            foo();\n" +
@@ -1623,8 +1736,8 @@ class Foo {
                                                                                                                    "    }\n" +
                                                                                                                    "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                    "    void foo() {\n" +
                                                                                                                    "        synchronized (this)\n" +
                                                                                                                    "        {\n" +
@@ -1633,8 +1746,8 @@ class Foo {
                                                                                                                    "    }\n" +
                                                                                                                    "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                    "    void foo() {\n" +
                                                                                                                    "        synchronized (this)\n" +
                                                                                                                    "            {\n" +
@@ -1644,8 +1757,8 @@ class Foo {
                                                                                                                    "}")
 
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {\n" + "foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "synchronized (this) {\n" + "foo();\n" + "}\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                           "    void foo() {\n" +
                                                                                                                           "        synchronized (this)\n" +
                                                                                                                           "            {\n" +
@@ -1656,26 +1769,29 @@ class Foo {
 
   }
 
+  @Test
   fun testNextLineShiftedForBlockStatement() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
 
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "        foo();\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "        foo();\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "            foo();\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testFieldWithJavadocAndAnnotation() {
-    doTextTest("class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}",
                "class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}")
   }
 
+  @Test
   fun testLongCallChainAfterElse() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
-    settings.ELSE_ON_NEW_LINE = false
-    settings.RIGHT_MARGIN = 110
-    settings.KEEP_LINE_BREAKS = false
-    doTextTest("class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true
+    formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    formatter.settings.ELSE_ON_NEW_LINE = false
+    formatter.settings.RIGHT_MARGIN = 110
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "        if (types.length > 1) // returns multiple columns\n" +
                "        {\n" +
@@ -1692,21 +1808,22 @@ class Foo {
                     "}")
   }
 
+  @Test
   fun testSpacesIncode() {
 
-    val facade = javaFacade
+    val facade = JavaPsiFacade.getInstance(formatter.project)
     val level = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
     try {
-      doTextTest("class C<Y, X> {\n" + "}", "class C<Y, X> {\n" + "}")
+      formatter.doTextTest("class C<Y, X> {\n" + "}", "class C<Y, X> {\n" + "}")
 
-      settings.SPACE_BEFORE_METHOD_LBRACE = true
-      settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+      formatter.settings.SPACE_BEFORE_METHOD_LBRACE = true
+      formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
 
-      doTextTest("enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}",
+      formatter.doTextTest("enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}",
                  "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) {}\n" + "}")
 
-      doTextTest("class C {\n" +
+      formatter.doTextTest("class C {\n" +
                  "    void foo (Map<?, String> s) {\n" +
                  "        Set<? extends Map<?, String>.Entry<?, String>> temp = s.entries();\n" +
                  "    }\n" +
@@ -1716,7 +1833,7 @@ class Foo {
                       "    }\n" +
                       "}")
 
-      doTextTest("class B {\n" +
+      formatter.doTextTest("class B {\n" +
                  "    public final A<String> myDelegate = new A<String>();\n" +
                  "\n" +
                  "    public List<? extends String> method1() {\n" +
@@ -1745,12 +1862,13 @@ class Foo {
   }
 
   ///IDEA-7761
+  @Test
   fun testKeepBlankLineInCodeBeforeComment() {
-    settings.KEEP_BLANK_LINES_IN_CODE = 1
-    settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 0
-    settings.KEEP_FIRST_COLUMN_COMMENT = false
+    formatter.settings.KEEP_BLANK_LINES_IN_CODE = 1
+    formatter.settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 0
+    formatter.settings.KEEP_FIRST_COLUMN_COMMENT = false
 
-    doTextTest("public class ReformatProblem {\n" +
+    formatter.doTextTest("public class ReformatProblem {\n" +
                "\n" +
                "    //comment in declaration\n" +
                "    public static void main(String[] args) {\n" +
@@ -1777,11 +1895,11 @@ class Foo {
                     "    }\n" +
                     "}")
 
-    settings.KEEP_BLANK_LINES_IN_CODE = 0
-    settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1
-    settings.KEEP_FIRST_COLUMN_COMMENT = false
+    formatter.settings.KEEP_BLANK_LINES_IN_CODE = 0
+    formatter.settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1
+    formatter.settings.KEEP_FIRST_COLUMN_COMMENT = false
 
-    doTextTest("public class ReformatProblem {\n" +
+    formatter.doTextTest("public class ReformatProblem {\n" +
                "\n" +
                "    //comment in declaration\n" +
                "    public static void main(String[] args) {\n" +
@@ -1809,32 +1927,35 @@ class Foo {
 
   }
 
+  @Test
   fun testSpaceBeforeTryBrace() {
-    settings.SPACE_BEFORE_TRY_LBRACE = false
-    settings.SPACE_BEFORE_FINALLY_LBRACE = true
-    doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
+    formatter.settings.SPACE_BEFORE_TRY_LBRACE = false
+    formatter.settings.SPACE_BEFORE_FINALLY_LBRACE = true
+    formatter.doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        try{\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}")
 
-    settings.SPACE_BEFORE_TRY_LBRACE = true
-    settings.SPACE_BEFORE_FINALLY_LBRACE = false
+    formatter.settings.SPACE_BEFORE_TRY_LBRACE = true
+    formatter.settings.SPACE_BEFORE_FINALLY_LBRACE = false
 
-    doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        try {\n" + "        } finally{\n" + "        }\n" + "    }\n" + "}")
 
   }
 
+  @Test
   fun testFormatComments() {
-    javaSettings.ENABLE_JAVADOC_FORMATTING = true
-    doTextTest("public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}",
+    formatter.javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    formatter.doTextTest("public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}",
                "public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}")
 
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testDoNotWrapLBrace() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.RIGHT_MARGIN = 66
-    doTextTest("public class Test {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.RIGHT_MARGIN = 66
+    formatter.doTextTest("public class Test {\n" +
                "    void foo(){\n" +
                "        if (veryLongIdentifier1 == 1 && veryLongIdentifier2 == 2) {\n" +
                "            doSmth();\n" +
@@ -1850,12 +1971,13 @@ class Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testNewLinesAroundArrayInitializer() {
-    settings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true
-    settings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true
-    settings.RIGHT_MARGIN = 40
-    doTextTest("class Foo {\n" + "    int[] a = new int[]{1,2,0x0052,0x0053,0x0054,0x0054,0x0054};\n" + "}", "class Foo {\n" +
+    formatter.settings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true
+    formatter.settings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true
+    formatter.settings.RIGHT_MARGIN = 40
+    formatter.doTextTest("class Foo {\n" + "    int[] a = new int[]{1,2,0x0052,0x0053,0x0054,0x0054,0x0054};\n" + "}", "class Foo {\n" +
                                                                                                              "    int[] a = new int[]{\n" +
                                                                                                              "            1, 2, 0x0052, 0x0053,\n" +
                                                                                                              "            0x0054, 0x0054, 0x0054\n" +
@@ -1864,13 +1986,14 @@ class Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testSpaceAfterCommaInEnum() {
-    settings.SPACE_AFTER_COMMA = true
+    formatter.settings.SPACE_AFTER_COMMA = true
 
-    val facade = javaFacade
+    val facade = JavaPsiFacade.getInstance(formatter.project)
     val effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
     try {
-      doTextTest("public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}",
+      formatter.doTextTest("public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}",
                  "public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}")
     }
     finally {
@@ -1878,8 +2001,9 @@ class Foo {
     }
   }
 
+  @Test
   fun testWrapBetweenCommaAndSemicolon() {
-      doTextTest("""
+      formatter.doTextTest("""
 enum Foo {
     VALUE_A,
     VALUE_B,;
@@ -1903,8 +2027,9 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testRemoveBraceBeforeInstanceOf() {
-    doTextTest("class ReformatInstanceOf {\n" +
+    formatter.doTextTest("class ReformatInstanceOf {\n" +
                "    void foo(Object string) {\n" +
                "        if (string.toString() instanceof String) {} // reformat me\n" +
                "    }\n" +
@@ -1917,32 +2042,36 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testAnnotationBeforePackageLocalConstructor() {
-    doTextTest("class Foo {\n" + "    @MyAnnotation Foo() {\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    @MyAnnotation Foo() {\n" + "    }\n" + "}",
                "class Foo {\n" + "    @MyAnnotation\n" + "    Foo() {\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testLongAnnotationsAreNotWrapped() {
-    settings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    doTest()
+    formatter.settings.ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.doTest()
   }
 
+  @Test
   fun testWrapExtendsList() {
-    settings.RIGHT_MARGIN = 50
-    settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-    settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.RIGHT_MARGIN = 50
+    formatter.settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    formatter.settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
 
-    doTextTest("class ColtreDataProvider extends DataProvider, AgentEventListener, ParameterDataEventListener {\n}",
+    formatter.doTextTest("class ColtreDataProvider extends DataProvider, AgentEventListener, ParameterDataEventListener {\n}",
                "class ColtreDataProvider extends DataProvider,\n" +
                "        AgentEventListener,\n" +
                "        ParameterDataEventListener {\n}")
   }
 
+  @Test
   fun testWrapLongExpression() {
-    settings.RIGHT_MARGIN = 80
-    settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    doTextTest("class Foo {\n" +
+    formatter.settings.RIGHT_MARGIN = 80
+    formatter.settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.doTextTest("class Foo {\n" +
                "    void foo () {\n" +
                "        return (interval1.getEndIndex() >= interval2.getStartIndex() && interval3.getStartIndex() <= interval4.getEndIndex()) || (interval5.getEndIndex() >= interval6.getStartIndex() && interval7.getStartIndex() <= interval8.getEndIndex());" +
                "    }\n" +
@@ -1956,14 +2085,15 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testDoNotWrapCallChainIfParametersWrapped() {
-    settings.RIGHT_MARGIN = 87
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    formatter.settings.RIGHT_MARGIN = 87
+    formatter.settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
     //getSettings().PREFER_PARAMETERS_WRAP = true;
 
-    doMethodTest(
+    formatter.doMethodTest(
       //9                    30                            70         80    86
       "descriptors = manager.createProblemDescriptor(parameter1, parameter2, parameterparameterpar3,parameter4);",
 
@@ -1974,9 +2104,10 @@ enum Foo {
     )
   }
 
+  @Test
   fun testAlignTernaryOperation() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
-    doMethodTest("String s = x == 0 ? \"hello\" :\n" +
+    formatter.settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    formatter.doMethodTest("String s = x == 0 ? \"hello\" :\n" +
                  "                x == 5 ? \"something else\" :\n" +
                  "                        x > 0 ? \"bla, bla\" :\n" +
                  "                                \"\";", "String s = x == 0 ? \"hello\" :\n" +
@@ -1984,39 +2115,42 @@ enum Foo {
                                                           "           x > 0 ? \"bla, bla\" :\n" +
                                                           "           \"\";")
 
-    settings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true
+    formatter.settings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true
 
-    doMethodTest("int someVariable = a ?\n" + "x :\n" + "y;",
+    formatter.doMethodTest("int someVariable = a ?\n" + "x :\n" + "y;",
                  "int someVariable = a ?\n" + "                   x :\n" + "                   y;")
   }
 
+  @Test
   fun testRightMargin_2() {
-    settings.RIGHT_MARGIN = 65
-    settings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true
-    settings.KEEP_LINE_BREAKS = false
+    formatter.settings.RIGHT_MARGIN = 65
+    formatter.settings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true
+    formatter.settings.KEEP_LINE_BREAKS = false
 
-    doClassTest(
+    formatter.doClassTest(
       "public static final Map<LongType, LongType> longVariableName =\n" + "variableValue;",
       "public static final Map<LongType, LongType> longVariableName\n" + "        = variableValue;")
   }
 
+  @Test
   fun testRightMargin_3() {
-    settings.RIGHT_MARGIN = 65
-    settings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false
-    settings.KEEP_LINE_BREAKS = false
+    formatter.settings.RIGHT_MARGIN = 65
+    formatter.settings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false
+    formatter.settings.KEEP_LINE_BREAKS = false
 
-    doClassTest(
+    formatter.doClassTest(
       "public static final Map<LongType, LongType> longVariableName =\n" + "variableValue;",
       "public static final Map<LongType, LongType>\n" + "        longVariableName = variableValue;")
   }
 
+  @Test
   fun testDoNotRemoveLineBreaksBetweenComments() {
-    settings.KEEP_LINE_BREAKS = false
-    settings.KEEP_FIRST_COLUMN_COMMENT = false
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.settings.KEEP_FIRST_COLUMN_COMMENT = false
 
-    doTextTest(
+    formatter.doTextTest(
       "public class Foo {\n" +
       "   //here is a comment\n" +
       "   //line 2 of comment\n" +
@@ -2055,8 +2189,9 @@ enum Foo {
       "}")
   }
 
+  @Test
   fun testWrapParamsOnEveryItem() {
-    val codeStyleSettings = CodeStyle.getSettings(project)
+    val codeStyleSettings = CodeStyle.getSettings(formatter.project)
 
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
     val oldMargin = javaSettings.RIGHT_MARGIN
@@ -2068,7 +2203,7 @@ enum Foo {
       javaSettings.KEEP_LINE_BREAKS = false
       javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
 
-      doClassTest(
+      formatter.doClassTest(
         "public void foo(String p1,\n" +
         "                String p2,\n" +
         "                String p3,\n" +
@@ -2096,8 +2231,9 @@ enum Foo {
 
   }
 
+  @Test
   fun testCommentAfterDeclaration() {
-    val codeStyleSettings = CodeStyle.getSettings(project)
+    val codeStyleSettings = CodeStyle.getSettings(formatter.project)
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
 
     val oldWrap = javaSettings.ASSIGNMENT_WRAP
@@ -2105,7 +2241,7 @@ enum Foo {
     try {
       codeStyleSettings.defaultRightMargin = 20
       javaSettings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-      doMethodTest(
+      formatter.doMethodTest(
         "int i=0; //comment comment",
         "int i =\n" + "        0; //comment comment"
       )
@@ -2120,28 +2256,32 @@ enum Foo {
   //              Tickets-implied tests
   // ------------------------------------------------
 
+  @Test
   fun testSCR915() {
-    settings.SPACE_AROUND_ADDITIVE_OPERATORS = false
-    doTest("SCR915.java", "SCR915_after.java")
+    formatter.settings.SPACE_AROUND_ADDITIVE_OPERATORS = false
+    formatter.doTest("SCR915.java", "SCR915_after.java")
   }
 
+  @Test
   fun testSCR429() {
-    val settings = settings
+    val settings = formatter.settings
     settings.KEEP_BLANK_LINES_IN_CODE = 2
     settings.KEEP_BLANK_LINES_BEFORE_RBRACE = 2
     settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 2
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR548() {
-    val settings = settings
+    val settings = formatter.settings
     settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4
     settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testIDEA_16151() {
-    doClassTest("@ValidateNestedProperties({\n" +
+    formatter.doClassTest("@ValidateNestedProperties({\n" +
                 "@Validate(field=\"name\", required=true, maxlength=Trip.NAME),\n" +
                 "@Validate(field=\"name\", required=true, maxlength=Trip.NAME)\n" +
                 "})" +
@@ -2155,10 +2295,11 @@ enum Foo {
 
   }
 
+  @Test
   fun testIDEA_14324() {
-    settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true
+    formatter.settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true
 
-    doClassTest(
+    formatter.doClassTest(
       "@Ann1({ @Ann2,\n" +
       "                      @Ann3})\n" +
       "public AuthorAddress getAddress() {\n" +
@@ -2170,7 +2311,7 @@ enum Foo {
       "    return address;\n" +
       "}")
 
-    doClassTest("@AttributeOverrides({ @AttributeOverride(name = \"address\", column = @Column(name = \"ADDR\")),\n" +
+    formatter.doClassTest("@AttributeOverrides({ @AttributeOverride(name = \"address\", column = @Column(name = \"ADDR\")),\n" +
                 "                      @AttributeOverride(name = \"country\", column = @Column(name = \"NATION\")) })\n" +
                 "public AuthorAddress getAddress() {\n" +
                 "    return address;\n" +
@@ -2184,64 +2325,73 @@ enum Foo {
     )
   }
 
+  @Test
   fun testSCR260() {
-    val settings = settings
+    val settings = formatter.settings
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
     settings.KEEP_LINE_BREAKS = false
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR114() {
-    val settings = settings
+    val settings = formatter.settings
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     settings.CATCH_ON_NEW_LINE = true
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR259() {
-    myTextRange = TextRange(36, 60)
-    val settings = settings
+    formatter.textRange = TextRange(36, 60)
+    val settings = formatter.settings
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
     settings.KEEP_LINE_BREAKS = false
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR279() {
-    val settings = settings
+    val settings = formatter.settings
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR395() {
-    val settings = settings
+    val settings = formatter.settings
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR11799() {
-    val settings = settings
+    val settings = formatter.settings
     settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 4
     settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR501() {
-    val settings = settings
+    val settings = formatter.settings
     settings.KEEP_FIRST_COLUMN_COMMENT = true
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR879() {
-    val settings = settings
+    val settings = formatter.settings
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTest()
+    formatter.doTest()
   }
 
 
+  @Test
   fun testSCR547() {
-    doTextTest("class Foo { \n" +
+    formatter.doTextTest("class Foo { \n" +
                "    Object[] objs = { \n" +
                "            new Object() { \n" +
                "        public String toString() { \n" +
@@ -2260,11 +2410,12 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR479() {
-    val settings = settings
+    val settings = formatter.settings
     settings.RIGHT_MARGIN = 80
     settings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    doTextTest("public class Foo {\n" +
+    formatter.doTextTest("public class Foo {\n" +
                "    public static void main(String[] args) {\n" +
                "        if (name != null ?                !name.equals(that.name) : that.name !=                null)\n" +
                "            return false;\n" +
@@ -2277,10 +2428,11 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR190() {
-    val settings = settings
+    val settings = formatter.settings
     settings.KEEP_LINE_BREAKS = false
-    doTextTest("public class EntityObject \n" +
+    formatter.doTextTest("public class EntityObject \n" +
                "{ \n" +
                "    private Integer id; \n" +
                "\n" +
@@ -2306,12 +2458,13 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR1535() {
-    val settings = settings
+    val settings = formatter.settings
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTextTest("public class Foo {\n" +
+    formatter.doTextTest("public class Foo {\n" +
                "    public int foo() {\n" +
                "        if (a) {\n" +
                "            return;\n" +
@@ -2329,38 +2482,42 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR970() {
-    val settings = settings
+    val settings = formatter.settings
     settings.THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
     settings.THROWS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
     settings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testSCR1486() {
-    doTextTest("public class Test {\n" + "  private BigDecimal\n" + "}", "public class Test {\n" + "    private BigDecimal\n" + "}")
+    formatter.doTextTest("public class Test {\n" + "  private BigDecimal\n" + "}", "public class Test {\n" + "    private BigDecimal\n" + "}")
 
-    doTextTest("public class Test {\n" + "  @NotNull private BigDecimal\n" + "}",
+    formatter.doTextTest("public class Test {\n" + "  @NotNull private BigDecimal\n" + "}",
                "public class Test {\n" + "    @NotNull\n" + "    private BigDecimal\n" + "}")
 
   }
 
+  @Test
   fun test1607() {
-    settings.RIGHT_MARGIN = 30
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
-    settings.ALIGN_MULTILINE_PARAMETERS = true
-    settings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    doTextTest("class TEst {\n" + "void foo(A a,B b){ /* compiled code */ }\n" + "}",
+    formatter.settings.RIGHT_MARGIN = 30
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    formatter.settings.ALIGN_MULTILINE_PARAMETERS = true
+    formatter.settings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.doTextTest("class TEst {\n" + "void foo(A a,B b){ /* compiled code */ }\n" + "}",
                "class TEst {\n" + "    void foo(A a, B b)\n" + "    { /* compiled code */ }\n" + "}")
   }
 
+  @Test
   fun testSCR1615() {
-    settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
 
-    doTextTest(
+    formatter.doTextTest(
       "public class ZZZZ \n" +
       "   { \n" +
       "   public ZZZZ() \n" +
@@ -2381,24 +2538,26 @@ enum Foo {
       "    }")
   }
 
+  @Test
   fun testSCR1047() {
-    doTextTest("class Foo{\n" + "    void foo(){\n" + "        String field1, field2;\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo{\n" + "    void foo(){\n" + "        String field1, field2;\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        String field1, field2;\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testSCR524() {
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
-    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
-    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() {return;}\n" + "}")
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    formatter.settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    formatter.doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() {return;}\n" + "}")
 
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false
-    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
-    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    settings.CASE_STATEMENT_ON_NEW_LINE = false
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
+    formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false
+    formatter.settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
+    formatter.settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    formatter.settings.CASE_STATEMENT_ON_NEW_LINE = false
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "void foo() {\n" +
                "if(a) {return;}\n" +
                "for(a = 0; a < 10; a++) {return;}\n" +
@@ -2419,16 +2578,17 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR3062() {
-    settings.KEEP_LINE_BREAKS = false
-    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-    settings.RIGHT_MARGIN = 80
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    formatter.settings.RIGHT_MARGIN = 80
 
-    settings.PREFER_PARAMETERS_WRAP = true
+    formatter.settings.PREFER_PARAMETERS_WRAP = true
 
-    doTextTest(
+    formatter.doTextTest(
       "public class Foo { \n" +
       "    public static void main() { \n" +
       "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
@@ -2444,9 +2604,9 @@ enum Foo {
       "    }\n" +
       "}")
 
-    settings.PREFER_PARAMETERS_WRAP = false
+    formatter.settings.PREFER_PARAMETERS_WRAP = false
 
-    doTextTest(
+    formatter.doTextTest(
       "public class Foo { \n" +
       "    public static void main() { \n" +
       "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
@@ -2463,34 +2623,39 @@ enum Foo {
 
   }
 
+  @Test
   fun testSCR1658() {
-    doTextTest("/** \n" + " * @author\tMike\n" + " */\n" + "public class Foo {\n" + "}",
+    formatter.doTextTest("/** \n" + " * @author\tMike\n" + " */\n" + "public class Foo {\n" + "}",
                "/**\n" + " * @author Mike\n" + " */\n" + "public class Foo {\n" + "}")
   }
 
+  @Test
   fun testSCR1699() {
-    doTextTest("class Test {\n" + "    Test(String t1 , String t2) {\n" + "    }\n" + "}",
+    formatter.doTextTest("class Test {\n" + "    Test(String t1 , String t2) {\n" + "    }\n" + "}",
                "class Test {\n" + "    Test(String t1, String t2) {\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testSCR1700() {
-    doTextTest("class Test {\n" + "    Test(String      t1 , String      t2) {\n" + "    }\n" + "}",
+    formatter.doTextTest("class Test {\n" + "    Test(String      t1 , String      t2) {\n" + "    }\n" + "}",
                "class Test {\n" + "    Test(String t1, String t2) {\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testSCR1701() {
-    settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
-    settings.SPACE_WITHIN_METHOD_PARENTHESES = false
-    settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
-    settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
-    settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        foo(a,b);" + "    }\n" + "}",
+    formatter.settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    formatter.settings.SPACE_WITHIN_METHOD_PARENTHESES = false
+    formatter.settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    formatter.settings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    formatter.settings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        foo(a,b);" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        foo( a, b );\n" + "    }\n" + "}")
   }
 
+  @Test
   fun testSCR1703() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
-    doTextTest("class Foo{\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        for (Object o : localizations) {\n" +
                "            //do something \n" +
@@ -2506,20 +2671,22 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR1804() {
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
-    doTextTest(
+    formatter.settings.ALIGN_MULTILINE_ASSIGNMENT = true
+    formatter.doTextTest(
       "class Foo {\n" + "    void foo() {\n" + "        int i;\n" + "        i = \n" + "                1 + 2;\n" + "    }\n" + "}",
       "class Foo {\n" + "    void foo() {\n" + "        int i;\n" + "        i =\n" + "                1 + 2;\n" + "    }\n" + "}")
 
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}")
 
   }
 
+  @Test
   fun testSCR1795() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
-    doTextTest("public class Test {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.doTextTest("public class Test {\n" +
                "    public static void main(String[] args) {\n" +
                "        do {\n" +
                "            // ...\n" +
@@ -2534,23 +2701,25 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR1936() {
-    settings.BLANK_LINES_AFTER_CLASS_HEADER = 4
-    doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "}",
+    formatter.settings.BLANK_LINES_AFTER_CLASS_HEADER = 4
+    formatter.doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "}",
                "/**\n" + " * Foo - test class\n" + " */\n" + "class Foo {\n" + "\n" + "\n" + "\n" + "\n" + "}")
 
-    doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "    int myFoo;\n" + "}",
+    formatter.doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "    int myFoo;\n" + "}",
                "/**\n" + " * Foo - test class\n" + " */\n" + "class Foo {\n" + "\n" + "\n" + "\n" + "\n" + "    int myFoo;\n" + "}")
 
   }
 
+  @Test
   fun test1980() {
-    settings.RIGHT_MARGIN = 144
-    settings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
-    settings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true
-    doTextTest("class Foo{\n" +
+    formatter.settings.RIGHT_MARGIN = 144
+    formatter.settings.TERNARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    formatter.settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    formatter.settings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "final VirtualFile moduleRoot = moduleRelativePath.equals(\"\") ? projectRootDirAfter : projectRootDirAfter.findFileByRelativePath(moduleRelativePath);\n" +
                "    }\n" +
@@ -2563,8 +2732,9 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR2089() {
-    doTextTest("class Test { \n" +
+    formatter.doTextTest("class Test { \n" +
                "    void test(int i) { \n" +
                "        switch (i) { \n" +
                "            case 1: { \n" +
@@ -2597,11 +2767,12 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testSCR2132() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
-    settings.ELSE_ON_NEW_LINE = true
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED
+    formatter.settings.ELSE_ON_NEW_LINE = true
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "        if (!rightPanel.isAncestorOf(validationPanel)) \n" +
                "                {\n" +
@@ -2624,17 +2795,19 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testIDEADEV1047() {
-    doTextTest("class Foo{\n" + "String field1\n" + ",\n" + "field2\n" + ";" + "}",
+    formatter.doTextTest("class Foo{\n" + "String field1\n" + ",\n" + "field2\n" + ";" + "}",
                "class Foo {\n" + "    String field1,\n" + "            field2;\n" + "}")
 
-    doTextTest("class Foo{\n" + "void foo() {\n" + "    String var1\n" + ",\n" + "var2\n" + ";\n" + "    }\n" + "}",
+    formatter.doTextTest("class Foo{\n" + "void foo() {\n" + "    String var1\n" + ",\n" + "var2\n" + ";\n" + "    }\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        String var1,\n" + "                var2;\n" + "    }\n" + "}")
 
   }
 
+  @Test
   fun testIDEADEV1047_2() {
-    doTextTest(
+    formatter.doTextTest(
       "class Foo{\n" +
       "String field1\n" +
       ",\n" +
@@ -2648,11 +2821,12 @@ enum Foo {
     )
   }
 
+  @Test
   fun testSCR2241() {
-    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    settings.SPECIAL_ELSE_IF_TREATMENT = true
-    settings.ELSE_ON_NEW_LINE = true
-    doTextTest("class Foo {\n" +
+    formatter.settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.settings.SPECIAL_ELSE_IF_TREATMENT = true
+    formatter.settings.ELSE_ON_NEW_LINE = true
+    formatter.doTextTest("class Foo {\n" +
                "    void foo() {\n" +
                "        if (a)\n" +
                "        {\n" +
@@ -2674,12 +2848,13 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testSCRIDEA_4783() {
-    settings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
-    settings.RIGHT_MARGIN = 80
+    formatter.settings.ASSIGNMENT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.RIGHT_MARGIN = 80
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        final CommandRouterProtocolHandler protocolHandler = (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                "    }\n" +
@@ -2691,7 +2866,7 @@ enum Foo {
                     "}")
 
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        protocolHandlerCommandRouterProtocolHandler = (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                "    }\n" +
@@ -2702,16 +2877,16 @@ enum Foo {
                     "    }\n" +
                     "}")
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    final CommandRouterProtocolHandler protocolHandler = (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                "}", "class Foo {\n" +
                     "    final CommandRouterProtocolHandler protocolHandler =\n" +
                     "            (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                     "}")
 
-    settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true
+    formatter.settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        final CommandRouterProtocolHandler protocolHandler = (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                "    }\n" +
@@ -2722,7 +2897,7 @@ enum Foo {
                     "    }\n" +
                     "}")
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    void foo() {\n" +
                "        protocolHandlerCommandRouterProtocolHandler = (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                "    }\n" +
@@ -2734,7 +2909,7 @@ enum Foo {
                     "}")
 
 
-    doTextTest("class Foo{\n" +
+    formatter.doTextTest("class Foo{\n" +
                "    final CommandRouterProtocolHandler protocolHandler = (CommandRouterProtocolHandler) connection.getProtocolHandler()\n" +
                "}", "class Foo {\n" +
                     "    final CommandRouterProtocolHandler protocolHandler\n" +
@@ -2744,15 +2919,16 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testSCRIDEADEV_2292() {
-    settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
-    settings.WHILE_ON_NEW_LINE = true
+    formatter.settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    formatter.settings.WHILE_ON_NEW_LINE = true
 
-    val facade = javaFacade
+    val facade = JavaPsiFacade.getInstance(formatter.project)
     val stored = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
     try {
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
                  "class Foo {\n" +
                  "    void foo() {\n" +
                  "        if (a)\n" +
@@ -2763,7 +2939,7 @@ enum Foo {
                  "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" +
                  "    void foo() {\n" +
                  "        for (int i = 0; i < 10; i++)\n" +
@@ -2772,11 +2948,11 @@ enum Foo {
                  "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars)\n" + "            foo();\n" + "    }\n" + "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}", "class Foo {\n" +
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                  "    void foo() {\n" +
                                                                                                                  "        do\n" +
                                                                                                                  "            foo();\n" +
@@ -2785,33 +2961,33 @@ enum Foo {
                                                                                                                  "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        while (true)\n" + "            foo();\n" + "    }\n" + "}")
 
-      settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true
-      settings.WHILE_ON_NEW_LINE = false
+      formatter.settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true
+      formatter.settings.WHILE_ON_NEW_LINE = false
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}")
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        while (true) foo();\n" + "    }\n" + "}")
 
-      settings.RIGHT_MARGIN = 17
+      formatter.settings.RIGHT_MARGIN = 17
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
                  "class Foo {\n" +
                  "    void foo() {\n" +
                  "        if (a)\n" +
@@ -2821,9 +2997,9 @@ enum Foo {
                  "    }\n" +
                  "}")
 
-      settings.RIGHT_MARGIN = 30
+      formatter.settings.RIGHT_MARGIN = 30
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" +
                  "    void foo() {\n" +
                  "        for (int i = 0; i < 10; i++)\n" +
@@ -2831,13 +3007,13 @@ enum Foo {
                  "    }\n" +
                  "}")
 
-      settings.RIGHT_MARGIN = 32
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
+      formatter.settings.RIGHT_MARGIN = 32
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars)\n" + "            foo();\n" + "    }\n" + "}")
 
 
-      settings.RIGHT_MARGIN = 12
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}", "class Foo {\n" +
+      formatter.settings.RIGHT_MARGIN = 12
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}", "class Foo {\n" +
                                                                                                                  "    void foo() {\n" +
                                                                                                                  "        do\n" +
                                                                                                                  "            foo();\n" +
@@ -2845,9 +3021,9 @@ enum Foo {
                                                                                                                  "    }\n" +
                                                                                                                  "}")
 
-      settings.RIGHT_MARGIN = 23
+      formatter.settings.RIGHT_MARGIN = 23
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
+      formatter.doTextTest("class Foo {\n" + "    void foo() {\n" + "        while(true) foo();\n" + "    }\n" + "}",
                  "class Foo {\n" + "    void foo() {\n" + "        while (true)\n" + "            foo();\n" + "    }\n" + "}")
 
     }
@@ -2858,14 +3034,15 @@ enum Foo {
 
   }
 
+  @Test
   fun testSCR3115() {
-    val indentOptions = settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE)
+    val indentOptions = formatter.settings.rootSettings.getIndentOptions(JavaFileType.INSTANCE)
     indentOptions.USE_TAB_CHARACTER = true
     indentOptions.SMART_TABS = true
 
-    settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true
+    formatter.settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true
 
-    doTextTest("class Foo {\n" +
+    formatter.doTextTest("class Foo {\n" +
                "\tpublic void test(String[] args) {\n" +
                "\t\tfoo(new String[] {\n" +
                "\t\t\t\t\"1\",\n" +
@@ -2882,9 +3059,10 @@ enum Foo {
                     "}")
   }
 
+  @Test
   fun testIDEADEV_6239() {
-    javaSettings.ENABLE_JAVADOC_FORMATTING = true
-    doTextTest("public class Test {\n" +
+    formatter.javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    formatter.doTextTest("public class Test {\n" +
                "\n" +
                "    /**\n" +
                "     * The s property.\n" +
@@ -2904,9 +3082,10 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_8755() {
-    settings.KEEP_LINE_BREAKS = false
-    doTextTest("class Foo {\n" +
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTextTest("class Foo {\n" +
                "void foo(){\n" +
                "System\n" +
                ".out\n" +
@@ -2922,8 +3101,9 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_24168() {
-    doTextTest(
+    formatter.doTextTest(
       "class Foo {\n" + "@AnExampleMethod\n" + "public String\n" + "getMeAString()\n" + "throws AnException\n" + "{\n" + "\n" + "}\n" + "}",
       "class Foo {\n" +
       "    @AnExampleMethod\n" +
@@ -2937,16 +3117,18 @@ enum Foo {
 
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_2541() {
-    myTextRange = TextRange(0, 15)
-    doTextTest("/** @param q */\nclass Foo {\n}", "/**\n" + " * @param q\n" + " */\n" + "class Foo {\n" + "}")
+    formatter.textRange = TextRange(0, 15)
+    formatter.doTextTest("/** @param q */\nclass Foo {\n}", "/**\n" + " * @param q\n" + " */\n" + "class Foo {\n" + "}")
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_6434() {
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true
-    settings.ALIGN_MULTILINE_ASSIGNMENT = true
-    doTextTest("class Foo {\n" +
+    formatter.settings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    formatter.settings.ALIGN_MULTILINE_ASSIGNMENT = true
+    formatter.doTextTest("class Foo {\n" +
                "void foo(){\n" +
                "return (interval1.getEndIndex() >= interval2.getStartIndex() &&\n" +
                "        interval1.getStartIndex() <= interval2.getEndIndex()) ||\n" +
@@ -2964,10 +3146,11 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_12836() {
-    settings.SPECIAL_ELSE_IF_TREATMENT = true
-    settings.RIGHT_MARGIN = 80
-    doTextTest("class Foo {\n" +
+    formatter.settings.SPECIAL_ELSE_IF_TREATMENT = true
+    formatter.settings.RIGHT_MARGIN = 80
+    formatter.doTextTest("class Foo {\n" +
                "void foo(){\n" +
                "if (true){\n" +
                "} else if (\"                                                            \" != null) {\n" +
@@ -3007,8 +3190,9 @@ enum Foo {
   */
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun test23551() {
-    doTextTest("public class Wrapping {\n" +
+    formatter.doTextTest("public class Wrapping {\n" +
                "    public static void sample() {\n" +
                "        System.out.println(\".\" + File.separator + \"..\" + File.separator + \"some-directory-name\" + File.separator + \"more-file-name\");\n" +
                "    }\n" +
@@ -3044,11 +3228,12 @@ enum Foo {
 
   */
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_23551() {
-    settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    formatter.settings.BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
 
-    settings.RIGHT_MARGIN = 60
-    doTextTest("public class Wrapping {\n" +
+    formatter.settings.RIGHT_MARGIN = 60
+    formatter.doTextTest("public class Wrapping {\n" +
                "public static void sample() {\n" +
                "System.out.println(\".\" + File.separator + \"..\" + File.separator + \"some-directory-name\" + File.separator + \"more-file-name\");\n" +
                "}\n" +
@@ -3066,10 +3251,11 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_22967() {
-    settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+    formatter.settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
 
-    doTextTest("public interface TestInterface {\n" +
+    formatter.doTextTest("public interface TestInterface {\n" +
                "\n" +
                "    void empty();\n" +
                "\n" +
@@ -3103,15 +3289,17 @@ enum Foo {
   }
 
   @Throws(IncorrectOperationException::class)
+  @Test
   fun testIDEADEV_22967_2() {
-    settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+    formatter.settings.METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
 
-    doTextTest("public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}",
+    formatter.doTextTest("public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}",
                "public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}")
   }
 
+  @Test
   fun testIDEA_54406() {
-    doTextTest("public class Test1 {\n" +
+    formatter.doTextTest("public class Test1 {\n" +
                "void func() {\n" +
                "new Thread(new Runnable() {\n" +
                "public void run() {\n" +
@@ -3136,8 +3324,9 @@ enum Foo {
                "}")
   }
 
+  @Test
   fun testCommaInMethodDeclParamsList() {
-    settings.SPACE_AFTER_COMMA = true
+    formatter.settings.SPACE_AFTER_COMMA = true
     var before = "public class Test {\n" +
                  "    public static void act(   int a   ,    int b   ,    int c   ,      int d) {\n" +
                  "        act(1,2,3,4);\n" +
@@ -3148,8 +3337,8 @@ enum Foo {
                 "        act(1, 2, 3, 4);\n" +
                 "    }\n" +
                 "}\n"
-    doTextTest(before, after)
-    settings.SPACE_AFTER_COMMA = false
+    formatter.doTextTest(before, after)
+    formatter.settings.SPACE_AFTER_COMMA = false
     before = "public class Test {\n" +
              "    public static void act(   int a   ,    int b   ,      int c   ,      int d) {\n" +
              "        act(1 ,   2 , 3 ,            4);\n" +
@@ -3160,28 +3349,31 @@ enum Foo {
             "        act(1,2,3,4);\n" +
             "    }\n" +
             "}\n"
-    doTextTest(before, after)
+    formatter.doTextTest(before, after)
   }
 
 
+  @Test
   fun testFormatterOnOffTags() {
-    settings.rootSettings.FORMATTER_TAGS_ENABLED = true
-    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
-    doTest()
+    formatter.settings.rootSettings.FORMATTER_TAGS_ENABLED = true
+    formatter.settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    formatter.doTest()
   }
 
+  @Test
   fun testFormatterOnOffTagsWithRegexp() {
-    val settings = settings.rootSettings
+    val settings = formatter.settings.rootSettings
     settings.FORMATTER_TAGS_ENABLED = true
     settings.FORMATTER_TAGS_ACCEPT_REGEXP = true
     settings.FORMATTER_OFF_TAG = "not.*format"
     settings.FORMATTER_ON_TAG = "end.*fragment"
-    doTest()
+    formatter.doTest()
   }
 
+  @Test
   fun testDoNotIndentNotSelectedStatement_AfterSelectedOne() {
-    myTextRange = TextRange(0, 73)
-    doTextTest(
+    formatter.textRange = TextRange(0, 73)
+    formatter.doTextTest(
       "class Test {\n" +
       "    public static void main(String[] args) {\n" +
       "    int a = 3;\n" +
@@ -3196,8 +3388,8 @@ enum Foo {
       "}"
     )
 
-    myTextRange = TextRange(0, 67)
-    doTextTest(
+    formatter.textRange = TextRange(0, 67)
+    formatter.doTextTest(
       "    import java.lang.Override;\n" +
       "    import java.lang.Exception;\n" +
       "    \n" +
@@ -3211,6 +3403,7 @@ enum Foo {
     )
   }
 
+  @Test
   fun testDetectableIndentOptions() {
     val original = "public class Main {\n" +
                    "\tpublic void main() {\n" +
@@ -3222,7 +3415,7 @@ enum Foo {
                    "}\n" +
                    "}"
     // Enabled but full reformat (no detection)
-    doTestWithDetectableIndentOptions(
+    formatter.doTestWithDetectableIndentOptions(
       original,
       "public class Main {\n" +
       "    public void main() {\n" +
@@ -3235,8 +3428,8 @@ enum Foo {
       "}"
     )
     // Reformat with a smaller text range (detection is on)
-    myTextRange = TextRange(1, original.length)
-    doTestWithDetectableIndentOptions(
+    formatter.textRange = TextRange(1, original.length)
+    formatter.doTestWithDetectableIndentOptions(
       original,
       "public class Main {\n" +
       "\tpublic void main() {\n" +
@@ -3250,8 +3443,9 @@ enum Foo {
     )
   }
 
+  @Test
   fun testKeepIndentsOnEmptyLines() {
-    val indentOptions = settings.indentOptions
+    val indentOptions = formatter.settings.indentOptions
     assertNotNull(indentOptions)
     val original = "public class Main {\n" +
                    "    public int x;\n" +
@@ -3273,7 +3467,7 @@ enum Foo {
                    "}"
 
     indentOptions!!.KEEP_INDENTS_ON_EMPTY_LINES = false
-    doTextTest(
+    formatter.doTextTest(
       original,
 
       "public class Main {\n" +
@@ -3296,7 +3490,7 @@ enum Foo {
       "}"
     )
     indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true
-    doTextTest(
+    formatter.doTextTest(
       original,
 
       "public class Main {\n" +
@@ -3320,12 +3514,13 @@ enum Foo {
     )
   }
 
+  @Test
   fun testIdea114862() {
-    settings.rootSettings.FORMATTER_TAGS_ENABLED = true
-    val indentOptions = settings.indentOptions
+    formatter.settings.rootSettings.FORMATTER_TAGS_ENABLED = true
+    val indentOptions = formatter.settings.indentOptions
     assertNotNull(indentOptions)
     indentOptions!!.USE_TAB_CHARACTER = true
-    doTextTest(
+    formatter.doTextTest(
       "// @formatter:off \n" +
       "public class Test {\n" +
       "      String foo;\n" +
@@ -3340,12 +3535,13 @@ enum Foo {
     )
   }
 
+  @Test
   fun testIdea184461() {
-    settings.rootSettings.FORMATTER_TAGS_ENABLED = true
-    val indentOptions = settings.indentOptions
+    formatter.settings.rootSettings.FORMATTER_TAGS_ENABLED = true
+    val indentOptions = formatter.settings.indentOptions
     assertNotNull(indentOptions)
     indentOptions!!.USE_TAB_CHARACTER = true
-    doTextTest(
+    formatter.doTextTest(
       "public class Test {\n" +
       "/* @formatter:off */\n" +
       "      String foo;\n" +
@@ -3365,8 +3561,9 @@ enum Foo {
     )
   }
 
+  @Test
   fun testReformatCodeWithErrorElementsWithoutAssertions() {
-    doTextTest("class  RedTest   {   \n\n\n\n\n\n\n\n   " +
+    formatter.doTextTest("class  RedTest   {   \n\n\n\n\n\n\n\n   " +
                "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
                "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
                "                      \n\n\n\n\n\n\n\n  }  ",
@@ -3380,20 +3577,22 @@ enum Foo {
                "}  ")
   }
 
+  @Test
   fun testReformatPackageAnnotation() {
-    doTextTest(
+    formatter.doTextTest(
       "@ParametersAreNonnullByDefault package com.example;",
       "@ParametersAreNonnullByDefault\n" + "package com.example;"
     )
 
-    doTextTest(
+    formatter.doTextTest(
       "        @ParametersAreNonnullByDefault\n" + "package com.example;",
       "@ParametersAreNonnullByDefault\n" + "package com.example;"
     )
   }
 
+  @Test
   fun testFinal_OnTheEndOfLine() {
-    doMethodTest(
+    formatter.doMethodTest(
       "@SuppressWarnings(\"unchecked\") final\n" +
       "List<String> list = new ArrayList<String>();\n" +
       "new Runnable() {\n" +
@@ -3412,8 +3611,9 @@ enum Foo {
     )
   }
 
+  @Test
   fun testKeepTypeAnnotationNearType() {
-    doTextTest(
+    formatter.doTextTest(
       "import java.lang.annotation.ElementType;\n" +
       "import java.lang.annotation.Retention;\n" +
       "import java.lang.annotation.RetentionPolicy;\n" +
@@ -3448,9 +3648,10 @@ enum Foo {
     )
   }
 
+  @Test
   fun testKeepSimpleSwitchInOneLine() {
-    settings.CASE_STATEMENT_ON_NEW_LINE = false
-    doMethodTest(
+    formatter.settings.CASE_STATEMENT_ON_NEW_LINE = false
+    formatter.doMethodTest(
       "switch (b) {\n" +
       "case 1: case 2: break;\n" +
       "}",
@@ -3459,9 +3660,10 @@ enum Foo {
       "}")
   }
 
+  @Test
   fun testExpandSwitch() {
-    settings.CASE_STATEMENT_ON_NEW_LINE = false
-    doMethodTest(
+    formatter.settings.CASE_STATEMENT_ON_NEW_LINE = false
+    formatter.doMethodTest(
       "switch (b) {\n" +
       "case 1: { println(1); } case 2: break;\n" +
       "}",
@@ -3473,9 +3675,10 @@ enum Foo {
       "}")
   }
 
+  @Test
   fun testKeepBreakOnSameLine() {
-    settings.CASE_STATEMENT_ON_NEW_LINE = false
-    doMethodTest(
+    formatter.settings.CASE_STATEMENT_ON_NEW_LINE = false
+    formatter.doMethodTest(
       "switch (b) {\n" +
       "case 1: case 2:\n" +
       "\n\n\n\n\n\n" +
@@ -3487,8 +3690,9 @@ enum Foo {
       "}")
   }
 
+  @Test
   fun testAnnotationAndFinalInsideParamList() {
-    doClassTest(
+    formatter.doClassTest(
       "public class Test {\n" +
       "    void test(@Nullable    final String childFallbackProvider) {\n" +
       "    }\n" +
@@ -3500,8 +3704,9 @@ enum Foo {
     )
   }
 
+  @Test
   fun testPreserveRbraceOnItsLine() {
-    doClassTest(
+    formatter.doClassTest(
       "class SomeTest {\n" +
       "  @Test\n" +
       "}",
@@ -3511,8 +3716,9 @@ enum Foo {
     )
   }
 
+  @Test
   fun testFormatCStyleCommentWithAsterisks() {
-    doMethodTest(
+    formatter.doMethodTest(
       "        for (Object o : new Object[]{}) {\n" +
       "/*\n" +
       "        *\t\n" +
@@ -3526,8 +3732,9 @@ enum Foo {
     )
   }
 
+  @Test
   fun testIdea183193() {
-    doTextTest(
+    formatter.doTextTest(
       "package de.tarent.bugreport;\n" +
       "\n" +
       "        /*-\n" +
@@ -3571,8 +3778,9 @@ enum Foo {
   /**
    * See IDEA-98552, IDEA-175560
    */
+  @Test
   fun testParenthesesIndentation() {
-    doTextTest(
+    formatter.doTextTest(
 """
 package com.company;
 
@@ -3631,9 +3839,10 @@ class Test {
     )
   }
 
+  @Test
   fun testBlankLinesBeforeClassEnd () {
-    settings.BLANK_LINES_BEFORE_CLASS_END = 2
-    doTextTest(
+    formatter.settings.BLANK_LINES_BEFORE_CLASS_END = 2
+    formatter.doTextTest(
 """
 public class Test {
 
@@ -3676,9 +3885,10 @@ public class Test {
     )
   }
 
+  @Test
   fun testBlankLinesBeforeClassEnd_afterField () {
-    settings.BLANK_LINES_BEFORE_CLASS_END = 2
-    doTextTest(
+    formatter.settings.BLANK_LINES_BEFORE_CLASS_END = 2
+    formatter.doTextTest(
 """
 public class Test {
 
@@ -3700,9 +3910,10 @@ public class Test {
   }
 
 
+  @Test
   fun testBlankLinesBeforeClassEnd_afterInnerClass () {
-    settings.BLANK_LINES_BEFORE_CLASS_END = 2
-    doTextTest(
+    formatter.settings.BLANK_LINES_BEFORE_CLASS_END = 2
+    formatter.doTextTest(
 """
 public class Test {
 
@@ -3727,8 +3938,9 @@ public class Test {
     )
   }
 
+  @Test
   fun testSpacing() {
-    doTextTest(
+    formatter.doTextTest(
       "enum A{\n" +
       "  B,\n" +
       "  /** or like this */C();\n" +
@@ -3745,11 +3957,12 @@ public class Test {
   }
 
 
+  @Test
   fun testIdea192024() {
-    settings.apply{
+    formatter.settings.apply{
       RIGHT_MARGIN = 30
     }
-    doTextTest(
+    formatter.doTextTest(
         """
           public class Main {
           public static void main(String[] args) {
@@ -3774,12 +3987,13 @@ public class Test {
     )
   }
 
+  @Test
   fun testIdeaIDEA203464() {
-    settings.apply{
+    formatter.settings.apply{
       ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
       KEEP_LINE_BREAKS = false
     }
-    doTextTest(
+    formatter.doTextTest(
         """
 /**
  * javadoc
@@ -3809,12 +4023,13 @@ public enum EnumApplyChannel {
   }
 
 
+  @Test
   fun testIdeaIDEA198408() {
-    settings.apply{
+    formatter.settings.apply{
       ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
       KEEP_LINE_BREAKS = false
     }
-    doTextTest(
+    formatter.doTextTest(
         """
 /** JavaDoc */
 public enum LevelCode {HIGH(3),
@@ -3847,13 +4062,14 @@ public enum LevelCode {
   }
 
 
+  @Test
   fun testIdea195707() {
-    settings.apply {
+    formatter.settings.apply {
       CASE_STATEMENT_ON_NEW_LINE = true
       KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
     }
 
-    doTextTest(
+    formatter.doTextTest(
       """
       public enum RotationDirection {
         CLOCKWISE, COUNTERCLOCKWISE;
@@ -3885,13 +4101,14 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testIdea195707_1() {
-    settings.apply {
+    formatter.settings.apply {
       CASE_STATEMENT_ON_NEW_LINE = false
       KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
     }
 
-    doTextTest(
+    formatter.doTextTest(
       """
       public enum RotationDirection {
         CLOCKWISE, COUNTERCLOCKWISE;
@@ -3921,11 +4138,12 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testFormatterTagsDisabled() {
-    settings.rootSettings.apply {
+    formatter.settings.rootSettings.apply {
       FORMATTER_TAGS_ENABLED = false
     }
-    doTextTest(
+    formatter.doTextTest(
       """
       package com.company;
       
@@ -3950,11 +4168,12 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testRecordHeaderLparenOnNewLine() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = true
     }
-    doTextTest("""
+    formatter.doTextTest("""
       record A(String s
         ) {}
     """.trimIndent(), """
@@ -3965,12 +4184,13 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testRecordHeaderLparenNotOnNewLine() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
     }
-    settings.KEEP_LINE_BREAKS = false
-    doTextTest("""
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTextTest("""
       record A(String s
         ) {}
     """.trimIndent(), """
@@ -3979,11 +4199,12 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testRecordHeaderRparenOnNewLine() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = true
     }
-    doTextTest("""
+    formatter.doTextTest("""
       record A(String s,
             String a) {}
     """.trimIndent(), """
@@ -3994,12 +4215,13 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testRecordHeaderRparenNotOnNewLine() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = false
     }
-    settings.KEEP_LINE_BREAKS = false
-    doTextTest("""
+    formatter.settings.KEEP_LINE_BREAKS = false
+    formatter.doTextTest("""
       record A(
             String s,
             String a
@@ -4011,12 +4233,13 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testRecordHeaderMultilineAlign() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
       ALIGN_MULTILINE_RECORDS = true
     }
-    doTextTest("""
+    formatter.doTextTest("""
       record A(String s,
         String a
       ) {}
@@ -4028,12 +4251,13 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testRecordHeaderNotMultilineAlign() {
-    javaSettings.apply {
+    formatter.javaSettings.apply {
       NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
       ALIGN_MULTILINE_RECORDS = false
     }
-    doTextTest("""
+    formatter.doTextTest("""
       record A(String s,
         String a
       ) {}
@@ -4045,9 +4269,10 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testInstanceofPatternWithGeneric() {
 
-    doTextTest("""
+    formatter.doTextTest("""
       class A{
        void foo(Object x) {
         if (x instanceof List<String> a) {}
@@ -4063,8 +4288,9 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testIdea154076() {
-    doTextTest("""
+    formatter.doTextTest("""
     public class Test {
     @SuppressWarnings("any")
       String suppressed = null;
@@ -4094,25 +4320,28 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testPermitsList() {
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
-    doTextTest("sealed class A permits B, \n" + "C {}", "sealed class A permits B,\n" + "                       C {\n}")
+    formatter.settings.ALIGN_MULTILINE_EXTENDS_LIST = true
+    formatter.doTextTest("sealed class A permits B, \n" + "C {}", "sealed class A permits B,\n" + "                       C {\n}")
   }
 
+  @Test
   fun testWrapPermitsList() {
-    settings.RIGHT_MARGIN = 50
-    settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-    settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    formatter.settings.RIGHT_MARGIN = 50
+    formatter.settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    formatter.settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
 
-    doTextTest("sealed class ColtreDataProvider permits Provider, AgentEventListener, ParameterDataEventListener {\n}",
+    formatter.doTextTest("sealed class ColtreDataProvider permits Provider, AgentEventListener, ParameterDataEventListener {\n}",
                "sealed class ColtreDataProvider permits Provider,\n" +
                "        AgentEventListener,\n" +
                "        ParameterDataEventListener {\n}")
   }
 
 
+  @Test
   fun testPermitsListWithPrecedingGeneric() {
-    doTextTest("""
+    formatter.doTextTest("""
       sealed class Simple permits B {
       }
 
@@ -4127,8 +4356,9 @@ public enum LevelCode {
     """.trimIndent())
   }
 
+  @Test
   fun testIdea250114() {
-    doTextTest("""
+    formatter.doTextTest("""
       @Deprecated // Comment
       class Test {
       }
@@ -4141,8 +4371,9 @@ public enum LevelCode {
       """.trimIndent())
   }
 
+  @Test
   fun testIdea252167() {
-    doTextTest("""      
+    formatter.doTextTest("""      
       @Ann record R(String str) {
       }
       """.trimIndent(),
@@ -4154,9 +4385,10 @@ public enum LevelCode {
       """.trimIndent())
   }
 
+  @Test
   fun testIdea153525() {
-    settings.LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
-    doTextTest(
+    formatter.settings.LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
+    formatter.doTextTest(
       """
       public class Test {
       void foo () {
@@ -4183,8 +4415,9 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testFormattingImplicitClassMembers() {
-    doTextTest(
+    formatter.doTextTest(
       """
       void before() {
       }
@@ -4209,8 +4442,9 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testFormattingImplicitClassWithCommentAfterImports() {
-    doTextTest(
+    formatter.doTextTest(
       """
       import jdk.incubator.vector.ByteVector;
       import jdk.incubator.vector.VectorSpecies;
@@ -4235,8 +4469,9 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testFormattingImplicitClassWithCommentBetweenMethods() {
-    doTextTest(
+    formatter.doTextTest(
       """
       import static java.lang.System.out;
 
@@ -4265,8 +4500,9 @@ public enum LevelCode {
     )
   }
 
+  @Test
   fun testDoNotFormatLongChains() {
-    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    doTest()
+    formatter.settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.doTest()
   }
 }

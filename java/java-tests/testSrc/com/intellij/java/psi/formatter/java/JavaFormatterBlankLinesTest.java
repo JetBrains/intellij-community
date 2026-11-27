@@ -15,15 +15,28 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterFixture;
+import static com.intellij.java.psi.formatter.java.JavaFormatterFixtureKt.javaFormatterProjectFixture;
+
 /**
  * Is intended to hold specific java formatting tests for 'blank lines' settings.
  */
-public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
+@TestApplication
+public class JavaFormatterBlankLinesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFormatterProjectFixture();
+  private final TestFixture<JavaFormatterFixture> formatterFixture = javaFormatterFixture(projectFixture);
 
+  @Test
   public void testBlankLinesAroundClassInitializationBlock() {
-    getSettings().BLANK_LINES_AROUND_METHOD = 3;
-    getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BLANK_LINES_AROUND_METHOD = 3;
+    formatter.getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
+    formatter.doTextTest(
       """
         class T {
             private final DecimalFormat fmt = new DecimalFormat();
@@ -46,11 +59,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
         }""");
   }
 
+  @Test
   public void testBlankLinesAroundClassMethods() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-19408
-    getSettings().BLANK_LINES_AROUND_METHOD = 3;
+    formatter.getSettings().BLANK_LINES_AROUND_METHOD = 3;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         class Test {
             public boolean flag1() {
@@ -91,11 +106,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBlankLinesAroundEnumMethods() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-19408
-    getSettings().BLANK_LINES_AROUND_METHOD = 2;
+    formatter.getSettings().BLANK_LINES_AROUND_METHOD = 2;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public enum Wrapping {
             WRAPPING {public boolean flag1() {
@@ -135,11 +152,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testInitializationBlockAndInnerClass() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-21191
-    getSettings().BLANK_LINES_AROUND_CLASS = 3;
+    formatter.getSettings().BLANK_LINES_AROUND_CLASS = 3;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class FormattingTest {
             {
@@ -195,11 +214,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
   
+  @Test
   public void testInnerClasses() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-21191
-    getSettings().BLANK_LINES_AROUND_CLASS = 3;
+    formatter.getSettings().BLANK_LINES_AROUND_CLASS = 3;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         public class FormattingTest {
             class MyInnerClass1 {
@@ -242,11 +263,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testTopLevelClasses() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-21191
-    getSettings().BLANK_LINES_AROUND_CLASS = 3;
+    formatter.getSettings().BLANK_LINES_AROUND_CLASS = 3;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         class Class1 {
         }
@@ -278,12 +301,14 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBlankLinesBetweenAbstractMethods() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-54668
-    getSettings().BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 0;
-    getSettings().BLANK_LINES_AROUND_METHOD = 1;
+    formatter.getSettings().BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 0;
+    formatter.getSettings().BLANK_LINES_AROUND_METHOD = 1;
 
-    doTextTest(
+    formatter.doTextTest(
       """
         abstract class Test {
             void test1() {
@@ -316,11 +341,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAroundClassHeader() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-54746
-    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 2;
-    getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 1;
-    doTextTest(
+    formatter.getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 2;
+    formatter.getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 1;
+    formatter.doTextTest(
       """
         public class FormattingTest {
             public void foo() {
@@ -344,9 +371,11 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testAfterAnonymousClassWhereCodeBlockStartsWithComment() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-66583
-    getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
+    formatter.getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
     
     String textWithWhiteSpaceBetweenCommentAndLbrace =
       """
@@ -356,7 +385,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
                 return super.toString();
             }
         };""";
-    doMethodTest(textWithWhiteSpaceBetweenCommentAndLbrace, textWithWhiteSpaceBetweenCommentAndLbrace);
+    formatter.doMethodTest(textWithWhiteSpaceBetweenCommentAndLbrace, textWithWhiteSpaceBetweenCommentAndLbrace);
 
     String textWithoutWhiteSpaceBetweenCommentAndLbrace =
       """
@@ -366,13 +395,15 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
                 return super.toString();
             }
         };""";
-    doMethodTest(textWithoutWhiteSpaceBetweenCommentAndLbrace, textWithoutWhiteSpaceBetweenCommentAndLbrace);
+    formatter.doMethodTest(textWithoutWhiteSpaceBetweenCommentAndLbrace, textWithoutWhiteSpaceBetweenCommentAndLbrace);
   }
   
+  @Test
   public void testBeforeMethodBody() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-54747
-    getSettings().BLANK_LINES_BEFORE_METHOD_BODY = 3;
-    doTextTest(
+    formatter.getSettings().BLANK_LINES_BEFORE_METHOD_BODY = 3;
+    formatter.doTextTest(
       """
         public class FormattingTest {
             public void foo() {
@@ -392,10 +423,12 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBeforeMethodBodyWithCodeBlockInside() {
+    JavaFormatterFixture formatter = formatterFixture.get();
     // Inspired by IDEA-54747
-    getSettings().BLANK_LINES_BEFORE_METHOD_BODY = 3;
-    doTextTest(
+    formatter.getSettings().BLANK_LINES_BEFORE_METHOD_BODY = 3;
+    formatter.doTextTest(
       """
         public class FormattingTest {
             public void foo() {
@@ -421,8 +454,9 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testIDEA126836() {
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         public class JavaClass {  // comment
             public void doSomething() {
@@ -438,9 +472,11 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBlankLinesAfterClassHeaderWithComment() {
-    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 5;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 5;
+    formatter.doTextTest(
       """
         public class JavaClass {  // comment
             public void doSomething() {
@@ -461,9 +497,11 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testBlankLinesAroundInitializer() {
-    getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getJavaSettings().BLANK_LINES_AROUND_INITIALIZER = 3;
+    formatter.doTextTest(
       """
         public class JavaClass {
             int a = 3;
@@ -492,11 +530,13 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEnumBlankLines() {
-    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
-    getSettings().KEEP_BLANK_LINES_IN_CODE = 1;
-    getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 0;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
+    formatter.getSettings().KEEP_BLANK_LINES_IN_CODE = 1;
+    formatter.getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 0;
+    formatter.doTextTest(
       """
         public enum SomeEnum {
           SOME;
@@ -524,8 +564,9 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testOneLineEnumWithJavadoc() {
-    doTextTest(
+    formatterFixture.get().doTextTest(
       """
         /**
          *
@@ -539,9 +580,11 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testLinesBetweenPackageAndHeader() {
-    getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 0;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 0;
+    formatter.doTextTest(
       """
         /*
          * This is a sample file.
@@ -557,10 +600,12 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testLinesBetweenPackageAndHeader2() {
-    getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
-    getSettings().BLANK_LINES_BEFORE_PACKAGE = 1;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
+    formatter.getSettings().BLANK_LINES_BEFORE_PACKAGE = 1;
+    formatter.doTextTest(
       """
         /*
          * This is a sample file.
@@ -575,10 +620,12 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEnumRbrace() {
-    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
-    getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
+    formatter.getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
+    formatter.doTextTest(
       """
         enum Test {
           TEST1, TEST2, TEST3;
@@ -594,10 +641,12 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  @Test
   public void testEnumRbrace2() {
-    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
-    getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 0;
-    doTextTest(
+    JavaFormatterFixture formatter = formatterFixture.get();
+    formatter.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
+    formatter.getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 0;
+    formatter.doTextTest(
       """
         enum Test {
           TEST1, TEST2, TEST3;

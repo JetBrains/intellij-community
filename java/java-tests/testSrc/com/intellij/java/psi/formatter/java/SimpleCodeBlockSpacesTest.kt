@@ -1,19 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
-class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
-  override fun setUp() {
-    super.setUp()
-    settings.SPACE_WITHIN_BRACES = false
-    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
-    settings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true
-    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+@TestApplication
+class SimpleCodeBlockSpacesTest {
+  companion object {
+    private val projectFixture = javaFormatterProjectFixture()
+  }
+
+  private val formatter by javaFormatterFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
+    formatter.settings.SPACE_WITHIN_BRACES = false
+    formatter.settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
+    formatter.settings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true
+    formatter.settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
   }
 
 
+  @Test
   fun `test should add spaces inside braces when block body is present`() {
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
-    doTextTest(
+    formatter.javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
+    formatter.doTextTest(
       """
       class A {
       public void simpleMethod() {int x = 10;}
@@ -38,9 +50,10 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
       """.trimIndent())
   }
 
+  @Test
   fun `test option doesn't affect code blocks when SPACES_WITHIN_BRACES is enabled`() {
-    settings.SPACE_WITHIN_BRACES = true
-    settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true
+    formatter.settings.SPACE_WITHIN_BRACES = true
+    formatter.settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true
     val expected =
     """
     class A {
@@ -78,12 +91,13 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
     }
     """.trimIndent()
 
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
-    doTextTest(expected, actual)
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
-    doTextTest(expected, actual)
+    formatter.javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
+    formatter.doTextTest(expected, actual)
+    formatter.javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
+    formatter.doTextTest(expected, actual)
   }
 
+  @Test
   fun `test option doesn't affect code blocks with empty body`() {
     val expected = """
       class A {
@@ -107,15 +121,16 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
           }
       }
       """.trimIndent()
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
-    doTextTest(expected, actual)
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
-    doTextTest(expected, actual)
+    formatter.javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
+    formatter.doTextTest(expected, actual)
+    formatter.javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = true
+    formatter.doTextTest(expected, actual)
   }
 
+  @Test
   fun `test should not add spaces inside braces when block body is present and option is disabled`() {
-    javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
-    doTextTest(
+    formatter.javaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT = false
+    formatter.doTextTest(
       """
       class A {
       public void simpleMethod() { int x = 10; }
@@ -140,9 +155,10 @@ class SimpleCodeBlockSpacesTest : AbstractJavaFormatterTest() {
       """.trimIndent())
   }
 
+  @Test
   fun `test non empty simple class is always formatted to a new line`() {
-    settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true
-    doTextTest(
+    formatter.settings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true
+    formatter.doTextTest(
       """
       class A {
           static class B {int x;}
