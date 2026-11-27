@@ -75,6 +75,11 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-90738
+  public void testCPythonTestSuiteModule() {
+    doTestByText("import test");
+  }
+
   // PY-18965
   public void testExec() {
     doTest();
