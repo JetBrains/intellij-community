@@ -5,14 +5,13 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.util.io.impl.FileTextMatchers
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -20,16 +19,11 @@ import kotlin.io.path.invariantSeparatorsPathString
  * are added to iml file (e.g. 'exclude-output' tag) so if this test is located in a platform module it'll give different results depending
  * on whether there is Java plugin in runtime classpath or not.
  */
+@TestApplication
 class SaveProjectTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   @Test
   fun `save single module`() {

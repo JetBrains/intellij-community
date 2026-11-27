@@ -4,32 +4,26 @@ package com.intellij.java.roots
 import com.intellij.java.configurationStore.saveProjectState
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.ModuleRootEventTracker
-import com.intellij.testFramework.rules.ProjectModelRule
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * Checks that proper [com.intellij.openapi.roots.ModuleRootListener.rootsChanged] are sent for changes in module roots.
  */
+@TestApplication
 class ModuleRootsChangedTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   private lateinit var moduleRootListener: ModuleRootEventTracker
   private lateinit var module: Module
 
-  @Before
+  @BeforeEach
   fun setUp() {
     module = projectModel.createModule("main")
     moduleRootListener = ModuleRootEventTracker(projectModel.project)

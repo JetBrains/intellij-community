@@ -18,8 +18,8 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.entities.sourceRoots
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
@@ -32,25 +32,19 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class JavaSourceRootPropertiesTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   lateinit var module: Module
 
-  @Before
+  @BeforeEach
   fun setUp() {
     module = projectModel.createModule()
   }

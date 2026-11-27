@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
@@ -12,58 +13,53 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.TestProjectManager
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.testFramework.createTestOpenProjectOptions
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.waitUntil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.MethodSource
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-@RunWith(Parameterized::class)
+@TestApplication
+@ParameterizedClass(name = "{0}")
+@MethodSource("modes")
 class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
-
-    @Parameterized.Parameters(name = "{0}")
     @JvmStatic
     fun modes(): Array<ReloadingMode> = ReloadingMode.values()
   }
 
-  @Rule
   @JvmField
-  val tempDir = TempDirectory()
+  @RegisterExtension
+  val tempDir = TempDirectoryExtension()
 
-  @JvmField
-  @Rule
-  val disposableRule = DisposableRule()
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   @Test
-  fun `unload simple module`() = runBlocking {
+  fun `unload simple module`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
@@ -77,7 +73,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).containsExactlyInAnyOrder("b", "c")
         }.isSuccess
       }
 
@@ -85,7 +81,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+          assertThat(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }).containsExactlyInAnyOrder("a", "d")
         }.isSuccess
       }
     }
@@ -95,7 +91,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `check loaded modules state`() = runBlocking {
+  fun `check loaded modules state`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
@@ -103,12 +99,12 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
       withContext(Dispatchers.EDT) {
         ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
       }
-      assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b")
+      assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).containsExactlyInAnyOrder("b")
       createModule(project, "c")
 
       waitUntil {
         runCatching {
-          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).containsExactlyInAnyOrder("b", "c")
         }.isSuccess
       }
 
@@ -116,7 +112,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c", "x")
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).containsExactlyInAnyOrder("b", "c", "x")
         }.isSuccess
       }
     }
@@ -126,16 +122,16 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `loaded modules are empty if no modules are unloaded`() = timeoutRunBlocking {
+  fun `loaded modules are empty if no modules are unloaded`(): Unit = timeoutRunBlocking {
     val project = createProject()
     try {
-      assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+      assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).isEmpty()
 
       createModule(project, "a")
       createModule(project, "b")
       waitUntil {
         runCatching {
-          assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).isEmpty()
         }.isSuccess
       }
 
@@ -143,7 +139,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).isEmpty()
         }.isSuccess
       }
     }
@@ -153,14 +149,14 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `loaded modules list is updated when we set unloaded modules`() = timeoutRunBlocking {
+  fun `loaded modules list is updated when we set unloaded modules`(): Unit = timeoutRunBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
       createModule(project, "b")
       createModule(project, "c")
 
-      assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+      assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).isEmpty()
 
       withContext(Dispatchers.EDT) {
         ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
@@ -168,7 +164,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).containsExactlyInAnyOrder("b", "c")
         }.isSuccess
       }
 
@@ -178,7 +174,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "c")
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).containsExactlyInAnyOrder("c")
         }.isSuccess
       }
 
@@ -188,7 +184,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
       waitUntil {
         runCatching {
-          assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+          assertThat(AutomaticModuleUnloader.getInstance(project).getLoadedModules()).isEmpty()
         }.isSuccess
       }
     }
@@ -198,7 +194,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `unload modules with dependencies between them`() = runBlocking {
+  fun `unload modules with dependencies between them`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
@@ -215,7 +211,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `do not unload module if loaded module depends on it`() = runBlocking {
+  fun `do not unload module if loaded module depends on it`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
@@ -231,7 +227,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `unload module if only unloaded module depends on it`() = runBlocking {
+  fun `unload module if only unloaded module depends on it`(): Unit = runBlocking {
     val project = createProject()
     try {
       val a = createModule(project, "a")
@@ -247,7 +243,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `do not unload modules if loaded module depends on them transitively`() = runBlocking {
+  fun `do not unload modules if loaded module depends on them transitively`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
@@ -268,7 +264,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `unload module if loaded module transitively depends on it via previously unloaded module`() = runBlocking {
+  fun `unload module if loaded module transitively depends on it via previously unloaded module`(): Unit = runBlocking {
     val project = createProject()
     try {
       val a = createModule(project, "a")
@@ -285,7 +281,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `load unloaded module back before adding new module`() = runBlocking {
+  fun `load unloaded module back before adding new module`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "root")
@@ -302,7 +298,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   }
 
   @Test
-  fun `deleted iml file`() = runBlocking {
+  fun `deleted iml file`(): Unit = runBlocking {
     val project = createProject()
     try {
       createModule(project, "a")
@@ -319,7 +315,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
         deletedImlFile.delete()
       }
 
-      assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+      assertThat(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }).containsExactlyInAnyOrder("a", "d")
     }
     finally {
       project.closeProjectAsync()
@@ -340,7 +336,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
     val moduleFiles = createNewModuleFiles(newModulesName, setup)
     val newProject = reloadProjectWithNewModules(project, moduleFiles)
 
-    assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
+    assertThat(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }).containsExactlyInAnyOrder(*expectedUnloadedModules)
   }
 
   private suspend fun createProject(): Project {
@@ -411,13 +407,13 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
         JDOMUtil.write(rootElement, modulesXmlCopyDir.resolve(".idea/modules.xml"))
         beforeReload()
         copyFilesAndReloadProject(project, modulesXmlCopyDir)
-        disposableRule.register { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
+        Disposer.register(disposable) { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
         return project
       }
       ReloadingMode.REOPEN -> {
         JDOMUtil.write(rootElement, modulesXmlFile)
         beforeReload()
-        return TestProjectManager.loadAndOpenProject(Path.of(project.basePath!!), disposableRule.disposable)
+        return TestProjectManager.loadAndOpenProject(Path.of(project.basePath!!), disposable)
       }
     }
   }

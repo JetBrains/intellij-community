@@ -8,28 +8,23 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TemporaryDirectoryExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.loadProjectAndCheckResults
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Paths
 
+@TestApplication
 class LoadJavaProjectTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @get:Rule
-  val tempDirectory = TemporaryDirectory()
+  @JvmField
+  @RegisterExtension
+  val tempDirectory = TemporaryDirectoryExtension()
 
   @Test
-  fun `load java project with custom language level`() = runBlocking {
+  fun `load java project with custom language level`(): Unit = runBlocking {
     val projectPath = Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("configurationStore/java-module-with-custom-language-level")
     loadProjectAndCheckResults(listOf(projectPath), tempDirectory) { project ->
       val modules = ModuleManager.getInstance(project).modules.sortedBy { it.name }

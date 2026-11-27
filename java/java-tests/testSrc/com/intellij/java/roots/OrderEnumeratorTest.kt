@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.roots
 
-import com.intellij.java.roots.ModuleRootManagerTestCase.assertRoots
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
@@ -17,30 +16,22 @@ import com.intellij.openapi.roots.OrderRootsEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertEquals
-import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
-import com.intellij.testFramework.UsefulTestCase.assertSame
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class OrderEnumeratorTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   private lateinit var module: Module
   private lateinit var library: Library
@@ -49,7 +40,7 @@ class OrderEnumeratorTest {
   private lateinit var librarySourcesZip: VirtualFile
   private lateinit var sdk: Sdk
 
-  @Before
+  @BeforeEach
   fun setUp() {
     module = projectModel.createModule()
     libraryJar = projectModel.baseProjectDir.newEmptyVirtualJarFile("foo.jar")
@@ -144,7 +135,7 @@ class OrderEnumeratorTest {
       OrderEnumerator.orderEntries(module).withoutSdk().withoutDepModules().withoutModuleSourceEntries())
     assertEnumeratorRoots(
       OrderEnumerator.orderEntries(module).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes())
-    assertOrderedEquals(OrderEnumerator.orderEntries(module).allLibrariesAndSdkClassesRoots, jdkJar, libraryJar)
+    assertThat(OrderEnumerator.orderEntries(module).allLibrariesAndSdkClassesRoots).containsExactly(jdkJar, libraryJar)
   }
 
   @Test
@@ -188,31 +179,31 @@ class OrderEnumeratorTest {
   @Test
   fun testCaching() {
     val roots = OrderEnumerator.orderEntries(module).classes().usingCache().roots
-    assertOrderedEquals(roots, jdkJar)
+    assertThat(roots).containsExactly(jdkJar)
     assertEquals(roots, OrderEnumerator.orderEntries(module).classes().usingCache().roots)
     val rootsWithoutSdk = OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().roots
-    assertEmpty(rootsWithoutSdk)
+    assertThat(rootsWithoutSdk).isEmpty()
     assertEquals(roots, OrderEnumerator.orderEntries(module).classes().usingCache().roots)
     assertEquals(rootsWithoutSdk, OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().roots)
     ModuleRootModificationUtil.addDependency(module, library)
-    assertRoots(OrderEnumerator.orderEntries(module).classes().usingCache().pathsList, jdkJar, libraryJar)
-    assertRoots(OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().pathsList, libraryJar)
+    assertThat(OrderEnumerator.orderEntries(module).classes().usingCache().pathsList.rootDirs).containsExactly(jdkJar, libraryJar)
+    assertThat(OrderEnumerator.orderEntries(module).withoutSdk().classes().usingCache().pathsList.rootDirs).containsExactly(libraryJar)
   }
 
   @Test
   fun testCachingUrls() {
     val computedUrls = OrderEnumerator.orderEntries(module).classes().usingCache().roots.map { it.url }
     val urls = OrderEnumerator.orderEntries(module).classes().usingCache().urls
-    assertOrderedEquals(computedUrls, *urls)
-    assertOrderedEquals(urls, jdkJar.url)
+    assertThat(computedUrls).containsExactly(*urls)
+    assertThat(urls).containsExactly(jdkJar.url)
     assertSame(urls, OrderEnumerator.orderEntries(module).classes().usingCache().urls)
     val sourceUrls = OrderEnumerator.orderEntries(module).sources().usingCache().urls
-    assertEmpty(sourceUrls)
+    assertThat(sourceUrls).isEmpty()
     assertSame(urls, OrderEnumerator.orderEntries(module).classes().usingCache().urls)
     assertSame(sourceUrls, OrderEnumerator.orderEntries(module).sources().usingCache().urls)
     ModuleRootModificationUtil.addDependency(module, library)
-    assertOrderedEquals(OrderEnumerator.orderEntries(module).classes().usingCache().urls, jdkJar.url, libraryJar.url)
-    assertOrderedEquals(OrderEnumerator.orderEntries(module).sources().usingCache().urls, librarySourcesZip.url)
+    assertThat(OrderEnumerator.orderEntries(module).classes().usingCache().urls).containsExactly(jdkJar.url, libraryJar.url)
+    assertThat(OrderEnumerator.orderEntries(module).sources().usingCache().urls).containsExactly(librarySourcesZip.url)
   }
 
   @Test
@@ -226,7 +217,7 @@ class OrderEnumeratorTest {
     assertSourceRoots(OrderEnumerator.orderEntries(projectModel.project).withoutSdk(), srcRoot, testRoot, librarySourcesZip)
     val modules = ArrayList<Module>()
     runReadAction { OrderEnumerator.orderEntries(projectModel.project).forEachModule { modules.add(it) } }
-    assertSameElements(modules, module)
+    assertThat(modules).containsExactlyInAnyOrder(module)
   }
 
   @Test
@@ -266,7 +257,7 @@ class OrderEnumeratorTest {
   }
 
   private fun assertClassUrls(vararg expectedUrls: String) {
-    assertSameElements(OrderEnumerator.orderEntries(module).classes().usingCache().urls, *expectedUrls)
+    assertThat(OrderEnumerator.orderEntries(module).classes().usingCache().urls).containsExactlyInAnyOrder(*expectedUrls)
   }
 
   @Test
@@ -332,7 +323,7 @@ class OrderEnumeratorTest {
   }
 
   private fun assertEnumeratorRoots(rootsEnumerator: OrderRootsEnumerator, vararg files: VirtualFile) {
-    assertOrderedEquals(runReadAction { rootsEnumerator.roots }, *files)
-    assertOrderedEquals(runReadAction { rootsEnumerator.urls }, *files.map { it.url }.toTypedArray())
+    assertThat(runReadAction { rootsEnumerator.roots }).containsExactly(*files)
+    assertThat(runReadAction { rootsEnumerator.urls }).containsExactly(*files.map { it.url }.toTypedArray())
   }
 }

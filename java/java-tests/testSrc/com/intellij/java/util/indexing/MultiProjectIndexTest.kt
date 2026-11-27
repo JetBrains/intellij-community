@@ -2,6 +2,8 @@
 package com.intellij.java.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.DumbService
@@ -13,13 +15,12 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.RunsInEdt
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileBasedIndexInfrastructureExtension
 import com.intellij.util.indexing.FileContent
@@ -27,38 +28,33 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.UpdatableIndex
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.writeText
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 const val fileNameMarkerPrefix: String = "TestFoo"
 
-@RunsInEdt
+@TestApplication
 class MultiProjectIndexTest {
-  @Rule
   @JvmField
-  val tempDir: TempDirectory = TempDirectory()
+  @RegisterExtension
+  val tempDir: TempDirectoryExtension = TempDirectoryExtension()
 
-  @Rule
-  @JvmField
-  val disposable: DisposableRule = DisposableRule()
-
-  @Rule
-  @JvmField
-  val appRule: ApplicationRule = ApplicationRule()
-
-  @Rule
-  @JvmField
-  val runInEdt: EdtRule = EdtRule()
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   @Test
-  fun `test index extension process files intersection`() {
+  fun `test index extension process files intersection`(): Unit = timeoutRunBlocking {
     val text = "<fileBasedIndexInfrastructureExtension implementation=\"" + CountingTestExtension::class.java.name + "\"/>"
-    Disposer.register(disposable.disposable, loadExtensionWithText(text))
+    withContext(Dispatchers.EDT) {
+      Disposer.register(disposable, loadExtensionWithText(text))
+    }
     val ext = FileBasedIndexInfrastructureExtension.EP_NAME.findExtension(CountingTestExtension::class.java)!!
 
     val projectPath1 = tempDir.newDirectory("project1").toPath()
@@ -83,19 +79,21 @@ class MultiProjectIndexTest {
     assertEquals(4, ext.stubCounter.get())
     assertEquals(commonBundledFileCount, ext.commonBundledFileCounter.get())
 
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project1)
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project2)
-    TestCase.assertTrue(project1.isDisposed)
-    TestCase.assertTrue(project2.isDisposed)
+    withContext(Dispatchers.EDT) {
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project1)
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project2)
+    }
+    assertTrue(project1.isDisposed)
+    assertTrue(project2.isDisposed)
   }
 
-  private fun openProject(path: Path): Project {
-    val project = PlatformTestUtil.loadAndOpenProject(path, disposable.disposable)
+  private suspend fun openProject(path: Path): Project = withContext(Dispatchers.EDT) {
+    val project = PlatformTestUtil.loadAndOpenProject(path, disposable)
     do {
       UIUtil.dispatchAllInvocationEvents() // for post-startup activities
     }
     while (DumbService.getInstance(project).isDumb)
-    return project
+    project
   }
 
   private fun Path.toVirtualFile(): VirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(this)!!

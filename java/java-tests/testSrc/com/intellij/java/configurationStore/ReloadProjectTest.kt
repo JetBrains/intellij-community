@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runReadAction
@@ -25,47 +26,35 @@ import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsE
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.loadProjectAndCheckResults
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assume.assumeTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Paths
 import kotlin.io.path.invariantSeparatorsPathString
 
+@TestApplication
 class ReloadProjectTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
   @JvmField
-  @Rule
-  val tempDirectory = TemporaryDirectory()
+  @RegisterExtension
+  val tempDirectory = TemporaryDirectoryExtension()
 
-  @JvmField
-  @Rule
-  val disposable = DisposableRule()
-
-  @JvmField
-  @Rule
-  val logging = TestLoggerFactory.createTestWatcher()
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   private val testDataRoot
     get() = Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("reloading")
 
   @Test
-  fun `reload module with module library`() = runBlocking {
+  fun `reload module with module library`(): Unit = runBlocking {
     loadProjectAndCheckResults("removeModuleWithModuleLibrary/before") { project ->
       val base = Paths.get(project.basePath!!)
       FileUtil.copyDir(testDataRoot.resolve("removeModuleWithModuleLibrary/after").toFile(), base.toFile())
@@ -77,7 +66,7 @@ class ReloadProjectTest {
   }
 
   @Test
-  fun `change iml`() = runBlocking {
+  fun `change iml`(): Unit = runBlocking {
     loadProjectAndCheckResults("changeIml/initial") { project ->
       copyFilesAndReload(project, "changeIml/update")
       val module = ModuleManager.getInstance(project).modules.single()
@@ -91,7 +80,7 @@ class ReloadProjectTest {
   }
 
   @Test
-  fun `add module from subdirectory`() = runBlocking {
+  fun `add module from subdirectory`(): Unit = runBlocking {
     loadProjectAndCheckResults("addModuleFromSubDir/initial") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       assertThat(module.name).isEqualTo("foo")
@@ -101,7 +90,7 @@ class ReloadProjectTest {
   }
 
   @Test
-  fun `change artifact`() = runBlocking {
+  fun `change artifact`(): Unit = runBlocking {
     loadProjectAndCheckResults("changeArtifact/initial") { project ->
       val artifact = runReadAction {
         ArtifactManager.getInstance(project).artifacts.single()
@@ -118,9 +107,9 @@ class ReloadProjectTest {
   }
 
   @Test
-  fun `change iml file content to invalid xml`() = runBlocking {
+  fun `change iml file content to invalid xml`(): Unit = runBlocking {
     val errors = ArrayList<ConfigurationErrorDescription>()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable.disposable, errors::add)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable, errors::add)
     loadProjectAndCheckResults("changeImlContentToInvalidXml/initial") { project ->
       copyFilesAndReload(project, "changeImlContentToInvalidXml/update")
       assertThat(ModuleManager.getInstance(project).modules.single().name).isEqualTo("foo")
@@ -130,9 +119,9 @@ class ReloadProjectTest {
   }
 
   @Test
-  fun `reload facet in module with custom storage`() = runBlocking {
-    BaseIdeSerializationContext.CUSTOM_MODULE_ROOTS_SERIALIZER_EP.point.registerExtension(SampleCustomModuleRootsSerializer(), disposable.disposable)
-    registerFacetType(MockFacetType(), disposable.disposable)
+  fun `reload facet in module with custom storage`(): Unit = runBlocking {
+    BaseIdeSerializationContext.CUSTOM_MODULE_ROOTS_SERIALIZER_EP.point.registerExtension(SampleCustomModuleRootsSerializer(), disposable)
+    registerFacetType(MockFacetType(), disposable)
     loadProjectAndCheckResults("facet-in-module-with-custom-storage/initial") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       assertThat(module.name).isEqualTo("foo")
@@ -152,7 +141,7 @@ class ReloadProjectTest {
   }
 
   @Test
-  fun `chained module rename`() = runBlocking {
+  fun `chained module rename`(): Unit = runBlocking {
     loadProjectAndCheckResults("chained-module-rename/initial") { project ->
       assertThat(ModuleManager.getInstance(project).modules).hasSize(2)
       copyFilesAndReload(project, "chained-module-rename/update")

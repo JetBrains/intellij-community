@@ -2,13 +2,14 @@
 package com.intellij.java.codeInspection.java18api;
 
 import com.intellij.codeInspection.java18api.Java8MapApiInspection;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("primeNumbers")
 public class Java8TestNameCandidateTest {
   private final String expected;
   private final String actual;
@@ -18,7 +19,6 @@ public class Java8TestNameCandidateTest {
     this.actual = actual;
   }
 
-  @Parameterized.Parameters
   public static Object[][] primeNumbers() {
     return new Object[][]{
       {"e", "element"},

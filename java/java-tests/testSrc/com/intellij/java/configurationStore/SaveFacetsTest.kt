@@ -6,6 +6,7 @@ import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.facet.mock.runWithRegisteredFacetTypes
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -20,42 +21,35 @@ import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class SaveFacetsTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
-  @Rule
-  @JvmField
-  val disposable = DisposableRule()
+  @TestDisposable
+  lateinit var disposable: Disposable
 
-  @Before
+  @BeforeEach
   fun setUp() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable.disposable, {})
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable, {})
   }
 
   @Test
   fun `single facet`() {
-    registerFacetType(MockFacetType(), disposable.disposable)
+    registerFacetType(MockFacetType(), disposable)
     val module = projectModel.createModule("foo")
     projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
     projectModel.saveProjectState()
@@ -88,7 +82,7 @@ class SaveFacetsTest {
       }
     }
     val module = projectModel.moduleManager.findModuleByName("foo")!!
-    registerFacetType(MockFacetType(), disposable.disposable)
+    registerFacetType(MockFacetType(), disposable)
     projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
     projectModel.saveProjectState()
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage")))
@@ -117,7 +111,7 @@ class SaveFacetsTest {
 
   @Test
   fun `remove last facet`() {
-    registerFacetType(MockFacetType(), disposable.disposable)
+    registerFacetType(MockFacetType(), disposable)
     val module = projectModel.createModule("foo")
     val facet = projectModel.addFacet(module, MockFacetType.getInstance(), MockFacetConfiguration("my-data"))
     projectModel.saveProjectState()

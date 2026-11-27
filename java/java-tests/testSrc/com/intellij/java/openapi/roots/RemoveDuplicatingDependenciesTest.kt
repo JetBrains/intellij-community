@@ -5,23 +5,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavaProjectDependenciesAnalyzer
 import com.intellij.openapi.roots.ModuleRootModificationUtil.addDependency
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.ProjectModelRule
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class RemoveDuplicatingDependenciesTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   @Test
   fun `duplicating items`() {

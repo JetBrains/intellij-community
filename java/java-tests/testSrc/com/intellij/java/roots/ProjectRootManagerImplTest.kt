@@ -7,31 +7,25 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.writeText
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.writeChild
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.assertj.core.api.Assertions
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.minutes
 
+@TestApplication
 class ProjectRootManagerImplTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
   @JvmField
-  @Rule
-  val tempDirManager = TemporaryDirectory()
+  @RegisterExtension
+  val tempDirManager = TemporaryDirectoryExtension()
 
   @Test
   @TestFor(issues = ["IDEA-232634"])
@@ -79,7 +73,7 @@ class ProjectRootManagerImplTest {
 
   @Test
   @TestFor(issues = ["IDEA-330499"])
-  fun testNoEventsIfNothingChanged() = timeoutRunBlocking {
+  fun testNoEventsIfNothingChanged(): Unit = timeoutRunBlocking {
     createOrLoadProject(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", $$"""
         <?xml version="1.0" encoding="UTF-8"?>

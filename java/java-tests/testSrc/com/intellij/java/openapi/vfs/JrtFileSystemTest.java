@@ -17,14 +17,14 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.rules.TempDirectoryExtension;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,19 +35,20 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class JrtFileSystemTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+@TestApplication
+public class JrtFileSystemTest {
+  @RegisterExtension public final TempDirectoryExtension tempDir = new TempDirectoryExtension();
 
   private final Disposable myDisposable = Disposer.newDisposable();
   private Path myTestData;
   private Path myJrtPath;
   private VirtualFile myRoot; // in jrt:// FS
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     myTestData = Paths.get(JavaTestUtil.getJavaTestDataPath(), "jrt");
     myJrtPath = tempDir.newDirectory("jrt").toPath();
@@ -58,7 +59,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(JrtFileSystem.isRoot(myRoot));
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     Disposer.dispose(myDisposable);
     releaseJrtFileSystem();

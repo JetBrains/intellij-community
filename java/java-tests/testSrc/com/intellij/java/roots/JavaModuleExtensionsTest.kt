@@ -11,25 +11,20 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.invariantSeparatorsPathString
 
+@TestApplication
 class JavaModuleExtensionsTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @get:Rule
-  val projectModel = ProjectModelRule()
+  @JvmField
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   private fun setLanguageLevel(module: Module, newLevel: LanguageLevel) {
     IdeaTestUtil.setModuleLanguageLevel(module, newLevel)

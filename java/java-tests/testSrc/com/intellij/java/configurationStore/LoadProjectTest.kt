@@ -15,38 +15,27 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TemporaryDirectoryExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.loadProjectAndCheckResults
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import java.util.function.Consumer
 
+@TestApplication
 class LoadProjectTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
   @JvmField
-  @Rule
-  val tempDirectory = TemporaryDirectory()
-
-  @JvmField
-  @Rule
-  val disposable = DisposableRule()
+  @RegisterExtension
+  val tempDirectory = TemporaryDirectoryExtension()
 
   @Test
-  fun `load single module`() = runBlocking {
+  fun `load single module`(): Unit = runBlocking {
     loadProjectAndCheckResults("single-module") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       assertThat(module.name).isEqualTo("foo")
@@ -55,7 +44,7 @@ class LoadProjectTest {
   }
 
   @Test
-  fun `load module with group`() = runBlocking {
+  fun `load module with group`(): Unit = runBlocking {
     loadProjectAndCheckResults("module-in-group") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       assertThat(module.name).isEqualTo("foo")
@@ -65,7 +54,7 @@ class LoadProjectTest {
   }
 
   @Test
-  fun `load detached module`() = runBlocking {
+  fun `load detached module`(): Unit = runBlocking {
     loadProjectAndCheckResults("detached-module") { project ->
       val fooModule = ModuleManager.getInstance(project).modules.single()
       assertThat(fooModule.name).isEqualTo("foo")
@@ -81,7 +70,7 @@ class LoadProjectTest {
   }
 
   @Test
-  fun `load detached module via modifiable model`() = runBlocking {
+  fun `load detached module via modifiable model`(): Unit = runBlocking {
     loadProjectAndCheckResults("detached-module") { project ->
       val fooModule = ModuleManager.getInstance(project).modules.single()
       assertThat(fooModule.name).isEqualTo("foo")
@@ -98,7 +87,7 @@ class LoadProjectTest {
   }
 
   @Test
-  fun `load single library`() = runBlocking {
+  fun `load single library`(): Unit = runBlocking {
     loadProjectAndCheckResults("single-library") { project ->
       assertThat(ModuleManager.getInstance(project).modules).isEmpty()
       val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.single()
@@ -109,7 +98,7 @@ class LoadProjectTest {
   }
 
   @Test
-  fun `load module and library`() = runBlocking {
+  fun `load module and library`(): Unit = runBlocking {
     loadProjectAndCheckResults("module-and-library", beforeOpen = { project ->
       //this emulates listener declared in plugin.xml, it's registered before the project is loaded
       project.messageBus.connect().subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
@@ -132,7 +121,7 @@ class LoadProjectTest {
     get() = (this as LibraryEx).properties as RepositoryLibraryProperties
 
   @Test
-  fun `load repository libraries`() = runBlocking {
+  fun `load repository libraries`(): Unit = runBlocking {
     val projectPath = jpsModelSerializationTestDataRoot.resolve("repositoryLibraries")
     loadProjectAndCheckResults(listOf(projectPath), tempDirectory) { project ->
       assertThat(ModuleManager.getInstance(project).modules).isEmpty()

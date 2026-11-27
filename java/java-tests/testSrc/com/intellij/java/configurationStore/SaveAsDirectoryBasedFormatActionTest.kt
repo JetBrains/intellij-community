@@ -4,24 +4,26 @@ package com.intellij.java.configurationStore
 import com.intellij.ide.actions.convertToDirectoryBasedFormat
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.project.stateStore
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.TemporaryDirectoryExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.loadProjectAndCheckResults
 import com.intellij.util.io.FileTextMatcher
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.directoryContentOf
 import kotlinx.coroutines.runBlocking
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 
-class SaveAsDirectoryBasedFormatActionTest : BareTestFixtureTestCase() {
-  @get:Rule
-  val tempDirectory = TemporaryDirectory()
+@TestApplication
+class SaveAsDirectoryBasedFormatActionTest {
+  @JvmField
+  @RegisterExtension
+  val tempDirectory = TemporaryDirectoryExtension()
 
   @Test
-  fun `convert sample project to directory based format`() = runBlocking {
+  fun `convert sample project to directory based format`(): Unit = runBlocking {
     val projectFile = jpsModelSerializationTestDataRoot.resolve("sampleProject-ipr/sampleProject.ipr")
     val projectDir = jpsModelSerializationTestDataRoot.resolve("sampleProject")
     loadProjectAndCheckResults(listOf(projectFile), tempDirectory) { project ->

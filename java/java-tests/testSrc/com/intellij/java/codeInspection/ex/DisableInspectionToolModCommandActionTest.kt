@@ -23,57 +23,49 @@ import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiFileFactory
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.InitInspectionRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.refreshProjectConfigDir
+import com.intellij.testFramework.runInInitMode
 import com.intellij.testFramework.writeChild
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.readText
 
+@TestApplication
 class DisableInspectionToolModCommandActionTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val tempDirManager = TemporaryDirectory()
-
-  @Rule
-  @JvmField
-  val initInspectionRule = InitInspectionRule()
+  @RegisterExtension
+  val tempDirManager = TemporaryDirectoryExtension()
 
   /** @param setUp prepares the project directory before the project loads */
   private fun doTest(setUp: (VirtualFile) -> Unit = {}, task: suspend (Project) -> Unit) {
-    runBlocking(Dispatchers.Default) {
-      createOrLoadProject(
-        tempDirManager = tempDirManager,
-        projectCreator = { directory ->
-          setUp(directory)
-          directory.toNioPath()
-        },
-        task = { project ->
-          project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
-          val profileManager = ProjectInspectionProfileManager.getInstance(project)
-          profileManager.forceLoadSchemes()
-          // A write action can cancel a read action, and a canceled initialization leaves the profile without tools
-          profileManager.currentProfile.initInspectionTools(project)
-          task(project)
-        },
-        runPostStartUpActivities = true,
-        loadComponentState = true,
-      )
+    runInInitMode {
+      runBlocking(Dispatchers.Default) {
+        createOrLoadProject(
+          tempDirManager = tempDirManager,
+          projectCreator = { directory ->
+            setUp(directory)
+            directory.toNioPath()
+          },
+          task = { project ->
+            project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
+            val profileManager = ProjectInspectionProfileManager.getInstance(project)
+            profileManager.forceLoadSchemes()
+            // A write action can cancel a read action, and a canceled initialization leaves the profile without tools
+            profileManager.currentProfile.initInspectionTools(project)
+            task(project)
+          },
+          runPostStartUpActivities = true,
+          loadComponentState = true,
+        )
+      }
     }
   }
 
