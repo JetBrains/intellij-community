@@ -103,13 +103,13 @@ internal fun validateMigrationState(state: MigrationState, file: Path, info: Ins
 
 /**
  * Returns `true` when the Unified IDE with the product info [info] has no launcher, and [os] needs one.
- * On Windows, this IDE starts the Unified IDE only with its launcher, so a Unified IDE with no launcher counts as removed.
+ * On Windows and Linux, this IDE starts the Unified IDE only with its launcher, so a Unified IDE with no launcher counts as removed.
  * On macOS, `open` starts the application, so the launcher is necessary only for a start that waits.
  */
 @ApiStatus.Internal
 fun isMigrationLauncherMissing(info: InstalledProductInfo?, os: OS = OS.CURRENT): Boolean = when (os) {
-  OS.Windows -> info?.launcher == null
-  OS.macOS, OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> false
+  OS.Windows, OS.Linux -> info?.launcher == null
+  OS.macOS, OS.FreeBSD, OS.OHOS, OS.Other -> false
 }
 
 /** Writes a temporary file next to [file], then renames it. */

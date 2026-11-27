@@ -40,7 +40,7 @@ private const val OPEN_TIMEOUT_SECONDS = 5L
  * The action of "Restart to Update" for an installed migration distribution.
  * The IDE saves and exits as usual, and the user can cancel the exit. Only a completed exit starts the Unified IDE.
  * When the Unified IDE is removed, it deletes the state and shows an error, so that the next update check offers the migration again.
- * On Windows, a Unified IDE with no launcher counts as removed, because the IDE cannot start it.
+ * On Windows and Linux, a Unified IDE with no launcher counts as removed, because the IDE cannot start it.
  */
 @RequiresEdt
 internal fun restartToMigration() {
@@ -101,12 +101,12 @@ private fun startMigrationApp(state: MigrationState) {
     val arguments = migrationLaunchArguments(MigrationLaunchReason.MIGRATE, sourceProduct, projects.map { it.toString() })
     when (OS.CURRENT) {
       OS.macOS -> startMigrationProcess(macOpenCommand(state.app, arguments))?.let { waitForMigrationOpen(it, OPEN_TIMEOUT_SECONDS) }
-      OS.Windows -> {
+      OS.Windows, OS.Linux -> {
         // no wait: a launcher that cannot start the IDE shows its own message and does not exit
         val launcher = readInstalledProductInfo(state.app)?.launcher
         if (launcher == null) LOG.warn("no launcher in ${state.app}") else startMigrationLauncher(migrationLauncherCommand(launcher, arguments))
       }
-      OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> LOG.warn("no start of the Unified IDE for ${OS.CURRENT}")
+      OS.FreeBSD, OS.OHOS, OS.Other -> LOG.warn("no start of the Unified IDE for ${OS.CURRENT}")
     }
   }
   catch (e: Exception) {

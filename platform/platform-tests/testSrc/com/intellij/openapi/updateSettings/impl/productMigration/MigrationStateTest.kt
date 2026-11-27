@@ -141,6 +141,23 @@ class MigrationStateTest {
   }
 
   @Test
+  fun `Linux application without a launcher is ignored and deleted`() {
+    writeProductInfo(app)
+    write(json())
+    assertNull(readMigrationState(file, OS.Linux))
+    assertFalse(file.exists())
+  }
+
+  @Test
+  fun `Linux application with a launcher is valid`() {
+    val linuxApp = tempDir.root.toPath().resolve("JetBrains/unified-ide-271.100")
+    writeRootLauncher(linuxApp, osName = "Linux", launcherPath = "bin/jetbrains")
+    write(json(app = quoted(linuxApp.toString())))
+    assertEquals(linuxApp, readMigrationState(file, OS.Linux)!!.app)
+    assertTrue(file.exists())
+  }
+
+  @Test
   fun `macOS application without a launcher is valid`() {
     writeProductInfo(app)
     write(json())
