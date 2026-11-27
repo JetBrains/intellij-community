@@ -1911,7 +1911,15 @@ class PluginDetailsPageComponent private constructor(
       readOnlyIndicator = null
       nameAndButtons?.removeProgressComponent()
     }
-    indicator = OneLineProgressIndicatorWithAsyncCallback(installationScope, false, cancelRunnable)
+    indicator = object : OneLineProgressIndicator(false) {
+      override fun cancelRequest() {
+        installationScope.launch {
+          super.cancelRequest()
+          cancelRunnable()
+          installationScope.cancel()
+        }
+      }
+    }
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
     if (storeIndicator) {
       PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
