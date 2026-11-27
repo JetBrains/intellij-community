@@ -616,8 +616,11 @@ public final class IterationState {
     if (myGuardedBlocks == null) {
       return false;
     }
+    if (atBreak && !myReverseIteration) {
+      return isBreakGuarded();
+    }
     if (atBreak && beforeBreak) {
-      return isSoftWrapGuarded();
+      return false;
     }
     if (myReverseIteration) {
       return myGuardedBlocks.isGuarded(myStartOffset - 1);
@@ -626,11 +629,10 @@ public final class IterationState {
   }
 
   /**
-   * Says that a guarded block holds both sides of the soft wrap at the current offset.
+   * Says that a guarded block holds both sides of the break at the current offset: a soft wrap, or a line start.
    */
-  private boolean isSoftWrapGuarded() {
-    return !myReverseIteration
-           && myStartOffset > 0
+  private boolean isBreakGuarded() {
+    return myStartOffset > 0
            && myGuardedBlocks.isGuarded(myStartOffset - 1)
            && myGuardedBlocks.isGuarded(myStartOffset);
   }

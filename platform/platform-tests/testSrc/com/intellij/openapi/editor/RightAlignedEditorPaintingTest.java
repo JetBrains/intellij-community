@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -254,6 +255,48 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
       } finally {
         restoreSelectionState(state);
       }
+    });
+  }
+
+  /**
+   * Gives the color of the stub before the start of line 1, with a guarded block from {@code start} to {@code end}.
+   */
+  private int guardStubBeforeSecondLine(int start, int end) throws IOException {
+    initText("ab\ncd\nef");
+    Editor editor = myFixture.getEditor();
+    editor.getDocument().createGuardedBlock(start, end);
+    BufferedImage image = paintEditor(false, null, null);
+    int x = (int)editor.offsetToXY(3).getX() - 5;
+    int y = editor.visualLineToYRange(1)[0] + 7;
+    return image.getRGB(x, y);
+  }
+
+  private void runWithHuggingLook(ThrowableRunnable<Exception> test) {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, true);
+      try {
+        test.run();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testGuardedBlockOfOneLineGivesNoStubBeforeIt() {
+    runWithHuggingLook(() -> {
+      int color = guardStubBeforeSecondLine(3, 5);
+      Color guard = myFixture.getEditor().getColorsScheme().getColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR);
+      assertNotEquals(guard.getRGB(), color, "the stub before line 1");
+    });
+  }
+
+  @Test
+  public void testGuardedBlockOverLineBreakGivesStubBeforeNextLine() {
+    runWithHuggingLook(() -> {
+      int color = guardStubBeforeSecondLine(0, 5);
+      Color guard = myFixture.getEditor().getColorsScheme().getColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR);
+      assertEquals(guard.getRGB(), color, "the stub before line 1");
     });
   }
 
