@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -8,7 +8,7 @@ public final class AppExitCodes {
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
-  // reserved: public static final int JDK_CHECK_FAILED = 4;
+  public static final int NO_DISK_SPACE = 4;
   public static final int DIR_CHECK_FAILED = 5;
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;

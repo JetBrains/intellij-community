@@ -454,4 +454,45 @@ public final class StartupErrorReporter {
       return true;
     }
   }
+
+  // sync with Diogen's `TEntityBuilder.noDiskSpaceLeftMessage`
+  @SuppressWarnings({"NonAsciiCharacters", "SpellCheckingInspection"})
+  private static final String[] NO_DISK_SPACE_MESSAGES = {
+    "No space left on device",
+    "not enough space on the disk",
+    "Disk quota exceeded",
+    "Es steht nicht genug Speicherplatz auf dem Datenträger zur Verfügung",
+    "Aucun espace disponible sur le périphérique",
+    "Débordement du quota d'espace disque",
+    "Espace insuffisant sur le disque",
+    "Não existe espaço suficiente no disco",
+    "Não há espaço disponível no dispositivo",
+    "Espaço insuficiente no disco",
+    "Espacio en disco insuficiente",
+    "Sem espaço livre no dispositivo",
+    "Spazio su disco insufficiente",
+    "Diskte yeterli yer yok",
+    "Za mało miejsca na dysku",
+    "Na disku není dost místa",
+    "Недостаточно места на диске",
+    "На устройстве не осталось свободного места",
+    "磁盘空间不足",
+    "磁碟的空間不足",
+    "设备上没有空间",
+    "디스크 공간이 부족합니다",
+    "ディスクに十分な空き領域がありません",
+    "デバイスに空き領域がありません"
+  };
+
+  public static boolean isNoDiskSpaceError(Throwable t) {
+    for (var e = t; e != null; e = e.getCause()) {
+      var message = e.getMessage();
+      if (message != null && e instanceof IOException) {
+        for (var s : NO_DISK_SPACE_MESSAGES) {
+          if (message.contains(s)) return true;
+        }
+      }
+    }
+    return false;
+  }
 }

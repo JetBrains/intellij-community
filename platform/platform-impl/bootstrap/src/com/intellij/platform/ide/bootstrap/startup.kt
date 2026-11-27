@@ -621,9 +621,16 @@ private fun lockSystemDirs(args: List<String>) {
     StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
   }
-  catch (e: Throwable) {
-    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
-    exitProcess(AppExitCodes.STARTUP_EXCEPTION)
+  catch (t: Throwable) {
+    if (StartupErrorReporter.isNoDiskSpaceError(t)) {
+      if (System.getProperty("ij.dir.lock.debug").toBoolean()) t.printStackTrace(System.out)
+      StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.no.disk.space"))
+      exitProcess(AppExitCodes.NO_DISK_SPACE)
+    }
+    else {
+      StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
+      exitProcess(AppExitCodes.STARTUP_EXCEPTION)
+    }
   }
 }
 
