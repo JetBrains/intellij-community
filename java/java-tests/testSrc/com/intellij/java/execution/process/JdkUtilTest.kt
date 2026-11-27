@@ -8,18 +8,20 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.java.JavaTargetParameter
 import com.intellij.execution.target.java.TargetPaths
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.projectRoots.CommandLineWrapperClassProvider
 import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -27,7 +29,8 @@ import kotlin.io.path.pathString
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class JdkUtilTest : BareTestFixtureTestCase() {
+@TestApplication
+class JdkUtilTest {
   companion object {
     private val jdk = lazy { SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()) }
     private const val WRAPPER_NAME = "com.intellij.rt.execution.CommandLineWrapper"
@@ -41,7 +44,10 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   private val parameters = SimpleJavaParameters()
   private var filesToDelete: Collection<File>? = null
 
-  @Before fun setUp() {
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
+  @BeforeEach fun setUp() {
     parameters.jdk = jdk.value
     parameters.classPath.add("/classes/hello.jar")
     parameters.vmParametersList.add("-Xmx256m")
@@ -51,7 +57,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     parameters.setUseDynamicClasspath(true)
   }
 
-  @After fun tearDown() {
+  @AfterEach fun tearDown() {
     filesToDelete?.forEach { FileUtil.delete(it) }
   }
 
@@ -210,7 +216,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `target-dependent parameter without wrapper provider`() {
-    ExtensionTestUtil.maskExtensions(CommandLineWrapperClassProvider.EP_NAME, emptyList(), testRootDisposable)
+    ExtensionTestUtil.maskExtensions(CommandLineWrapperClassProvider.EP_NAME, emptyList(), disposable)
     addFixedTargetParameter()
     doTest("-Xmx256m", "-Dan.option=1", FULL_AGENT, "-classpath", "/classes/hello.jar", "hello.Main", "hello")
   }
@@ -235,7 +241,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `no CommandLineWrapper without a provider`() {
-    ExtensionTestUtil.maskExtensions(CommandLineWrapperClassProvider.EP_NAME, emptyList(), testRootDisposable)
+    ExtensionTestUtil.maskExtensions(CommandLineWrapperClassProvider.EP_NAME, emptyList(), disposable)
     assertThat(JdkCommandLineSetup.commandLineWrapperClass()).isNull()
   }
 

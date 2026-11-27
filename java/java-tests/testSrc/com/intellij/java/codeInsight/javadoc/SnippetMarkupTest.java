@@ -7,11 +7,11 @@ import com.intellij.codeInsight.javadoc.SnippetMarkup.LocationMarkupNode;
 import com.intellij.codeInsight.javadoc.SnippetMarkup.PlainText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SnippetMarkupTest {
   @Test

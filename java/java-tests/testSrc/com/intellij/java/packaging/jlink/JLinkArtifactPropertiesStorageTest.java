@@ -5,9 +5,9 @@ import com.intellij.packaging.jlink.JLinkArtifactProperties;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JLinkArtifactPropertiesStorageTest {
 

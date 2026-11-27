@@ -5,7 +5,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.text.ByteArrayCharSequence
 import com.intellij.util.text.CharArrayCharSequence
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 

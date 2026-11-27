@@ -5,10 +5,10 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
  * After simplifying Java code style settings, it is better to write normal collector
  */
 @SuppressWarnings("NewClassNamingConvention")
-@Ignore
-public class GenerateJavaFormattingStyleCollector extends TestCase {
+@Disabled
+public class GenerateJavaFormattingStyleCollector {
 
   public static final String PATH =
     "/community/java/java-impl/src/com/intellij/internal/statistic/JavaFormattingStyleCollector.kt";
@@ -37,6 +37,7 @@ public class GenerateJavaFormattingStyleCollector extends TestCase {
    * Please increase the version number and run this test.
    * After that, check file com.intellij.internal.statistic.JavaFormattingStyleCollector
    */
+  @Test
   public void testGenerate() {
     int version = 3; //change it
     List<String> names2 = new ArrayList<>();

@@ -3,9 +3,12 @@ package com.intellij.java.internal.statistic.libraryUsage
 
 import com.intellij.internal.statistic.libraryUsage.LibraryDescriptor
 import com.intellij.internal.statistic.libraryUsage.LibraryLayer
-import junit.framework.TestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
-class LibraryLayerTest : TestCase() {
+class LibraryLayerTest {
+  @Test
   fun test() {
     val layer = LibraryLayer.create(
       listOf(

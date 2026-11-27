@@ -2,13 +2,16 @@
 package com.intellij.java.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.psi.impl.source.codeStyle.javadoc.JDParser.FenceInfo;
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.impl.source.codeStyle.javadoc.JDParser.findCodeFence;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class JDParserTest extends UsefulTestCase {
+public class JDParserTest {
 
   /// Test examples from commonmark spec 0.31.2
+  @Test
   public void testFindCodeFenceCommonmarkSpec() {
     // Example 119: Basic backtick fence
     assertEquals(new FenceInfo('`', 3), findCodeFence("```", true));

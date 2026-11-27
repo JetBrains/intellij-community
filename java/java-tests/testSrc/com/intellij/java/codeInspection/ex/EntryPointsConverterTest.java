@@ -5,24 +5,30 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.SmartRefElementPointer;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMUtil;
-import junit.framework.TestCase;
 import org.jdom.Element;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
-public class EntryPointsConverterTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class EntryPointsConverterTest {
+  @Test
   public void testMethodConverter1() {
     doTest("method", "String java.lang.String.replace(char oldChar, char newChar)", "java.lang.String String replace(char oldChar, char newChar)");
   }
 
+  @Test
   public void testMethodConverter2() {
     doTest("method", "void java.lang.String.replace(char oldChar, char newChar)", "java.lang.String void replace(char oldChar, char newChar)");
   }
 
+  @Test
   public void testMethodConverter3() {
     doTest("method", "java.lang.String.String(char oldChar)", "java.lang.String String(char oldChar)");
   }
 
+  @Test
   public void testFieldConverter() {
     doTest("field", "java.lang.String.myFakeField", "java.lang.String myFakeField");
   }

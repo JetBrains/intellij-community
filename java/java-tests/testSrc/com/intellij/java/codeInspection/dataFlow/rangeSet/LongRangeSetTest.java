@@ -24,7 +24,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,13 +46,13 @@ import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.point;
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.range;
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType.INT32;
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType.INT64;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class LongRangeSetTest {
   @NotNull
@@ -295,7 +295,7 @@ public class LongRangeSetTest {
         LongRangeSet result = set1.join(set2);
         intervals.add(result);
       }
-      assertEquals(start, union, intervals.get(0));
+      assertEquals(union, intervals.get(0), start);
     }
   }
 
@@ -330,13 +330,13 @@ public class LongRangeSetTest {
       LongRangeSet rDiff = right.subtract(left);
       LongRangeSet intersection = left.meet(right);
       String message = left + " & " + right + " = " + intersection;
-      assertEquals(message, intersection, right.meet(left));
+      assertEquals(intersection, right.meet(left), message);
       if (!intersection.isEmpty()) {
-        assertTrue(message, intersection.min() >= Math.max(left.min(), right.min()));
-        assertTrue(message, intersection.max() <= Math.min(left.max(), right.max()));
+        assertTrue(intersection.min() >= Math.max(left.min(), right.min()), message);
+        assertTrue(intersection.max() <= Math.min(left.max(), right.max()), message);
       }
-      assertEquals(message, intersection, right.subtract(fromTypeStrict(PsiTypes.longType()).subtract(left)));
-      assertEquals(message, intersection, left.subtract(fromTypeStrict(PsiTypes.longType()).subtract(right)));
+      assertEquals(intersection, right.subtract(fromTypeStrict(PsiTypes.longType()).subtract(left)), message);
+      assertEquals(intersection, left.subtract(fromTypeStrict(PsiTypes.longType()).subtract(right)), message);
       intersection.stream().limit(1000).forEach(e -> {
         assertTrue(left.contains(e));
         assertTrue(right.contains(e));

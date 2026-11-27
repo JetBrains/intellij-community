@@ -4,11 +4,11 @@ package com.intellij.java;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.jps.model.java.LanguageLevel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * For whatever reason, there are two Java language level enums in the project - {@link com.intellij.pom.java.LanguageLevel} and

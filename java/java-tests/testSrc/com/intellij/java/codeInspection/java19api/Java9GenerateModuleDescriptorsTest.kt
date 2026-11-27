@@ -2,10 +2,12 @@
 package com.intellij.java.codeInspection.java19api
 
 import com.intellij.codeInspection.java19api.NameConverterUtil
-import junit.framework.TestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class Java9GenerateModuleDescriptorsTest : TestCase() {
+class Java9GenerateModuleDescriptorsTest {
 
+  @Test
   fun testNameConverter() {
     doTestName("foo", ".foo")
     doTestName("foo", "foo.")

@@ -19,12 +19,16 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Supplier;
 
-public class IntentionWrappersTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class IntentionWrappersTest {
+  @Test
   public void testIntentionWrapperDelegatesDumbawareness() {
     checkDumbAwarenessIsDelegatedThrough(() -> new IntentionWrapper(new MyIntentionAction()));
   }
@@ -37,6 +41,7 @@ public class IntentionWrappersTest extends TestCase {
     assertTrue(DumbService.isDumbAware(o.get()));
   }
 
+  @Test
   public void testIntentionActionDelegateDelegatesDumbawareness() {
     MyIntentionAction delegate = new MyIntentionAction();
     class MyDelegate implements IntentionActionDelegate {
@@ -47,12 +52,15 @@ public class IntentionWrappersTest extends TestCase {
     }
     checkDumbAwarenessIsDelegatedThrough(() -> new MyDelegate());
   }
+  @Test
   public void testIntentionActionWithTextCachingDelegatesDumbawareness() {
     checkDumbAwarenessIsDelegatedThrough(() -> new IntentionActionWithTextCaching(new MyIntentionAction()));
   }
+  @Test
   public void testPriorityIntentionActionWrapperDelegatesDumbawareness() {
     checkDumbAwarenessIsDelegatedThrough(() -> PriorityIntentionActionWrapper.highPriority(new MyIntentionAction()));
   }
+  @Test
   public void testModCommandActionWrapperDelegatesDumbawareness() {
     class MyModCommand extends PsiBasedModCommandAction implements PossiblyDumbAware {
       protected MyModCommand() {

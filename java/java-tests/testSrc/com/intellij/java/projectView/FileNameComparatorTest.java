@@ -3,16 +3,17 @@ package com.intellij.java.projectView;
 
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class FileNameComparatorTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+
+public class FileNameComparatorTest {
   private static final List<String> PATHS = Arrays.asList(
     "",
     ".txt",
@@ -161,19 +162,22 @@ public class FileNameComparatorTest extends TestCase {
     "~/project/zzz-qwe.java/test"
   );
 
+  @Test
   public void testOrder() {
     ArrayList<String> shuffled = new ArrayList<>(PATHS);
     Collections.shuffle(shuffled);
     List<String> sortedPaths = ContainerUtil.sorted(shuffled, FileNameComparator.getInstance());
-    UsefulTestCase.assertOrderedEquals(sortedPaths, PATHS);
+    assertIterableEquals(PATHS, sortedPaths);
   }
 
+  @Test
   public void testTransitive1() {
     PlatformTestUtil.assertComparisonContractNotViolated(PATHS,
                                                          FileNameComparator.getInstance(),
                                                          (path1, path2) -> path1.equals(path2));
   }
 
+  @Test
   public void testTransitive2() {
     List<String> tokens = Arrays.asList("a", "b", "-", "_", "!", " ", ".", "~" /*, "1", "2", "0"*/);
     List<String> names = new ArrayList<>();

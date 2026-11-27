@@ -10,12 +10,14 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListParser
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPlatform
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.platform.bazel.runfiles.BazelLabel
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.BazelTestUtil
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
 /**
@@ -24,48 +26,55 @@ import java.nio.file.Files
  *
  * @see SdkmanrcWatcherLightTests for [SdkmanReleaseData.matchVersionString] tests
  */
-class JdkReleaseDataMatchItemTest : UsefulTestCase() {
+class JdkReleaseDataMatchItemTest {
 
   private lateinit var allItems: List<JdkItem>
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     val json = loadFeed("feed-v2-08-24.json")
     allItems = JdkListParser.parseJdkList(json, JdkPredicate(null, setOf(JdkPlatform("windows", "x86_64"))))
   }
 
   // region SdkmanReleaseData
 
+  @Test
   fun `test sdkman exact match against item`() {
     val item = findItem("Eclipse", "Temurin", "17.0.12")
     assertEquals(ReleaseDataMatching.EXACT_MATCH, SdkmanReleaseData.parse("17.0.12-tem")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test sdkman feature match against item`() {
     val item = findItem("Eclipse", "Temurin", "17.0.12")
     assertEquals(ReleaseDataMatching.FEATURE_MATCH, SdkmanReleaseData.parse("17.0.0-tem")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test sdkman no match on variant against item`() {
     val item = findItem("Azul", "Zulu Community™", "17.0.12")
     assertEquals(ReleaseDataMatching.NO_MATCH, SdkmanReleaseData.parse("17.0.12-tem")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test sdkman no match on version against item`() {
     val item = findItem("Eclipse", "Temurin", "21.0.4")
     assertEquals(ReleaseDataMatching.NO_MATCH, SdkmanReleaseData.parse("17.0.12-tem")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test sdkman graalce exact match against item`() {
     val item = findItem("GraalVM", "Community Edition", "21.0.2")
     assertEquals(ReleaseDataMatching.EXACT_MATCH, SdkmanReleaseData.parse("21.0.2-graalce")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test sdkman graal exact match against item`() {
     val item = findItem("Oracle", "GraalVM", "17.0.12")
     assertEquals(ReleaseDataMatching.EXACT_MATCH, SdkmanReleaseData.parse("17.0.12-graal")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test sdkman candidates matching against items`() {
     for ((candidate, triple) in mapOf(
       "18.0.2-amzn" to Triple("Amazon", "Corretto", "18.0.2"),
@@ -80,9 +89,9 @@ class JdkReleaseDataMatchItemTest : UsefulTestCase() {
     )) {
       val (vendor, product, version) = triple
       val item = findItem(vendor, product, version)
-      assertEquals("$candidate doesn't exactly match $vendor $product $version",
-                   ReleaseDataMatching.EXACT_MATCH,
-                   SdkmanReleaseData.parse(candidate)?.matchAgainstItem(item))
+      assertEquals(ReleaseDataMatching.EXACT_MATCH,
+                   SdkmanReleaseData.parse(candidate)?.matchAgainstItem(item),
+                   "$candidate doesn't exactly match $vendor $product $version")
     }
   }
 
@@ -90,31 +99,37 @@ class JdkReleaseDataMatchItemTest : UsefulTestCase() {
 
   // region AsdfReleaseData
 
+  @Test
   fun `test asdf exact match against item`() {
     val item = findItem("Eclipse", "Temurin", "17.0.12")
     assertEquals(ReleaseDataMatching.EXACT_MATCH, AsdfReleaseData.parse("temurin-17.0.12")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test asdf feature match against item`() {
     val item = findItem("Eclipse", "Temurin", "17.0.12")
     assertEquals(ReleaseDataMatching.FEATURE_MATCH, AsdfReleaseData.parse("temurin-17")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test asdf no match on variant against item`() {
     val item = findItem("Eclipse", "Temurin", "17.0.12")
     assertEquals(ReleaseDataMatching.NO_MATCH, AsdfReleaseData.parse("zulu-17.0.12")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test asdf no match on version against item`() {
     val item = findItem("Eclipse", "Temurin", "21.0.4")
     assertEquals(ReleaseDataMatching.NO_MATCH, AsdfReleaseData.parse("temurin-17.0.12")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test asdf graalvm community exact match against item`() {
     val item = findItem("GraalVM", "Community Edition", "21.0.2")
     assertEquals(ReleaseDataMatching.EXACT_MATCH, AsdfReleaseData.parse("graalvm-community-21.0.2")?.matchAgainstItem(item))
   }
 
+  @Test
   fun `test asdf candidates matching against items`() {
     for ((candidate, triple) in mapOf(
       "corretto-18.0.2" to Triple("Amazon", "Corretto", "18.0.2"),
@@ -129,9 +144,9 @@ class JdkReleaseDataMatchItemTest : UsefulTestCase() {
     )) {
       val (vendor, product, version) = triple
       val item = findItem(vendor, product, version)
-      assertEquals("$candidate doesn't exactly match $vendor $product $version",
-                   ReleaseDataMatching.EXACT_MATCH,
-                   AsdfReleaseData.parse(candidate)?.matchAgainstItem(item))
+      assertEquals(ReleaseDataMatching.EXACT_MATCH,
+                   AsdfReleaseData.parse(candidate)?.matchAgainstItem(item),
+                   "$candidate doesn't exactly match $vendor $product $version")
     }
   }
 

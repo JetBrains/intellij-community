@@ -2,10 +2,10 @@
 package com.intellij.java.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.MutationSignature;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MutationSignatureTest {
   @Test

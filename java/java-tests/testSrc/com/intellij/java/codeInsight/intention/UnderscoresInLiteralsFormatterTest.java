@@ -17,9 +17,9 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.psi.PsiTypes;
 import com.intellij.util.text.LiteralFormatUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UnderscoresInLiteralsFormatterTest {
   @Test

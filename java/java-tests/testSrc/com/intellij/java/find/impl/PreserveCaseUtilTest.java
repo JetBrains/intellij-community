@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.find.impl;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.find.impl.PreserveCaseUtil.applyCase;
 import static com.intellij.find.impl.PreserveCaseUtil.replaceWithCaseRespect;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Bas Leijdekkers

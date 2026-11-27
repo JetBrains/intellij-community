@@ -10,19 +10,20 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.lang.JavaVersion;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class JavaCommandLineTest extends BareTestFixtureTestCase {
+@TestApplication
+public class JavaCommandLineTest {
   @Test
   public void testJdkMissing() {
     try {
@@ -53,7 +54,7 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     javaParameters.setJdk(getProjectJDK());
     javaParameters.setJarPath("my-jar-file.jar");
     String commandLineString = javaParameters.toCommandLine().getCommandLineString();
-    assertTrue(commandLineString, commandLineString.contains("-jar my-jar-file.jar"));
+    assertTrue(commandLineString.contains("-jar my-jar-file.jar"), commandLineString);
   }
 
   @Test
@@ -116,18 +117,18 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     parameters.setCharset(StandardCharsets.UTF_8);
     parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(25)));
     String commandLineString = parameters.toCommandLine().getCommandLineString();
-    assertTrue(commandLineString, commandLineString.contains("-Dstdin.encoding=UTF-8"));
+    assertTrue(commandLineString.contains("-Dstdin.encoding=UTF-8"), commandLineString);
 
     parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(24)));
     commandLineString = parameters.toCommandLine().getCommandLineString();
-    assertFalse(commandLineString, commandLineString.contains("-Dstdin.encoding="));
+    assertFalse(commandLineString.contains("-Dstdin.encoding="), commandLineString);
 
     parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(25)));
     String stdinEncoding = "-Dstdin.encoding=windows-1252";
     parameters.getVMParametersList().add(stdinEncoding);
     commandLineString = parameters.toCommandLine().getCommandLineString();
-    assertTrue(commandLineString, commandLineString.contains(stdinEncoding));
-    assertFalse(commandLineString, commandLineString.contains("-Dstdin.encoding=UTF-8"));
+    assertTrue(commandLineString.contains(stdinEncoding), commandLineString);
+    assertFalse(commandLineString.contains("-Dstdin.encoding=UTF-8"), commandLineString);
   }
 
   private static boolean containsClassPath(String commandLineString) {

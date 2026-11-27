@@ -4,9 +4,12 @@ package com.intellij.java.codeInsight.template;
 import com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro;
 import com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro;
 import com.intellij.codeInsight.template.macro.SplitWordsMacro;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class NamingConventionMacrosTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class NamingConventionMacrosTest {
+  @Test
   public void testCapitalizeAndUnderscore() {
     assertEquals("FOO_BAR", cau("fooBar"));
     assertEquals("FOO_BAR", cau("fooBar"));
@@ -15,6 +18,7 @@ public class NamingConventionMacrosTest extends TestCase {
     assertEquals("", cau(""));
   }
 
+  @Test
   public void testSnakeCase() {
     assertEquals("foo", snakeCase("foo"));
     assertEquals("foo_bar", snakeCase("foo-bar"));
@@ -27,11 +31,13 @@ public class NamingConventionMacrosTest extends TestCase {
     assertEquals("", snakeCase(""));
   }
 
+  @Test
   public void testLowercaseAndDash() {
     assertEquals("foo-bar", new SplitWordsMacro.LowercaseAndDash().convertString("FOO_BAR"));
     assertEquals("", new SplitWordsMacro.LowercaseAndDash().convertString(""));
   }
 
+  @Test
   public void testToCamelCase() {
     assertEquals("fooBar", new ConvertToCamelCaseMacro().convertString("foo-bar").toString());
     assertEquals("fooBar", new ConvertToCamelCaseMacro().convertString("FOO-BAR").toString());
@@ -39,12 +45,14 @@ public class NamingConventionMacrosTest extends TestCase {
     assertEquals("", new ConvertToCamelCaseMacro().convertString("").toString());
   }
 
+  @Test
   public void testSpaceSeparated() {
     assertEquals("foo Bar", new SplitWordsMacro.SpaceSeparated().convertString("fooBar"));
     assertEquals("foo bar", new SplitWordsMacro.SpaceSeparated().convertString("foo-bar"));
     assertEquals("", new SplitWordsMacro.SpaceSeparated().convertString(""));
   }
 
+  @Test
   public void testUnderscoresToCamelCase() {
     assertEquals("fooBar-goo", new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("foo_bar-goo").toString());
     assertEquals("", new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("").toString());

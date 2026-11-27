@@ -5,11 +5,11 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JavaSdkVersionTest {
   @Test
@@ -24,7 +24,7 @@ public class JavaSdkVersionTest {
   public void maxLanguageLevelSanity() {
     for (JavaSdkVersion version : JavaSdkVersion.values()) {
       LanguageLevel languageLevel = version.getMaxLanguageLevel();
-      assertFalse("Fails for " + version, languageLevel.isPreview() && languageLevel != LanguageLevel.JDK_X);
+      assertFalse(languageLevel.isPreview() && languageLevel != LanguageLevel.JDK_X, "Fails for " + version);
     }
   }
 
