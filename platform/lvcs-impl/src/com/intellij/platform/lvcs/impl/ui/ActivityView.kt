@@ -173,13 +173,15 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         activityList.updateEmptyText(false)
       }
     }, this)
-    if (isSwitchingDiffModeAllowed) {
-      settings.addListener(object : ActivityViewApplicationSettings.Listener {
-        override fun settingsChanged() {
+
+    settings.addListener(object : ActivityViewApplicationSettings.Listener {
+      override fun settingsChanged() {
+        if (isSwitchingDiffModeAllowed) {
           model.diffMode = settings.diffMode
         }
-      }, this)
-    }
+        model.setAllLabelsShown(settings.showAllLabels)
+      }
+    }, this)
     model.diffMode = currentDiffMode
 
     isFocusCycleRoot = true

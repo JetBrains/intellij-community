@@ -79,8 +79,8 @@
             icon="AllIcons.Actions.Rollback"/>
     <action id="ActivityView.CreatePatch" class="com.intellij.platform.lvcs.impl.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
     <group id="ActivityView.Options" searchable="false" icon="AllIcons.General.Show" popup="true">
-      <action id="ActivityView.ShowSystemLabelsAction"
-              class="com.intellij.platform.lvcs.impl.actions.ShowSystemLabelsAction"/>
+      <action id="ActivityView.ShowAllLabelsAction"
+              class="com.intellij.platform.lvcs.impl.actions.ShowAllLabelsAction"/>
     </group>
 
     <group id="ActivityView.Toolbar">
