@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test
 
 
 @TestApplication
-internal class LspParameterInfoTest {
+internal class LspSignatureHelpTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)

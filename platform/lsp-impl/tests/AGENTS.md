@@ -2,6 +2,11 @@
 
 See also the "Tests" section in `../AGENTS.md`. The fake server and its fixture are in `testSrc/common/`.
 
+## Naming
+
+- A class that runs an editor feature as a user does, from the action to what the IDE shows, is named after the customizer of that feature in `com.intellij.platform.lsp.api.customization`: `LspFindReferencesTest` for `LspFindReferencesCustomizer`. Take that name also where the LSP specification or the IDE names the feature in another way: `LspDocumentHighlightsTest` for `LspDocumentHighlightsCustomizer`, `LspSignatureHelpTest` for `LspSignatureHelpCustomizer`, which Parameter Info uses.
+- Other tests keep a name of what they test, for example an extension point, the document sync or the lifecycle of the client: `LspBulkIntegrationProviderTest`, `LspDidSaveTest`.
+
 ## Drive the feature the way the IDE does
 
 - Use the methods of `codeInsightFixture`, or other platform test helpers and fixtures, the way the tests of other languages in the monorepo do. Look at how those tests check the same feature before writing a new helper. When a more specific fixture exists, prefer it, for example:
