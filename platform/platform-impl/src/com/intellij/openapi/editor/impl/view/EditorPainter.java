@@ -755,12 +755,14 @@ public final class EditorPainter implements TextDrawingCallback {
       int bottom
     ) {
       boolean selection = selectionInlayQueries.isAllBlockInlaysAboveSelected(visualLine);
-      BackgroundLayer betweenLinesLayer = getBetweenLinesBackgroundLayer(selection, visualLineStartOffset);
+      BetweenLinesLayers layers = getBetweenLinesBackgroundLayers(selection, visualLineStartOffset);
+      BackgroundLayer topLayer = layers.top();
       TextAttributes attributes = new TextAttributes();
-      attributes.setBackgroundColor(betweenLinesLayer == null ? null : betweenLinesLayer.getColor());
+      attributes.setBackgroundColor(topLayer == null ? null : topLayer.getColor());
       myBetweenLinesAttributes.put(visualLine, attributes);
-      if (betweenLinesLayer != null && betweenLinesLayer.getHugs()) {
-        if (isDefaultBackground(betweenLinesLayer.getColor())) {
+      if (topLayer != null && topLayer.getHugs()) {
+        paintBackgroundLayer(layers.filling(), myFillStartX, top, myFillEndX - myFillStartX, bottom - top);
+        if (isDefaultBackground(topLayer.getColor())) {
           return;
         }
         for (Inlay<?> blockInlay : selectionInlayQueries.blockInlaysAbove(visualLine)) {
@@ -768,10 +770,10 @@ public final class EditorPainter implements TextDrawingCallback {
           if (bounds == null) {
             continue;
           }
-          myBackgroundFill.fillBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height), betweenLinesLayer);
+          myBackgroundFill.fillBlock(withStub(bounds.x, bounds.x + bounds.width, bounds.y + myYShift, bounds.height), topLayer);
         }
       } else {
-        paintBackgroundLayer(betweenLinesLayer, myFillStartX, top, myFillEndX - myFillStartX, bottom - top);
+        paintBackgroundLayer(topLayer, myFillStartX, top, myFillEndX - myFillStartX, bottom - top);
       }
     }
 
@@ -1814,42 +1816,66 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     /**
-     * Gives the background of the block inlay band above the bottom visual line, or null when the band has no background.
-     * The band takes the style of the top background that crosses it: of a highlighter, or of the selection.
+     * The backgrounds of a block inlay band: the top one, and the top one of those that fill the line.
+     * Each is null when no such background crosses the band.
+     */
+    private record BetweenLinesLayers(@Nullable BackgroundLayer top, @Nullable BackgroundLayer filling) {
+    }
+
+    /**
+     * Gives the backgrounds of the block inlay band above the bottom visual line: of a highlighter, or of the selection.
+     * The band takes the style of the top background that crosses it.
      * So while the editor rounds, the band joins the shape of the visual lines above and below it.
      */
-    private @Nullable BackgroundLayer getBetweenLinesBackgroundLayer(boolean selection, int bottomVisualLineStartOffset) {
+    private @NotNull BetweenLinesLayers getBetweenLinesBackgroundLayers(boolean selection, int bottomVisualLineStartOffset) {
       final class MyProcessor implements Processor<RangeHighlighterEx> {
-        private @Nullable BackgroundLayer result;
+        private @Nullable BackgroundLayer top;
+        private @Nullable BackgroundLayer filling;
 
         private MyProcessor(boolean selection) {
           Color selectionColor = selection ? selectionBackgroundColor() : null;
           if (selectionColor != null) {
-            result = BackgroundLayer.selection(selectionColor, myRoundedHighlighting, myHuggingHighlighting);
+            top = BackgroundLayer.selection(selectionColor, myRoundedHighlighting, myHuggingHighlighting);
+            if (!top.getHugs()) {
+              filling = top;
+            }
           }
         }
 
         @Override
         public boolean process(RangeHighlighterEx highlighterEx) {
           int layer = highlighterEx.getLayer();
-          int topLayer = result == null ? Integer.MIN_VALUE : result.getLayer();
-          if (layer > topLayer &&
+          boolean exactRange = highlighterEx.getTargetArea() == HighlighterTargetArea.EXACT_RANGE;
+          boolean hugs = myHuggingHighlighting && exactRange;
+          boolean aboveTop = layer > layerOf(top);
+          boolean aboveFilling = !hugs && layer > layerOf(filling);
+          if ((aboveTop || aboveFilling) &&
               highlighterEx.getAffectedAreaStartOffset() < bottomVisualLineStartOffset &&
-              highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset -
-                                                         (highlighterEx.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? 0 : 1)) {
+              highlighterEx.getAffectedAreaEndOffset() > bottomVisualLineStartOffset - (exactRange ? 0 : 1)) {
             TextAttributes attributes = highlighterEx.getTextAttributes(myColorsScheme);
             Color backgroundColor = attributes == null ? null : attributes.getBackgroundColor();
             if (backgroundColor != null) {
-              result = BackgroundLayer.highlighter(highlighterEx, backgroundColor, myRoundedHighlighting, myHuggingHighlighting);
+              BackgroundLayer candidate =
+                BackgroundLayer.highlighter(highlighterEx, backgroundColor, myRoundedHighlighting, myHuggingHighlighting);
+              if (aboveTop) {
+                top = candidate;
+              }
+              if (aboveFilling) {
+                filling = candidate;
+              }
             }
           }
           return true;
+        }
+
+        private static int layerOf(@Nullable BackgroundLayer layer) {
+          return layer == null ? Integer.MIN_VALUE : layer.getLayer();
         }
       }
       MyProcessor processor = new MyProcessor(selection);
       myDocMarkup.processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
       myEditorMarkup.processRangeHighlightersOverlappingWith(bottomVisualLineStartOffset, bottomVisualLineStartOffset, processor);
-      return processor.result;
+      return new BetweenLinesLayers(processor.top, processor.filling);
     }
 
     private interface MarginWidthConsumer {

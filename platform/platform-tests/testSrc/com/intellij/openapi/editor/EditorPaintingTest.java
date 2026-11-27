@@ -672,6 +672,28 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     runWithLook(false, true, this::runTestHuggingHighlighterOverBlockInlays);
   }
 
+  private void runTestLineHighlighterUnderHuggingHighlighterOverBlockInlay() throws IOException {
+    myFixture.initText("line 1\nline 2\nline 3");
+    Document document = myFixture.getEditor().getDocument();
+    myFixture.addBlockInlay(document.getLineStartOffset(1), true);
+    addLineHighlighter(0, 13, HighlighterLayer.WARNING, null, Color.green);
+    addRangeHighlighter(3, 10, HighlighterLayer.ERROR, null, Color.red);
+    BufferedImage image = paintEditor(false, null, null);
+    int bandY = myFixture.getEditor().visualLineToY(1) - 2;
+    assertEquals(Color.green.getRGB(), image.getRGB(image.getWidth() - 3, bandY), "the band right of the inlay");
+    assertEquals(Color.red.getRGB(), image.getRGB(3, bandY), "the block of the inlay");
+  }
+
+  @Test
+  public void testLineHighlighterUnderHuggingHighlighterOverBlockInlayRounded() {
+    runWithLook(true, true, this::runTestLineHighlighterUnderHuggingHighlighterOverBlockInlay);
+  }
+
+  @Test
+  public void testLineHighlighterUnderHuggingHighlighterOverBlockInlayStraight() {
+    runWithLook(false, true, this::runTestLineHighlighterUnderHuggingHighlighterOverBlockInlay);
+  }
+
   private void runTestHuggingHighlighterOverCustomFold() throws IOException {
     myFixture.initText("\ntext\n");
     addCustomLinesFolding(1, 1);
