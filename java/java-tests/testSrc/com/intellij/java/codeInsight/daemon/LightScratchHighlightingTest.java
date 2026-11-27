@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -57,6 +58,7 @@ public final class LightScratchHighlightingTest {
       }
     };
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), fileCreator);
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
     PsiFile file = fileCreator.myFile;
     ReadAction.runBlocking(() -> {
       JavaErrorCollector collector = new JavaErrorCollector(file, e -> fail(e.description()));
