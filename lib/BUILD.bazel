@@ -14369,22 +14369,6 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "net.bytebuddy/byte-buddy-1.17.4.jar_copy",
-    src = "@net_bytebuddy-byte-buddy-1_17_4_http//file",
-    out = "net.bytebuddy/byte-buddy-1.17.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "net.bytebuddy/byte-buddy-agent-1.17.4.jar_copy",
-    src = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file",
-    out = "net.bytebuddy/byte-buddy-agent-1.17.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
 java_library(
     name = "libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter",
     visibility = ["//visibility:public"],
@@ -14392,8 +14376,6 @@ java_library(
         # do not sort,
         ":uk_org_webcompere-system-stubs-jupiter-2_1_8_http_import",
         ":uk_org_webcompere-system-stubs-core-2_1_8_http_import",
-        ":net_bytebuddy-byte-buddy-1_17_4_http_import",
-        ":net_bytebuddy-byte-buddy-agent-1_17_4_http_import",
     ],
 )
 
@@ -14407,18 +14389,6 @@ jvm_import(
     name = "uk_org_webcompere-system-stubs-core-2_1_8_http_import",
     jar = "@uk_org_webcompere-system-stubs-core-2_1_8_http//file",
     source_jar = "@uk_org_webcompere-system-stubs-core-2_1_8-sources_http//file",
-)
-
-jvm_import(
-    name = "net_bytebuddy-byte-buddy-1_17_4_http_import",
-    jar = "@net_bytebuddy-byte-buddy-1_17_4_http//file",
-    source_jar = "@net_bytebuddy-byte-buddy-1_17_4-sources_http//file",
-)
-
-jvm_import(
-    name = "net_bytebuddy-byte-buddy-agent-1_17_4_http_import",
-    jar = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file",
-    source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_4-sources_http//file",
 )
 
 copy_file(

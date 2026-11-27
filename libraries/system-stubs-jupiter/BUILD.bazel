@@ -19,6 +19,8 @@ jvm_library(
         # do not sort,
         "//libraries/junit6",
         "@lib//:libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter",
+        "//libraries/byte-buddy",
+        "//libraries/byte-buddy/agent",
     ],
 )
 ### auto-generated section `build intellij.libraries.system.stubs.jupiter` end

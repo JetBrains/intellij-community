@@ -1,5 +1,9 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.byte.buddy"/>
+    <module name="intellij.libraries.byte.buddy.agent"/>
     <module name="intellij.libraries.junit6"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>
