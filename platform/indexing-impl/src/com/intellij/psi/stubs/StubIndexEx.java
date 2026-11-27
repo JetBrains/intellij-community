@@ -89,7 +89,7 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @ApiStatus.Internal
-  public abstract void initializeStubIndexes(boolean isInitialStubUpdatingIndexBuild);
+  public abstract void initializeStubIndexes(boolean isStubUpdatingIndexUpToDate);
 
   @ApiStatus.Internal
   public abstract void initializationFailed(@NotNull Throwable error);

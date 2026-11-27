@@ -596,7 +596,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     return initIndexStorage(
-      extension, layout, version, diff instanceof IndexVersion.IndexVersionDiff.InitialBuild, state, versionRegistrationStatusSink, dirtyFiles
+      extension, layout, version, diff == IndexVersion.IndexVersionDiff.UP_TO_DATE, state, versionRegistrationStatusSink, dirtyFiles
     );
   }
 
@@ -619,7 +619,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static <K, V> IntSet initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
                                                 @NotNull VfsAwareIndexStorageLayout<K, V> layout,
                                                 int version,
-                                                boolean isInitialBuild,
+                                                boolean isUpToDate,
                                                 @NotNull IndexConfiguration state,
                                                 @NotNull IndexVersionRegistrationSink registrationStatusSink,
                                                 @NotNull IntSet dirtyFiles) throws Exception {
@@ -631,7 +631,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     int attemptCount = 2;
     for (int attempt = 0; attempt < attemptCount; attempt++) {
       try {
-        index = createIndex(extension, layout, isInitialBuild);
+        index = createIndex(extension, layout, isUpToDate);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
           UpdatableIndex<K, V, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(extension, index);
@@ -674,6 +674,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         registrationStatusSink.setIndexVersionDiff(indexId, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
         IndexVersion.rewriteVersion(indexId, version);
+        isUpToDate = false;
         IndexStatisticGroup.reportIndexRebuild(indexId, e, true);
 
         boolean lastAttempt = (attempt == attemptCount - 1);
@@ -713,7 +714,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static @NotNull <K, V> UpdatableIndex<K, V, FileContent, ?> createIndex(@NotNull FileBasedIndexExtension<K, V> extension,
                                                                                   @NotNull VfsAwareIndexStorageLayout<K, V> layout,
-                                                                                  boolean isInitialBuild)
+                                                                                  boolean isUpToDate)
     throws StorageException, IOException {
     //noinspection removal
     if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX && extension.getName() == FilenameIndex.NAME) {
@@ -727,7 +728,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     else if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       @SuppressWarnings("unchecked") UpdatableIndex<K, V, FileContent, ?> index =
-        ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, layout, isInitialBuild);
+        ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, layout, isUpToDate);
       return index;
     }
     else {

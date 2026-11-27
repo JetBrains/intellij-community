@@ -39,6 +39,9 @@ internal class FileBasedIndexImplIndexInvalidationTest {
       )
 
       assertThat(events).containsExactly("clear", "create")
+      assertThat(extension.isUpToDate)
+        .describedAs("an index with a version change has no data, so it is not up to date")
+        .isFalse()
     }
     finally {
       FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(TestIndexExtension.INDEX_ID))
@@ -87,6 +90,9 @@ internal class FileBasedIndexImplIndexInvalidationTest {
       assertThat(events)
         .describedAs("an index that does not trace the key hashes must not be cleared")
         .containsExactly("create")
+      assertThat(extension.isUpToDate)
+        .describedAs("an index that keeps its data is up to date")
+        .isTrue()
     }
     finally {
       FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(TestIndexExtension.INDEX_ID))
@@ -117,8 +123,14 @@ internal class FileBasedIndexImplIndexInvalidationTest {
     override fun createIndexImplementation(
       extension: FileBasedIndexExtension<Int, Int>,
       indexStorageLayout: VfsAwareIndexStorageLayout<Int, Int>,
-      isInitialBuild: Boolean,
-    ): UpdatableIndex<Int, Int, FileContent, *> = createIndex(indexStorageLayout)
+      isUpToDate: Boolean,
+    ): UpdatableIndex<Int, Int, FileContent, *> {
+      this.isUpToDate = isUpToDate
+      return createIndex(indexStorageLayout)
+    }
+
+    var isUpToDate: Boolean? = null
+      private set
 
     companion object {
       val INDEX_ID: ID<Int, Int> = ID.create("FileBasedIndexImplIndexInvalidationTest")

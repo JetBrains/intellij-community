@@ -287,7 +287,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   @ApiStatus.Internal
-  public void initializeStubIndexes(boolean isInitialStubUpdatingIndexBuild) {
+  public void initializeStubIndexes(boolean isStubUpdatingIndexUpToDate) {
     assert !myInitialized;
 
     myPerFileElementTypeStubModificationTracker.undispose();
@@ -298,7 +298,7 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      myGenesisFuture = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization(isInitialStubUpdatingIndexBuild));
+      myGenesisFuture = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization(isStubUpdatingIndexUpToDate));
     }
   }
 
@@ -396,13 +396,13 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   private final class StubIndexInitialization extends IndexDataInitializer<AsyncState> {
-    private final boolean myIsInitialStubUpdatingIndexBuild;
+    private final boolean myStubUpdatingIndexUpToDate;
     private final AsyncState state = new AsyncState();
     private final IndexVersionRegistrationSink indicesRegistrationSink = new IndexVersionRegistrationSink();
 
-    StubIndexInitialization(boolean isInitialStubUpdatingIndexBuild) {
+    StubIndexInitialization(boolean isStubUpdatingIndexUpToDate) {
       super("stub index");
-      myIsInitialStubUpdatingIndexBuild = isInitialStubUpdatingIndexBuild;
+      myStubUpdatingIndexUpToDate = isStubUpdatingIndexUpToDate;
     }
 
     @Override
@@ -410,7 +410,7 @@ public final class StubIndexImpl extends StubIndexEx {
       indicesRegistrationSink.logChangedAndFullyBuiltIndices(LOG, "Following stub indices will be updated:",
                                                              "Following stub indices will be built:");
 
-      if (indicesRegistrationSink.hasChangedIndexes() || !myIsInitialStubUpdatingIndexBuild && indicesRegistrationSink.hasNewIndexes()) {
+      if (indicesRegistrationSink.hasChangedIndexes() || myStubUpdatingIndexUpToDate && indicesRegistrationSink.hasNewIndexes()) {
         final Throwable e = new Throwable(indicesRegistrationSink.changedIndices());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
         AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> forceRebuild(e));

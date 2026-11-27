@@ -341,10 +341,10 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @ApiStatus.Internal
   public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
                                                                                                         @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,
-                                                                                                        boolean isInitialBuild)
+                                                                                                        boolean isUpToDate)
     throws StorageException, IOException {
 
-    ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes(isInitialBuild);
+    ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes(isUpToDate);
     checkNameStorage();
     mySerializationManager.initialize();
 
