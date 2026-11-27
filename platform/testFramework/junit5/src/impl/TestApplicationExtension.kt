@@ -42,8 +42,19 @@ class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
   }
 }
 
+/**
+ * Starts the shared test application once for the run of this context.
+ *
+ * In a run with parallel classes, a class that starts the application must be isolated, as each class with
+ * [TestApplication][com.intellij.testFramework.junit5.TestApplication] is. Otherwise its tests change the global state of
+ * the application beside other tests, and the checks of the whole JVM skip its tests, so the call fails.
+ */
 @TestOnly
 fun ExtensionContext.testApplication(): Result<Unit> {
+  check(!runsBesideOtherTests()) {
+    "${testClass.map { it.name }.orElse(uniqueId)} starts the test application beside other tests of a parallel run. " +
+    "Annotate it with @TestApplication or @Isolated"
+  }
   val store = root.getStore(ExtensionContext.Namespace.GLOBAL)
   val resource = store.computeIfAbsent("application") {
     TestApplicationResource(initTestApplication())

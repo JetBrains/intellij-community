@@ -33,7 +33,7 @@ class JUnit5ParallelUncaughtExceptionTest {
 
   @Test
   fun `concurrent tests keep the uncaught exception handler`() {
-    val summary = runConcurrently(ConcurrentScenario::class.java)
+    val summary = runConcurrently(PARALLELISM, ConcurrentScenario::class.java)
 
     assertNoFailures(summary)
     assertEquals(PARALLELISM.toLong(), summary.testsSucceededCount)
@@ -41,7 +41,7 @@ class JUnit5ParallelUncaughtExceptionTest {
 
   @Test
   fun `one exception on a thread fails one test of a concurrent run`() {
-    val summary = runConcurrently(BackgroundFailureScenario::class.java)
+    val summary = runConcurrently(PARALLELISM, BackgroundFailureScenario::class.java)
 
     assertEquals(1L, summary.totalFailureCount, failureReport(summary))
     assertEquals(PARALLELISM.toLong() - 1, summary.testsSucceededCount, failureReport(summary))
@@ -106,7 +106,11 @@ class JUnit5ParallelUncaughtExceptionTest {
   }
 }
 
-private fun runConcurrently(scenarioClass: Class<*>): TestExecutionSummary {
+/**
+ * Runs the scenario classes in a nested engine with parallel execution on: the top-level classes and the tests of each
+ * class run concurrently, in [parallelism] threads.
+ */
+internal fun runConcurrently(parallelism: Int, vararg scenarioClasses: Class<*>): TestExecutionSummary {
   // The auto-registered session listeners of the outer run enable IDE-wide extensions a second
   // time. The nested run needs only the extensions that META-INF/services declares.
   val launcher = LauncherFactory.create(
@@ -115,13 +119,13 @@ private fun runConcurrently(scenarioClass: Class<*>): TestExecutionSummary {
       .build()
   )
   val request = LauncherDiscoveryRequestBuilder.request()
-    .selectors(selectClass(scenarioClass))
+    .selectors(scenarioClasses.map { selectClass(it) })
     .configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition")
     .configurationParameter(Constants.EXTENSIONS_AUTODETECTION_ENABLED_PROPERTY_NAME, "true")
     .configurationParameter(Constants.PARALLEL_EXECUTION_ENABLED_PROPERTY_NAME, "true")
     .configurationParameter(Constants.DEFAULT_PARALLEL_EXECUTION_MODE, "concurrent")
     .configurationParameter(Constants.PARALLEL_CONFIG_STRATEGY_PROPERTY_NAME, "fixed")
-    .configurationParameter(Constants.PARALLEL_CONFIG_FIXED_PARALLELISM_PROPERTY_NAME, PARALLELISM.toString())
+    .configurationParameter(Constants.PARALLEL_CONFIG_FIXED_PARALLELISM_PROPERTY_NAME, parallelism.toString())
     .build()
 
   val listener = SummaryGeneratingListener()
@@ -129,12 +133,12 @@ private fun runConcurrently(scenarioClass: Class<*>): TestExecutionSummary {
   return listener.summary
 }
 
-private fun assertNoFailures(summary: TestExecutionSummary) {
+internal fun assertNoFailures(summary: TestExecutionSummary) {
   if (summary.totalFailureCount == 0L) return
   fail(failureReport(summary))
 }
 
-private fun failureReport(summary: TestExecutionSummary): String {
+internal fun failureReport(summary: TestExecutionSummary): String {
   val report = StringWriter()
   PrintWriter(report).use { writer ->
     summary.printFailuresTo(writer, 30)

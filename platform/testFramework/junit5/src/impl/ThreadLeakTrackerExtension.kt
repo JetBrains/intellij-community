@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.impl
 
 import com.intellij.testFramework.common.ThreadLeakTracker
@@ -15,6 +15,10 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import kotlin.jvm.optionals.getOrNull
 
+/**
+ * Checks that a test leaves no thread of its own. A test that runs beside other tests ([runsBesideOtherTests]) is not
+ * checked, because the threads of the other tests would count as its leaks.
+ */
 @TestOnly
 internal class ThreadLeakTrackerExtension : BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
 
@@ -38,7 +42,7 @@ internal class ThreadLeakTrackerExtension : BeforeEachCallback, AfterEachCallbac
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    if (context.testInstanceLifecycle.getOrNull() != TestInstance.Lifecycle.PER_CLASS) {
+    if (context.testInstanceLifecycle.getOrNull() != TestInstance.Lifecycle.PER_CLASS && !context.runsBesideOtherTests()) {
       context[threadsBeforeKey] = ThreadLeakTracker.getThreads()
     }
   }
@@ -53,7 +57,7 @@ internal class ThreadLeakTrackerExtension : BeforeEachCallback, AfterEachCallbac
   }
 
   override fun beforeAll(context: ExtensionContext) {
-    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS && !context.runsBesideOtherTests()) {
       // Provisional baseline: app-owned threads created by later declarative fixtures aren't here yet.
       // TestApplicationExtension re-captures via refreshPerClassThreadLeakBaseline once the app is up.
       context[threadsBeforeKey] = ThreadLeakTracker.getThreads()

@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.concurrent.locks.LockSupport;
 import java.util.prefs.Preferences;
 
@@ -324,8 +325,13 @@ public final class ThreadLeakTracker {
     }
   }
 
+  /**
+   * A worker thread of the JUnit executor of a parallel run. Such a thread runs the tests, so it is no leak of a test.
+   */
+  private static final Pattern JUNIT_WORKER_THREAD_NAME = Pattern.compile("junit-\\d+-worker-\\d+");
+
   private static boolean shouldWaitForThread(Thread thread) {
-    if (thread == Thread.currentThread()) {
+    if (thread == Thread.currentThread() || JUNIT_WORKER_THREAD_NAME.matcher(thread.getName()).matches()) {
       return false;
     }
     ThreadGroup group = thread.getThreadGroup();
