@@ -89,6 +89,7 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
  * The "Default Browser" dropdown offers each installed browser that no browser of the list opens, see [InstalledBrowser.isSameAs].
  * The "JavaScript Debugger" dropdown does the same for the Chromium-based browsers, see [WebBrowserManager.getChromiumBasedBrowser].
  * The "Search Engine" dropdown picks the [SearchEngine] of [WebBrowserManager.getSearchEngine].
+ * It shows only while an [EditorTabWebBrowser] is available, see [EditorTabWebBrowserProvider.getAvailableBrowsers].
  *
  * The "Edit Browser…" icon button of a dropdown opens [BrowserDialog] for the selected browser of the list or installed browser.
  * The "Custom Path or Command…" item of a dropdown opens [BrowserDialog] for a new browser.
@@ -413,7 +414,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
         })
           .widthGroup(CHOICE_WIDTH_GROUP)
           .applyToComponent { isSwingPopup = false }
-      }
+      }.visible(EditorTabWebBrowserProvider.getAvailableBrowsers().isNotEmpty())
 
       sections = ConfigurableWrapper.createConfigurables(WebBrowserSettingsSectionEP.EP_NAME)
       for (section in sections) {

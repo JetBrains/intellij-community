@@ -174,9 +174,11 @@ class DefaultBrowserDropdownTest {
   fun `search engine dropdown offers every engine and selects the stored one`() {
     loadState("""<state searchEngine="bing" />""")
 
+    withProvidedBrowser()
     withSearchEngineDropdown { page, comboBox ->
       assertEquals(SearchEngine.entries, (0 until comboBox.itemCount).map { comboBox.getItemAt(it) })
       assertEquals(SearchEngine.BING, comboBox.selectedItem)
+      assertTrue(comboBox.isVisible)
       assertFalse(page.isModified)
     }
   }
@@ -185,6 +187,7 @@ class DefaultBrowserDropdownTest {
   fun `apply stores the picked search engine`() {
     loadState("""<state />""")
 
+    withProvidedBrowser()
     withSearchEngineDropdown { page, comboBox ->
       comboBox.selectedItem = SearchEngine.GOOGLE
       assertTrue(page.isModified)
@@ -199,6 +202,7 @@ class DefaultBrowserDropdownTest {
   fun `reset restores the stored search engine`() {
     loadState("""<state />""")
 
+    withProvidedBrowser()
     withSearchEngineDropdown { page, comboBox ->
       comboBox.selectedItem = SearchEngine.GOOGLE
       page.reset()
@@ -207,6 +211,16 @@ class DefaultBrowserDropdownTest {
     }
 
     assertEquals(SearchEngine.DUCKDUCKGO, WebBrowserManager.getInstance().searchEngine)
+  }
+
+  @Test
+  fun `search engine dropdown hides without a provided browser`() {
+    loadState("""<state />""")
+
+    withSearchEngineDropdown { page, comboBox ->
+      assertFalse(comboBox.isVisible)
+      assertFalse(page.isModified)
+    }
   }
 
   private fun withProvidedBrowser(id: UUID = PROVIDED_BROWSER_ID): WebBrowser {
