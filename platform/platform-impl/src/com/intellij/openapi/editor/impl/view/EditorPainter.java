@@ -267,6 +267,12 @@ public final class EditorPainter implements TextDrawingCallback {
      * The map covers the visual lines from {@link #myFirstVisitedLine} to {@link #myLastVisitedLine}.
      */
     private final Int2ObjectMap<IntPair> myVirtualSelectionMap;
+    /**
+     * The visual positions of the selection ends of the current caret. Without a selection, both are the caret position,
+     * so a soft-wrapped line paints no selection.
+     */
+    private final VisualPosition myCurrentSelectionStart;
+    private final VisualPosition myCurrentSelectionEnd;
     private final int myLineHeight;
     private final int myAscent;
     private final int myDescent;
@@ -367,7 +373,15 @@ public final class EditorPainter implements TextDrawingCallback {
       myVisitMargin = myRoundedHighlighting ? (int)Math.ceil(2 * HighlighterVisualModel.cornerRadius(myLineHeight)) : 0;
       myFirstVisitedLine = myDryRunRows ? Math.max(0, myStartVisualLine - 1) : myStartVisualLine;
       myLastVisitedLine = myDryRunRows ? myEndVisualLine + 1 : myEndVisualLine;
-      myVirtualSelectionMap = createVirtualSelectionMap(myCaretModel, myFirstVisitedLine, myLastVisitedLine);
+      Caret currentCaret = myCaretModel.getCurrentCaret();
+      if (currentCaret.hasSelection()) {
+        myCurrentSelectionStart = currentCaret.getSelectionStartPosition();
+        myCurrentSelectionEnd = currentCaret.getSelectionEndPosition();
+      } else {
+        myCurrentSelectionStart = currentCaret.getVisualPosition();
+        myCurrentSelectionEnd = myCurrentSelectionStart;
+      }
+      myVirtualSelectionMap = createVirtualSelectionMap(myFirstVisitedLine, myLastVisitedLine, currentCaret);
       myHuggingHighlighting = myEditor.isHuggingHighlighting(myRegistry);
       myFillStartX = fillStartX();
       myFillEndX = fillEndX();
@@ -586,9 +600,6 @@ public final class EditorPainter implements TextDrawingCallback {
       float whiteSpaceScale = getWhiteSpaceScale(myEditor);
       final BasicStroke whiteSpaceStroke = new BasicStroke(calcFeatureSize(1, whiteSpaceScale));
 
-      final VisualPosition primarySelectionStart = mySelectionModel.getSelectionStartPosition();
-      final VisualPosition primarySelectionEnd = mySelectionModel.getSelectionEndPosition();
-
       LineLayout prefixLayout = myView.getPrefixLayout();
       if (myStartVisualLine == 0 && prefixLayout != null) {
         float width = prefixLayout.getWidth();
@@ -646,7 +657,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (softWrap == null) {
               return;
             }
-            paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, Objects.requireNonNull(primarySelectionStart), primarySelectionEnd);
+            paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, myCurrentSelectionStart, myCurrentSelectionEnd);
             if (!dryRun && paintSoftWraps && softWrap.isPaintable()) {
               int x = (int)xEnd;
               textTasks.add(g -> {
@@ -749,7 +760,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             else {
               paintStubPastLineEnd(it, x, y);
-              paintSelectionOnFirstSoftWrapLineIfNecessary(visualLine, columnStart, x, y, primarySelectionStart, primarySelectionEnd);
+              paintSelectionOnFirstSoftWrapLineIfNecessary(visualLine, columnStart, x, y, myCurrentSelectionStart, myCurrentSelectionEnd);
               if (!dryRun && paintSoftWraps && softWrap.isPaintable()) {
                 textTasks.add(g -> {
                   mySoftWrapModel.doPaint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, (int)x, y, myLineHeight);
@@ -979,12 +990,16 @@ public final class EditorPainter implements TextDrawingCallback {
       return Math.max(visibleArea.x + visibleArea.width, clipEndX);
     }
 
-    private static @NotNull Int2ObjectMap<IntPair> createVirtualSelectionMap(CaretModel caretModel, int startVisualLine, int endVisualLine) {
+    /**
+     * Builds {@link #myVirtualSelectionMap}. The selection ends of {@code currentCaret} come from
+     * {@link #myCurrentSelectionStart} and {@link #myCurrentSelectionEnd}.
+     */
+    private @NotNull Int2ObjectMap<IntPair> createVirtualSelectionMap(int startVisualLine, int endVisualLine, @NotNull Caret currentCaret) {
       Int2ObjectMap<IntPair> map = new Int2ObjectOpenHashMap<>();
-      for (Caret caret : caretModel.getAllCarets()) {
+      for (Caret caret : myCaretModel.getAllCarets()) {
         if (caret.hasSelection()) {
-          VisualPosition selectionStart = caret.getSelectionStartPosition();
-          VisualPosition selectionEnd = caret.getSelectionEndPosition();
+          VisualPosition selectionStart = caret == currentCaret ? myCurrentSelectionStart : caret.getSelectionStartPosition();
+          VisualPosition selectionEnd = caret == currentCaret ? myCurrentSelectionEnd : caret.getSelectionEndPosition();
           if (selectionStart.line == selectionEnd.line) {
             int line = selectionStart.line;
             if (line >= startVisualLine && line <= endVisualLine) {
