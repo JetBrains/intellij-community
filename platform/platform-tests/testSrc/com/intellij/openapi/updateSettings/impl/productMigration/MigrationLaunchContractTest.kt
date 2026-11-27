@@ -3,16 +3,30 @@ package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.openapi.application.productMigration.MigrationLaunchParameters
 import com.intellij.openapi.application.productMigration.MigrationLaunchReason
+import com.intellij.openapi.application.productMigration.linuxDetachedCommand
 import com.intellij.openapi.application.productMigration.macOpenCommand
 import com.intellij.openapi.application.productMigration.migrationLaunchArguments
 import com.intellij.openapi.application.productMigration.migrationLauncherCommand
 import com.intellij.openapi.application.productMigration.readMigrationLaunchParameters
+import com.intellij.openapi.application.productMigration.startMigrationLauncher
+import com.intellij.util.system.OS
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+import kotlin.io.path.readText
 
 class MigrationLaunchContractTest {
+  @get:Rule
+  val tempDir = TemporaryFolder()
+
   @Test
   fun `launch arguments have the version, the reason, the source product and the projects`() {
     val arguments = migrationLaunchArguments(MigrationLaunchReason.MIGRATE, "GO", listOf("/Users/me/my project", "/Users/me/other"))
@@ -100,6 +114,41 @@ class MigrationLaunchContractTest {
                         "C:\\Users\\John Smith\\my project"),
                  migrationLauncherCommand(launcher, arguments))
   }
+
+  @Test
+  fun `Linux command with setsid starts with it, and without setsid it does not change`() {
+    val command = listOf("/opt/ide/bin/jetbrains", "-Da=b", "/home/me/my project")
+    val setsid = Path.of("/usr/bin/setsid")
+    assertEquals(listOf(setsid.toString()) + command, linuxDetachedCommand(command, setsid))
+    assertEquals(command, linuxDetachedCommand(command, setsid = null))
+  }
+
+  @Test
+  fun `Linux launcher starts in a new session with no terminal`() {
+    assumeTrue(OS.CURRENT == OS.Linux)
+    assumeTrue("no setsid", Files.isExecutable(Path.of("/usr/bin/setsid")) || Files.isExecutable(Path.of("/bin/setsid")))
+    val stat = tempDir.root.toPath().resolve("stat.txt")
+    val script = "read line < /proc/self/stat; echo \"\$line\" > '${stat}'"
+    val process = startMigrationLauncher(listOf("/bin/sh", "-c", script), OS.Linux)!!
+    try {
+      assertTrue(process.waitFor(30, TimeUnit.SECONDS))
+      assertEquals(0, process.exitValue())
+    }
+    finally {
+      process.destroyForcibly()
+    }
+    val child = sessionAndTerminal(stat.readText())
+    // setsid becomes the launcher, so the process is the leader of its own session
+    assertEquals(process.pid().toString(), child.first)
+    assertNotEquals(sessionAndTerminal(Files.readString(Path.of("/proc/self/stat"))).first, child.first)
+    assertEquals("0", child.second)
+  }
+}
+
+/** The session ID and the terminal of a `/proc/<pid>/stat` text. The fields start after the process name in parentheses. */
+private fun sessionAndTerminal(stat: String): Pair<String, String> {
+  val fields = stat.substringAfterLast(')').trim().split(' ')
+  return fields[3] to fields[4]
 }
 
 private val VALID = mapOf(

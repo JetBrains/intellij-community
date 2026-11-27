@@ -3,12 +3,21 @@ package com.intellij.openapi.application.productMigration
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 private val LOG = logger<MigrationLaunchContract>()
+
+private const val SETSID = "setsid"
+
+// the desktop gives them to the old IDE for its own start, and a child must not use them a second time
+private val LINUX_DESKTOP_VARIABLES = listOf("DESKTOP_STARTUP_ID", "GIO_LAUNCHED_DESKTOP_FILE", "GIO_LAUNCHED_DESKTOP_FILE_PID", "XDG_ACTIVATION_TOKEN")
 
 /**
  * The launch contract between the old IDE and the Unified IDE.
@@ -98,19 +107,32 @@ fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
 fun migrationLauncherCommand(launcher: Path, arguments: List<String>): List<String> = listOf(launcher.toString()) + arguments
 
 /**
- * Starts [command] directly and logs the start. A failure is logged and gives `null`.
- * [command] is a [migrationLauncherCommand]. The process is the Unified IDE, and it continues after the exit of this process.
- * So it gets no pipe for its output, and its working directory is the user home and not a folder of this IDE.
+ * The Linux command that runs [command] in a new session, so the process does not end with the terminal of this IDE.
+ * [setsid] is the `setsid` program. It makes the session and then becomes the first program of [command], with the same process ID.
+ * With no [setsid], the result is [command], and the process stays in the session of this IDE.
  */
 @ApiStatus.Internal
-fun startMigrationLauncher(command: List<String>): Process? {
-  LOG.info("starting the Unified IDE: ${command}")
+fun linuxDetachedCommand(command: List<String>, setsid: Path?): List<String> =
+  if (setsid == null) command else listOf(setsid.toString()) + command
+
+/**
+ * Starts [command] and logs the start. A failure is logged and gives `null`.
+ * [command] is a [migrationLauncherCommand]. The process is the Unified IDE, and it continues after the exit of this process.
+ * So it gets no pipe for its output, and its working directory is the user home and not a folder of this IDE.
+ * On Linux, it starts as a [linuxDetachedCommand], without the desktop variables of this IDE.
+ * With `setsid`, a launcher that cannot run gives a process that ends, and not `null`.
+ */
+@ApiStatus.Internal
+fun startMigrationLauncher(command: List<String>, os: OS = OS.CURRENT): Process? {
+  val fullCommand = if (os == OS.Linux) linuxDetachedCommand(command, findSetsid()) else command
+  LOG.info("starting the Unified IDE: ${fullCommand}")
   try {
-    return ProcessBuilder(command)
+    val builder = ProcessBuilder(fullCommand)
       .directory(Path.of(SystemProperties.getUserHome()).toFile())
       .redirectOutput(ProcessBuilder.Redirect.DISCARD)
       .redirectError(ProcessBuilder.Redirect.DISCARD)
-      .start()
+    if (os == OS.Linux) removeLinuxDesktopVariables(builder)
+    return builder.start()
   }
   catch (e: IOException) {
     LOG.warn("cannot start the Unified IDE", e)
@@ -120,14 +142,17 @@ fun startMigrationLauncher(command: List<String>): Process? {
 
 /**
  * Starts [command] and logs it. With [inheritIO], the process gets the standard streams of this process.
+ * It stays in the session of this process, so the terminal of a start that waits controls it.
+ * On Linux, it does not get the desktop variables of this IDE.
  * A failure is logged and gives `null`.
  */
 @ApiStatus.Internal
-fun startMigrationProcess(command: List<String>, inheritIO: Boolean = false): Process? {
+fun startMigrationProcess(command: List<String>, inheritIO: Boolean = false, os: OS = OS.CURRENT): Process? {
   LOG.info("starting the Unified IDE: ${command}")
   try {
     val builder = ProcessBuilder(command)
     if (inheritIO) builder.inheritIO() else builder.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+    if (os == OS.Linux) removeLinuxDesktopVariables(builder)
     return builder.start()
   }
   catch (e: IOException) {
@@ -150,4 +175,22 @@ fun waitForMigrationOpen(process: Process, timeoutSeconds: Long): Boolean {
     return false
   }
   return true
+}
+
+/** Looks only in the absolute folders of `PATH`. This module does not see `PathEnvironmentVariableUtil`. */
+private fun findSetsid(): Path? {
+  val setsid = System.getenv("PATH").orEmpty().split(File.pathSeparatorChar).firstNotNullOfOrNull { dir ->
+    try {
+      Path.of(dir, SETSID).takeIf { it.isAbsolute && Files.isRegularFile(it) && Files.isExecutable(it) }
+    }
+    catch (_: InvalidPathException) {
+      null
+    }
+  }
+  if (setsid == null) LOG.info("no ${SETSID} in PATH, the Unified IDE starts in the session of this IDE")
+  return setsid
+}
+
+private fun removeLinuxDesktopVariables(builder: ProcessBuilder) {
+  builder.environment().keys.removeAll(LINUX_DESKTOP_VARIABLES)
 }
