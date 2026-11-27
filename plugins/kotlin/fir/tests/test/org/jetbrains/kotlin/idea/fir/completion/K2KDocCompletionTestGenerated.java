@@ -83,6 +83,11 @@ public class K2KDocCompletionTestGenerated extends AbstractK2JvmBasicCompletionT
         runTest("../../completion/testData/kdoc/FQLinkInTag2.kt");
     }
 
+    @TestMetadata("InInjectedFragment.kt")
+    public void testInInjectedFragment() throws Exception {
+        runTest("../../completion/testData/kdoc/InInjectedFragment.kt");
+    }
+
     @TestMetadata("Link.kt")
     public void testLink() throws Exception {
         runTest("../../completion/testData/kdoc/Link.kt");
