@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -20,25 +21,35 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
+@TestApplication
+public class UnknownSdkTrackerTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testProjectSdk() {
     Sdk sdk = IdeaTestUtil.getMockJdk18();
     setProjectSdk2(sdk);
-    ModuleRootModificationUtil.setSdkInherited(getModule());
+    ModuleRootModificationUtil.setSdkInherited(codeInsightFixture.get().getModule());
 
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
@@ -46,9 +57,10 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .isEmpty();
   }
 
+  @Test
   public void testMissingProjectJdk() {
-    WriteAction.run(() -> {
-      ProjectRootManager.getInstance(getProject()).setProjectSdkName("missingSDK", JavaSdk.getInstance().getName());
+    WriteAction.runAndWait(() -> {
+      ProjectRootManager.getInstance(codeInsightFixture.get().getProject()).setProjectSdkName("missingSDK", JavaSdk.getInstance().getName());
     });
 
     final List<String> fixes = detectMissingSdks();
@@ -58,9 +70,10 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .first().asString().startsWith("SdkFixInfo:");
   }
 
+  @Test
   public void testMissingProjectUnknownJdk() {
-    WriteAction.run(() -> {
-      ProjectRootManager.getInstance(getProject()).setProjectSdkName("missingSDK", "foo-bar-baz");
+    WriteAction.runAndWait(() -> {
+      ProjectRootManager.getInstance(codeInsightFixture.get().getProject()).setProjectSdkName("missingSDK", "foo-bar-baz");
     });
 
     final List<String> fixes = detectMissingSdks();
@@ -69,6 +82,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .isEmpty();
   }
 
+  @Test
   public void testMissingModuleJdk() {
     setModuleSdk("missingSDK", JavaSdk.getInstance());
 
@@ -79,6 +93,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .first().asString().matches(s -> s.startsWith("SdkFixInfo:") || s.startsWith("SdkSetupNotification:"));
   }
 
+  @Test
   public void testMissingModuleUnknownSdk() {
     setModuleSdk("missingSDK", "foo-bar-baz");
 
@@ -91,9 +106,10 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .startsWith("SdkSetupNotification:");
   }
 
+  @Test
   public void testNoProjectSdk() {
     setProjectSdk2(null);
-    ModuleRootModificationUtil.setSdkInherited(getModule());
+    ModuleRootModificationUtil.setSdkInherited(codeInsightFixture.get().getModule());
 
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
@@ -101,9 +117,10 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .isNotEmpty();
   }
 
+  @Test
   public void testModuleSdk() {
     Sdk sdk = addSdkIfNeeded(IdeaTestUtil.getMockJdk18());
-    ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
+    ModuleRootModificationUtil.setModuleSdk(codeInsightFixture.get().getModule(), sdk);
 
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
@@ -111,14 +128,16 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
       .isEmpty();
   }
 
+  @Test
   public void testNoModuleSdk() {
-    ModuleRootModificationUtil.setModuleSdk(getModule(), null);
+    ModuleRootModificationUtil.setModuleSdk(codeInsightFixture.get().getModule(), null);
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
       .isNotEmpty();
   }
 
+  @Test
   @TestFor(issues = "IDEA-236153")
   public void testItIgnoresSameSnapshot() {
     AtomicInteger lookupCalls = new AtomicInteger();
@@ -133,7 +152,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
         lookupCalls.incrementAndGet();
         return null;
       }
-    }, getTestRootDisposable());
+    }, codeInsightFixture.get().getTestRootDisposable());
 
     setModuleSdk("foo-bar-baz", JavaSdk.getInstance());
 
@@ -162,21 +181,22 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     assertThat(lookupCalls).hasValue(2);
   }
 
+  @Test
   @TestFor(issues = "IDEA-237884")
   public void testShouldNotRantOnCustomSDKType() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", SimpleJavaSdkType.getInstance());
-    WriteAction.run(() -> {
+    WriteAction.runAndWait(() -> {
       SdkModificator m = broken.getSdkModificator();
       m.setHomePath("invalid home path");
       m.setVersionString("11");
       m.commitChanges();
 
-      ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(broken, myFixture.getTestRootDisposable());
 
-      ModifiableRootModel mod = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      ModifiableRootModel mod = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
       mod.setSdk(broken);
       mod.commit();
-
     });
     final @NotNull List<String> panel = detectMissingSdks();
     assertThat(panel).isEmpty();
@@ -188,27 +208,29 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     final Sdk valid = IdeaTestUtil.getMockJdk18();
 
     private SdkTestCases() {
-      WriteAction.run(() -> {
+      WriteAction.runAndWait(() -> {
         SdkModificator m = broken.getSdkModificator();
         m.setHomePath("invalid home path");
         m.setVersionString("11");
         m.commitChanges();
 
-        ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
-        ProjectJdkTable.getInstance().addJdk(valid, getTestRootDisposable());
+        ProjectJdkTable.getInstance().addJdk(broken, codeInsightFixture.get().getTestRootDisposable());
+        ProjectJdkTable.getInstance().addJdk(valid, codeInsightFixture.get().getTestRootDisposable());
       });
     }
   }
 
+  @Test
   public void testBrokenModuleSdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     new SdkTestCases() {
       {
-        WriteAction.run(() -> {
-          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+        WriteAction.runAndWait(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
           m.setSdk(broken);
           m.commit();
 
-          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+          ProjectRootManager.getInstance(myFixture.getProject()).setProjectSdk(valid);
         });
 
         final List<String> panel = detectMissingSdks();
@@ -217,15 +239,17 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     };
   }
 
+  @Test
   public void testMissingModuleSdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     new SdkTestCases() {
       {
-        WriteAction.run(() -> {
-          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+        WriteAction.runAndWait(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
           m.setSdk(jdkNotInJdkTable);
           m.commit();
 
-          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+          ProjectRootManager.getInstance(myFixture.getProject()).setProjectSdk(valid);
         });
 
         final List<String> panel = detectMissingSdks();
@@ -234,15 +258,17 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     };
   }
 
+  @Test
   public void testValidProjectSdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     new SdkTestCases() {
       {
-        WriteAction.run(() -> {
-          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+        WriteAction.runAndWait(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
           m.inheritSdk();
           m.commit();
 
-          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+          ProjectRootManager.getInstance(myFixture.getProject()).setProjectSdk(valid);
         });
 
         final List<String> panel = detectMissingSdks();
@@ -251,15 +277,17 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     };
   }
 
+  @Test
   public void testBrokenProjectValidModuleSdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     new SdkTestCases() {
       {
-        WriteAction.run(() -> {
-          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+        WriteAction.runAndWait(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
           m.setSdk(valid);
           m.commit();
 
-          ProjectRootManager.getInstance(getProject()).setProjectSdk(broken);
+          ProjectRootManager.getInstance(myFixture.getProject()).setProjectSdk(broken);
         });
 
         final List<String> panel = detectMissingSdks();
@@ -273,31 +301,30 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void setModuleSdk(@NotNull String sdkName, @NotNull String sdkType) {
-    WriteAction.run(() -> {
-      ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+    WriteAction.runAndWait(() -> {
+      ModifiableRootModel model = ModuleRootManager.getInstance(codeInsightFixture.get().getModule()).getModifiableModel();
       model.setInvalidSdk(sdkName, sdkType);
       model.commit();
     });
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  @BeforeEach
+  void setUp() {
     setProjectSdk2(IdeaTestUtil.getMockJdk17());
   }
 
   private @NotNull List<String> detectMissingSdks() {
-    UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    UnknownSdkTracker.getInstance(myFixture.getProject()).updateUnknownSdks();
 
     List<String> infos = new ArrayList<>();
     EditorNotificationPanel sdkNotification =
-      SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");
+      EdtTestUtil.runInEdtAndGet(() -> SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }"));
     if (sdkNotification != null) {
       infos.add("SdkSetupNotification:" + sdkNotification.getText());
     }
 
-    for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
+    for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(myFixture.getProject()).getNotifications()) {
       infos.add("SdkFixInfo:" + notification.toString());
     }
 
@@ -305,8 +332,8 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void setProjectSdk2(@Nullable Sdk sdk) {
-    WriteAction.run(() -> {
-      ProjectRootManager.getInstance(getProject()).setProjectSdk(addSdkIfNeeded(sdk));
+    WriteAction.runAndWait(() -> {
+      ProjectRootManager.getInstance(codeInsightFixture.get().getProject()).setProjectSdk(addSdkIfNeeded(sdk));
     });
   }
 
@@ -320,13 +347,13 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     if (foundJdk != null) return sdk;
 
     ThrowableRunnable<RuntimeException> addSdk = () -> {
-      jdkTable.addJdk(sdk, myFixture.getProjectDisposable());
+      jdkTable.addJdk(sdk, codeInsightFixture.get().getProjectDisposable());
     };
 
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       addSdk.run();
     } else {
-      WriteAction.run(addSdk);
+      WriteAction.runAndWait(addSdk);
     }
 
     return sdk;

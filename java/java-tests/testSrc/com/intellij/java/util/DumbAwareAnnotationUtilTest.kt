@@ -4,43 +4,68 @@ package com.intellij.java.util
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.DumbAwareAnnotationUtil
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class DumbAwareAnnotationUtilTest : JavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/util/dumbAwareAnnotation/"
+@TestApplication
+class DumbAwareAnnotationUtilTest {
+  private val myFixture by javaModuleCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/util/dumbAwareAnnotation/")
+  private val project get() = myFixture.project
 
-  override fun setUp() {
-    super.setUp()
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, false)
     ModuleRootModificationUtil.updateModel(myFixture.getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations)
   }
 
-  fun testNonNls() = doFindAnnotationTest(AnnotationUtil.NON_NLS)
+  @Test
+  fun testNonNls(): Unit = doFindAnnotationTest(AnnotationUtil.NON_NLS)
 
-  fun testNotNull() = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
+  @Test
+  fun testNotNull(): Unit = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
 
-  fun testNullable() = doFindAnnotationTest(AnnotationUtil.NULLABLE)
+  @Test
+  fun testNullable(): Unit = doFindAnnotationTest(AnnotationUtil.NULLABLE)
 
-  fun testAnnotationWithFqn() = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
+  @Test
+  fun testAnnotationWithFqn(): Unit = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
 
-  fun testAnnotationWithStarImport() = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
+  @Test
+  fun testAnnotationWithStarImport(): Unit = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
 
-  fun testWrongImport() = doFindAnnotationTest(AnnotationUtil.NULLABLE, false)
+  @Test
+  fun testWrongImport(): Unit = doFindAnnotationTest(AnnotationUtil.NULLABLE, false)
 
-  fun testAnnotationInMethod() = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
+  @Test
+  fun testAnnotationInMethod(): Unit = doFindAnnotationTest(AnnotationUtil.NOT_NULL)
 
-  fun testFormatReferenceSimple() = doFormatReferenceTest("foo.bar", "foo.bar")
+  @Test
+  fun testFormatReferenceSimple(): Unit = doFormatReferenceTest("foo.bar", "foo.bar")
 
-  fun testFormatReferenceSpacesOnTheEnd() = doFormatReferenceTest("foo.  bar   ", "foo.bar")
+  @Test
+  fun testFormatReferenceSpacesOnTheEnd(): Unit = doFormatReferenceTest("foo.  bar   ", "foo.bar")
 
-  fun testFormatReferenceSpacesInTheMiddle() = doFormatReferenceTest("foo.   bar  .baz", "foo.bar.baz")
+  @Test
+  fun testFormatReferenceSpacesInTheMiddle(): Unit = doFormatReferenceTest("foo.   bar  .baz", "foo.bar.baz")
 
-  fun testFormatReferenceSpacesInTheBeginning() = doFormatReferenceTest("  foo  .bar", "foo.bar")
+  @Test
+  fun testFormatReferenceSpacesInTheBeginning(): Unit = doFormatReferenceTest("  foo  .bar", "foo.bar")
 
-  fun testFormatReferenceWithNewLines() = doFormatReferenceTest("\nfoo\n.\n\nbar\n.baz", "foo.bar.baz")
+  @Test
+  fun testFormatReferenceWithNewLines(): Unit = doFormatReferenceTest("\nfoo\n.\n\nbar\n.baz", "foo.bar.baz")
 
   private fun doFormatReferenceTest(input: String, expected: String)  {
     val actual = DumbModeTestUtils.computeInDumbModeSynchronously(project) {
@@ -50,11 +75,13 @@ class DumbAwareAnnotationUtilTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private fun doFindAnnotationTest(annotationFqn: String, shouldAnnotationBePresent: Boolean = true) {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile("$testName.java")
     DumbModeTestUtils.runInDumbModeSynchronously(project) {
-      val element = myFixture.elementAtCaret
-      assertTrue(element is PsiModifierListOwner)
-      assertEquals(DumbAwareAnnotationUtil.hasAnnotation(element as PsiModifierListOwner, annotationFqn), shouldAnnotationBePresent)
+      runReadActionBlocking {
+        val element = myFixture.elementAtCaret
+        assertTrue(element is PsiModifierListOwner)
+        assertEquals(DumbAwareAnnotationUtil.hasAnnotation(element as PsiModifierListOwner, annotationFqn), shouldAnnotationBePresent)
+      }
     }
   }
 }

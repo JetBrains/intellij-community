@@ -15,17 +15,30 @@
  */
 package com.intellij.java.psi.util.proximity;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ProximityTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class ProximityTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testSameSourceRoot() throws Throwable {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final TempDirTestFixture root1 = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     final TempDirTestFixture root2 = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
 
@@ -33,18 +46,20 @@ public class ProximityTest extends JavaCodeInsightFixtureTestCase {
     root2.setUp();
 
     try {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        PsiTestUtil.addSourceContentToRoots(getModule(), root1.getFile(""));
-        PsiTestUtil.addSourceContentToRoots(getModule(), root2.getFile(""));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+        PsiTestUtil.addSourceContentToRoots(myFixture.getModule(), root1.getFile(""));
+        PsiTestUtil.addSourceContentToRoots(myFixture.getModule(), root2.getFile(""));
       });
 
       final VirtualFile file1 = root1.createFile("buy.txt", "");
       final VirtualFile file2 = root2.createFile("buy.txt", "");
       final VirtualFile ctx = root2.createFile("ctx.txt", "");
 
-      final PsiProximityComparator comparator = new PsiProximityComparator(getPsiManager().findFile(ctx));
-      assertTrue(comparator.compare(getPsiManager().findFile(file1), getPsiManager().findFile(file2)) > 0);
-      assertTrue(comparator.compare(getPsiManager().findFile(file2), getPsiManager().findFile(file1)) < 0);
+      final PsiProximityComparator comparator = ReadAction.computeBlocking(() -> new PsiProximityComparator(PsiManager.getInstance(myFixture.getProject()).findFile(ctx)));
+      ReadAction.runBlocking(() -> {
+        assertTrue(comparator.compare(PsiManager.getInstance(myFixture.getProject()).findFile(file1), PsiManager.getInstance(myFixture.getProject()).findFile(file2)) > 0);
+        assertTrue(comparator.compare(PsiManager.getInstance(myFixture.getProject()).findFile(file2), PsiManager.getInstance(myFixture.getProject()).findFile(file1)) < 0);
+      });
     }
     finally {
       root1.tearDown();

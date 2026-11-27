@@ -7,32 +7,38 @@ import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class IncreaseLanguageLevelFixTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/increaseLanguageLevel/";
-  }
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6);
-    moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
+@TestApplication
+public class IncreaseLanguageLevelFixTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/increaseLanguageLevel/", true, moduleBuilder -> {
+      moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6);
+      moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
+    });
 
+  @Test
   public void testLambda() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("Lambda.java");
     assertEquals(LanguageLevel.JDK_1_6, PsiUtil.getLanguageLevel(myFixture.getFile()));
     IntentionAction fix = myFixture.findSingleIntention("Set language level");
     myFixture.launchAction(fix);
     // new language level will be pushed during scanning
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
     assertEquals(LanguageLevel.JDK_1_8, PsiUtil.getLanguageLevel(myFixture.getFile()));
   }
 
+  @Test
   public void testUpgradeJdk() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("UpgradeJdk.java");
     assertEquals(LanguageLevel.JDK_1_6, PsiUtil.getLanguageLevel(myFixture.getFile()));
     assertNotNull(myFixture.findSingleIntention(JavaBundle.message("intention.name.upgrade.jdk.to", "10")));

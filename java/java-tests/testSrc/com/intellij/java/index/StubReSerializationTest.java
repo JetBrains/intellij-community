@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -11,20 +13,32 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.psi.stubs.SerializationManagerImpl;
 import com.intellij.psi.stubs.Stub;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+@TestApplication
+public class StubReSerializationTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testReSerializationWithDifferentSerializerEnumeration() throws Exception {
     SerializationManagerEx serializationManager = SerializationManagerEx.getInstanceEx();
     serializationManager.flushNameStorage();
 
     Path externalStubEnumerator =
-      VfsUtilCore.virtualToIoFile(myFixture.getTempDirFixture().createFile("external_stub_serializer_enumerator/serializer.names")).toPath();
+      VfsUtilCore.virtualToIoFile(codeInsightFixture.get().getTempDirFixture().createFile("external_stub_serializer_enumerator/serializer.names")).toPath();
 
     // ensure we have different serializer's enumeration
     try (PersistentStringEnumerator enumerator = new PersistentStringEnumerator(externalStubEnumerator)) {
@@ -53,7 +67,7 @@ public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
         BufferExposingByteArrayOutputStream initialOut = new BufferExposingByteArrayOutputStream();
         externalSerializationManager.reSerialize(new ByteArrayInputStream(externalStub), initialOut, serializationManager);
         byte[] initialSerializedStub = initialOut.toByteArray();
-        assertOrderedEquals(serialized, initialSerializedStub);
+        assertArrayEquals(initialSerializedStub, serialized);
       }
       finally {
         Disposer.dispose(externalSerializationManager);
@@ -61,6 +75,7 @@ public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testIdenticalReSerialization() throws Exception {
     SerializationManagerEx serializationManager = SerializationManagerEx.getInstanceEx();
 
@@ -74,17 +89,17 @@ public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
     serializationManager.reSerialize(new ByteArrayInputStream(serialized), reSerializedOut, serializationManager);
     byte[] reSerialized = reSerializedOut.toByteArray();
 
-    assertOrderedEquals(serialized, reSerialized);
+    assertArrayEquals(reSerialized, serialized);
 
     BufferExposingByteArrayOutputStream reSerializedOut2 = new BufferExposingByteArrayOutputStream();
     serializationManager.reSerialize(new ByteArrayInputStream(reSerialized), reSerializedOut2, serializationManager);
     byte[] reSerialized2 = reSerializedOut.toByteArray();
 
-    assertOrderedEquals(serialized, reSerialized2);
+    assertArrayEquals(reSerialized2, serialized);
   }
 
   private PsiFileStub createStub() {
-    PsiFile f = myFixture.addFileToProject("A.java", "class A { int j = 123; void m () { Runnable r = () -> {}; }}");
-    return ((PsiFileWithStubSupport)f).getStubTree().getRoot();
+    PsiFile f = codeInsightFixture.get().addFileToProject("A.java", "class A { int j = 123; void m () { Runnable r = () -> {}; }}");
+    return ReadAction.computeBlocking(() -> ((PsiFileWithStubSupport)f).getStubTree().getRoot());
   }
 }

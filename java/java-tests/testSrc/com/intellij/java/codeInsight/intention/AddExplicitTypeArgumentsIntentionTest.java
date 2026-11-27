@@ -17,18 +17,23 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    super.tuneFixture(moduleBuilder);
-    moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
-  }
+@TestApplication
+public class AddExplicitTypeArgumentsIntentionTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(PathManager.getHomePath(), true, moduleBuilder -> moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8));
 
+  @Test
   public void testNoStaticQualifier() {
     doTest("""
              class Test {
@@ -50,6 +55,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
              }""");
   }
   
+  @Test
   public void testNoThisQualifier() {
     doTest("""
              class Test {
@@ -71,6 +77,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testContextClass() {
     doTest("""
              import java.util.Comparator;abstract class UserSession {
@@ -96,6 +103,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testInferredCapturedWildcard() {
     doTest("""
              class Test {
@@ -115,7 +123,9 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testNotAvailableWhenRawTypeInferred() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       import java.util.List;
       class Foo {
@@ -129,7 +139,9 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
     assertNull(intentionAction);
   }
 
+  @Test
   public void testNotAvailableWhenWildcardInferred() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       import java.util.stream.*;
 
@@ -145,6 +157,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
   }
 
   private void doTest(String beforeText, String afterText) {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", beforeText);
     final IntentionAction intentionAction = myFixture.findSingleIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNotNull(intentionAction);

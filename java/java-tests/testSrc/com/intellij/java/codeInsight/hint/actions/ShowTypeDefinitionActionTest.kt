@@ -3,16 +3,35 @@ package com.intellij.java.codeInsight.hint.actions
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiClass
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class ShowTypeDefinitionActionTest : JavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath(): String {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/showTypeDefinition/"
+@TestApplication
+class ShowTypeDefinitionActionTest {
+  private val myFixture by javaModuleCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/showTypeDefinition/")
+
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUpTestName(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, false)
   }
 
-  fun testReference() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+  @Test
+  fun testReference(): Unit = timeoutRunBlocking {
+    myFixture.configureByFile("$testName.java")
     val definitions = showDefinitions()
     assertEquals(1, definitions.size)
     val psiClass = definitions[0] as? PsiClass
@@ -21,26 +40,30 @@ class ShowTypeDefinitionActionTest : JavaCodeInsightFixtureTestCase() {
     assertEquals("String.java", psiClass.containingFile!!.name)
   }
 
-  fun testNoDefinitionForInt() {
+  @Test
+  fun testNoDefinitionForInt(): Unit = timeoutRunBlocking {
     doTestNoDefinitions()
   }
 
-  fun testNoDefinitionForClass() {
+  @Test
+  fun testNoDefinitionForClass(): Unit = timeoutRunBlocking {
     doTestNoDefinitions()
   }
 
-  fun testNoDefinitionForMethod() {
+  @Test
+  fun testNoDefinitionForMethod(): Unit = timeoutRunBlocking {
     doTestNoDefinitions()
   }
 
-  fun testNoDefinitionForType() {
+  @Test
+  fun testNoDefinitionForType(): Unit = timeoutRunBlocking {
     doTestNoDefinitions()
   }
 
-  private fun doTestNoDefinitions() {
-    myFixture.configureByFile(getTestName(false) + ".java")
-    assertEmpty(showDefinitions())
+  private suspend fun doTestNoDefinitions() {
+    myFixture.configureByFile("$testName.java")
+    assertThat(showDefinitions()).isNullOrEmpty()
   }
 
-  private fun showDefinitions() = ShowTypeDefinitionAction.runForTests(myFixture.editor.contentComponent)
+  private suspend fun showDefinitions() = withContext(Dispatchers.EDT) { ShowTypeDefinitionAction.runForTests(myFixture.editor.contentComponent) }
 }

@@ -3,34 +3,47 @@ package com.intellij.java.util.indexing
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaParserDefinition
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.tree.IFileElementType
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaPerFileElementTypeModificationTrackerTest {
+  private val myFixture by javaModuleCodeInsightFixture(PathManager.getHomePath())
+  private val project get() = myFixture.project
+
   companion object {
     val JAVA: IFileElementType = JavaParserDefinition.JAVA_FILE!!
   }
 
   private val helper = StubIndexPerFileElementTypeModificationTrackerTestHelper()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     helper.setUp()
   }
 
-  fun `test mod count increments on java file creation and change`() {
+  @Test
+  fun `test mod count increments on java file creation and change`(): Unit = timeoutRunBlocking {
     helper.initModCounts(JAVA)
     val psi = myFixture.addFileToProject("Foo.java", "class Foo { String bar; }")
     helper.checkModCountHasChanged(JAVA)
-    helper.ensureStubIndexUpToDate(project)
-    runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, "class Foo { int val; }"); }
+    readAction { helper.ensureStubIndexUpToDate(project) }
+    edtWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, "class Foo { int val; }"); }
     helper.checkModCountHasChanged(JAVA)
   }
 
-  fun `test mod count doesnt change on non-stub changes`() {
+  @Test
+  fun `test mod count doesnt change on non-stub changes`(): Unit = timeoutRunBlocking {
     helper.initModCounts(JAVA)
     val psi = myFixture.addFileToProject("Foo.java", """
       class Predicate {
@@ -40,8 +53,8 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
       }
     """.trimIndent())
     helper.checkModCountHasChanged(JAVA)
-    helper.ensureStubIndexUpToDate(project)
-    runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, """
+    readAction { helper.ensureStubIndexUpToDate(project) }
+    edtWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, """
       class Predicate {
         boolean test(int x) {
           return x >= 0;
@@ -51,7 +64,8 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
     helper.checkModCountIsSame(JAVA)
   }
 
-  fun `test mod count changes twice on same content if stub index is not updated`() {
+  @Test
+  fun `test mod count changes twice on same content if stub index is not updated`(): Unit = timeoutRunBlocking {
     helper.initModCounts(JAVA)
     val src = """
       class Predicate {
@@ -62,11 +76,12 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
     """.trimIndent()
     val psi = myFixture.addFileToProject("Foo.java", src)
     helper.checkModCountHasChanged(JAVA)
-    runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src); }
+    edtWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src); }
     helper.checkModCountHasChanged(JAVA)
   }
 
-  fun `test mod count changes twice on same content if stub index is not updated 2`() {
+  @Test
+  fun `test mod count changes twice on same content if stub index is not updated 2`(): Unit = timeoutRunBlocking {
     val src = """
       class Predicate {
         boolean test(int x) {
@@ -76,9 +91,9 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
     """.trimIndent()
     val psi = myFixture.addFileToProject("Foo.java", src)
     helper.initModCounts(JAVA)
-    helper.ensureStubIndexUpToDate(project)
+    readAction { helper.ensureStubIndexUpToDate(project) }
     helper.checkModCountIsSame(JAVA)
-    runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src); }
+    edtWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src); }
     helper.checkModCountIsSame(JAVA)
 
     val src2 = """
@@ -88,13 +103,14 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
         }
       }
     """.trimIndent()
-    runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src2); }
+    edtWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src2); }
     helper.checkModCountHasChanged(JAVA)
-    runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src2); }
+    edtWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src2); }
     helper.checkModCountHasChanged(JAVA)
   }
 
-  fun `test tracker does not modify file line separator data`() {
+  @Test
+  fun `test tracker does not modify file line separator data`(): Unit = timeoutRunBlocking {
     val psi = myFixture.configureByText(JavaFileType.INSTANCE, """
       class Predicate {
         boolean test(int x) {
@@ -104,8 +120,8 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
       }
     """.trimIndent())
     helper.initModCounts(JAVA)
-    helper.ensureStubIndexUpToDate(project)
-    runWriteAction { LoadTextUtil.changeLineSeparators(project, psi.virtualFile, "\r\n", this) }
+    readAction { helper.ensureStubIndexUpToDate(project) }
+    edtWriteAction { LoadTextUtil.changeLineSeparators(project, psi.virtualFile, "\r\n", this) }
     helper.checkModCountIsSame(JAVA)
     assertEquals("\r\n", psi.virtualFile.detectedLineSeparator)
     myFixture.type("int smth() { return 239; }\n")

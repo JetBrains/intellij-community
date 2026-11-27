@@ -4,13 +4,15 @@ package com.intellij.java.refactoring
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.rename.ModPlanRenameOptions
+import com.intellij.testFramework.junit5.TestApplication
 
 /**
  * The tests of the legacy rename of directories, run on the ModPlan engine. A test that fails here is a difference of the ModPlan rename from
  * the legacy one.
  */
+@TestApplication
 class RenameDirectoryOnModPlanTest : RenameDirectoryTest() {
   override fun rename(element: PsiElement, newName: String) {
-    renameOnModPlanInTests(project, element, newName, ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, true).with(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES, true))
+    renameOnModPlanInTests(codeInsightFixture.get().project, element, newName, ModPlanOptionValues.EMPTY.with(ModPlanRenameOptions.SEARCH_IN_COMMENTS, true).with(ModPlanRenameOptions.SEARCH_TEXT_OCCURRENCES, true))
   }
 }

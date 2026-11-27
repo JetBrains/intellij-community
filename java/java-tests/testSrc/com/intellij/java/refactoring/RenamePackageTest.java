@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -9,23 +11,31 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.rename.RenamePsiPackageProcessor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_25);
-  }
-  
+@TestApplication
+public class RenamePackageTest {
+  protected final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(PathManager.getHomePath(), true, builder -> builder.setLanguageLevel(LanguageLevel.JDK_25));
+
+  @Test
   public void testOrderingWithInjected() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile one = myFixture.addFileToProject("src/com/a/Amorphus.java", """
       package com.a;
       public class Amorphus {
@@ -49,13 +59,15 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
         void main() {
           new Amorphus();
       }""").getVirtualFile();
-    PsiTestUtil.removeSourceRoot(getModule(), ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]);
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("src"));
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("test"), true);
+    PsiTestUtil.removeSourceRoot(myFixture.getModule(), ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0]);
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().getFile("src"));
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().getFile("test"), true);
     PsiPackage p = myFixture.findPackage("com.a");
     myFixture.testHighlighting("src/com/a/Amorphus.java");
-    RenamePsiPackageProcessor.createRenameMoveProcessor("x.y.z", p, false, false).run();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      RenamePsiPackageProcessor.createRenameMoveProcessor("x.y.z", p, false, false).run();
+      FileDocumentManager.getInstance().saveAllDocuments();
+    });
 
     assertTrue(one.getPath().endsWith("src/x/y/z/Amorphus.java"));
     assertTrue(two.getPath().endsWith("test/x/y/z/Iconoclass.java"));
@@ -84,22 +96,28 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
                        new Amorphus();
                    }""", VfsUtilCore.loadText(two));
 
-    assertNull(myFixture.getJavaFacade().findPackage("p"));
-    assertEquals(2, myFixture.getJavaFacade().findPackage("x.y.z").getDirectories().length);
+    ReadAction.runBlocking(() -> {
+      assertNull(myFixture.getJavaFacade().findPackage("p"));
+      assertEquals(2, myFixture.getJavaFacade().findPackage("x.y.z").getDirectories().length);
+    });
   }
   
+  @Test
   public void testRenameInPackagePrefix() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile a = myFixture.addFileToProject("srcPrefix/foo/A.java", "package p.foo; class A extends B {}").getVirtualFile();
     VirtualFile b = myFixture.addFileToProject("src/p/foo/B.java", "package p.foo; class B { }").getVirtualFile();
     VirtualFile c = myFixture.addFileToProject("src/bar/C.java", "package bar; class C { p.foo.A a; p.foo.B b; }").getVirtualFile();
 
-    PsiTestUtil.removeSourceRoot(getModule(), ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]);
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("src"));
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("srcPrefix"), JavaSourceRootType.SOURCE,
+    PsiTestUtil.removeSourceRoot(myFixture.getModule(), ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0]);
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().getFile("src"));
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().getFile("srcPrefix"), JavaSourceRootType.SOURCE,
                               JpsJavaExtensionService.getInstance().createSourceRootProperties("p"));
 
-    rename(myFixture.findPackage("p"), "p1");
-    FileDocumentManager.getInstance().saveAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      rename(myFixture.findPackage("p"), "p1");
+      FileDocumentManager.getInstance().saveAllDocuments();
+    });
 
     assertTrue(a.getPath().endsWith("srcPrefix/foo/A.java"));
     assertTrue(b.getPath().endsWith("src/p1/foo/B.java"));
@@ -109,11 +127,15 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("package p1.foo; class B { }", VfsUtilCore.loadText(b));
     assertEquals("package bar; class C { p1.foo.A a; p1.foo.B b; }", VfsUtilCore.loadText(c));
 
-    assertNull(myFixture.getJavaFacade().findPackage("p"));
-    assertEquals(2, myFixture.getJavaFacade().findPackage("p1").getDirectories().length);
+    ReadAction.runBlocking(() -> {
+      assertNull(myFixture.getJavaFacade().findPackage("p"));
+      assertEquals(2, myFixture.getJavaFacade().findPackage("p1").getDirectories().length);
+    });
   }
 
+  @Test
   public void testRenameInResources() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("src/p/p/m.txt", "").getVirtualFile();
     VirtualFile c = myFixture.addFileToProject("src/bar/C.java", """
       package bar;\s
@@ -123,11 +145,13 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
         }\s
       }""").getVirtualFile();
 
-    PsiTestUtil.removeSourceRoot(getModule(), ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]);
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().getFile("src"));
+    PsiTestUtil.removeSourceRoot(myFixture.getModule(), ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0]);
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().getFile("src"));
 
-    rename(myFixture.findPackage("p.p"), "p.p1");
-    FileDocumentManager.getInstance().saveAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      rename(myFixture.findPackage("p.p"), "p.p1");
+      FileDocumentManager.getInstance().saveAllDocuments();
+    });
 
     assertEquals("""
                    package bar;\s
@@ -140,6 +164,6 @@ public class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
 
   /** Renames {@code element} as the fixture does; a subclass renames with another engine. */
   protected void rename(@NotNull PsiElement element, @NotNull String newName) {
-    myFixture.renameElement(element, newName);
+    codeInsightFixture.get().renameElement(element, newName);
   }
 }

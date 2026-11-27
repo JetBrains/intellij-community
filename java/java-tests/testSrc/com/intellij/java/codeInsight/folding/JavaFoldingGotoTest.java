@@ -16,16 +16,28 @@
 package com.intellij.java.codeInsight.folding;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaFoldingGotoTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class JavaFoldingGotoTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testIDEA127145() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("Program.java",
                                               """
                                                 import java.io.InputStream;
@@ -49,13 +61,15 @@ public class JavaFoldingGotoTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     Editor editor = myFixture.getEditor();
-    EditorTestUtil.buildInitialFoldingsInBackground(editor);
-    FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
-    foldingModel.rebuild();
-    myFixture.doHighlighting();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      EditorTestUtil.buildInitialFoldingsInBackground(editor);
+      FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
+      foldingModel.rebuild();
+      myFixture.doHighlighting();
 
-    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), editor, editor.getCaretModel().getOffset());
-    assertTrue("Should navigate to: file.sql instead of " + element, element != null && element.equals(fileSql));
+      PsiElement element = GotoDeclarationAction.findTargetElement(myFixture.getProject(), editor, editor.getCaretModel().getOffset());
+      assertTrue(element != null && element.equals(fileSql), "Should navigate to: file.sql instead of " + element);
+    });
   }
 
 }

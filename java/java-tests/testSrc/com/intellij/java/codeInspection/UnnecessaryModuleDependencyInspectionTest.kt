@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ui.InspectionToolPresentation
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
@@ -13,16 +15,28 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createGlobalContextForTool
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase() {
+@TestApplication
+class UnnecessaryModuleDependencyInspectionTest {
+  private val myFixture by javaModuleCodeInsightFixture(PathManager.getHomePath())
+  private val project get() = myFixture.project
+  private val module get() = myFixture.module
 
-  fun testRequireSuperClassInDependencies() {
+  @Test
+  fun testRequireSuperClassInDependencies(): Unit = timeoutRunBlocking {
     addModuleDependencies()
 
     myFixture.addClass("public class Class0 {}")
@@ -32,7 +46,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
-  fun testDependencyThrough2Paths() {
+  @Test
+  fun testDependencyThrough2Paths(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(module, mod1, DependencyScope.COMPILE, false)
@@ -48,7 +63,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertReportedProblems("Module '${module.name}' sources do not depend on module 'mod1' sources")
   }
 
-  fun testUsageInXml() {
+  @Test
+  fun testUsageInXml(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, false)
@@ -61,7 +77,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
   }
 
-  fun testRequireSuperClassInUnusedReturnTypeOfFactory() {
+  @Test
+  fun testRequireSuperClassInUnusedReturnTypeOfFactory(): Unit = timeoutRunBlocking {
     addModuleDependencies()
 
     myFixture.addClass("public class Class0 {}")
@@ -72,7 +89,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
   
-  fun testUnnecessaryDependencyWhenTwoModulesUseTheSameLibrary() {
+  @Test
+  fun testUnnecessaryDependencyWhenTwoModulesUseTheSameLibrary(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
@@ -84,7 +102,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
   }
 
-  fun testExportedLibraryThroughModuleDependency() {
+  @Test
+  fun testExportedLibraryThroughModuleDependency(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
     ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
@@ -94,7 +113,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
-  fun testDeepExportedLibraryThroughModuleDependency() {
+  @Test
+  fun testDeepExportedLibraryThroughModuleDependency(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
@@ -106,7 +126,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
-  fun testRequireSuperClassInUnusedReturnType() {
+  @Test
+  fun testRequireSuperClassInUnusedReturnType(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     val apiMod = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "apiMod", myFixture.tempDirFixture.findOrCreateDir("apiMod"))
@@ -125,7 +146,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
-  fun testExportedDependencies() {
+  @Test
+  fun testExportedDependencies(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(mod2, mod1)
@@ -136,13 +158,15 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
-  fun testDeepExportedDependenciesWithDirectDependency() {
+  @Test
+  fun testDeepExportedDependenciesWithDirectDependency(): Unit = timeoutRunBlocking {
     val topModule = deepDepends()
     ModuleRootModificationUtil.addDependency(topModule, module)
     assertReportedProblems("Module 'mod3' sources do not depend on module 'mod2' sources")
   }
 
-  fun testDuplicatedDependencies() {
+  @Test
+  fun testDuplicatedDependencies(): Unit = timeoutRunBlocking {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     val mod3 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod3", myFixture.tempDirFixture.findOrCreateDir("mod3"))
@@ -165,7 +189,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
-  fun testDeepExportedDependenciesNoDirectDependency() {
+  @Test
+  fun testDeepExportedDependenciesNoDirectDependency(): Unit = timeoutRunBlocking {
     deepDepends()
     assertInspectionProducesZeroResults()
   }
@@ -184,26 +209,26 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     return mod3
   }
 
-  private fun assertInspectionProducesZeroResults() {
+  private suspend fun assertInspectionProducesZeroResults() {
     val presentation = getReportedProblems()
-    Assert.assertFalse(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                       presentation.hasReportedProblems().toBoolean())
+    assertFalse(presentation.hasReportedProblems().toBoolean(),
+                       presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
   }
 
-  private fun assertReportedProblems(expectedProblems: String) {
+  private suspend fun assertReportedProblems(expectedProblems: String) {
     val presentation = getReportedProblems()
-    Assert.assertTrue("No problems were reported. Expected: ${expectedProblems}" , presentation.hasReportedProblems().toBoolean())
-    Assert.assertEquals(expectedProblems, presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+    assertTrue(presentation.hasReportedProblems().toBoolean() , "No problems were reported. Expected: ${expectedProblems}")
+    assertEquals(expectedProblems, presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
   }
 
-  private fun getReportedProblems(): @NotNull InspectionToolPresentation {
+  private suspend fun getReportedProblems(): @NotNull InspectionToolPresentation = withContext(Dispatchers.EDT) {
     val toolWrapper: InspectionToolWrapper<*, *> = GlobalInspectionToolWrapper(UnnecessaryModuleDependencyInspection())
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     val presentation = globalContext.getPresentation(toolWrapper)
     presentation.updateContent()
-    return presentation
+    presentation
   }
 
   private fun addModuleDependencies(): Module {

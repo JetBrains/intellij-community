@@ -5,6 +5,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -19,18 +21,36 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GotoImplementationHandlerTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testMultipleImplsFromAbstractCall() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                   "    abstract void foo();\n" +
@@ -54,7 +74,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
+  @Test
   public void testFromIncompleteCode() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                       "    abstract void foo();\n" +
@@ -78,7 +100,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
+  @Test
   public void testShowSelfNonAbstract() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public class Hello {\n" +
@@ -103,7 +127,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(3, impls.length);
   }
 
+  @Test
   public void testMultipleImplsFromStaticCall() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                       "    static void bar (){}\n" +
@@ -123,7 +149,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
+  @Test
   public void testFilterOutImpossibleVariants() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface A {\n" +
                       "    void save();\n" +
@@ -148,15 +176,19 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement[] impls = getTargets(file);
-    assertEquals(1, impls.length);
-    final PsiElement method = impls[0];
-    assertTrue(method instanceof PsiMethod);
-    final PsiClass aClass = ((PsiMethod)method).getContainingClass();
-    assertNotNull(aClass);
-    assertEquals("X", aClass.getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals(1, impls.length);
+      final PsiElement method = impls[0];
+      assertInstanceOf(PsiMethod.class, method);
+      final PsiClass aClass = ((PsiMethod)method).getContainingClass();
+      assertNotNull(aClass);
+      assertEquals("X", aClass.getName());
+    });
   }
 
+  @Test
   public void testImplicitInheritance() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface PackContainer {\n" +
                       "    void foo();\n" +
@@ -178,15 +210,19 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement[] impls = getTargets(file);
-    assertEquals(1, impls.length);
-    final PsiElement method = impls[0];
-    assertTrue(method instanceof PsiMethod);
-    final PsiClass aClass = ((PsiMethod)method).getContainingClass();
-    assertNotNull(aClass);
-    assertEquals("PsiPackageBase", aClass.getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals(1, impls.length);
+      final PsiElement method = impls[0];
+      assertInstanceOf(PsiMethod.class, method);
+      final PsiClass aClass = ((PsiMethod)method).getContainingClass();
+      assertNotNull(aClass);
+      assertEquals("PsiPackageBase", aClass.getName());
+    });
   }
 
+  @Test
   public void testMethodReferences() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface I {void f();}\n" +
                   "class A implements I { public void f(){}}\n" +
@@ -198,21 +234,25 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     final PsiElement[] impls = getTargets(file);
-    assertEquals(2, impls.length);
-    // target are non-deterministic now
-    Arrays.sort(impls, (o1, o2) -> {
-      String name1 = ((PsiMethod)o1).getContainingClass().getName();
-      String name2 = ((PsiMethod)o2).getContainingClass().getName();
-      return StringUtil.compare(name1, name2, false);
+    ReadAction.runBlocking(() -> {
+      assertEquals(2, impls.length);
+      // target are non-deterministic now
+      Arrays.sort(impls, (o1, o2) -> {
+        String name1 = ((PsiMethod)o1).getContainingClass().getName();
+        String name2 = ((PsiMethod)o2).getContainingClass().getName();
+        return StringUtil.compare(name1, name2, false);
+      });
+      final PsiElement method = impls[0];
+      assertInstanceOf(PsiMethod.class, method);
+      final PsiClass aClass = ((PsiMethod)method).getContainingClass();
+      assertNotNull(aClass);
+      assertEquals("A", aClass.getName());
     });
-    final PsiElement method = impls[0];
-    assertTrue(method instanceof PsiMethod);
-    final PsiClass aClass = ((PsiMethod)method).getContainingClass();
-    assertNotNull(aClass);
-    assertEquals("A", aClass.getName());
   }
 
+  @Test
   public void testMethodImplementationsOnTypeVariable() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface I {}\n" +
                       "interface Im {\n" +
@@ -232,10 +272,12 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     PsiElement[] targets = getTargets(file);
-    assertSize(2, targets);
+    assertEquals(2, targets.length);
   }
 
+  @Test
   public void testStaticMethodReference() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "class C {\n" +
                   "  static void a(){}\n" +
@@ -249,7 +291,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(1, impls.length);
   }
 
+  @Test
   public void testPrivateClassInheritors() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String fileText = """
       class C {
@@ -260,24 +304,28 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     myFixture.addClass("class Inheritor extends C.Public {}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    assertSize(2, getTargets(file));
+    assertEquals(2, getTargets(file).length);
   }
 
+  @Test
   public void testPrivateClassInheritorsInJdkDecompiled() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Sdk sdk = IdeaTestUtil.getMockJdk18();
-    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
-    ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, myFixture.getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(myFixture.getModule(), sdk);
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
 
-    PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
-    PsiFile file = aClass.getContainingFile();
+    PsiClass aClass = ReadAction.computeBlocking(() -> myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference"));
+    PsiFile file = ReadAction.computeBlocking(() -> aClass.getContainingFile());
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    myFixture.getEditor().getCaretModel().moveToOffset(aClass.getTextOffset());
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.getEditor().getCaretModel().moveToOffset(aClass.getTextOffset()));
 
-    assertSize(2, getTargets(file));
+    assertEquals(2, getTargets(file).length);
   }
 
+  @Test
   public void testScopeForPrivateMethod() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") @SuppressWarnings("ALL")
     String text = "class Foo {" +
                   " {f<caret>oo();}" +
@@ -285,13 +333,15 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                   "}";
     PsiFile file = myFixture.configureByText(JavaFileType.INSTANCE, text);
     PsiClass inheritor = myFixture.addClass("class FooImpl extends Foo {}");
-    SearchScope scope = TargetElementUtil.getInstance().getSearchScope(myFixture.getEditor(), ((PsiJavaFile)file).getClasses()[0].getMethods()[0]);
+    SearchScope scope = ReadAction.computeBlocking(() -> TargetElementUtil.getInstance().getSearchScope(myFixture.getEditor(), ((PsiJavaFile)file).getClasses()[0].getMethods()[0]));
     assertFalse(scope.contains(PsiUtilCore.getVirtualFile(inheritor)));
   }
 
+  @Test
   public void testAnonymousAndLocalClassesInLibrary() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ModuleRootModificationUtil.addModuleLibrary(
-      getModule(),
+      myFixture.getModule(),
       "jar://" + JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/MyInterfaceLibrary.jar!/"
     );
     @Language("JAVA")
@@ -308,49 +358,53 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     myFixture.configureFromExistingVirtualFile(psiFile.getVirtualFile());
 
-    PsiClass implementation = myFixture.findClass("MyInterfaceImplementation");
-    assertNotNull(implementation);
-    PsiClass[] supers = implementation.getSupers();
-    assertTrue(supers.length == 2 && "com.company.MyInterface".equalsIgnoreCase(supers[1].getQualifiedName()));
+    ReadAction.runBlocking(() -> {
+      PsiClass implementation = myFixture.findClass("MyInterfaceImplementation");
+      assertNotNull(implementation);
+      PsiClass[] supers = implementation.getSupers();
+      assertTrue(supers.length == 2 && "com.company.MyInterface".equalsIgnoreCase(supers[1].getQualifiedName()));
+    });
 
     PsiElement[] targets = getTargets(psiFile);
-    assertSize(5, targets);
+    assertEquals(5, targets.length);
 
-    List<String> names = ContainerUtil.map(targets, element -> ((PsiClass)element).getName());
+    ReadAction.runBlocking(() -> {
+      List<String> names = ContainerUtil.map(targets, element -> ((PsiClass)element).getName());
 
-    for(PsiElement element:targets) {
-      PsiClass psiClass = (PsiClass)element;
-      String name = psiClass.getName();
-      if ("1".equals(name) || "2".equals(name)) {
-        assertNull(psiClass.getModifierList());
-        assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
-        assertInstanceOf(psiClass, PsiAnonymousClass.class);
+      for(PsiElement element:targets) {
+        PsiClass psiClass = (PsiClass)element;
+        String name = psiClass.getName();
+        if ("1".equals(name) || "2".equals(name)) {
+          assertNull(psiClass.getModifierList());
+          assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
+          assertInstanceOf(PsiAnonymousClass.class, psiClass);
+        }
+        else if (!"MyInterfaceImplementation".equals(name)) {
+          assertNotNull(psiClass.getModifierList());
+        }
       }
-      else if (!"MyInterfaceImplementation".equals(name)) {
-        assertNotNull(psiClass.getModifierList());
-      }
-    }
 
-    assertContainsElements(names, "1");
-    assertContainsElements(names, "2");
-    assertContainsElements(names, "MyLocalClassImplementation");
-    assertContainsElements(names, "MyLocalClassImplementationInInner");
-    assertContainsElements(names, "MyInterfaceImplementation");
+      assertThat(names).contains("1");
+      assertThat(names).contains("2");
+      assertThat(names).contains("MyLocalClassImplementation");
+      assertThat(names).contains("MyLocalClassImplementationInInner");
+      assertThat(names).contains("MyInterfaceImplementation");
 
-    implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementation");
-    assertNull(implementation);
-    implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementationInInner");
-    assertNull(implementation);
+      PsiClass implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementation");
+      assertNull(implementation);
+      implementation = myFixture.getJavaFacade().findClass("MyLocalClassImplementationInInner");
+      assertNull(implementation);
 
-    implementation = myFixture.getJavaFacade().findClass("1");
-    assertNull(implementation);
+      implementation = myFixture.getJavaFacade().findClass("1");
+      assertNull(implementation);
 
-    implementation = myFixture.getJavaFacade().findClass("2");
-    assertNull(implementation);
+      implementation = myFixture.getJavaFacade().findClass("2");
+      assertNull(implementation);
+    });
   }
 
   private PsiElement[] getTargets(PsiFile file) {
-    GotoTargetHandler.GotoData gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.getEditor(), file);
+    GotoTargetHandler.GotoData gotoData = EdtTestUtil.runInEdtAndGet(() -> CodeInsightTestUtil.gotoImplementation(codeInsightFixture.get().getEditor(), file));
     assertNotNull(gotoData);
     return gotoData.targets;
   }

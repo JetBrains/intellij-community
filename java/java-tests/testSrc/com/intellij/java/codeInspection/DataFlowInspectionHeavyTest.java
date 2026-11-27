@@ -11,23 +11,29 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
 
+@TestApplication
+public class DataFlowInspectionHeavyTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
+
+  @Test
   public void testDifferentAnnotationsWithDifferentLanguageLevels() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Module module6 =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod6", myFixture.getTempDirFixture().findOrCreateDir("mod6"));
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), "mod6", myFixture.getTempDirFixture().findOrCreateDir("mod6"));
     IdeaTestUtil.setModuleLanguageLevel(module6, LanguageLevel.JDK_1_6);
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_8);
-    ModuleRootModificationUtil.addDependency(getModule(), module6);
-    ModuleRootModificationUtil.setModuleSdk(module6, ModuleRootManager.getInstance(getModule()).getSdk());
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_8);
+    ModuleRootModificationUtil.addDependency(myFixture.getModule(), module6);
+    ModuleRootModificationUtil.setModuleSdk(module6, ModuleRootManager.getInstance(myFixture.getModule()).getSdk());
 
     myFixture.addFileToProject("mod6/annos/annos.java",
                                annotationsText("ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE"));
@@ -39,7 +45,7 @@ public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase 
        }""");
 
     myFixture.addFileToProject("annos/annos.java", annotationsText("ElementType.TYPE_USE"));
-    DataFlowInspectionFixture.setCustomAnnotations(getProject(), myFixture.getTestRootDisposable(), "annos.NotNull", "annos.Nullable");
+    DataFlowInspectionFixture.setCustomAnnotations(myFixture.getProject(), myFixture.getTestRootDisposable(), "annos.NotNull", "annos.Nullable");
 
     PsiFile testFile = myFixture.addFileToProject("test.java", """
        class Zoo {
@@ -69,8 +75,10 @@ public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase 
           public @interface Nullable {}""".replace("$TARGETS$", targets);
   }
 
+  @Test
   public void test_no_always_failing_calls_in_tests() throws IOException {
-    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("test"), true);
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), myFixture.getTempDirFixture().findOrCreateDir("test"), true);
 
     myFixture.addFileToProject("test/org/junit/Test.java", """
       package org.junit;
@@ -94,14 +102,16 @@ public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase 
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testTypeQualifierNicknameWithoutDeclarations() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
 
     String noJsr305dep = "noJsr305dep";
     Module anotherModule =
-      PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), noJsr305dep, myFixture.getTempDirFixture().findOrCreateDir(noJsr305dep));
-    ModuleRootModificationUtil.setModuleSdk(anotherModule, ModuleRootManager.getInstance(getModule()).getSdk());
+      PsiTestUtil.addModule(myFixture.getProject(), JavaModuleType.getModuleType(), noJsr305dep, myFixture.getTempDirFixture().findOrCreateDir(noJsr305dep));
+    ModuleRootModificationUtil.setModuleSdk(anotherModule, ModuleRootManager.getInstance(myFixture.getModule()).getSdk());
 
     PsiFile nullableNick = myFixture.addFileToProject(noJsr305dep + "/bar/NullableNick.java", DataFlowInspectionTest.barNullableNick());
 

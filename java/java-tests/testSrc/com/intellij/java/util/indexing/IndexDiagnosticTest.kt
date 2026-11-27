@@ -2,6 +2,8 @@
 package com.intellij.java.util.indexing
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
@@ -9,13 +11,13 @@ import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAre
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.application
 import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
-import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
@@ -40,11 +42,15 @@ import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.indexing.diagnostic.dto.JsonRuntimeInfo
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
+import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.junit.Assert
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.io.BufferedReader
@@ -64,18 +70,22 @@ import kotlin.time.toJavaDuration
 /**
  * Tests for [IndexDiagnosticDumper].
  */
-class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
+@TestApplication
+class IndexDiagnosticTest {
+  private val myFixture by javaModuleCodeInsightFixture(PathManager.getHomePath())
+  private val project get() = myFixture.project
 
   @TestFor(issues = ["IDEA-252012"])
-  fun `test index diagnostics are laid out per project`() {
+  @Test
+  fun `test index diagnostics are laid out per project`(): Unit = timeoutRunBlocking {
     try {
       val tempDirectory = createTempDirectory()
-      TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, tempDirectory, testRootDisposable)
+      TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, tempDirectory, myFixture.testRootDisposable)
       shouldDumpInUnitTestMode = true
 
       val externalDir = myFixture.tempDirFixture.createFile("dir/A.java", "class A { void m() { } }").parent
       PsiTestUtil.addContentRoot(myFixture.module, externalDir)
-      PsiManager.getInstance(project).dropPsiCaches()
+      withContext(Dispatchers.EDT) { PsiManager.getInstance(project).dropPsiCaches() }
       waitUntilIndexesAreReady(project)
       IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
 
@@ -91,10 +101,10 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         val jsonFiles = files.filter { it.extension == "json" }
         val htmlFiles = files.filter { it.extension == "html" }
         assertTrue(files.isNotEmpty())
-        assertEquals(files.joinToString(prefix = "Actual files: ") { it.toString() }, files.size, jsonFiles.size + htmlFiles.size)
-        assertEquals(files.joinToString(prefix = "Actual files: ") { it.toString() },
-                     jsonFiles.map { it.nameWithoutExtension }.toSet(),
-                     htmlFiles.map { it.nameWithoutExtension }.toSet())
+        assertEquals(files.size, jsonFiles.size + htmlFiles.size, files.joinToString(prefix = "Actual files: ") { it.toString() })
+        assertEquals(jsonFiles.map { it.nameWithoutExtension }.toSet(),
+                     htmlFiles.map { it.nameWithoutExtension }.toSet(),
+                     files.joinToString(prefix = "Actual files: ") { it.toString() })
       }
     }
     finally {
@@ -102,6 +112,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     }
   }
 
+  @Test
   fun `test empty index diagnostic with default fields can be deserialized`() {
     val mapper = jacksonObjectMapper()
 
@@ -109,20 +120,21 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     println(mapper.writeValueAsString(indexDiagnostic))
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
-    Assert.assertEquals(indexDiagnostic, deserialized)
+    assertEquals(indexDiagnostic, deserialized)
   }
 
   @TestFor(issues = ["IJPL-260777"])
+  @Test
   fun `test diagnostic dumps do not block the service dispatcher`(): Unit = timeoutRunBlocking {
     val diagnosticDirectory = createTempDirectory()
-    TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, diagnosticDirectory, testRootDisposable)
+    TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, diagnosticDirectory, myFixture.testRootDisposable)
     val previousDumpInUnitTestMode = shouldDumpInUnitTestMode
     shouldDumpInUnitTestMode = true
     try {
       coroutineScope {
         val serviceScope = CoroutineScope(coroutineContext + Dispatchers.Default.limitedParallelism(1))
         val dumper = IndexDiagnosticDumper(serviceScope)
-        Disposer.register(testRootDisposable, dumper)
+        Disposer.register(myFixture.testRootDisposable, dumper)
 
         synchronized(dumper) {
           dumper.onScanningFinished(ProjectScanningHistoryImpl(project, "test scan", ScanningType.PARTIAL))
@@ -132,8 +144,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           serviceScope.launch {
             serviceDispatcherIsFree.countDown()
           }
-          assertTrue("Diagnostic dumps must leave the service dispatcher available while waiting for the dumper monitor",
-                     serviceDispatcherIsFree.await(5, TimeUnit.SECONDS))
+          assertTrue(serviceDispatcherIsFree.await(5, TimeUnit.SECONDS),
+                     "Diagnostic dumps must leave the service dispatcher available while waiting for the dumper monitor")
         }
       }
 
@@ -151,6 +163,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     }
   }
 
+  @Test
   fun `test scanning diagnostics json can be deserialized`() {
     val indexDiagnostic = JsonIndexingActivityDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
@@ -214,9 +227,10 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val mapper = jacksonObjectMapper()
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
-    Assert.assertEquals(indexDiagnostic, deserialized)
+    assertEquals(indexDiagnostic, deserialized)
   }
 
+  @Test
   fun `test dumb indexing diagnostics json can be deserialized`() {
     val indexDiagnostic = JsonIndexingActivityDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
@@ -303,9 +317,10 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val mapper = jacksonObjectMapper()
 
     val deserialized = deserializeDiagnostic(mapper, indexDiagnostic)
-    Assert.assertEquals(indexDiagnostic, deserialized)
+    assertEquals(indexDiagnostic, deserialized)
   }
 
+  @Test
   fun `test scanning diagnostics handles exceptions in listeners`() {
     val faultyListener = object : ProjectIndexingActivityHistoryListener {
       override fun onStartedScanning(history: ProjectScanningHistory) {
@@ -324,7 +339,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         throw AssertionError("test error")
       }
     }
-    application.registerExtension(IndexDiagnosticDumper.projectIndexingActivityHistoryListenerEpName, faultyListener, testRootDisposable)
+    application.registerExtension(IndexDiagnosticDumper.projectIndexingActivityHistoryListenerEpName, faultyListener, myFixture.testRootDisposable)
     // Registration of extension will trigger indexing, but this is implicit knowledge. Invoke full indexing explicitly.
     UnindexedFilesScanner(project).queue()
     waitUntilIndexesAreReady(project, 10.seconds.toJavaDuration())

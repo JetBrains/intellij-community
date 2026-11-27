@@ -6,21 +6,28 @@ import com.intellij.find.findUsages.similarity.JavaUsageSimilarityFeaturesProvid
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.Distance;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 
-public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/findSimilar/";
-  }
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class JavaUsagesBySimilarityTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture =
+    javaModuleCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/findSimilar/");
+
+  @Test
   public void testFeaturesProvider() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("FeaturesProvider.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
     final Bag features = getFeatures(elementAtCaret);
@@ -29,7 +36,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(1, features.get("NEW_KEYWORD"));
   }
 
+  @Test
   public void testForFeatures() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("ForFeatures.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
     final Bag features = getFeatures(elementAtCaret);
@@ -38,7 +47,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(1, features.get("CONTEXT: VAR: int GP: FOR_STATEMENT -1"));
   }
 
+  @Test
   public void testAnonymousExtractor() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       Registry.get("similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class").setValue(true);
@@ -56,7 +67,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testAnonymous() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       Registry.get("similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class").setValue(false);
@@ -79,7 +92,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     return ReadAction.nonBlocking(() -> new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret)).submit(AppExecutorUtil.getAppExecutorService()).get();
   }
 
+  @Test
   public void testIncrement() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       myFixture.configureByFile("Increment.java");
@@ -93,7 +108,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testLambdaExtractor() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       Registry.get("similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class").setValue(true);
@@ -112,7 +129,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testLambda() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       Registry.get("similarity.find.usages.new.features.collector.for.lambda.and.anonymous.class").setValue(false);
@@ -131,7 +150,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testMethodReference() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       myFixture.configureByFile("MethodReference.java");
@@ -145,14 +166,18 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testDeclarationInForStatement() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("DeclarationInForStatement.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
     final Bag features = getFeatures(elementAtCaret);
     assertEquals(1, features.get("USAGE: FOR"));
   }
 
+  @Test
   public void testFieldFeatures() throws ExecutionException, InterruptedException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     try {
       Registry.get("similarity.find.usages.add.features.for.fields").setValue(true);
       myFixture.configureByFile("Field.java");
@@ -173,6 +198,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testBag() {
     final Bag bag = new Bag("a", "b");
     assertEquals("""
@@ -191,6 +217,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(5, bag.getCardinality());
   }
 
+  @Test
   public void testDistance() {
     assertEquals(0.6, Distance.jaccardSimilarityWithThreshold(new Bag("a", "b", "c", "d", "e", "f", "g", "h"),
                                                                              new Bag("a", "z", "c", "y", "e", "f", "g", "h"), 0.6));

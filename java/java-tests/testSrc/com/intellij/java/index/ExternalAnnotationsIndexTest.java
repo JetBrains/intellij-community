@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -11,18 +13,28 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.psi.impl.java.stubs.index.ExternalAnnotationsIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ThrowableConsumer;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class ExternalAnnotationsIndexTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
   private static void withExternalAnnotations(String xmlRelativePath, String xmlContent,
                                        ThrowableConsumer<? super VirtualFile, ? extends Exception> test) throws Exception {
     Path externalAnnotationsDir = Files.createTempDirectory("extAnnotations");
@@ -40,7 +52,8 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
   }
 
   private void addLibraryAnnotationRoot(VirtualFile root) {
-    WriteAction.run(() -> {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    WriteAction.runAndWait(() -> {
       var model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
       LibraryTable libTable = model.getModuleLibraryTable();
       Library library = libTable.createLibrary("testLib");
@@ -49,23 +62,26 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       libModel.commit();
       model.commit();
     });
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
   private void addSdkAnnotationRoot(VirtualFile root) {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Sdk originalSdk = ModuleRootManager.getInstance(myFixture.getModule()).getSdk();
     assertNotNull(originalSdk);
     Sdk sdkWithAnnotations = PsiTestUtil.addRootsToJdk(originalSdk, AnnotationOrderRootType.getInstance(), root);
-    WriteAction.run(() -> {
-      ProjectJdkTable.getInstance().addJdk(sdkWithAnnotations, getTestRootDisposable());
+    WriteAction.runAndWait(() -> {
+      ProjectJdkTable.getInstance().addJdk(sdkWithAnnotations, myFixture.getTestRootDisposable());
       var model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
       model.setSdk(sdkWithAnnotations);
       model.commit();
     });
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
+  @Test
   public void testSimple() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("annotations.xml", """
       <root>
         <item name="com.example.Foo void bar()">
@@ -80,15 +96,17 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", scope);
-    assertSameElements(items, "com.example.Foo void bar()", "com.example.Foo");
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", scope));
+    assertThat(items).containsExactlyInAnyOrder("com.example.Foo void bar()", "com.example.Foo");
 
-    List<String> otherItems = ExternalAnnotationsIndex.getItemsByAnnotation("test.Other", scope);
-    assertSameElements(otherItems, "com.example.Foo myField");
+    List<String> otherItems = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Other", scope));
+    assertThat(otherItems).containsExactlyInAnyOrder("com.example.Foo myField");
   }
 
+  @Test
   public void testMultipleAnnotationsXmls() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("pkg1/annotations.xml", """
       <root>
         <item name="com.example.Foo">
@@ -108,13 +126,15 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    assertSameElements(ExternalAnnotationsIndex.getItemsByAnnotation("test.NotNull", scope), "com.example.Foo");
-    assertSameElements(ExternalAnnotationsIndex.getItemsByAnnotation("test.Nullable", scope), "com.example.Bar");
-    assertSameElements(ExternalAnnotationsIndex.getItemsByAnnotation("test.Contract", scope), "com.example.Bar");
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.NotNull", scope)).containsExactlyInAnyOrder("com.example.Foo"));
+    ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Nullable", scope)).containsExactlyInAnyOrder("com.example.Bar"));
+    ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Contract", scope)).containsExactlyInAnyOrder("com.example.Bar"));
   }
 
+  @Test
   public void testNonAnnotationsXmlIgnored() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("other.xml", """
       <root>
         <item name="com.example.Foo">
@@ -123,16 +143,20 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    assertEmpty(ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject())));
+    ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(myFixture.getProject()))).isNullOrEmpty());
   }
 
+  @Test
   public void testEmptyAnnotationsXml() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("annotations.xml", "<root>\n</root>");
 
-    assertEmpty(ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject())));
+    ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(myFixture.getProject()))).isNullOrEmpty());
   }
 
+  @Test
   public void testAnnotationWithValChildren() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("annotations.xml", """
       <root>
         <item name="com.example.Foo java.lang.String bar()">
@@ -145,11 +169,13 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       """);
 
     List<String> items =
-      ExternalAnnotationsIndex.getItemsByAnnotation("test.Contract", GlobalSearchScope.allScope(getProject()));
-    assertSameElements(items, "com.example.Foo java.lang.String bar()");
+      ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Contract", GlobalSearchScope.allScope(myFixture.getProject())));
+    assertThat(items).containsExactlyInAnyOrder("com.example.Foo java.lang.String bar()");
   }
 
+  @Test
   public void testTypePathAnnotationsSkipped() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("annotations.xml", """
       <root>
         <item name="com.example.Foo java.lang.String[] bar()">
@@ -162,14 +188,16 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.NotNull", scope);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.NotNull", scope));
     // First item has an element-level @NotNull, so it should appear.
     // Second item only has a type-level @NotNull (typePath), so it should NOT appear.
-    assertSameElements(items, "com.example.Foo java.lang.String[] bar()");
+    assertThat(items).containsExactlyInAnyOrder("com.example.Foo java.lang.String[] bar()");
   }
 
+  @Test
   public void testEntityResolutionInItemNames() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("annotations.xml", """
       <root>
         <item name="com.example.Box &lt;T&gt;">
@@ -181,11 +209,13 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject()));
-    assertSameElements(items, "com.example.Box <T>", "com.example.Foo java.util.Map<java.lang.String, java.lang.Integer> getMap()");
+    List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(myFixture.getProject())));
+    assertThat(items).containsExactlyInAnyOrder("com.example.Box <T>", "com.example.Foo java.util.Map<java.lang.String, java.lang.Integer> getMap()");
   }
 
+  @Test
   public void testExternalDoctypeIsNotResolved() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Indexing must never open a stream for an external DTD: it would make indexing depend on the network
     // (see StdXMLParser.processDocType). The system id below is unreachable on purpose: if it is resolved,
     // parsing fails and nothing gets indexed.
@@ -199,11 +229,13 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject()));
-    assertSameElements(items, "com.example.Foo");
+    List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(myFixture.getProject())));
+    assertThat(items).containsExactlyInAnyOrder("com.example.Foo");
   }
 
+  @Test
   public void testExternalPublicDoctypeIsNotResolved() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("annotations.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE root PUBLIC "-//Test//DTD Annotations//EN" "https://127.0.0.1:1/annotations.dtd">
@@ -214,11 +246,13 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject()));
-    assertSameElements(items, "com.example.Bar <T>");
+    List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(myFixture.getProject())));
+    assertThat(items).containsExactlyInAnyOrder("com.example.Bar <T>");
   }
 
+  @Test
   public void testMultipleFilesAggregation() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("pkg1/annotations.xml", """
       <root>
         <item name="pkg1.A"><annotation name="test.Ann"/></item>
@@ -230,10 +264,11 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       </root>
       """);
 
-    List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(getProject()));
-    assertSameElements(items, "pkg1.A", "pkg2.B");
+    List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.Ann", GlobalSearchScope.allScope(myFixture.getProject())));
+    assertThat(items).containsExactlyInAnyOrder("pkg1.A", "pkg2.B");
   }
 
+  @Test
   public void testAnnotationRootIsIndexed() throws Exception {
     withExternalAnnotations("com/example/annotations.xml", """
       <root>
@@ -247,12 +282,14 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       """, annRoot -> {
       addLibraryAnnotationRoot(annRoot);
 
-      List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.LibAnn", GlobalSearchScope.allScope(getProject()));
-      assertSameElements(items, "com.example.Foo", "com.example.Foo void bar()");
+      List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.LibAnn", GlobalSearchScope.allScope(codeInsightFixture.get().getProject())));
+      assertThat(items).containsExactlyInAnyOrder("com.example.Foo", "com.example.Foo void bar()");
     });
   }
 
+  @Test
   public void testAnnotationRootIndexUpdatesOnXmlChange() throws Exception {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     withExternalAnnotations("com/example/annotations.xml", """
       <root>
         <item name="com.example.Foo">
@@ -262,13 +299,13 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       """, annRoot -> {
       addLibraryAnnotationRoot(annRoot);
 
-      GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-      assertSameElements(ExternalAnnotationsIndex.getItemsByAnnotation("test.Upd", scope), "com.example.Foo");
+      GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+      ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Upd", scope)).containsExactlyInAnyOrder("com.example.Foo"));
 
       // Modify the XML: add a new item, remove the old one
       VirtualFile xmlFile = annRoot.findFileByRelativePath("com/example/annotations.xml");
       assertNotNull(xmlFile);
-      WriteAction.run(() -> xmlFile.setBinaryContent("""
+      WriteAction.runAndWait(() -> xmlFile.setBinaryContent("""
         <root>
           <item name="com.example.Bar">
             <annotation name="test.Upd"/>
@@ -278,13 +315,14 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
           </item>
         </root>
         """.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+      IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
 
-      assertSameElements(ExternalAnnotationsIndex.getItemsByAnnotation("test.Upd", scope), "com.example.Bar");
-      assertSameElements(ExternalAnnotationsIndex.getItemsByAnnotation("test.Upd2", scope), "com.example.Baz");
+      ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Upd", scope)).containsExactlyInAnyOrder("com.example.Bar"));
+      ReadAction.runBlocking(() -> assertThat(ExternalAnnotationsIndex.getItemsByAnnotation("test.Upd2", scope)).containsExactlyInAnyOrder("com.example.Baz"));
     });
   }
 
+  @Test
   public void testSdkAnnotationRootIsIndexed() throws Exception {
     withExternalAnnotations("annotations.xml", """
       <root>
@@ -298,8 +336,8 @@ public class ExternalAnnotationsIndexTest extends JavaCodeInsightFixtureTestCase
       """, annRoot -> {
       addSdkAnnotationRoot(annRoot);
 
-      List<String> items = ExternalAnnotationsIndex.getItemsByAnnotation("test.SdkAnn", GlobalSearchScope.allScope(getProject()));
-      assertSameElements(items, "java.lang.String", "java.lang.String int length()");
+      List<String> items = ReadAction.computeBlocking(() -> ExternalAnnotationsIndex.getItemsByAnnotation("test.SdkAnn", GlobalSearchScope.allScope(codeInsightFixture.get().getProject())));
+      assertThat(items).containsExactlyInAnyOrder("java.lang.String", "java.lang.String int length()");
     });
   }
 }

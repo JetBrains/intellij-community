@@ -17,21 +17,36 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.longLine.LongLineInspection
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-class JavaLongLineInspectionTest : JavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/longLine"
+@TestApplication
+class JavaLongLineInspectionTest {
+  private val myFixture by javaModuleCodeInsightFixture(JavaTestUtil.getJavaTestDataPath() + "/inspection/longLine")
 
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUpTestName(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, false)
+  }
+
+  @Test
   fun testSimple() {
     doTest()
   }
 
+  @Test
   fun testLongLine() {
     doTest()
   }
 
   private fun doTest() {
     myFixture.enableInspections(LongLineInspection())
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
+    myFixture.testHighlighting(true, false, false, "$testName.java")
   }
 }

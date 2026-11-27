@@ -12,7 +12,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsContexts
@@ -24,41 +27,52 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.TestActionEvent
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.javaModuleCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.annotations.NonNls
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import javax.swing.Icon
 
-class CreateClassActionAvailabilityTest : JavaCodeInsightFixtureTestCase() {
+@TestApplication
+class CreateClassActionAvailabilityTest {
+  private val myFixture by javaModuleCodeInsightFixture(PathManager.getHomePath())
+  private val project get() = myFixture.project
+  private val module get() = myFixture.module
 
-  fun testCreateClassActionAvailability() {
+  @Test
+  fun testCreateClassActionAvailability(): Unit = timeoutRunBlocking {
     val srcRoot = myFixture.tempDirFixture.findOrCreateDir("newContentRoot/src")
     val contentRoot = srcRoot.parent
-    ApplicationManager.getApplication().runWriteAction {
+    edtWriteAction {
       ModuleRootManager.getInstance(myFixture.module).modifiableModel.apply {
         addContentEntry(contentRoot.url).addSourceFolder(srcRoot, false)
         commit()
       }
     }
 
-    assertFalse(isEnabledAndVisibleFor(contentRoot))
-    assertTrue(isEnabledAndVisibleFor(srcRoot))
+    assertFalse(readAction { isEnabledAndVisibleFor(contentRoot) })
+    assertTrue(readAction { isEnabledAndVisibleFor(srcRoot) })
   }
 
-  fun testCompactSourceClassAvailability() {
-    Registry.get("java.create.compact.source.file.separately").setValue(false, testRootDisposable)
+  @Test
+  fun testCompactSourceClassAvailability(): Unit = timeoutRunBlocking {
+    Registry.get("java.create.compact.source.file.separately").setValue(false, myFixture.testRootDisposable)
     val srcRoot = myFixture.tempDirFixture.findOrCreateDir("newContentRoot/src")
     val contentRoot = srcRoot.parent
-    ApplicationManager.getApplication().runWriteAction {
+    edtWriteAction {
       ModuleRootManager.getInstance(myFixture.module).modifiableModel.apply {
         addContentEntry(contentRoot.url).addSourceFolder(srcRoot, false)
         commit()
       }
     }
     val sourceLevel = myFixture.tempDirFixture.findOrCreateDir("")
-    val sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceLevel)
+    val sourceDirectory = readAction { PsiManager.getInstance(project).findDirectory(sourceLevel) }
 
     val dir = myFixture.tempDirFixture.findOrCreateDir("foo")
-    val psiDirectory = PsiManager.getInstance(project).findDirectory(dir)
+    val psiDirectory = readAction { PsiManager.getInstance(project).findDirectory(dir) }
 
 
     val builder = object : CreateFileFromTemplateDialog.Builder by TestDialogBuilder(TestDialogBuilder.TestAnswers(null, null)) {
@@ -78,36 +92,37 @@ class CreateClassActionAvailabilityTest : JavaCodeInsightFixtureTestCase() {
     IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_CLASSES.minimumLevel) {
 
       builder.templateNames.clear()
-      action.buildDialog(project, sourceDirectory!!, builder)
+      runReadActionBlocking { action.buildDialog(project, sourceDirectory!!, builder) }
       assertTrue(builder.templateNames.contains(JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE))
 
       builder.templateNames.clear()
-      action.buildDialog(project, psiDirectory!!, builder)
+      runReadActionBlocking { action.buildDialog(project, psiDirectory!!, builder) }
       assertTrue(builder.templateNames.contains(JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE))
     }
 
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
       builder.templateNames.clear()
-      action.buildDialog(project, sourceDirectory!!, builder)
+      runReadActionBlocking { action.buildDialog(project, sourceDirectory!!, builder) }
       assertTrue(!builder.templateNames.contains(JavaTemplateUtil.INTERNAL_SIMPLE_SOURCE_FILE))
     }
   }
 
-  fun testCompactSourceClassAvailabilitySeparately() {
-    Registry.get("java.create.compact.source.file.separately").setValue(true, testRootDisposable)
+  @Test
+  fun testCompactSourceClassAvailabilitySeparately(): Unit = timeoutRunBlocking {
+    Registry.get("java.create.compact.source.file.separately").setValue(true, myFixture.testRootDisposable)
     val srcRoot = myFixture.tempDirFixture.findOrCreateDir("newContentRoot/src")
     val contentRoot = srcRoot.parent
-    ApplicationManager.getApplication().runWriteAction {
+    edtWriteAction {
       ModuleRootManager.getInstance(myFixture.module).modifiableModel.apply {
         addContentEntry(contentRoot.url).addSourceFolder(srcRoot, false)
         commit()
       }
     }
     val sourceLevel = myFixture.tempDirFixture.findOrCreateDir("")
-    val sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceLevel)!!
+    val sourceDirectory = readAction { PsiManager.getInstance(project).findDirectory(sourceLevel)!! }
 
     val dir = myFixture.tempDirFixture.findOrCreateDir("foo")
-    val psiDirectory = PsiManager.getInstance(project).findDirectory(dir)!!
+    val psiDirectory = readAction { PsiManager.getInstance(project).findDirectory(dir)!! }
 
 
     val builder = object : CreateFileFromTemplateDialog.Builder by TestDialogBuilder(TestDialogBuilder.TestAnswers(null, null)) {
@@ -151,8 +166,8 @@ class CreateClassActionAvailabilityTest : JavaCodeInsightFixtureTestCase() {
           }
         })
         .build()
-      assertTrue(action.isAvailable(context))
-      assertFalse(action.isAvailable(contextWithoutRoot))
+      assertTrue(runReadActionBlocking { action.isAvailable(context) })
+      assertFalse(runReadActionBlocking { action.isAvailable(contextWithoutRoot) })
     }
   }
 

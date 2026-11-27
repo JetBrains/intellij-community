@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.FCTSBackedLighterAST;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -24,25 +25,37 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @SkipSlowTestLocally
-public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getProject());
+@TestApplication
+public class ConcurrentIndexTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myFixture.getProject())).disableBackgroundCommit(myFixture.getProject());
   }
 
+  @Test
   public void test_concurrent_switching_with_checkCanceled() throws Exception {
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;
@@ -50,7 +63,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     for (int iteration = 1; iteration <= 200; iteration++) {
       String name = "Foo" + iteration;
 
-      myFixture.addFileToProject(name + ".java", "class " + name + " {}");
+      codeInsightFixture.get().addFileToProject(name + ".java", "class " + name + " {}");
 
       List<Future<?>> futuresToWait = new ArrayList<>();
       CountDownLatch startAllAtOnceLatch = new CountDownLatch(N);
@@ -90,12 +103,14 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void checkFindClass(@NotNull String name) {
-    PsiClass clazz = myFixture.findClass(name);
+    PsiClass clazz = codeInsightFixture.get().findClass(name);
     ASTNode node = clazz.getNode();
-    assertNotNull("Class [" + name + "] must be available in indexes", node);
+    assertNotNull(node, "Class [" + name + "] must be available in indexes");
   }
 
+  @Test
   public void test_cancellable_and_non_cancellable_progress() throws Exception {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;
     PsiFileImpl psiFile = (PsiFileImpl)myFixture.addFileToProject(
@@ -103,11 +118,13 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       "class Foo {" +
       "public void foo() {}\n".repeat(1000) +
       "}");
-    assertNotNull("File.java is indexed by Stub index: Foo class could be found in Stub index",
-                  myFixture.findClass("Foo").getNode());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(myFixture.findClass("Foo").getNode(),
+                    "File.java is indexed by Stub index: Foo class could be found in Stub index");
+    });
 
     Application app = ApplicationManager.getApplication();
-    Project project = getProject();
+    Project project = myFixture.getProject();
     for (int i = 1; i <= 20; i++) {
       int finalI = i;
       WriteCommandAction.runWriteCommandAction(project, () -> {
@@ -115,7 +132,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
           .add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar" + finalI));
       });
       // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
-      GCWatcher.tracking(psiFile.getNode()).ensureCollectedWithinTimeout(5_000);
+      GCWatcher.tracking(ReadAction.computeBlocking(() -> psiFile.getNode())).ensureCollectedWithinTimeout(5_000);
       assertFalse(psiFile.isContentsLoaded());
 
       List<Future<?>> futuresToWait = new ArrayList<>();
@@ -132,8 +149,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
               catch (InterruptedException e) {
                 throw new RuntimeException(e);
               }
-              assertNotNull("File.java is indexed by Stub index: Foo class could be found in Stub index",
-                            myFixture.findClass("Foo").getNode());
+              assertNotNull(myFixture.findClass("Foo").getNode(),
+                            "File.java is indexed by Stub index: Foo class could be found in Stub index");
             });
           });
         }));
@@ -149,8 +166,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             catch (InterruptedException e) {
               throw new RuntimeException(e);
             }
-            assertNotNull("File.java is indexed by Stub index: Foo class could be found in Stub index",
-                          myFixture.findClass("Foo").getNode());
+            assertNotNull(myFixture.findClass("Foo").getNode(),
+                          "File.java is indexed by Stub index: Foo class could be found in Stub index");
           });
         }));
       }
@@ -160,8 +177,10 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   @IJIgnore(issue = "IDEA-352828")
   public void test_forceUpdateAffectsReadOfDataForUnsavedDocuments() throws Exception {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject(
@@ -170,17 +189,17 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       " public void foo() {}\n".repeat(1000) +
       "}"
     );
-    assertNotNull(myFixture.findClass("Foo").getNode());
+    ReadAction.runBlocking(() -> assertNotNull(myFixture.findClass("Foo").getNode()));
 
     Application app = ApplicationManager.getApplication();
     for (int i = 1; i <= 20; i++) {
       int finalI = i;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
         ((PsiJavaFile)file).getImportList()
-          .add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("foo.bar" + finalI));
+          .add(JavaPsiFacade.getElementFactory(myFixture.getProject()).createImportStatementOnDemand("foo.bar" + finalI));
       });
 
-      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000); // wait for document commit queue
+      GCWatcher.tracking(ReadAction.computeBlocking(() -> file.getNode())).ensureCollectedWithinTimeout(5_000); // wait for document commit queue
       assertFalse(file.isContentsLoaded());
 
       myFixture.addFileToProject("Foo" + i + ".java",
@@ -224,7 +243,9 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void test_concurrent_light_AST_access_during_uncommitted_document_indexing() throws Exception {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass clazz = myFixture.addClass("class Bar { void foo(Object o) {}}");
 
     String text = " foo(null);";
@@ -236,19 +257,19 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     text = "class Foo {{ " + text.repeat(200) + "}}";
 
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", text);
-    Document document = file.getViewProvider().getDocument();
+    Document document = ReadAction.computeBlocking(() -> file.getViewProvider().getDocument());
     for (int i = 1; i <= 5; i++) {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
         document.insertString(document.getText().indexOf("null") + 1, " ");
         document.insertString(document.getText().indexOf("(null") + 1, " ");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       });
 
       // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
-      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000);
+      GCWatcher.tracking(ReadAction.computeBlocking(() -> file.getNode())).ensureCollectedWithinTimeout(5_000);
       assertFalse(file.isContentsLoaded());
 
-      assertTrue(file.getNode().getLighterAST() instanceof FCTSBackedLighterAST);
+      ReadAction.runBlocking(() -> assertInstanceOf(FCTSBackedLighterAST.class, file.getNode().getLighterAST()));
       List<Future<?>> futures = new ArrayList<>();
       futures.add(((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
         new Task.Backgroundable(myFixture.getProject(), "hasNull") {
@@ -259,7 +280,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             });
           }
         }));
-      Project project = getProject();// https://issues.apache.org/jira/browse/GROOVY-9562
+      Project project = myFixture.getProject();// https://issues.apache.org/jira/browse/GROOVY-9562
       futures.add(((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
         new Task.Backgroundable(myFixture.getProject(), "findClass") {
           @Override

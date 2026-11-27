@@ -3,18 +3,17 @@ package com.intellij.java.refactoring
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.modplan.ModPlanOptionValues
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * The tests of the legacy rename of packages, run on the ModPlan engine. A test that fails here is a difference of the ModPlan rename from
  * the legacy one.
  */
+@TestApplication
+@ExtendWith(KnownGapsExtension::class)
 class RenamePackageOnModPlanTest : RenamePackageTest() {
   override fun rename(element: PsiElement, newName: String) {
-    renameOnModPlanInTests(project, element, newName, ModPlanOptionValues.EMPTY)
-  }
-
-  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-    runWithKnownGaps(this) { super.runTestRunnable(testRunnable) }
+    renameOnModPlanInTests(codeInsightFixture.get().project, element, newName, ModPlanOptionValues.EMPTY)
   }
 }

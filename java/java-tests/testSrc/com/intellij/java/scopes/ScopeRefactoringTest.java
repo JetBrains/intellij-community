@@ -2,6 +2,7 @@
 package com.intellij.java.scopes;
 
 import com.intellij.module.ModuleGroupTestsKt;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -24,33 +25,50 @@ import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.psi.search.scope.packageSet.UnionPackageSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usageView.UsageInfo;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class ScopeRefactoringTest extends JavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.javaModuleCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class ScopeRefactoringTest {
+  private final TestFixture<JavaCodeInsightTestFixture> codeInsightFixture = javaModuleCodeInsightFixture(PathManager.getHomePath());
+
+  @Test
   public void testClassRename() {
     doTestClassRename("src:p.A", "src:p.B");
   }
 
+  @Test
   public void testUnionPattern() {
     doTestClassRename("src:p.A||src:p.X", "src:p.B||src:p.X");
   }
 
+  @Test
   public void testDoNotRenameEntryInDifferentPackage() {
     doTestClassRename("src:x.p.A||src:p.A", "src:x.p.A||src:p.B");
   }
 
+  @Test
   public void testClassRenameWhenFilePatternIsUsed() {
     doTestClassRename("file:p/A.java", "file:p/B.java");
   }
 
   private void doTestClassRename(String oldPattern, String newPattern) {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PsiClass psiClass = myFixture.addClass("package p; public class A {}");
     final VirtualFile file = PsiUtilCore.getVirtualFile(psiClass);
     assertNotNull(file);
-    myFixture.openFileInEditor(file);
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.openFileInEditor(file));
     final String scopeName = "myscope";
     PackageSet packageSet;
     try {
@@ -60,11 +78,11 @@ public class ScopeRefactoringTest extends JavaCodeInsightFixtureTestCase {
       throw new RuntimeException(e);
     }
     NamedScope namedScope = new NamedScope(scopeName, packageSet);
-    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(getProject());
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myFixture.getProject());
     validationManager.addScope(namedScope);
     WriteCommandAction.runWriteCommandAction(
-      getProject(),
-      () -> RenameUtil.doRename(psiClass, "B", UsageInfo.EMPTY_ARRAY, getProject(),
+      myFixture.getProject(),
+      () -> RenameUtil.doRename(psiClass, "B", UsageInfo.EMPTY_ARRAY, myFixture.getProject(),
                                 new RefactoringScopeElementListenerProvider().getListener(psiClass)));
     namedScope = validationManager.getScope(scopeName);
     assertNotNull(namedScope);
@@ -73,8 +91,8 @@ public class ScopeRefactoringTest extends JavaCodeInsightFixtureTestCase {
     String valueText = value.getText();
     assertEquals(newPattern, valueText);
 
-    final FileEditor selectedEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(file);
-    UndoManager.getInstance(getProject()).undo(selectedEditor);
+    final FileEditor selectedEditor = FileEditorManager.getInstance(myFixture.getProject()).getSelectedEditor(file);
+    EdtTestUtil.runInEdtAndWait(() -> UndoManager.getInstance(myFixture.getProject()).undo(selectedEditor));
     namedScope = validationManager.getScope(scopeName);
     assertNotNull(namedScope);
     value = namedScope.getValue();
@@ -84,35 +102,39 @@ public class ScopeRefactoringTest extends JavaCodeInsightFixtureTestCase {
     validationManager.setScopes(NamedScope.EMPTY_ARRAY);
   }
 
+  @Test
   public void testRenameModule() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String path = FileUtil.createTempDirectory("renameModuleInScope", null).getAbsolutePath();
-    Module module = WriteAction.compute(
-      () -> ModuleManager.getInstance(getProject()).newModule(path + "/m.iml", EmptyModuleType.EMPTY_MODULE));
+    Module module = WriteAction.computeAndWait(
+      () -> ModuleManager.getInstance(myFixture.getProject()).newModule(path + "/m.iml", EmptyModuleType.EMPTY_MODULE));
     String scopeName = "module";
-    NamedScopeManager.getInstance(getProject()).addScope(new NamedScope(scopeName, new FilePatternPackageSet(module.getName(), "*/")));
+    NamedScopeManager.getInstance(myFixture.getProject()).addScope(new NamedScope(scopeName, new FilePatternPackageSet(module.getName(), "*/")));
 
     String newName = "newModuleName";
     ModuleGroupTestsKt.renameModule(module, newName);
-    NamedScope scope = NamedScopeManager.getInstance(getProject()).getScope(scopeName);
-    assertEquals(newName, assertInstanceOf(scope.getValue(), FilePatternPackageSet.class).getModulePattern());
+    NamedScope scope = NamedScopeManager.getInstance(myFixture.getProject()).getScope(scopeName);
+    assertEquals(newName, assertInstanceOf(FilePatternPackageSet.class, scope.getValue()).getModulePattern());
   }
 
+  @Test
   public void testRenameModuleInCompositeScope() throws IOException {
+    JavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String path = FileUtil.createTempDirectory("renameModuleInScope", null).getAbsolutePath();
-    Module module = WriteAction.compute(
-      () -> ModuleManager.getInstance(getProject()).newModule(path + "/m.iml", EmptyModuleType.EMPTY_MODULE));
+    Module module = WriteAction.computeAndWait(
+      () -> ModuleManager.getInstance(myFixture.getProject()).newModule(path + "/m.iml", EmptyModuleType.EMPTY_MODULE));
     String scopeName = "module";
-    NamedScopeManager.getInstance(getProject()).addScope(new NamedScope(scopeName,
+    NamedScopeManager.getInstance(myFixture.getProject()).addScope(new NamedScope(scopeName,
                                                                         UnionPackageSet.create(
                                                                           new FilePatternPackageSet(module.getName(), "*/a.txt"),
                                                                           new FilePatternPackageSet(module.getName(), "*/b.txt"))));
 
     String newName = "newModuleName";
     ModuleGroupTestsKt.renameModule(module, newName);
-    NamedScope scope = NamedScopeManager.getInstance(getProject()).getScope(scopeName);
-    PackageSet firstSet = assertInstanceOf(scope.getValue(), UnionPackageSet.class).getSets()[0];
-    PackageSet secondSet = assertInstanceOf(scope.getValue(), UnionPackageSet.class).getSets()[1];
-    assertEquals(newName, assertInstanceOf(firstSet, FilePatternPackageSet.class).getModulePattern());
-    assertEquals(newName, assertInstanceOf(secondSet, FilePatternPackageSet.class).getModulePattern());
+    NamedScope scope = NamedScopeManager.getInstance(myFixture.getProject()).getScope(scopeName);
+    PackageSet firstSet = assertInstanceOf(UnionPackageSet.class, scope.getValue()).getSets()[0];
+    PackageSet secondSet = assertInstanceOf(UnionPackageSet.class, scope.getValue()).getSets()[1];
+    assertEquals(newName, assertInstanceOf(FilePatternPackageSet.class, firstSet).getModulePattern());
+    assertEquals(newName, assertInstanceOf(FilePatternPackageSet.class, secondSet).getModulePattern());
   }
 }
