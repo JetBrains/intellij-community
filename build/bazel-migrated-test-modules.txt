@@ -76,6 +76,7 @@ intellij.debugger.jvm.advanced.mcpServer.tests
 intellij.debugger.lambdaDebuggerTests.java
 intellij.debugger.logpoints.frontend.tests
 intellij.debugger.logpoints.java.tests
+intellij.debuggerMcp.skills.tests
 intellij.debuggerMcp.tests
 intellij.dev.leakDetection.tests
 intellij.dev.pluginLoading.tests
