@@ -116,8 +116,8 @@ export function walkFiles(dir: string, skips: (entry: string) => boolean, visit:
   }
 }
 
-/** The directories under a spec root that hold no authored spec, in addition to `docs.skipDirs`. */
-const SPEC_SKIP_DIRS: readonly string[] = ['node_modules', 'generated', 'test-results']
+/** The directories under a spec root or a source root that hold no authored file, in addition to `docs.skipDirs`. */
+export const SPEC_SKIP_DIRS: readonly string[] = ['node_modules', 'generated', 'test-results']
 
 /** One spec file of a site. */
 export interface SpecFile {

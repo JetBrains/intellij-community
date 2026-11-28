@@ -122,6 +122,21 @@ describe('the spec reference check', () => {
     ])
   })
 
+  it('reports a backlink of a Kotlin or Java source that names no file, and reads no source without source roots', () => {
+    const root = repo({
+      'spec/a.spec.md': spec('Short.\n'),
+      'src/Backlinks.kt': 'package a\n\n// @spec spec/a.spec.md\n  // @spec spec/gone.spec.md\nval text = "// @spec spec/inline.spec.md"\n',
+      'src/Old.java': '// @spec spec/old.spec.md\nclass Old {}\n',
+      'src/notes.md': '// @spec spec/gone.spec.md\n',
+      'src/node_modules/x/Dep.kt': '// @spec spec/gone.spec.md\n',
+    })
+    assert.deepEqual(specRefFindings(config(), root).findings, [])
+    assert.deepEqual(specRefFindings({ ...config(), sourceRoots: ['src'] }, root).findings, [
+      `src/Backlinks.kt:4: backlink: '// @spec spec/gone.spec.md' names no existing spec; fix the path, or delete the backlink`,
+      `src/Old.java:1: backlink: '// @spec spec/old.spec.md' names no existing spec; fix the path, or delete the backlink`,
+    ])
+  })
+
   it('checks the budgets, the sections and the style of a plain-1 site, and only the references of a free site', () => {
     const long = Array.from({ length: 26 }, (_, i) => `w${i}`).join(' ')
     const requirement = Array.from({ length: 21 }, (_, i) => `r${i}`).join(' ')

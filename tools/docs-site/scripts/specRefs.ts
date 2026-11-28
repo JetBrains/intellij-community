@@ -10,6 +10,8 @@
 //   - test-name: each test name in parentheses after a `[@test]` path is a test that the file declares (testNames.ts).
 //   - link, anchor: each relative `.md` link of a spec or a prose doc names an existing file, and its `#anchor` names
 //     a heading of that file by its GitHub slug.
+//   - backlink: each `// @spec <path>` line of a Kotlin or Java file under `sourceRoots` names an existing file, by its
+//     path from the repository root. A config without `sourceRoots` reads no source.
 // The style rules apply when `specs.style` is `plain-1`, to each spec that declares `style: plain-1`:
 //   - sentence: a sentence has at most 25 words. The words of ASD-STE100 for a descriptive sentence. The prose check
 //     splits and counts the same way (sentences.ts): a code span is one word, and a link target is no word.
@@ -38,14 +40,15 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve, sep } from 'node:path'
-import { contentDir, isMainModule, openspecArchiveDesigns, openspecDeltaFiles, posixRelative, repoRoot, runCheck, specFiles, walkFiles } from './paths.ts'
+import { contentDir, isMainModule, openspecArchiveDesigns, openspecDeltaFiles, posixRelative, repoRoot, runCheck, SPEC_SKIP_DIRS, specFiles, walkFiles } from './paths.ts'
 import { countWords, type LinedText, normalize, splitSentences } from './sentences.ts'
+import { readSourceFile } from './sourceCache.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { OPENSPEC_SPEC_FILE, requirementGroup } from './sourcePaths.ts'
 import { declaresTest, testLinkNames } from './testNames.ts'
 
-/** The part of the site config that the check reads. */
-export type SpecRefsConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>
+/** The part of the site config that the check reads. The backlink rule reads the sources of `sourceRoots`, when it is given. */
+export type SpecRefsConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'> & Partial<Pick<SiteConfig, 'sourceRoots'>>
 
 /** The style version of a spec that the style rules check. See `community/.ai/spec/SPEC_GUIDE.md`. */
 export const PLAIN_STYLE = 'plain-1'
@@ -87,6 +90,12 @@ export interface SpecSentence {
 }
 
 const TEST_LINK = /\[@test]\s*\(?([^\s)]+)\)?/g
+
+/** A `// @spec <path>` backlink of a source line: group 1 is the path from the repository root. */
+const BACKLINK = /^[ \t]*\/\/\s*@spec\s+(\S+)/gm
+
+/** The extensions of the sources whose backlinks the check reads. */
+const BACKLINK_SOURCES: readonly string[] = ['.kt', '.java']
 
 /** A relative markdown link to a `.md` file, or a same-document anchor: group 1 is the path, group 2 the anchor. */
 const MARKDOWN_LINK = /]\(([^)#\s]*\.md)?(?:#([^)\s]*))?\)/g
@@ -705,6 +714,25 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
 
   for (const file of proseDocs) {
     markdownLinks(file)
+  }
+
+  const sourceSkips = new Set([...SPEC_SKIP_DIRS, ...config.docs.skipDirs])
+  for (const sourceRoot of config.sourceRoots ?? []) {
+    walkFiles(join(root, sourceRoot), entry => sourceSkips.has(entry) || entry.startsWith('.'), (file) => {
+      if (!BACKLINK_SOURCES.some(extension => file.endsWith(extension))) {
+        return
+      }
+      // the shared cache: the harvest of a site reads the same sources again
+      const source = readSourceFile(file)
+      if (!source.includes('@spec')) {
+        return
+      }
+      for (const match of source.matchAll(BACKLINK)) {
+        if (!existsSync(join(root, match[1]))) {
+          findings.push(`${path(file)}:${lineAt(source, match.index)}: backlink: '// @spec ${match[1]}' names no existing spec; fix the path, or delete the backlink`)
+        }
+      }
+    })
   }
 
   const specs = files.map(({ file, id }) => ({ id, path: path(file) }))
