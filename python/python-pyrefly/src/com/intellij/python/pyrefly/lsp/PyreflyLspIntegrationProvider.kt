@@ -1,5 +1,7 @@
 package com.intellij.python.pyrefly.lsp
 
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
@@ -24,15 +26,16 @@ class PyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
 /**
  * Runs the bundled Pyrefly, the binary of the plugin.
  *
- * Nothing starts it yet, see [PyreflyPyTool.runsBundledPyrefly]. The `pyrefly` package of an environment does not
- * change its binary, so a change of that package does not restart it.
+ * The `pyrefly` package of an environment does not change its binary, so a change of that package does not restart it.
  */
 class BundledPyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
+  private val isLspMode: Boolean = PluginManagerCore.isLoaded(PluginId.getId("com.intellij.python.lspMode"))
+
   override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = bundledPyreflyDescriptor(pyProject)
 
   override fun pyTool(project: Project): PyLspTool<*> = PyreflyPyTool.getInstance()
 
-  override fun isActiveOn(project: Project): Boolean = PyreflyPyTool.getInstance().runsBundledPyrefly(project)
+  override fun isActiveOn(project: Project): Boolean = isLspMode
 
   override val followsToolPackage: Boolean get() = false
 

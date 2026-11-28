@@ -89,7 +89,7 @@ class PyreflyLspClientDescriptor(
 
   /** Whether this server may serve now: the bundled one when it runs, the other one for the External Tools tool. */
   private fun isActive(): Boolean =
-    if (runsBundledPyrefly) PyreflyPyTool.getInstance().runsBundledPyrefly(project) else pyTool.isActiveOn(project)
+    runsBundledPyrefly || pyTool.isActiveOn(project)
 
   override fun hasExecutable(): Boolean {
     if (!runsBundledPyrefly) {
