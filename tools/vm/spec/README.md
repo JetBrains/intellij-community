@@ -33,9 +33,9 @@ the paths are these:
 
 ## The gate
 
-Run `./community/tools/bt.cmd //plugins/air:air-plugin-tests_test --filter com.intellij.air.plugin.AirSpecReferencesTest` from the ultimate root after a change of a spec. The test scans
-this directory and `plugins/air/spec`. It checks the targets, the test links, the Markdown links, the style tag, the
-sentence budget and the section names.
+Run `(cd plugins/air/docs && bun scripts/gate.ts)` from the ultimate root after a change of a spec. Its check
+`plainSpecRefs` scans this directory and `plugins/air/spec`. It checks the targets, the test links and their test
+names, the Markdown links and anchors, the style tag, the sentence budget and the section names.
 
 A link into `plugins/air` is dead in a community-only checkout. That is by design, because only the ultimate checkout
 has the Air area, as the [workspace README](../README.md) states.

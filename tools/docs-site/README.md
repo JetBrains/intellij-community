@@ -178,8 +178,7 @@ node ../../community/tools/docs-site/scripts/vocabulary.ts site.config.ts
 | `vocabulary` | A term of the site table outside the docs and sections that allow it. |
 
 The doc harvest also fails on a design with an unknown `x-topic`. The `pnpm run check` script of a
-site runs these checks and its own checks. Then it runs the script tests of the site and of the kernel. Air does not run `specRefs` and `vocabulary`. `AirSpecReferencesTest` owns the Air spec
-references.
+site runs these checks and its own checks. Then it runs the script tests of the site and of the kernel. Air runs `specRefs` once for each OpenSpec root and once for its `plain-1` roots, and it does not run `vocabulary`.
 
 The doc harvest runs the decision, diagram, prose, and vocabulary checks too. It takes them from a check run of
 `scripts/checkRun.ts`, which runs each check at most once. The check of the build site gives its run to the harvest,

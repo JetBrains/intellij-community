@@ -1,9 +1,10 @@
 //! The spec relation: a path a spec owns reaches the suites the spec links as its tests.
 //!
 //! A spec under the spec directory names the source files it owns in its frontmatter `targets`, and the tests that
-//! verify it in `[@test]` links (`community/.ai/spec/SPEC_GUIDE.md`). `AirSpecReferencesTest` keeps both resolving.
-//! So when a link names a suite, the spec states that the suite tests the files the spec owns. An authored suite
-//! has no route and no module, and this is the only relation that reaches one from a product path.
+//! verify it in `[@test]` links (`community/.ai/spec/SPEC_GUIDE.md`). The kernel spec check keeps both resolving: the
+//! check `plainSpecRefs` of the Air docs gate. So when a link names a suite, the spec states that the suite tests the
+//! files the spec owns. An authored suite has no route and no module, and this is the only relation that reaches one
+//! from a product path.
 //!
 //! A link names a suite through the same rule that answers a named path: it is the suite's document, or the source
 //! of its test class. A link to a lane's generated file names no suite, because that file holds every suite of its
@@ -54,7 +55,7 @@ impl SpecLink {
 /// Every spec that links a suite, in walk order.
 ///
 /// A lane table without `specDir` and a checkout without the directory answer no spec, and so does a spec that
-/// cannot be read: the relation adds suites and never refuses, and `AirSpecReferencesTest` owns that every spec
+/// cannot be read: the relation adds suites and never refuses, and the kernel spec check owns that every spec
 /// parses and resolves.
 pub(crate) fn read_spec_links(runtime: &dyn Runtime, area: &Area, own_suites: &(dyn Fn(&str) -> Vec<usize> + Sync)) -> Vec<SpecLink> {
     let mut specs = Vec::new();
@@ -80,7 +81,7 @@ pub(crate) fn read_spec_links(runtime: &dyn Runtime, area: &Area, own_suites: &(
 /// The targets and the suite links of one spec, or `None` for a spec that links no suite or owns no path.
 fn parse_spec_link(spec: &str, text: &str, own_suites: &dyn Fn(&str) -> Vec<usize>) -> Option<SpecLink> {
     let directory = distpath::dir(spec);
-    // `AirSpecReferencesTest`'s own `[@test]` pattern, so the two read the same links.
+    // The `[@test]` pattern of the kernel spec check (`specRefs.ts`), so the two read the same links.
     let test_link = regex!(r"\[@test]\s*\(?([^\s)]+)\)?");
     let mut suites = Vec::new();
     for link in test_link.captures_iter(text) {
@@ -115,7 +116,7 @@ fn parse_spec_link(spec: &str, text: &str, own_suites: &dyn Fn(&str) -> Vec<usiz
     })
 }
 
-/// The `targets` list of a spec's YAML frontmatter, read the way `AirSpecReferencesTest` reads it: the `- ` items
+/// The `targets` list of a spec's YAML frontmatter, read the way the kernel spec check reads it: the `- ` items
 /// that follow a `targets:` line, up to the next key. No closing `---` line means no frontmatter.
 fn frontmatter_targets(text: &str) -> Vec<String> {
     let mut lines = text.split('\n');

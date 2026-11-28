@@ -6,7 +6,7 @@ context: |
   and the planner. The rules of a change under community/tools/vm/ are in community/tools/vm/AGENTS.md, and its terms
   are the terms of every artifact. Name no implementation language in a spec.
   This root has no spec yet. Its specs stay under community/tools/vm/spec/ in the format plain-1, and
-  AirSpecReferencesTest checks them. The root holds the decisions of the workspace in its archive.
+  the docs gate of plugins/air/docs checks them. The root holds the decisions of the workspace in its archive.
   Their format is the section "OpenSpec roots" of community/.ai/spec/SPEC_GUIDE.md, and every artifact follows it.
   Write in ASD-STE100: a sentence has at most 25 words, and a requirement sentence at most 20.
   A contract sentence goes into a spec, and a rationale sentence into the design.md of an OpenSpec change. One
