@@ -61,9 +61,7 @@ private object ListItemConverter : HtmlElementConverter {
         htmlElement: MarkdownHtmlNode.Element,
         convertChildren: MarkdownHtmlNode.Element.() -> List<MarkdownBlock>,
         convertInlines: (List<MarkdownHtmlNode>) -> List<InlineMarkdown>,
-    ): MarkdownBlock =
-        // TODO[JEWEL-1056] support levels. Have to pass context as additional parameter?
-        MarkdownBlock.ListItem(htmlElement.convertChildren(), level = 0)
+    ): MarkdownBlock = MarkdownBlock.ListItem(htmlElement.convertChildren(), level = 0)
 }
 
 private abstract class ListConverter : HtmlElementConverter {
@@ -81,13 +79,11 @@ private abstract class ListConverter : HtmlElementConverter {
 
 private object OrderedListConverter : ListConverter() {
     override fun convert(listItems: List<MarkdownBlock.ListItem>): MarkdownBlock =
-        // TODO[JEWEL-1056] support levels. Have to pass context as additional parameter?
         MarkdownBlock.ListBlock.OrderedList(listItems, isTight = true, startFrom = 1, delimiter = ".")
 }
 
 private object UnorderedListConverter : ListConverter() {
     override fun convert(listItems: List<MarkdownBlock.ListItem>): MarkdownBlock =
-        // TODO[JEWEL-1056] support levels. Have to pass context as additional parameter?
         MarkdownBlock.ListBlock.UnorderedList(listItems, isTight = true, marker = ".")
 }
 

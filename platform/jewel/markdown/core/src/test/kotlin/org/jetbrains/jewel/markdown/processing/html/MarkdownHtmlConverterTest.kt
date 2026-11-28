@@ -6,11 +6,16 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.assertEquals
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
+import org.junit.Assert
 import org.junit.Test
 
 @Suppress("LargeClass")
 public class MarkdownHtmlConverterTest {
     private val processor = MarkdownProcessor(parseEmbeddedHtml = true)
+
+    private fun List<MarkdownBlock>.assertEqualsWithLevels(vararg expected: MarkdownBlock) {
+        Assert.assertEquals(expected.toList(), this)
+    }
 
     @Test
     public fun `parses paragraphs -- p`() {
@@ -54,14 +59,17 @@ public class MarkdownHtmlConverterTest {
     @Test
     public fun `parses nested lists`() {
         val parsed = processor.processMarkdownDocument("<ul><li>Items:<ol><li>Just one item!</li></ol></li></ul>")
-        parsed.assertEquals(
+        parsed.assertEqualsWithLevels(
             MarkdownBlock.ListBlock.UnorderedList(
                 listOf(
                     MarkdownBlock.ListItem(
                         MarkdownBlock.Paragraph(InlineMarkdown.Text("Items:")),
                         MarkdownBlock.ListBlock.OrderedList(
                             listOf(
-                                MarkdownBlock.ListItem(MarkdownBlock.Paragraph(InlineMarkdown.Text("Just one item!")))
+                                MarkdownBlock.ListItem(
+                                    MarkdownBlock.Paragraph(InlineMarkdown.Text("Just one item!")),
+                                    level = 1,
+                                )
                             ),
                             isTight = true,
                             startFrom = 1,
@@ -73,6 +81,56 @@ public class MarkdownHtmlConverterTest {
                 marker = ".",
             )
         )
+    }
+
+    @Test
+    public fun `assigns increasing levels to nested list items`() {
+        val parsed =
+            processor.processMarkdownDocument(
+                "<ul><li>One<ol><li>Two<ul><li>Three</li></ul></li></ol></li><li>Again</li></ul>"
+            )
+        parsed.assertEqualsWithLevels(
+            MarkdownBlock.ListBlock.UnorderedList(
+                listOf(
+                    MarkdownBlock.ListItem(
+                        MarkdownBlock.Paragraph(InlineMarkdown.Text("One")),
+                        MarkdownBlock.ListBlock.OrderedList(
+                            listOf(
+                                MarkdownBlock.ListItem(
+                                    MarkdownBlock.Paragraph(InlineMarkdown.Text("Two")),
+                                    MarkdownBlock.ListBlock.UnorderedList(
+                                        listOf(
+                                            MarkdownBlock.ListItem(
+                                                MarkdownBlock.Paragraph(InlineMarkdown.Text("Three")),
+                                                level = 2,
+                                            )
+                                        ),
+                                        isTight = true,
+                                        marker = ".",
+                                    ),
+                                    level = 1,
+                                )
+                            ),
+                            isTight = true,
+                            startFrom = 1,
+                            delimiter = ".",
+                        ),
+                        level = 0,
+                    ),
+                    MarkdownBlock.ListItem(MarkdownBlock.Paragraph(InlineMarkdown.Text("Again")), level = 0),
+                ),
+                isTight = true,
+                marker = ".",
+            )
+        )
+    }
+
+    @Test
+    public fun `treats upper case list tags like lower case ones`() {
+        val lowerCase = processor.processMarkdownDocument("<ul><li>One<ol><li>Two</li></ol></li></ul>")
+        val upperCase = processor.processMarkdownDocument("<UL><LI>One<OL><LI>Two</LI></OL></LI></UL>")
+
+        Assert.assertEquals(lowerCase, upperCase)
     }
 
     @Test
@@ -380,7 +438,7 @@ public class MarkdownHtmlConverterTest {
                 "<ul><li>Pay attention to <b>this</b>:<ol><li>Just one item!</li></ol></li></ul>"
             )
 
-        parsed.assertEquals(
+        parsed.assertEqualsWithLevels(
             MarkdownBlock.ListBlock.UnorderedList(
                 listOf(
                     MarkdownBlock.ListItem(
@@ -391,7 +449,10 @@ public class MarkdownHtmlConverterTest {
                         ),
                         MarkdownBlock.ListBlock.OrderedList(
                             listOf(
-                                MarkdownBlock.ListItem(MarkdownBlock.Paragraph(InlineMarkdown.Text("Just one item!")))
+                                MarkdownBlock.ListItem(
+                                    MarkdownBlock.Paragraph(InlineMarkdown.Text("Just one item!")),
+                                    level = 1,
+                                )
                             ),
                             isTight = true,
                             startFrom = 1,
