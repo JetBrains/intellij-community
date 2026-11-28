@@ -174,7 +174,7 @@ node ../../community/tools/docs-site/scripts/vocabulary.ts site.config.ts
 | `diagramFiles` | A grammar or grid error, a fence that names no diagram, and a diagram that no fence shows. |
 | `decisionFiles` | An archive folder name without a calendar date, an unknown `x-topic`, a `decision <change-id>` mention that names no design, a dead link to a design, an `ADR NNNN` mention, and a link into a `docs/decisions/` folder. |
 | `proseLint` | A long sentence, a history mark, and a long card, in the explainers and the diagram cards. A long sentence and a history mark in a design with an `x-topic`. |
-| `specRefs` | A dead spec target, `[@test]` link, `.md` link, or anchor, and a break of the `plain-1` rules. The prose docs include each design with an `x-topic`. |
+| `specRefs` | A dead spec target, `[@test]` link, `[@test]` test name, `.md` link, anchor, or `// @spec` backlink of a source root, a test in a proposed section, and a break of the `plain-1` rules. The prose docs include each design with an `x-topic`. |
 | `vocabulary` | A term of the site table outside the docs and sections that allow it. |
 
 The doc harvest also fails on a design with an unknown `x-topic`. The `pnpm run check` script of a
