@@ -31,6 +31,10 @@ import java.util.function.Function;
 
 public final class JBImageToolkit {
 
+  /** Ratio of raster pixels to user space units. */
+  @ApiStatus.Internal
+  public static final String IMAGE_SCALE_PROPERTY = "JBImageToolkit.scale";
+
   public static Image createImage(String filename) {
     return createImage(new FileImageSource(filename) {
       @Override

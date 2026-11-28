@@ -12,6 +12,9 @@ import javax.swing.text.html.ImageView
 
 internal open class DataUrlImageView(elem: Element?) : ImageView(elem) {
 
+  override fun getAlignment(axis: Int): Float =
+    if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
+
   override fun getImageURL(): URL? =
     element.attributes.getAttribute(HTML.Attribute.SRC).asSafely<String>()?.let {
       JBImageToolkit.tryBuildDataImageUrl(it)

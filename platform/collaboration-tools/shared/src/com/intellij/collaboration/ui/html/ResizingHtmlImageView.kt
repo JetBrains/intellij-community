@@ -4,9 +4,11 @@ package com.intellij.collaboration.ui.html
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageToolkit
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.html.getImageVerticalAlignment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -26,14 +28,17 @@ import java.net.URL
 import java.util.Base64
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
+import javax.swing.text.AttributeSet
 import javax.swing.text.BadLocationException
 import javax.swing.text.Element
+import javax.swing.text.FlowView
 import javax.swing.text.Position
 import javax.swing.text.View
 import javax.swing.text.ViewFactory
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.properties.Delegates.observable
 
 private val loadingIcon: Icon
@@ -53,7 +58,6 @@ private const val MAX_IMAGE_HEIGHT = 500
  */
 //TODO: handle HTML props - h/vspace, h/valign
 //TODO: handle CSS props - max-width/height to control the resize behavior
-//TODO: handle hidpi (ensureHiDpi does not work with ToolkitImage/ImageObserver)
 internal class ResizingHtmlImageView(element: Element) : View(element) {
 
   private var _loader: ImageLoader? = null
@@ -69,6 +73,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }
 
   private var cachedContainer: Container? = null
+  private var cachedAttributes: AttributeSet? = null
   private var lastPaintedRectangle: Rectangle? = null
 
   override fun getPreferredSpan(axis: Int): Float =
@@ -78,11 +83,15 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
       is ImageLoader.State.Loaded -> state.dimension.getSpan(axis)
     }.toFloat()
 
-  /**
-   * If the image was loaded we ALWAYS "break" this view to scale the image properly - [breakView]
-   */
   override fun getBreakWeight(axis: Int, pos: Float, len: Float): Int {
-    return if (axis == X_AXIS && loader.state is ImageLoader.State.Loaded) ForcedBreakWeight
+    if (axis != X_AXIS) return BadBreakWeight
+    val size = (loader.state as? ImageLoader.State.Loaded)?.dimension ?: return BadBreakWeight
+
+    var view = parent
+    while (view != null && view !is FlowView) view = view.parent
+    val availableWidth = view?.getFlowSpan(0)?.toFloat() ?: len
+
+    return if (size.width > availableWidth || size.height.toFloat() > JBUI.scale(MAX_IMAGE_HEIGHT)) ForcedBreakWeight
     else BadBreakWeight
   }
 
@@ -110,7 +119,11 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }
   }
 
-  override fun getAlignment(axis: Int): Float = 0f
+  override fun getAlignment(axis: Int): Float =
+    if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
+
+  override fun getAttributes(): AttributeSet =
+    cachedAttributes ?: (document as HTMLDocument).styleSheet.getViewAttributes(this).also { cachedAttributes = it }
 
   override fun paint(g: Graphics, allocation: Shape) {
     val rect = if (allocation is Rectangle) allocation else allocation.bounds
@@ -124,6 +137,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   }
 
   override fun changedUpdate(e: DocumentEvent?, a: Shape?, f: ViewFactory?) {
+    cachedAttributes = null
     // ignore if it does not have relevant changes
     if (e?.getChange(element) == null) return
     super.changedUpdate(e, a, f)
@@ -132,6 +146,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   }
 
   override fun setParent(parent: View?) {
+    cachedAttributes = null
     super.setParent(parent)
     cachedContainer = parent?.container
   }
@@ -192,7 +207,9 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }
 
     override fun getAlignment(axis: Int): Float =
-      this@ResizingHtmlImageView.getAlignment(axis)
+      if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
+
+    override fun getAttributes(): AttributeSet = this@ResizingHtmlImageView.attributes
 
     override fun modelToView(pos: Int, a: Shape, b: Position.Bias?): Shape =
       this@ResizingHtmlImageView.modelToView(pos, a, b)
@@ -274,7 +291,7 @@ private class ImageLoader(
         throw CancellationException("Image loading cancelled", e)
       }
       if (image is BufferedImage) {
-        state = State.Loaded(image, Dimension(image.width, image.height))
+        state = State.Loaded(image, getImageSize(image))
       }
       else {
         JBImageToolkit.prepareImage(image, -1, -1, this@ImageLoader)
@@ -301,7 +318,7 @@ private class ImageLoader(
     }
 
     if (flags and (ImageObserver.FRAMEBITS or ImageObserver.ALLBITS or ImageObserver.SOMEBITS) != 0) {
-      val dim = Dimension(img.getWidth(null), img.getHeight(null))
+      val dim = getImageSize(img)
       state = State.Loaded(img, dim)
     }
     else if (state !is State.Loaded) {
@@ -313,6 +330,11 @@ private class ImageLoader(
 
   fun cancel() {
     loadingJob?.cancel()
+  }
+
+  private fun getImageSize(image: Image): Dimension {
+    val scale = image.getProperty(JBImageToolkit.IMAGE_SCALE_PROPERTY, null) as? Double ?: 1.0
+    return Dimension((ImageUtil.getUserWidth(image) / scale).roundToInt(), (ImageUtil.getUserHeight(image) / scale).roundToInt())
   }
 
   sealed interface State {

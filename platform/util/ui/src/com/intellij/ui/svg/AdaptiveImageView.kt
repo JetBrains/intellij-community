@@ -9,6 +9,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.DataUrl
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.html.ImageViewPreferredSpan
+import com.intellij.util.ui.html.getImageVerticalAlignment
 import com.intellij.util.ui.html.getIntAttr
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
+import javax.swing.text.AttributeSet
 import javax.swing.text.Document
 import javax.swing.text.Element
 import javax.swing.text.Position
@@ -44,10 +46,10 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   private var myState: ViewState = ViewState.Idle()
   private var myCachedContainer: Container? = null
   private var myCachedDocument: Document? = null
+  private var myCachedAttributes: AttributeSet? = null
 
   private var myPreferredImageViewDimensions: FloatDimensions = FloatDimensions(DEFAULT_WIDTH.toFloat(), DEFAULT_HEIGHT.toFloat())
   private var myBorder: Int = 0
-  private var myVerticalAlign: Float = 0f
   private var myWidthAttrValue: Int = -1
   private var myHeightAttrValue: Int = -1
 
@@ -57,19 +59,6 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
 
   private fun updateStateFromAttrs() {
     myBorder = getIntAttr(HTML.Attribute.BORDER, DEFAULT_BORDER)
-    var alignment = element.attributes.getAttribute(HTML.Attribute.ALIGN)
-    var vAlign = 1.0f
-    if (alignment != null) {
-      alignment = alignment.toString()
-      if ("top" == alignment) {
-        vAlign = 0f
-      }
-      else if ("middle" == alignment) {
-        vAlign = .5f
-      }
-    }
-    this.myVerticalAlign = vAlign
-
     myWidthAttrValue = getIntAttr(HTML.Attribute.WIDTH, -1)
     myHeightAttrValue = getIntAttr(HTML.Attribute.HEIGHT, -1)
     myImageRenderer?.setOrigin(getImageOrigin())
@@ -222,14 +211,18 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   }
 
   override fun changedUpdate(e: DocumentEvent?, a: Shape?, f: ViewFactory?) {
+    myCachedAttributes = null
     super.changedUpdate(e, a, f)
     updateStateFromAttrs()
     preferenceChanged(null, true, true)
   }
 
   override fun getAlignment(axis: Int): Float {
-    return if (axis == Y_AXIS) myVerticalAlign else super.getAlignment(axis)
+    return if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
   }
+
+  override fun getAttributes(): AttributeSet =
+    myCachedAttributes ?: (document as HTMLDocument).styleSheet.getViewAttributes(this).also { myCachedAttributes = it }
 
   private fun computeViewDimensions(defaultWidth: Float, defaultHeight: Float): FloatDimensions {
     val aspectRatio: Double = defaultWidth.toDouble() / defaultHeight
@@ -248,6 +241,7 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   }
 
   override fun setParent(parent: View?) {
+    myCachedAttributes = null
     super.setParent(parent)
     myCachedContainer = container
     myCachedDocument = document
