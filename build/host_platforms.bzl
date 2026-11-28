@@ -22,10 +22,15 @@ def platform_parts(platform):
     return struct(os = os, arch = arch)
 
 def host_select(value_of):
-    """A `select` over the `host_*` config settings: `value_of(platform)` for each host platform.
+    """A `select` over the `host_*` config settings: the value of each host platform.
 
-    A host that is not one of [HOST_PLATFORMS] matches no key, so the select fails with its name.
+    `value_of` is a function of the platform, or a string whose `%s` is the platform. A BUILD file cannot define a
+    function, so it passes a string. A host that is not one of [HOST_PLATFORMS] matches no key, so the select fails
+    with its name.
     """
+    if type(value_of) == "string":
+        template = value_of
+        value_of = lambda platform: template % platform
     return select({"@community//build:host_" + platform: value_of(platform) for platform in HOST_PLATFORMS})
 
 # The platforms of a Linux guest. A Docker worker shares the kernel of a Linux VM on the host, so it runs the CPU of
