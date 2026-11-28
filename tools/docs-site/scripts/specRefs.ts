@@ -17,9 +17,10 @@
 // The style rules apply when `specs.style` is `plain-1`, to each spec that declares `style: plain-1`:
 //   - sentence: a sentence has at most 25 words. The words of ASD-STE100 for a descriptive sentence. The prose check
 //     splits and counts the same way (sentences.ts): a code span is one word, and a link target is no word.
-//   - requirement: a list item under `## Requirements` has at most 20 words in each sentence.
+//   - requirement: a list item under `## Requirements` has at most 20 words in each sentence, unless
+//     `specs.requirementBudget` is false.
 //   - section: each `##` heading is one of `specs.templateSections`, when the site gives them.
-//   - style: each spec under the first spec root declares `style: plain-1`.
+//   - style: each spec of a suffix root declares `style: plain-1`.
 // The OpenSpec rules apply to each spec of an OpenSpec root (`specs.openspec`), with the style `openspec-1`:
 //   - style: the spec declares `style: openspec-1`.
 //   - sentence: as for `plain-1`.
@@ -642,7 +643,7 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
   const openspecSections = config.specs.openspec === undefined ? null : new Set(config.specs.openspec.templateSections)
   const plain = config.specs.style === PLAIN_STYLE
   const sections = config.specs.templateSections === null ? null : new Set(config.specs.templateSections)
-  const firstRoot = join(root, config.specs.roots[0] ?? '')
+  const requirementBudget = config.specs.requirementBudget ?? true
   for (const { file, rootPaths } of files) {
     const source = text(file)
     // a path of a spec of an OpenSpec root is from the repository root, because the archive moves the text of a delta
@@ -678,14 +679,11 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     if (!plain) {
       continue
     }
-    const style = frontmatterStyle(source)
-    if (style !== PLAIN_STYLE) {
-      if (file.startsWith(firstRoot + sep)) {
-        findings.push(`${path(file)}:1: style: a spec under ${config.specs.roots[0]} declares 'style: ${PLAIN_STYLE}'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`)
-      }
+    if (frontmatterStyle(source) !== PLAIN_STYLE) {
+      findings.push(`${path(file)}:1: style: a spec of a suffix root declares 'style: ${PLAIN_STYLE}'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`)
       continue
     }
-    sentenceBudget(file, source, requirementSentences(source))
+    sentenceBudget(file, source, requirementBudget ? requirementSentences(source) : [])
     if (sections !== null) {
       let inFence = false
       for (const [index, line] of lines(source).entries()) {

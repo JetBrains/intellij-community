@@ -154,15 +154,27 @@ describe('the spec reference check', () => {
     const root = repo({
       'spec/a.spec.md': spec(`## Summary\n\n${long}.\n\n## Requirements\n\n- ${requirement}.\n\n## Design\n\nShort.\n`),
       'spec/b.spec.md': spec('Short.\n', 'targets:\n  - ../src/A.kt'),
-      'legacy/c.spec.md': spec(`${long}.\n`, 'targets:\n  - ../src/A.kt'),
+      'other/c.spec.md': spec(`${long}.\n`, 'targets:\n  - ../src/A.kt'),
     })
-    assert.deepEqual(specRefFindings(config(null, ['spec', 'legacy']), root).findings, [])
-    const findings = specRefFindings(config('plain-1', ['spec', 'legacy']), root).findings
+    assert.deepEqual(specRefFindings(config(null, ['spec', 'other']), root).findings, [])
+    const findings = specRefFindings(config('plain-1', ['spec', 'other']), root).findings
     assert.deepEqual(findings.map(finding => finding.replace(/budget; split it: .*$/, 'budget').replace(/ use one of .*$/, '')), [
+      `other/c.spec.md:1: style: a spec of a suffix root declares 'style: plain-1'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`,
       'spec/a.spec.md:11: sentence: 26 words exceed the 25-word budget',
       'spec/a.spec.md:15: requirement: 21 words exceed the 20-word budget',
       `spec/a.spec.md:17: section: 'Design' is not a template section;`,
-      `spec/b.spec.md:1: style: a spec under spec declares 'style: plain-1'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`,
+      `spec/b.spec.md:1: style: a spec of a suffix root declares 'style: plain-1'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`,
+    ])
+  })
+
+  it('checks no requirement budget when the site turns it off, and keeps the sentence budget', () => {
+    const long = Array.from({ length: 26 }, (_, i) => `w${i}`).join(' ')
+    const requirement = Array.from({ length: 21 }, (_, i) => `r${i}`).join(' ')
+    const root = repo({ 'spec/a.spec.md': spec(`## Requirements\n\n- ${requirement}.\n- ${long}.\n`) })
+    const plain = config('plain-1')
+    const findings = specRefFindings({ ...plain, specs: { ...plain.specs, requirementBudget: false } }, root).findings
+    assert.deepEqual(findings.map(finding => finding.replace(/budget; split it: .*$/, 'budget')), [
+      'spec/a.spec.md:12: sentence: 26 words exceed the 25-word budget',
     ])
   })
 

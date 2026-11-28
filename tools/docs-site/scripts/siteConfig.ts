@@ -115,6 +115,11 @@ export interface SiteConfig {
     /** The `##` headings that a `plain-1` spec can use, or null when the site checks no sections. */
     templateSections: string[] | null
     /**
+     * False turns off the requirement rule of the `plain-1` style: at most 20 words in each sentence of a list item
+     * under `## Requirements`. Set it for specs that are older than the rule. Absent means true.
+     */
+    requirementBudget?: boolean
+    /**
      * The OpenSpec roots, or absent when the site has none. A root holds `config.yaml`, `specs/<capability>/spec.md`
      * and `changes/`. Its specs use the style `openspec-1`, and their `targets` and `[@test]` paths are from the
      * repository root. See `community/.ai/spec/SPEC_GUIDE.md`.
