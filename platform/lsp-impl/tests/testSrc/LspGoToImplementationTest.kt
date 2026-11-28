@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 
 @TestApplication
-internal class LspGotoImplementationTest {
+internal class LspGoToImplementationTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)

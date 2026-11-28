@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test
  * behind [Go To Declaration][com.intellij.codeInsight.navigation.actions.GotoDeclarationAction].
  */
 @TestApplication
-internal class LspGotoDefinitionTest {
+internal class LspGoToDefinitionTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)

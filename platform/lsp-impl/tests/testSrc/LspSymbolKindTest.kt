@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test
 import javax.swing.Icon
 
 @TestApplication
-internal class LspSymbolKindCustomizerTest {
+internal class LspSymbolKindTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)
