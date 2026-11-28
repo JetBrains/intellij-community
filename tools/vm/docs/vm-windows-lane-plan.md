@@ -4,6 +4,11 @@ Note of 2026-10-02: the crates `avl-lane`, `avl-worker` and `avl-daemon` that th
 `lane`, `worker` and `daemon` of `avl-vm`. `avl-trace-serve` is the module `serve` of `air-trace`
 ([The UI-lane crates follow the re-key domains, and the audience of each binary picks its error model](../openspec/changes/archive/2026-10-02-the-ui-lane-crates-follow-the-re-key-domains/design.md)). The plan keeps its old text.
 
+Note of 2026-11-28: no `--config=air-lane-linux` and no guest struct of `ui_lane_ide.bzl` selects the guest
+distribution now. Each host reads `//build:idea_dist_linux_guest`: the host build on a Linux host, and the cross
+distribution for the CPU of the host on every other host. `linux_guest_platform` of
+`community/build/host_platforms.bzl` states the guest platform.
+
 Status on 2026-09-30: route 2, the native Windows controller, is implemented, and
 [A Windows host runs the controller natively](a-windows-host-runs-the-controller-natively-plan.md) records it. It supersedes the paragraph of
 [The UI-lane tooling is one Rust implementation in one cargo workspace that Bazel builds](../openspec/changes/archive/2026-09-26-the-ui-lane-tooling-is-rust/design.md) that made Windows an unsupported host. Route 1 is implemented on 2026-09-29, except its step 3. The first

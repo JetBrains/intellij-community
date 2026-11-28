@@ -107,8 +107,8 @@ Docker backend.**
    - The verb owns its destination. After a build or a reuse it keeps its tree and the newest other tree, for a
      daemon that may still read it. It removes older trees and the staging directory of a build that died.
 6. **An x86_64 Windows host gets an amd64 guest** (commit 74118c7a93fd4). `GuestArch::of` gives `X86_64` for a
-   Docker worker on any x86_64 host. The lane distribution for that guest is `idea_air_lane_dist_linux_x64`, which
-   a Windows x64 host selects through `air_lane_guest_linux_x64_cross`. A Windows arm64 host gets the arm64 guest,
+   Docker worker on any x86_64 host. The lane distribution of the guest is `//build:idea_dist_linux_guest`. On a
+   Windows x64 host it is the cross distribution `idea_dist_linux_x64`. A Windows arm64 host gets the arm64 guest,
    as a Mac does.
 7. **The wrappers build and run the binaries on Windows** (commit 9f6c4e284966f). The CMD halves of `vm.cmd` and
    `trace.cmd` do what the sh halves do, as `bt.cmd` does. A failed build exits 78.

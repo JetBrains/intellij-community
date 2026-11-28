@@ -21,7 +21,7 @@ fn write(path: &Path, content: &str, executable: bool) {
 #[test]
 fn the_distribution_home_and_its_jbr_come_from_the_ide_config() {
     let root = TempDir::new().unwrap();
-    let config = root.path().join("_main/ide/idea_air_lane_dist_ide_config.properties");
+    let config = root.path().join("_main/build/idea_dist_ide_config.properties");
     write(&config, "main.class.name=com.intellij.idea.Main\nhome.path=../dist/./home\n", false);
     let home = distribution_home(&config).unwrap();
     assert_eq!(home, root.path().join("_main/dist/home"));

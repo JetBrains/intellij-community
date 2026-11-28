@@ -52,8 +52,8 @@ fn valid_descriptor() -> Value {
                 plugin("air-integrationTests-bridge/lib/air-integrationTests-bridge-plugin.jar"),
                 plugin("air-integrationTests-bridge/lib/modules/intellij.air.integrationTests.bridge.jar"),
             ],
-            "projectArchive": file("_main/external/air_integration_test_deps/simpleJavaProject.zip", "@air_integration_test_deps//:simpleJavaProject.zip"),
-            "projectRoot": "BookmarksTestProject",
+            "projectArchive": file("_main/plugins/air/tests/integration/testData/plain-project.zip", "//plugins/air/tests/integration/testData:plain-project.zip"),
+            "projectRoot": "plain-project",
             "suiteDocuments": documents_jar(),
         },
         "data": [file("_main/plugins/air/testData/project.zip", "//plugins/air:test_data")],
@@ -128,7 +128,7 @@ fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     );
     assert_eq!(parsed.jbr.platform, GUEST_JBR_PLATFORM);
     assert_eq!(parsed.dist.home.logical_path, "_main/dist/home");
-    assert_eq!(parsed.ide.project_root, "BookmarksTestProject");
+    assert_eq!(parsed.ide.project_root, "plain-project");
     assert_eq!(
         parsed.ide.flags_file.logical_path,
         "_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt"
@@ -460,10 +460,10 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             bytes(set(
                 valid(),
                 "/data/0/logicalPath",
-                json!("_main/external/air_integration_test_deps/simpleJavaProject.zip"),
+                json!("_main/plugins/air/tests/integration/testData/plain-project.zip"),
             )),
             code::DUPLICATE_LOGICAL_PATH,
-            &["duplicate logical path _main/external/air_integration_test_deps/simpleJavaProject.zip"],
+            &["duplicate logical path _main/plugins/air/tests/integration/testData/plain-project.zip"],
         ),
         // Two *different* files claiming one staged name: the stage materializes whichever it reaches last.
         (
@@ -559,7 +559,7 @@ fn the_validator_refuses_nothing_it_should_accept() {
     // An empty data list is a build that mounts nothing.
     assert_eq!(parse(&set(valid_descriptor(), "/data", json!([]))).data, []);
     // A project root of more than one segment.
-    parse(&set(valid_descriptor(), "/ide/projectRoot", json!("projects/BookmarksTestProject")));
+    parse(&set(valid_descriptor(), "/ide/projectRoot", json!("projects/plain-project")));
     // A jar whose name contains dots but climbs nowhere.
     parse(&set(
         valid_descriptor(),
@@ -608,16 +608,16 @@ fn the_runfiles_root_is_derived_from_the_descriptor_path() {
 #[test]
 fn the_ide_config_names_the_home_of_the_distribution() {
     let root = tempfile::tempdir().unwrap();
-    let config = root.path().join("ide/idea_air_lane_dist.ide.config");
+    let config = root.path().join("ide/idea_dist.ide.config");
     fs::create_dir_all(config.parent().unwrap()).unwrap();
     fs::write(
         &config,
-        "main.class.name=com.intellij.idea.Main\nhome.path=idea_air_lane_dist.dist/./Contents\n",
+        "main.class.name=com.intellij.idea.Main\nhome.path=idea_dist.dist/./Contents\n",
     )
     .unwrap();
     assert_eq!(
         dist_home(&config).unwrap(),
-        root.path().join("ide/idea_air_lane_dist.dist/Contents")
+        root.path().join("ide/idea_dist.dist/Contents")
     );
     fs::write(&config, "home.path=/out/../opt/idea.dist\n").unwrap();
     assert_eq!(dist_home(&config).unwrap(), PathBuf::from("/opt/idea.dist"));

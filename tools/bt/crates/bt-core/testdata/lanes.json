@@ -118,7 +118,6 @@
     "community/tools/vm": [],
     "plugins/air/tests/integration/BUILD.bazel": [],
     "plugins/air/tests/integration/air_lane_test.bzl": [],
-    "plugins/air/tests/integration/air_test_dependencies.bzl": [],
     "plugins/air/tests/integration/air_ui_daemon_runtime.bzl": [],
     "plugins/air/tests/integration/bridge_plugin_dir_test.bzl": [],
     "plugins/air/tests/integration/gui-chat": [],
