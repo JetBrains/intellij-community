@@ -1684,6 +1684,46 @@ class ScrollableContainerTest {
     }
 
     @Test
+    fun `horizontal container reports no intrinsic width inside IntrinsicSize Max column`() {
+        rule.setContent {
+            IntUiTheme {
+                val style by rememberScrollbarStyle(alwaysVisible = false)
+                Column(Modifier.width(IntrinsicSize.Max).testTag("column")) {
+                    Spacer(Modifier.width(50.dp).height(1.dp))
+                    HorizontallyScrollableContainer(
+                        scrollState = rememberScrollState(),
+                        modifier = Modifier.height(100.dp),
+                        style = style,
+                    ) {
+                        Spacer(Modifier.requiredWidth(300.dp).height(1.dp))
+                    }
+                }
+            }
+        }
+        rule.onNodeWithTag("column").assertWidthIsEqualTo(50.dp)
+    }
+
+    @Test
+    fun `horizontal container reports no intrinsic width inside IntrinsicSize Min column`() {
+        rule.setContent {
+            IntUiTheme {
+                val style by rememberScrollbarStyle(alwaysVisible = false)
+                Column(Modifier.width(IntrinsicSize.Min).testTag("column")) {
+                    Spacer(Modifier.width(50.dp).height(1.dp))
+                    HorizontallyScrollableContainer(
+                        scrollState = rememberScrollState(),
+                        modifier = Modifier.height(100.dp),
+                        style = style,
+                    ) {
+                        Spacer(Modifier.requiredWidth(300.dp).height(1.dp))
+                    }
+                }
+            }
+        }
+        rule.onNodeWithTag("column").assertWidthIsEqualTo(50.dp)
+    }
+
+    @Test
     fun `IntrinsicSize Min row is tall enough to fit horizontal container with AlwaysVisible scrollbar (macOs only)`() {
         if (hostOs != OS.MacOS) return
 

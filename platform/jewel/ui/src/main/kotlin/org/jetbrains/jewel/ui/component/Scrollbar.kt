@@ -4,16 +4,21 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.ScrollIndicatorState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitHorizontalDragOrCancellation
 import androidx.compose.foundation.gestures.awaitVerticalDragOrCancellation
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -69,6 +74,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
@@ -136,13 +142,14 @@ public fun VerticalScrollbar(
  * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
  * @param style The [ScrollbarStyle] to use for this scrollbar.
  * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
- * @param adapter The [ScrollbarAdapter] used to compute the thumb position and size, and to handle thumb drags and
- *   track clicks. When null, a default adapter is derived from [scrollState]; in that case, [scrollState] must be a
- *   [ScrollState], [LazyListState], [LazyGridState], or [TextFieldScrollState]. Provide a custom adapter to override
- *   the default scroll math — e.g., to stabilize the thumb in lazy layouts with items of significantly varying sizes.
- *   The adapter must be backed by the same [scrollState], since mouse-wheel scrolling on the track bypasses the adapter
- *   and goes through [scrollState] directly. Callers should [remember] the adapter instance: a new instance on every
- *   recomposition causes unnecessary internal state recreation.
+ * @param adapter The [ScrollbarAdapter] that computes the thumb position and size, and that handles thumb drags and
+ *   track clicks. When null, the scrollbar derives a default adapter from [scrollState]. That works for a
+ *   [ScrollState], [LazyListState], [LazyGridState], [TextFieldScrollState], and any other [ScrollableState] that
+ *   reports a [ScrollableState.scrollIndicatorState], such as a `LazyStaggeredGridState` or an axis view of
+ *   `Scroll2DState`. For any other state, pass an adapter. A custom adapter can also replace the default scroll math,
+ *   for example to keep the thumb steady in a lazy layout whose items vary a lot in size. The adapter must use the same
+ *   [scrollState], because the mouse wheel over the track scrolls [scrollState] directly, without the adapter.
+ *   [remember] the adapter, because a new instance on each recomposition recreates internal state for no reason.
  */
 @Composable
 public fun VerticalScrollbar(
@@ -173,7 +180,8 @@ public fun VerticalScrollbar(
  *
  * @param scrollState The [ScrollableState] to control.
  * @param modifier The modifier to apply to this layout node.
- * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise. Use the same value as the
+ *   content. In a right-to-left layout, the scrollbar starts at the right edge, as the content does.
  * @param enabled `true` to enable the scrollbar, `false` otherwise.
  * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
  * @param style The [ScrollbarStyle] to use for this scrollbar.
@@ -207,18 +215,20 @@ public fun HorizontalScrollbar(
  *
  * @param scrollState The [ScrollableState] to control.
  * @param modifier The modifier to apply to this layout node.
- * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise. Use the same value as the
+ *   content. In a right-to-left layout, the scrollbar starts at the right edge, as the content does.
  * @param enabled `true` to enable the scrollbar, `false` otherwise.
  * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
  * @param style The [ScrollbarStyle] to use for this scrollbar.
  * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
- * @param adapter The [ScrollbarAdapter] used to compute the thumb position and size, and to handle thumb drags and
- *   track clicks. When null, a default adapter is derived from [scrollState]; in that case, [scrollState] must be a
- *   [ScrollState], [LazyListState], [LazyGridState], or [TextFieldScrollState]. Provide a custom adapter to override
- *   the default scroll math — e.g., to stabilize the thumb in lazy layouts with items of significantly varying sizes.
- *   The adapter must be backed by the same [scrollState], since mouse-wheel scrolling on the track bypasses the adapter
- *   and goes through [scrollState] directly. Callers should [remember] the adapter instance: a new instance on every
- *   recomposition causes unnecessary internal state recreation.
+ * @param adapter The [ScrollbarAdapter] that computes the thumb position and size, and that handles thumb drags and
+ *   track clicks. When null, the scrollbar derives a default adapter from [scrollState]. That works for a
+ *   [ScrollState], [LazyListState], [LazyGridState], [TextFieldScrollState], and any other [ScrollableState] that
+ *   reports a [ScrollableState.scrollIndicatorState], such as a `LazyStaggeredGridState` or an axis view of
+ *   `Scroll2DState`. For any other state, pass an adapter. A custom adapter can also replace the default scroll math,
+ *   for example to keep the thumb steady in a lazy layout whose items vary a lot in size. The adapter must use the same
+ *   [scrollState], because the mouse wheel over the track scrolls [scrollState] directly, without the adapter.
+ *   [remember] the adapter, because a new instance on each recomposition recreates internal state for no reason.
  */
 @Composable
 public fun HorizontalScrollbar(
@@ -303,8 +313,26 @@ private fun BaseScrollbar(
                 is LazyGridState -> rememberScrollbarAdapter(scrollState)
                 is ScrollState -> rememberScrollbarAdapter(scrollState)
                 is TextFieldScrollState -> rememberScrollbarAdapter(scrollState)
-                else -> error("Unsupported scroll state type: ${scrollState::class.qualifiedName}")
+                else -> {
+                    val indicatorState =
+                        scrollState.scrollIndicatorState
+                            ?: error(
+                                "Unsupported scroll state type: ${scrollState::class.qualifiedName}. It reports no " +
+                                    "scrollIndicatorState, so the scrollbar cannot derive an adapter. Pass an adapter."
+                            )
+                    remember(scrollState, indicatorState, reverseLayout) {
+                        ScrollIndicatorScrollbarAdapter(scrollState, indicatorState, reverseLayout)
+                    }
+                }
             }
+
+    val layoutDirection = LocalLayoutDirection.current
+    val orientation = if (isVertical) Orientation.Vertical else Orientation.Horizontal
+    // The adapter reports the offset from the first item. In a right-to-left layout, the first item of a horizontal
+    // scroll is at the right edge, so the thumb also starts at the right edge.
+    val isThumbReversed = reverseLayout != (!isVertical && layoutDirection == LayoutDirection.Rtl)
+    // The mouse wheel over the track scrolls in the same direction as over the content.
+    val isTrackScrollReversed = ScrollableDefaults.reverseDirection(layoutDirection, orientation, reverseLayout)
 
     with(LocalDensity.current) {
         var containerSize by remember { mutableIntStateOf(0) }
@@ -312,8 +340,16 @@ private fun BaseScrollbar(
 
         val coroutineScope = rememberCoroutineScope()
         val sliderAdapter =
-            remember(adapter, containerSize, thumbMinHeight, reverseLayout, isVertical, coroutineScope) {
-                SliderAdapter(adapter, containerSize, thumbMinHeight, reverseLayout, isVertical, coroutineScope)
+            remember(adapter, containerSize, thumbMinHeight, isThumbReversed, isVertical, coroutineScope, scrollState) {
+                SliderAdapter(
+                    adapter,
+                    containerSize,
+                    thumbMinHeight,
+                    isThumbReversed,
+                    isVertical,
+                    coroutineScope,
+                    scrollState,
+                )
             }
 
         val thumbBackgroundColor = getThumbBackgroundColor(isOpaque, isHovered, isScrolling, style, showScrollbar)
@@ -332,7 +368,6 @@ private fun BaseScrollbar(
 
         val thumbThicknessPx =
             if (isVertical) {
-                    val layoutDirection = LocalLayoutDirection.current
                     animatedThickness -
                         trackPadding.calculateLeftPadding(layoutDirection) -
                         trackPadding.calculateRightPadding(layoutDirection)
@@ -383,14 +418,14 @@ private fun BaseScrollbar(
                     .thenIf(showScrollbar && canScroll && isExpanded) { background(trackBackground) }
                     .scrollable(
                         state = scrollState,
-                        orientation = if (isVertical) Orientation.Vertical else Orientation.Horizontal,
+                        orientation = orientation,
                         enabled = enabled,
-                        reverseDirection = true, // Not sure why it's needed, but it is — TODO revisit this
+                        reverseDirection = isTrackScrollReversed,
                     )
                     .padding(trackPadding)
                     .hoverable(interactionSource = interactionSource)
                     .thenIf(enabled && showScrollbar) {
-                        scrollOnPressTrack(style.trackClickBehavior, isVertical, reverseLayout, sliderAdapter)
+                        scrollOnPressTrack(style.trackClickBehavior, isVertical, isThumbReversed, sliderAdapter)
                     },
             measurePolicy = measurePolicy,
         )
@@ -496,7 +531,8 @@ private fun Thumb(
     Box(
         Modifier.layoutId("thumb")
             .thenIf(canScroll) { drawThumb(background, borderWidth, border, hasVisibleBorder, cornerSize, density) }
-            .thenIf(enabled) { scrollbarDrag(interactionSource, dragInteraction, sliderAdapter) }
+            // A thumb that fills the track cannot move, so it does not take the drag.
+            .thenIf(enabled && canScroll) { scrollbarDrag(interactionSource, dragInteraction, sliderAdapter) }
     )
 }
 
@@ -685,6 +721,7 @@ private class TrackPressScroller(
         job?.cancel()
         job =
             coroutineScope.launch {
+                sliderAdapter.stopScrollInProgress()
                 scrollTowardsCurrentOffset()
                 delay(DELAY_BEFORE_SECOND_SCROLL_ON_TRACK_PRESS)
                 while (true) {
@@ -729,9 +766,8 @@ private class TrackPressScroller(
         job?.cancel()
         job =
             coroutineScope.launch {
-                val contentSize = sliderAdapter.adapter.contentSize
-                val scrollOffset = offset / sliderAdapter.adapter.viewportSize * contentSize
-                sliderAdapter.adapter.scrollTo(scrollOffset)
+                sliderAdapter.stopScrollInProgress()
+                sliderAdapter.adapter.scrollTo(sliderAdapter.scrollOffsetAt(offset))
             }
     }
 
@@ -826,21 +862,26 @@ private class ScrollbarDragNode(
                     draggedInteraction.value = interaction
                     sliderAdapter.onDragStarted()
 
-                    val isSuccess =
-                        drag(down.id) { change ->
-                            sliderAdapter.onDragDelta(change.positionChange())
-                            change.consume()
-                        }
+                    var isSuccess = false
+                    try {
+                        isSuccess =
+                            drag(down.id) { change ->
+                                sliderAdapter.onDragDelta(change.positionChange())
+                                change.consume()
+                            }
+                    } finally {
+                        // This also runs when the node leaves the composition during a drag, for example when the
+                        // content stops being scrollable. Otherwise the scrollbar stays in the dragged state.
+                        val finishInteraction =
+                            if (isSuccess) {
+                                DragInteraction.Stop(interaction)
+                            } else {
+                                DragInteraction.Cancel(interaction)
+                            }
 
-                    val finishInteraction =
-                        if (isSuccess) {
-                            DragInteraction.Stop(interaction)
-                        } else {
-                            DragInteraction.Cancel(interaction)
-                        }
-
-                    interactionSource.tryEmit(finishInteraction)
-                    draggedInteraction.value = null
+                        interactionSource.tryEmit(finishInteraction)
+                        draggedInteraction.value = null
+                    }
                 }
             }
         )
@@ -916,6 +957,7 @@ internal class SliderAdapter(
     private val reverseLayout: Boolean,
     private val isVertical: Boolean,
     private val coroutineScope: CoroutineScope,
+    private val scrollState: ScrollableState,
 ) {
     private val contentSize
         get() = adapter.contentSize
@@ -952,9 +994,20 @@ internal class SliderAdapter(
     // How much of the current drag was ignored because we've reached the end of the scrollbar area
     private var unscrolledDragDistance = 0.0
 
+    /**
+     * Stops a scroll in progress, such as the momentum of a trackpad gesture. A thumb drag and a track press call it
+     * before they scroll, because the adapters scroll at [MutatePriority.Default], and that priority cannot cancel a
+     * scroll at [MutatePriority.UserInput].
+     */
+    suspend fun stopScrollInProgress() {
+        scrollState.stopScroll(MutatePriority.UserInput)
+    }
+
     /** Called when the thumb dragging starts */
     fun onDragStarted() {
         unscrolledDragDistance = 0.0
+        // The drag deltas wait for the same lock, so they apply after the stop.
+        coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) { dragMutex.withLock { stopScrollInProgress() } }
     }
 
     private suspend fun setPosition(value: Double) {
@@ -967,10 +1020,25 @@ internal class SliderAdapter(
         adapter.scrollTo(rawPosition / scrollScale)
     }
 
+    /**
+     * Returns the scroll offset that moves the thumb to [trackOffset], in pixels from the visual start of the track. A
+     * "Jump to spot" track click uses it.
+     */
+    fun scrollOffsetAt(trackOffset: Float): Double {
+        if (trackSize <= 0) return 0.0
+        val offsetFromFirstItem = if (reverseLayout) trackSize - trackOffset else trackOffset
+        // The track can be shorter than the viewport, for example when it leaves the corner free for the other
+        // scrollbar. A click at the end of the track must still reach the end of the content.
+        return offsetFromFirstItem / trackSize * adapter.contentSize
+    }
+
     private val dragMutex = Mutex()
 
     /** Called on every movement while dragging the thumb */
     fun onDragDelta(offset: Offset) {
+        // A thumb that fills the track, or is longer than the track, has no room to move.
+        if (thumbSize >= trackSize) return
+
         coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
             // Mutex is used to ensure that all earlier drag deltas were applied
             // before calculating a new raw position
@@ -990,4 +1058,46 @@ internal class SliderAdapter(
             }
         }
     }
+}
+
+/**
+ * A [ScrollbarAdapter] for a [ScrollableState] that reports its metrics through a [ScrollIndicatorState]. The scrollbar
+ * uses it for any state type that has no adapter of its own.
+ *
+ * A [ScrollbarAdapter] reports the offset from the first item, and the scrollbar reverses the thumb itself.
+ * [ScrollIndicatorState.scrollOffset] is the offset from the visual start edge, also in a reversed layout, so this
+ * adapter converts it when [reverseLayout] is true.
+ *
+ * @param scrollState The state that the adapter scrolls.
+ * @param indicatorState The metrics of [scrollState].
+ * @param reverseLayout The `reverseLayout` value of the scrollbar, without the reversal for a right-to-left layout. In
+ *   a right-to-left layout, the scrollbar reverses a horizontal thumb, but [ScrollIndicatorState.scrollOffset] is
+ *   already the offset from the right edge.
+ */
+internal class ScrollIndicatorScrollbarAdapter(
+    private val scrollState: ScrollableState,
+    private val indicatorState: ScrollIndicatorState,
+    private val reverseLayout: Boolean,
+) : ScrollbarAdapter {
+    override val scrollOffset: Double
+        get() {
+            val visualOffset = indicatorState.scrollOffset.knownOrZero()
+            return if (reverseLayout) (maxScrollOffset - visualOffset).coerceAtLeast(0.0) else visualOffset
+        }
+
+    override val contentSize: Double
+        get() = indicatorState.contentSize.knownOrZero()
+
+    override val viewportSize: Double
+        get() = indicatorState.viewportSize.knownOrZero()
+
+    override suspend fun scrollTo(scrollOffset: Double) {
+        // An infinite or NaN target cannot be rounded to a pixel.
+        if (!scrollOffset.isFinite()) return
+        // The state keeps the sub-pixel part of each delta. A fractional target would add that part twice.
+        scrollState.scrollBy((scrollOffset.roundToInt() - this.scrollOffset).toFloat())
+    }
+
+    // The state reports Int.MAX_VALUE for a value that it does not know yet.
+    private fun Int.knownOrZero(): Double = if (this == Int.MAX_VALUE) 0.0 else toDouble()
 }
