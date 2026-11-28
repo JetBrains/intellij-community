@@ -125,6 +125,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.eelDescriptor
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.collectAddInterpreterActions
+import com.jetbrains.python.sdk.collectExtraAddInterpreterActions
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
@@ -1293,6 +1294,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // A package-manager row: its actionId is the platform action's own id, and it is run against the same dependency
     // file it was gated on — never the editor's, which is unrelated to the interpreter the row acts for.
     if (nodeId == EvoNodeIds.PACKAGE_MANAGER) return target.performPackageManagerAction(actionId)
+    if (nodeId == EvoNodeIds.ADVANCED && actionId.startsWith(AdvancedEvoNode.EXTRA_ACTION_ID_PREFIX)) {
+      return performExtraAddInterpreterAction(project, actionId.removePrefix(AdvancedEvoNode.EXTRA_ACTION_ID_PREFIX))
+    }
     // Only the "advanced" node (AdvancedEvoNode) exposes backend actions today; its actionId is the
     // index into collectAddInterpreterActions. Resolved after `project` so a malformed id is reported rather than
     // dropped — an unreported failure here would read as the action never having been clicked.
@@ -1345,6 +1349,21 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val event = AnActionEvent.createEvent(context, presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
     readAction { ActionUtil.updateAction(action, event) }
     if (!presentation.isVisible || !presentation.isEnabled) return failed()
+    withContext(Dispatchers.EDT) { ActionUtil.performAction(action, event) }
+    PyEvoWidgetCollector.backendActionPerformed(project, stats, PyEvoWidgetCollector.Outcome.OK)
+    return EvoSelectResultDto.Ok
+  }
+
+  private suspend fun performExtraAddInterpreterAction(project: Project, actionId: String): EvoSelectResultDto {
+    val stats = evoNodeStats(EvoNodeIds.ADVANCED)
+    fun failed(): EvoSelectResultDto {
+      PyEvoWidgetCollector.backendActionPerformed(project, stats, PyEvoWidgetCollector.Outcome.ERROR)
+      return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
+    }
+
+    val action = collectExtraAddInterpreterActions().firstOrNull { ActionManager.getInstance().getId(it) == actionId } ?: return failed()
+    val event = AdvancedEvoNode.createExtraActionEvent(project, action)
+    if (!event.presentation.isVisible || !event.presentation.isEnabled) return failed()
     withContext(Dispatchers.EDT) { ActionUtil.performAction(action, event) }
     PyEvoWidgetCollector.backendActionPerformed(project, stats, PyEvoWidgetCollector.Outcome.OK)
     return EvoSelectResultDto.Ok

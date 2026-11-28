@@ -101,7 +101,7 @@ class EvoTreeItem(
     // a whole class of interpreters — a remote one, one no tool owns — and that is a fact about the environment rather
     // than something wrong. Disabled, with the reason on hover, says it without an alarm.
     State.NOT_AVAILABLE -> AllIcons.General.Warning.takeIf { (element as? EvoTreeLazyNodeElement)?.signsUnavailable != false }
-      State.CREATED, State.LOADING, State.DONE -> null
+      State.CREATED, State.LOADING, State.DONE -> element.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)
     }
 
 }

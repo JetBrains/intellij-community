@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -99,15 +100,23 @@ abstract class DialogAction(
   }
 }
 
+internal const val ADD_INTERPRETER_EXTRA_GROUP_ID: String = "Python.NewInterpreter.Extra"
+
 @ApiStatus.Internal
 fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, onInterpreterSet: Consumer<PythonInterpreter>): DefaultActionGroup =
   DefaultActionGroup(collectAddInterpreterActions(moduleOrProject, onInterpreterSet)).apply {
-    ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let { add(it) }
-    templatePresentation.putClientProperty(
-      ActionUtil.POPUP_AD_TEXT,
-      PyAddInterpreterPopupPromo.EP_NAME.computeSafeIfAny { it.getPopupFooterText() },
-    )
+    ActionManager.getInstance().getAction(ADD_INTERPRETER_EXTRA_GROUP_ID)?.let { add(it) }
+    templatePresentation.putClientProperty(ActionUtil.POPUP_AD_TEXT, addInterpreterPopupFooterText())
   }
+
+internal fun addInterpreterPopupFooterText(): @Nls String? =
+  PyAddInterpreterPopupPromo.EP_NAME.computeSafeIfAny { it.getPopupFooterText() }
+
+internal fun collectExtraAddInterpreterActions(): List<AnAction> {
+  val actionManager = ActionManager.getInstance()
+  val group = actionManager.getAction(ADD_INTERPRETER_EXTRA_GROUP_ID) as? DefaultActionGroup ?: return emptyList()
+  return group.getChildren(actionManager).filterNot { it is Separator }
+}
 
 /**
  * The actions that add an interpreter to the module of [moduleOrProject]. None for [ProjectOnly]: every interpreter

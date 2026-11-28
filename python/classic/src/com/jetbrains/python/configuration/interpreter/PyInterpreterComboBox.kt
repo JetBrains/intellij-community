@@ -33,6 +33,7 @@ import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
+import com.jetbrains.python.sdk.createAddInterpreterActionGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -146,7 +147,7 @@ class PyInterpreterComboBox @JvmOverloads constructor(
   ) {
     override fun actionPerformed(e: AnActionEvent) {
       val target = loaded.addTarget ?: return
-      val group = DefaultActionGroup(collectAddInterpreterActions(target) { added -> select(added) })
+      val group = createAddInterpreterActionGroup(target) { added -> select(added) }
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
         null, group, e.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
       )

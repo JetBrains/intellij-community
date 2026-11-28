@@ -628,7 +628,7 @@ class EvoPySdkSwitchPopupFactory(
         if (sections.none { it.elements.isNotEmpty() }) {
           throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.node.empty"))
         }
-        EvoLoadedNode(sections + settingsSection(node.id), refreshable)
+        EvoLoadedNode(sections + settingsSection(node.id), refreshable, stepDescription = (result as? EvoLoadResultDto.Ok)?.stepDescription)
       }
       // No heading of its own: the row the user opened already names the tool, and the line along the bottom says what
       // its list is for.

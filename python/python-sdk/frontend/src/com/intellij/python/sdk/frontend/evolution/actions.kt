@@ -120,6 +120,7 @@ internal fun evoBackendActionLeaf(
   init {
     templatePresentation.setPlainText(leaf.title)
     leaf.secondaryText?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
+    leaf.trailingIcon?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_ICON, it.icon()) }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

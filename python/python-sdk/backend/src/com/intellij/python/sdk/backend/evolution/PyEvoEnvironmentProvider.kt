@@ -784,6 +784,7 @@ fun evoActionLeaf(
   description: @Nls String? = title,
   secondaryText: @Nls String? = null,
   icon: Icon,
+  trailingIcon: Icon? = null,
   actionId: String? = null,
 ): EvoLeafDto =
   EvoLeafDto(title = title,
@@ -791,7 +792,8 @@ fun evoActionLeaf(
              secondaryText = secondaryText,
              icon = icon.rpcId(),
              kind = EvoLeafKind.ACTION,
-             actionId = actionId)
+             actionId = actionId,
+             trailingIcon = trailingIcon?.rpcId())
 
 /**
  * Builds a leaf for a Python version that is not on the machine: selecting it installs that version and then creates the

@@ -564,6 +564,7 @@ data class EvoLeafDto(
    * it from, so this says which tool that is. `null` when the row is the showing node's own.
    */
   val ownerNodeId: @NonNls String? = null,
+  val trailingIcon: IconId? = null,
 )
 
 @ApiStatus.Internal
@@ -779,7 +780,11 @@ sealed interface EvoLoadResultDto {
    * [refreshable] is set by the backend when this tool's last scan was slow (> 5 s): such tools are cached for 10 min
    * and shown with an inline reload icon; fast tools stay uncached (covered by the frontend's short popup-tree cache).
    */
-  @Serializable data class Ok(val sections: List<EvoSectionDto>, val refreshable: Boolean = false) : EvoLoadResultDto
+  @Serializable data class Ok(
+    val sections: List<EvoSectionDto>,
+    val refreshable: Boolean = false,
+    val stepDescription: @Nls String? = null,
+  ) : EvoLoadResultDto
   @Serializable data class Warning(val message: @Nls String) : EvoLoadResultDto
   @Serializable data class Error(val message: @Nls String) : EvoLoadResultDto
 }
