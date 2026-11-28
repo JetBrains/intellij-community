@@ -145,8 +145,8 @@ Text.
     assert.deepEqual(specRefFindings(config(), root).findings.map(finding => finding.replace(/budget; split it: .*$/, 'budget').replace(/;.*$/, '')), [
       `os/openspec/specs/cache/spec.md:6: targets: 'src/Gone.kt' matches no existing file`,
       `os/openspec/specs/cache/spec.md:1: style: a spec of an OpenSpec root declares 'style: openspec-1'`,
-      // `r0` starts no new sentence, so the rule and the words after it are one sentence
-      'os/openspec/specs/cache/spec.md:26: requirement: 25 words exceed the 20-word budget',
+      // the dot after the rule ends a sentence, so the 21 words after it count alone
+      'os/openspec/specs/cache/spec.md:26: requirement: 21 words exceed the 20-word budget',
       `os/openspec/specs/cache/spec.md:20: heading: 'Requirement: No group here' is not 'Requirement: <Group>: <behaviour>'`,
       'os/openspec/specs/cache/spec.md:27: requirement: a [@test] line stands in the text of a requirement',
       'os/openspec/specs/cache/spec.md:33: requirement: a table stands in the text of a requirement',

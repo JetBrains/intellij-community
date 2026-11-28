@@ -10,7 +10,8 @@
 //   - link, anchor: each relative `.md` link of a spec or a prose doc names an existing file, and its `#anchor` names
 //     a heading of that file by its GitHub slug.
 // The style rules apply when `specs.style` is `plain-1`, to each spec that declares `style: plain-1`:
-//   - sentence: a sentence has at most 25 words. The words of ASD-STE100 for a descriptive sentence.
+//   - sentence: a sentence has at most 25 words. The words of ASD-STE100 for a descriptive sentence. The prose check
+//     splits and counts the same way (sentences.ts): a code span is one word, and a link target is no word.
 //   - requirement: a list item under `## Requirements` has at most 20 words in each sentence.
 //   - section: each `##` heading is one of `specs.templateSections`, when the site gives them.
 //   - style: each spec under the first spec root declares `style: plain-1`.
@@ -37,6 +38,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import { contentDir, isMainModule, openspecArchiveDesigns, openspecDeltaFiles, posixRelative, repoRoot, runCheck, specFiles, walkFiles } from './paths.ts'
+import { countWords, type LinedText, normalize, splitSentences } from './sentences.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { OPENSPEC_SPEC_FILE, requirementGroup } from './sourcePaths.ts'
 
@@ -75,7 +77,7 @@ export interface SpecRefs {
   linkTargets: string[]
 }
 
-/** One sentence of a spec, with the line that its block starts on. */
+/** One sentence of a spec, with the line of its first character. The text has each code span compacted and each link target removed. */
 export interface SpecSentence {
   line: number
   text: string
@@ -89,12 +91,6 @@ const MARKDOWN_LINK = /]\(([^)#\s]*\.md)?(?:#([^)\s]*))?\)/g
 
 /** A table header separator such as `|---|---|`. */
 const TABLE_RULE = /^\|?[\s:|-]+\|?$/
-
-/**
- * A sentence boundary: terminal punctuation, whitespace, then the start of a new sentence. The opening character keeps
- * `e.g.` and `0.131.0` from splitting a sentence into false short ones.
- */
-const SENTENCE_BREAK = /(?<=[.!?])\s+(?=[A-Z[(`])/
 
 const LIST_MARKER = /^(?:[-*+]|\d+\.)\s+/
 
@@ -220,16 +216,13 @@ export interface SentencePlace {
   isTableCell: boolean
 }
 
-function sentence(line: number, text: string): SpecSentence {
-  return { line, text, wordCount: text.split(/[ \t]/).filter(word => word.trim().length > 0).length }
-}
-
 /**
- * The sentences of a spec that `accept` takes, with the line that the containing block starts on.
+ * The sentences of a spec that `accept` takes, each with the line of its first character.
  *
  * Skips what a word budget cannot judge: the frontmatter, fenced code, headings, and `[@test]` inventory lines. Each
  * cell of a table row is its own block. Soft-wrapped lines join back into one block first, because a markdown sentence
- * wraps across lines, and a count per line measures the wrapping, not the prose.
+ * wraps across lines, and a count per line measures the wrapping, not the prose. Then the prose check splits and
+ * counts the block (sentences.ts).
  */
 export function sentencesOf(text: string, accept: (section: string, isListItem: boolean, place: SentencePlace) => boolean): SpecSentence[] {
   const all = lines(text)
@@ -237,8 +230,7 @@ export function sentencesOf(text: string, accept: (section: string, isListItem: 
   let index = end < 0 ? 0 : end + 1
 
   const sentences: SpecSentence[] = []
-  let block = ''
-  let blockLine = 0
+  let block: LinedText = { text: '', lines: [] }
   let blockIsListItem = false
   let blockPlace: SentencePlace = { inRequirementText: false, isTableCell: false }
   let section = ''
@@ -246,29 +238,27 @@ export function sentencesOf(text: string, accept: (section: string, isListItem: 
   let inFence = false
 
   const flush = (): void => {
-    const joined = block.trim()
-    block = ''
-    if (joined.length === 0 || !accept(section, blockIsListItem, blockPlace)) {
+    const joined = block
+    block = { text: '', lines: [] }
+    if (joined.text.trim().length === 0 || !accept(section, blockIsListItem, blockPlace)) {
       return
     }
-    for (const part of joined.split(SENTENCE_BREAK)) {
-      const trimmed = part.trim()
-      if (trimmed.length > 0) {
-        sentences.push(sentence(blockLine, trimmed))
-      }
+    for (const { text: sentenceText, line } of splitSentences(normalize(joined))) {
+      sentences.push({ line, text: sentenceText, wordCount: countWords(sentenceText) })
     }
   }
 
   const append = (lineNumber: number, content: string, isListItem: boolean, isTableCell: boolean = false): void => {
-    if (block.length === 0) {
-      blockLine = lineNumber
+    if (block.text.length === 0) {
       blockIsListItem = isListItem
       blockPlace = { inRequirementText, isTableCell }
     }
     else {
-      block += ' '
+      block.text += ' '
+      block.lines.push(lineNumber)
     }
-    block += content
+    block.text += content
+    block.lines.push(...Array.from({ length: content.length }, () => lineNumber))
   }
 
   for (; index < all.length; index++) {

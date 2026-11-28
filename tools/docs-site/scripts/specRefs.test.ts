@@ -53,11 +53,11 @@ describe('a heading slug', () => {
 })
 
 describe('the sentences of a spec', () => {
-  it('join soft-wrapped lines and split at a sentence start, not at `e.g.` or a version', () => {
+  it('join soft-wrapped lines and split at a sentence end, not at `e.g.` or a version', () => {
     const sentences = proseSentences(spec('The packer reads the jar,\nfor example e.g. the 0.131.0 one. It writes the file.\n'))
     assert.deepEqual(sentences.map(({ line, text }) => ({ line, text })), [
       { line: 9, text: 'The packer reads the jar, for example e.g. the 0.131.0 one.' },
-      { line: 9, text: 'It writes the file.' },
+      { line: 10, text: 'It writes the file.' },
     ])
     assert.equal(sentences[0].wordCount, 11)
   })
@@ -127,6 +127,16 @@ describe('the spec reference check', () => {
       'spec/a.spec.md:15: requirement: 21 words exceed the 20-word budget',
       `spec/a.spec.md:17: section: 'Design' is not a template section;`,
       `spec/b.spec.md:1: style: a spec under spec declares 'style: plain-1'; see community/.ai/spec/SPEC_GUIDE.md 'Writing Style'`,
+    ])
+  })
+
+  it('counts a code span as one word, as the prose check does', () => {
+    const words = (count: number): string => Array.from({ length: count }, (_, i) => `w${i}`).join(' ')
+    const root = repo({ 'spec/a.spec.md': spec(`## Summary\n\n${words(24)} \`Do not show again\`.\n`) })
+    assert.deepEqual(specRefFindings(config('plain-1'), root).findings, [])
+    const long = repo({ 'spec/a.spec.md': spec(`## Summary\n\n${words(28)}.\n`) })
+    assert.deepEqual(specRefFindings(config('plain-1'), long).findings.map(finding => finding.replace(/budget; split it: .*$/, 'budget')), [
+      'spec/a.spec.md:11: sentence: 28 words exceed the 25-word budget',
     ])
   })
 
