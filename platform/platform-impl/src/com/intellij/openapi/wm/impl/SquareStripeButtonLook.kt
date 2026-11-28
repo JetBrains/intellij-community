@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.icons.HoledIcon
-import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -112,14 +111,16 @@ internal open class SquareStripeButtonLook(private val button: AbstractSquareStr
     val rect = Rectangle(actionButton.getWidth(), actionButton.getHeight())
     JBInsets.removeFrom(rect, actionButton.insets)
     JBInsets.removeFrom(rect, getIconPadding(button))
-    if (icon is HoledIcon) {
+    // The bridged icon of the experimental rendering is no HoledIcon, but the button keeps the legacy icon behind it.
+    val holedIcon = icon as? HoledIcon ?: (button as? SquareStripeButton)?.bridgedLegacyIcon as? HoledIcon
+    if (holedIcon != null) {
       // If the icon has a badge, we need to make sure that the original icon stays in place and not "dancing"
       // as the badge is added and removed (e.g., a build is starting and finishing).
-      val originalIcon = icon.icon
+      val originalIcon = holedIcon.icon
       val point = centerIcon(rect, originalIcon)
       // Now we have exactly the same location as the original icon,
       // but we need to shift it to take the badge into consideration.
-      val badgeInsets = icon.getExtraInsets()
+      val badgeInsets = holedIcon.getExtraInsets()
       point.x -= badgeInsets.left
       point.y -= badgeInsets.top
       return point
@@ -136,7 +137,7 @@ internal open class SquareStripeButtonLook(private val button: AbstractSquareStr
       return
     }
 
-    super.paintIcon(g, actionButton, toStrokeIcon(icon, UIManager.getColor("ToolWindow.Button.selectedForeground")))
+    super.paintIcon(g, actionButton, actionButton.computeActiveIcon(icon, color))
   }
 
   override fun getButtonArc(): JBValue = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode)

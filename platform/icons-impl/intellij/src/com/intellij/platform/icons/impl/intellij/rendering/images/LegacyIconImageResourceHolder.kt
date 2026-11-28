@@ -2,15 +2,20 @@
 package com.intellij.platform.icons.impl.intellij.rendering.images
 
 import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.icons.CachedImageIcon
-import com.intellij.ui.icons.RgbImageFilterSupplier
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.RgbImageFilterSupplier
+import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.replaceCachedImageIcons
+import com.intellij.util.SVGLoader
 import java.awt.Image
 import java.awt.image.RGBImageFilter
 import javax.swing.Icon
+import javax.swing.ImageIcon
 
 internal class LegacyIconImageResourceHolder(
   private val backingLegacyIcon: Icon
@@ -22,14 +27,34 @@ internal class LegacyIconImageResourceHolder(
   override fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image? {
     val params = imageModifiers.toLoadParameters()
     val svgPatcher = params.colorPatcher
-    val icon = if (backingLegacyIcon is CachedImageIcon && svgPatcher != null && svgPatcher !== SVGLoader.colorPatcherProvider) {
-      backingLegacyIcon.createWithPatcher(svgPatcher, isDark = params.isDark, useStroke = params.isStroke)
+    val icon = if (svgPatcher != null && svgPatcher !== SVGLoader.colorPatcherProvider) {
+      replaceCachedImageIcons(backingLegacyIcon) { cachedImageIcon ->
+        cachedImageIcon.createWithPatcher(svgPatcher, isDark = params.isDark, useStroke = params.isStroke)
+      } ?: backingLegacyIcon
     } else backingLegacyIcon
     val filtered = if (params.filters.isNotEmpty()) {
         IconLoader.filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {
             override fun getFilter() = params.filters.first() as RGBImageFilter
         })
     } else icon
-    return IconLoader.toImage(filtered, scale)
+    val origin = filtered.origin()
+    val context = when (origin) {
+      is CachedImageIcon -> scale.withObjectScaleOf(origin)
+      is ImageIcon -> scale
+      else -> scale.toSystemScale()
+    }
+    return IconLoader.toImage(origin, context)
   }
+}
+
+private fun ScaleContext.withObjectScaleOf(icon: CachedImageIcon): ScaleContext {
+  val iconScale = icon.getObjScale() ?: return this
+  return copy<ScaleContext>().apply { setScale(ScaleType.OBJ_SCALE.of(getScale(ScaleType.OBJ_SCALE) * iconScale)) }
+}
+
+private fun Icon.origin(): Icon = generateSequence(this) { (it as? RetrievableIcon)?.retrieveIcon() }.take(11).last()
+
+private fun ScaleContext.toSystemScale(): ScaleContext {
+  val pixelScale = getScale(DerivedScaleType.PIX_SCALE)
+  return ScaleContext.createIdentity().apply { setScale(ScaleType.SYS_SCALE.of(pixelScale)) }
 }

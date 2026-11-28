@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.ui.icons.HoledIcon
-import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
@@ -79,7 +78,7 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
     }
 
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
-    val renderedIcon = if (!toolWindow.isActive || color == null) icon else toStrokeIcon(icon, color)
+    val renderedIcon = if (!toolWindow.isActive || color == null) icon else button.computeActiveIcon(icon, color)
 
     // Avoid "dancing" for icons with badges, see com.intellij.openapi.wm.impl.SquareStripeButtonLook.getIconPosition
     val labelIconSize = JBUIScale.scale(ToolWindowStripeExtension.ICON_UNSCALED_SIZE)

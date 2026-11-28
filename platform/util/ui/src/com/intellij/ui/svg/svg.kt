@@ -451,7 +451,8 @@ private fun patchIconsWithColorPatcher(icon: Icon, colorPatcher: SVGLoader.SvgEl
 /**
  * Creates a new icon with the low-level CachedImageIcon changing
  */
-internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
+@Internal
+fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
   if (icon is CachedImageIcon) {
     return cachedImageIconReplacer(icon)
   }

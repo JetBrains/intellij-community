@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.project.DumbAwareAction
@@ -23,6 +24,7 @@ import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
 import com.intellij.openapi.wm.impl.getStripeToolbarButtonIconSize
 import com.intellij.openapi.wm.impl.getStripeToolbarButtonSize
 import com.intellij.openapi.wm.impl.getToolWindowManagerForEvent
+import com.intellij.platform.icons.swing.toIconDescriptor
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
@@ -86,8 +88,16 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
 private fun createPresentation(): Presentation {
   val presentation = Presentation()
   presentation.setIconSupplier(SynchronizedClearableLazy(::scaleIcon))
+  setMoreIconDescriptor(presentation)
   presentation.isEnabledAndVisible = true
   return presentation
+}
+
+private fun setMoreIconDescriptor(presentation: Presentation) {
+  // TODO(JEWEL-1490): use a scaled `AllIconDescriptors.Actions.MoreHorizontal` when `@WxH` size variants land (#3783)
+  if (ExperimentalIconRendering.isEnabled) {
+    presentation.iconDescriptor = scaleIcon().toIconDescriptor()
+  }
 }
 
 private fun scaleIcon(): Icon {
@@ -159,5 +169,6 @@ internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimum
   override fun updateUI() {
     super.updateUI()
     myPresentation.icon = scaleIcon()
+    setMoreIconDescriptor(myPresentation)
   }
 }
