@@ -8,8 +8,8 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.writeCommandAction
-import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -71,6 +71,7 @@ import org.eclipse.lsp4j.RenameOptions
 import org.eclipse.lsp4j.SemanticTokens
 import org.eclipse.lsp4j.SemanticTokensLegend
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions
+import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.TextDocumentSyncOptions
 import org.eclipse.lsp4j.TextEdit
@@ -83,8 +84,14 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 
+/**
+ * Notebooks of [TestNotebookDocumentAdapter]: the notebookDocument sync notifications,
+ * and the textDocument features that address the cells of a notebook.
+ *
+ * @see LspDocumentSyncTest
+ */
 @TestApplication
-internal class LspNotebookDocumentProtocolTest {
+internal class LspNotebookDocumentTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)
@@ -97,72 +104,39 @@ internal class LspNotebookDocumentProtocolTest {
     private val adapterFixture = extensionPointFixture(LspDocumentAdapter.EP_NAME) {
       TestNotebookDocumentAdapter()
     }
-
   }
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
-    lspCustomization = object : LspCustomization() {
-      override val formattingCustomizer = object : LspFormattingSupport() {
-        override fun shouldFormatThisFileExclusivelyByServer(
-          file: VirtualFile,
-          ideCanFormatThisFileItself: Boolean,
-          serverExplicitlyWantsToFormatThisFile: Boolean,
-        ): Boolean = true
-      }
-      override val onTypeFormattingCustomizer = LspOnTypeFormattingSupport()
-      override val renameCustomizer = object : LspRenameSupport() {
-        override fun shouldRunRename(psiFile: PsiFile): Boolean = true
-      }
-    },
-    configureServerCapabilities = {
-      textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
-        openClose = true
-        change = TextDocumentSyncKind.Full
-        save = Either.forLeft(true)
-      })
-      hoverProvider = Either.forLeft(true)
-      setDefinitionProvider(Either.forLeft(true))
-      completionProvider = CompletionOptions()
-      codeActionProvider = Either.forLeft(true)
-      documentFormattingProvider = Either.forLeft(true)
-      foldingRangeProvider = Either.forLeft(true)
-      colorProvider = Either.forLeft(true)
-      inlayHintProvider = Either.forLeft(true)
-      codeLensProvider = CodeLensOptions()
-      documentLinkProvider = DocumentLinkOptions()
-      semanticTokensProvider = SemanticTokensWithRegistrationOptions().apply {
-        full = Either.forLeft(true)
-        legend = SemanticTokensLegend(listOf("keyword"), listOf("declaration"))
-      }
-      documentOnTypeFormattingProvider = DocumentOnTypeFormattingOptions().apply {
-        firstTriggerCharacter = ";"
-      }
-      renameProvider = Either.forRight(RenameOptions())
-      referencesProvider = Either.forLeft(true)
-      diagnosticProvider = DiagnosticRegistrationOptions().apply {
-        identifier = "test"
-        isInterFileDependencies = false
-        isWorkspaceDiagnostics = false
-      }
-      notebookDocumentSync = NotebookDocumentSyncRegistrationOptions().apply {
-        notebookSelector = listOf(
-          NotebookSelector().apply {
-            notebook = Either.forLeft("test-notebook")
-          }
-        )
-        save = true
-      }
-    },
-    // The server offers every feature, and each test checks one of them. Highlighting requests the others.
-    allowUnmatched = {
-      DOCUMENT_SYNC + setOf(DOCUMENT_LINK, SEMANTIC_TOKENS_FULL, DIAGNOSTIC, DOCUMENT_COLOR, INLAY_HINT, FOLDING_RANGE, CODE_ACTION, CODE_LENS)
-    },
-  )
+  private fun ServerCapabilities.syncNotebooks(syncKind: TextDocumentSyncKind) {
+    textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
+      openClose = true
+      change = syncKind
+      save = Either.forLeft(true)
+    })
+    notebookDocumentSync = NotebookDocumentSyncRegistrationOptions().apply {
+      notebookSelector = listOf(
+        NotebookSelector().apply {
+          notebook = Either.forLeft("test-notebook")
+        }
+      )
+      save = true
+    }
+  }
+
+  /**
+   * Each nested class declares its own: the fixture stores the server capabilities in the shared project,
+   * so a second one active in the same test would fail.
+   */
+  private fun notebookSyncIntegrationFixture(syncKind: TextDocumentSyncKind) =
+    projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = { syncNotebooks(syncKind) },
+    )
 
   @Nested
   inner class NotebookSync {
+    private val fakeLspIntegration by notebookSyncIntegrationFixture(TextDocumentSyncKind.Full)
+
     @Test
     fun `notebookDocument didOpen -- sends correct notebook structure with 3 cells`() = timeoutRunBlocking {
       val content = "cell zero\n---\ncell one\n---\ncell two"
@@ -257,7 +231,79 @@ internal class LspNotebookDocumentProtocolTest {
   }
 
   @Nested
+  inner class IncrementalSync {
+    private val fakeLspIntegration by notebookSyncIntegrationFixture(TextDocumentSyncKind.Incremental)
+
+    @Test
+    fun `notebookDocument didChange -- incremental sync sends notebook change notification`() = timeoutRunBlocking {
+      val content = "cell zero\n---\ncell one"
+      val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      val didChange = serverSession.expectNotification(serverSession.NOTEBOOK_DID_CHANGE) { params ->
+        params.notebookDocument.uri == fileUri
+      }
+
+      edtWriteAction {
+        CommandProcessor.getInstance().executeCommand(project, {
+          codeInsightFixture.editor.document.replaceString(0, "cell zero".length, "cell zero modified")
+        }, "test", null)
+      }
+
+      didChange.await()
+    }
+  }
+
+  @Nested
   inner class FeatureRoundTrip {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      lspCustomization = object : LspCustomization() {
+        override val formattingCustomizer = object : LspFormattingSupport() {
+          override fun shouldFormatThisFileExclusivelyByServer(
+            file: VirtualFile,
+            ideCanFormatThisFileItself: Boolean,
+            serverExplicitlyWantsToFormatThisFile: Boolean,
+          ): Boolean = true
+        }
+        override val onTypeFormattingCustomizer = LspOnTypeFormattingSupport()
+        override val renameCustomizer = object : LspRenameSupport() {
+          override fun shouldRunRename(psiFile: PsiFile): Boolean = true
+        }
+      },
+      configureServerCapabilities = {
+        syncNotebooks(TextDocumentSyncKind.Full)
+        hoverProvider = Either.forLeft(true)
+        setDefinitionProvider(Either.forLeft(true))
+        completionProvider = CompletionOptions()
+        codeActionProvider = Either.forLeft(true)
+        documentFormattingProvider = Either.forLeft(true)
+        foldingRangeProvider = Either.forLeft(true)
+        colorProvider = Either.forLeft(true)
+        inlayHintProvider = Either.forLeft(true)
+        codeLensProvider = CodeLensOptions()
+        documentLinkProvider = DocumentLinkOptions()
+        semanticTokensProvider = SemanticTokensWithRegistrationOptions().apply {
+          full = Either.forLeft(true)
+          legend = SemanticTokensLegend(listOf("keyword"), listOf("declaration"))
+        }
+        documentOnTypeFormattingProvider = DocumentOnTypeFormattingOptions().apply {
+          firstTriggerCharacter = ";"
+        }
+        renameProvider = Either.forRight(RenameOptions())
+        referencesProvider = Either.forLeft(true)
+        diagnosticProvider = DiagnosticRegistrationOptions().apply {
+          identifier = "test"
+          isInterFileDependencies = false
+          isWorkspaceDiagnostics = false
+        }
+      },
+      // The server offers every feature, and each test checks one of them. Highlighting requests the others.
+      allowUnmatched = {
+        DOCUMENT_SYNC + setOf(DOCUMENT_LINK, SEMANTIC_TOKENS_FULL, DIAGNOSTIC, DOCUMENT_COLOR, INLAY_HINT, FOLDING_RANGE, CODE_ACTION, CODE_LENS)
+      },
+    )
+
     @Test
     fun `textDocument hover -- request uses cell URI for notebook position`() = timeoutRunBlocking {
       val content = "cell zero\n---\ncell <caret>one"
@@ -756,7 +802,7 @@ internal class LspNotebookDocumentProtocolTest {
       serverSession.awaitExpected()
 
       // Verify fold region is at host lines 4-5, not cell-relative 0-1
-      checkFoldRegionsRetrying(1) { regions ->
+      codeInsightFixture.checkFoldRegionsRetrying(1) { regions ->
         val document = codeInsightFixture.editor.document
         assertEquals(4, document.getLineNumber(regions[0].startOffset),
           "Fold start should be at host line 4 (cell 1, cell-relative line 0)")
@@ -855,16 +901,6 @@ internal class LspNotebookDocumentProtocolTest {
         filter = null,
         renderer = { renderer: com.intellij.openapi.editor.EditorCustomElementRenderer, _: Inlay<*> -> renderer.toString() }
       )
-    }
-
-    private suspend fun checkFoldRegionsRetrying(expectedCount: Int, check: ((Array<FoldRegion>) -> Unit)? = null) {
-      waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
-        readAction {
-          val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-          assertEquals(expectedCount, regions.size)
-          check?.invoke(regions)
-        }
-      }
     }
   }
 }

@@ -102,6 +102,38 @@ class LspDidSaveTest {
   }
 
   @Nested
+  inner class DidSaveWithBooleanCapability {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = {
+        textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
+          openClose = true
+          save = Either.forLeft(true)
+        })
+      },
+    )
+
+    @Test
+    fun `didSave notification does not include text when the save capability is true`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "initial content").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectNotification(serverSession.DID_SAVE) {
+        it.textDocument.uri == fileUri && it.text == null
+      }
+
+      withContext(Dispatchers.EDT) {
+        edtWriteAction {
+          codeInsightFixture.editor.document.setText("modified content")
+        }
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
+
+      serverSession.awaitExpected()
+    }
+  }
+
+  @Nested
   inner class TwoProjects {
     private val tempDirFixture2 = tempPathFixture()
     private val projectFixture2 = projectFixture(tempDirFixture2, openAfterCreation = true)

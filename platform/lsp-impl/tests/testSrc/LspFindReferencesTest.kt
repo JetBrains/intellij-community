@@ -2,11 +2,14 @@
 package com.intellij.platform.lsp
 
 import com.intellij.find.actions.FindUsagesAction
+import com.intellij.find.usages.impl.DefaultUsageSearchParameters
+import com.intellij.model.search.SearchService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.project.DumbService
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspFindReferencesCustomizer
 import com.intellij.platform.lsp.api.customization.LspFindReferencesDisabled
@@ -14,6 +17,8 @@ import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.nullResponse
 import com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -257,6 +262,30 @@ internal class LspFindReferencesTest {
              2world
              3world
       """.trimIndent(), text)
+    }
+
+    @Test
+    fun `references are requested in the dumb mode`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("dumbMode.txt", "hello wor<caret>ld").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.REFERENCES, { it.textDocument.uri == fileUri }) {
+        emptyList()
+      }
+
+      // The target must be dumb-aware: the dumb mode drops every other search target, and JetBrains Light never leaves it
+      val searchTarget = lspSearchTargets().single()
+      assertTrue(DumbService.isDumbAware(searchTarget))
+
+      // SearchService applies the dumb filter to the searchers, so a non-dumb-aware LspUsageSearcher sends no request here
+      val project = codeInsightFixture.project
+      val params = DefaultUsageSearchParameters(project, searchTarget, GlobalSearchScope.projectScope(project))
+      DumbModeTestUtils.runInDumbModeSynchronously(project) {
+        SearchService.getInstance().searchParameters(params).forEach { true }
+      }
+
+      serverSession.awaitExpected()
     }
   }
 

@@ -2,6 +2,8 @@
 package com.intellij.platform.lsp
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.codeInsight.navigation.getCtrlMouseData
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION_ONLY
@@ -13,6 +15,7 @@ import com.intellij.platform.lsp.api.customization.LspHoverCustomizer
 import com.intellij.platform.lsp.api.customization.LspHoverDisabled
 import com.intellij.platform.lsp.common.FakeLspServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
+import com.intellij.platform.lsp.common.withPerformedAction
 import com.intellij.platform.lsp.impl.supportsGotoDefinition
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -24,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.DefinitionRegistrationOptions
 import org.eclipse.lsp4j.DocumentFilter
+import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
@@ -168,6 +172,66 @@ internal class LspGoToDefinitionTest {
 
       serverSession.awaitExpected()
       assertEquals(OFFSET_IN_REFERENCE, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
+  }
+
+  /** A definition at the caret itself falls back to Show Usages, which needs the references capability. */
+  @Nested
+  inner class GoToDeclarationOrUsages {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = {
+        definitionProvider = Either.forLeft(true)
+        referencesProvider = Either.forLeft(true)
+      },
+    )
+
+    @Test
+    fun `given a Location pointing at the reference itself then go to declaration shows usages`() = timeoutRunBlocking {
+      // A plain `Location` response has no origin selection range. The name range covers the caret.
+      val outcome = gtduOutcome { fileUri -> Either.forLeft(listOf(Location(fileUri, REFERENCE_RANGE))) }
+      assertEquals(GTDUOutcome.SU, outcome)
+    }
+
+    @Test
+    fun `given a LocationLink pointing at the reference itself then go to declaration shows usages`() = timeoutRunBlocking {
+      val outcome = gtduOutcome { fileUri ->
+        Either.forRight(listOf(LocationLink(fileUri, REFERENCE_RANGE, REFERENCE_RANGE, REFERENCE_RANGE)))
+      }
+      assertEquals(GTDUOutcome.SU, outcome)
+    }
+
+    @Test
+    fun `given definition then go to declaration navigates`() = timeoutRunBlocking {
+      val outcome = gtduOutcome { fileUri -> Either.forLeft(listOf(Location(fileUri, DEFINITION_RANGE))) }
+      assertEquals(GTDUOutcome.GTD, outcome)
+    }
+
+    @Test
+    fun `given a multi-line Location around the caret then go to declaration navigates`() = timeoutRunBlocking {
+      // A multi-line range is the full declaration body, not the name range. The caret is on a usage inside the body.
+      val outcome = gtduOutcome(fileText = "fun foo() {\n  <caret>foo()\n}") { fileUri ->
+        Either.forLeft(listOf(Location(fileUri, Range(Position(0, 0), Position(2, 1)))))
+      }
+      assertEquals(GTDUOutcome.GTD, outcome)
+    }
+
+    private suspend fun gtduOutcome(
+      fileText: String = TEXT,
+      createResponse: (fileUri: String) -> Either<List<Location>, List<LocationLink>>,
+    ): GTDUOutcome? {
+      val psiFile = codeInsightFixture.configureByText("test.txt", fileText)
+      val serverSession = fakeLspIntegration.serverSession(psiFile.virtualFile)
+      val fileUri = serverSession.fileUri(psiFile.virtualFile)
+      serverSession.expectRequest(serverSession.DEFINITION, { it.textDocument.uri == fileUri }) { createResponse(fileUri) }
+
+      val editor = withContext(Dispatchers.EDT) { codeInsightFixture.editor }
+      val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
+
+      return withPerformedAction(ACTION_GOTO_DECLARATION) {
+        val outcome = readAction { GotoDeclarationOrUsageHandler2.testGTDUOutcome(editor, psiFile, offset) }
+        serverSession.awaitExpected()
+        outcome
+      }
     }
   }
 
