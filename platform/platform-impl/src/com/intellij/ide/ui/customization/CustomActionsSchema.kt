@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionStub
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
@@ -33,11 +34,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.imageFileIconDescriptor
+import com.intellij.platform.icons.imageUrlIconDescriptor
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.with
+import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,9 +51,14 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.io.File
 import java.io.FileNotFoundException
+import java.net.MalformedURLException
+import java.net.URI
+import java.net.URISyntaxException
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -121,6 +131,14 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
      */
     @JvmField
     val PROP_ORIGINAL_ICON: Key<Icon?> = Key.create("originalIcon")
+
+    /**
+     * Descriptor counterpart of [PROP_ORIGINAL_ICON]: the originally declared icon descriptor, saved in the template
+     * presentation when one customizes the action icon so that resetting the customization can restore it.
+     */
+    @ApiStatus.Internal
+    @JvmField
+    val ORIGINAL_ICON_DESCRIPTOR_KEY: Key<IconDescriptor?> = Key.create("originalIconDescriptor")
 
     @JvmStatic
     fun addSettingsGroup(itemId: String, itemName: @Nls String) {
@@ -488,6 +506,11 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   @ApiStatus.Internal
   fun initActionIcon(anAction: AnAction, actionId: String, actionSupplier: (String) -> AnAction?) {
     LOG.assertTrue(anAction !is ActionStub)
+    if (ExperimentalIconRendering.isEnabled) {
+      initActionIconDescriptor(anAction = anAction, actionId = actionId, actionSupplier = actionSupplier)
+      return
+    }
+
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
     if (presentation.getClientProperty(PROP_ORIGINAL_ICON) == null && anAction.isDefaultIcon && originalIcon != null) {
@@ -499,6 +522,31 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
     anAction.isDefaultIcon = icon == originalIcon
+  }
+
+  /**
+   * [initActionIcon] for the experimental icons pipeline, where the icon is loaded by the icons API only. A customization
+   * that reuses the icon of another action takes that action's descriptor, and a custom icon is loaded from its file or
+   * `jar:` URL, see [getCustomIconDescriptor]. Without a customization, the originally declared descriptor is restored
+   * from [ORIGINAL_ICON_DESCRIPTOR_KEY].
+   */
+  private fun initActionIconDescriptor(anAction: AnAction, actionId: String, actionSupplier: (String) -> AnAction?) {
+    val presentation = anAction.templatePresentation
+    val originalIconDescriptor = presentation.iconDescriptor
+    if (presentation.getClientProperty(ORIGINAL_ICON_DESCRIPTOR_KEY) == null && anAction.isDefaultIcon && originalIconDescriptor != null) {
+      presentation.putClientProperty(ORIGINAL_ICON_DESCRIPTOR_KEY, originalIconDescriptor)
+      if (presentation.getClientProperty(PROP_ORIGINAL_ICON) == null) {
+        // the Swing icon of the descriptor, for the code that reads the original icon, such as the icon chooser of the
+        // customization dialog; creating it loads nothing
+        presentation.putClientProperty(PROP_ORIGINAL_ICON, presentation.icon)
+      }
+    }
+
+    val iconDescriptor = iconCustomizations.get(actionId)?.let { getIconDescriptorForPath(actionSupplier = actionSupplier, iconPath = it) }
+                         ?: presentation.getClientProperty(ORIGINAL_ICON_DESCRIPTOR_KEY)
+    presentation.iconDescriptor = iconDescriptor
+    // `presentation.icon` creates a new Swing icon for the descriptor on every call, so compare the descriptors
+    anAction.isDefaultIcon = iconDescriptor == originalIconDescriptor
   }
 }
 
@@ -559,6 +607,28 @@ private object ActionUrlComparator : Comparator<ActionUrl> {
 @ApiStatus.Internal
 @Throws(Throwable::class)
 fun loadCustomIcon(path: String): Icon {
+  val (adjustedUrl, rawUrl) = getCustomIconUrls(path)
+  try {
+    return doLoadCustomIcon(adjustedUrl)
+  }
+  catch (t: Throwable) {
+    // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
+    // and there is no icon file without '_dark' suffix, we will fail.
+    // And in this case, we just need to load the file chosen by the user.
+    if (rawUrl == adjustedUrl) {
+      throw t
+    }
+    else {
+      return doLoadCustomIcon(rawUrl)
+    }
+  }
+}
+
+/**
+ * The URLs [loadCustomIcon] tries for [path]: first without the '_dark' and '@2x' suffixes, so that the variant for the
+ * current scale and UI theme is chosen, then as it is.
+ */
+private fun getCustomIconUrls(path: String): Pair<String, String> {
   val independentPath = FileUtilRt.toSystemIndependentName(path)
 
   val lastDotIndex = independentPath.lastIndexOf('.')
@@ -575,20 +645,7 @@ fun loadCustomIcon(path: String): Icon {
 
   val possibleSuffixes = listOf("@2x_dark", "_dark@2x", "_dark", "@2x")
   val adjustedUrl = possibleSuffixes.firstOrNull { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
-  try {
-    return doLoadCustomIcon("$adjustedUrl.$ext")
-  }
-  catch (t: Throwable) {
-    // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
-    // and there is no icon file without '_dark' suffix, we will fail.
-    // And in this case, we just need to load the file chosen by the user.
-    if (rawUrl == adjustedUrl) {
-      throw t
-    }
-    else {
-      return doLoadCustomIcon("$rawUrl.$ext")
-    }
-  }
+  return "$adjustedUrl.$ext" to "$rawUrl.$ext"
 }
 
 private fun doLoadCustomIcon(urlString: String): Icon {
@@ -628,6 +685,99 @@ private fun doLoadCustomIcon(urlString: String): Icon {
   return icon
 }
 
+/**
+ * Descriptor counterpart of [loadCustomIcon]: the icon at [path], a file path or a `file:` or `jar:` URL, for the icons
+ * API to load. The image itself is not loaded here.
+ *
+ * @return `null` when [path] is none of these, or, like [loadCustomIcon], when the file does not exist (anymore), so
+ * that the action keeps its declared icon; whether a `jar:` resource exists is only known when it is rendered
+ */
+private fun getCustomIconDescriptor(path: String): IconDescriptor? {
+  val (adjustedUrl, rawUrl) = getCustomIconUrls(path)
+  // Like loadCustomIcon, prefer the file without the '_dark' and '@2x' suffixes, so that the variant for the current
+  // scale and UI theme is chosen, unless only the file chosen by the user exists. Whether an entry of a jar: URL exists
+  // is not known here, so a jar: URL keeps the file chosen by the user.
+  val url = when {
+    rawUrl.startsWith("jar:") -> rawUrl
+    rawUrl != adjustedUrl && isMissingCustomIconFile(adjustedUrl) -> rawUrl
+    else -> adjustedUrl
+  }
+  if (isMissingCustomIconFile(url)) {
+    LOG.info("Failed to find icon by URL: $url")
+    return null
+  }
+  return try {
+    when {
+      // a stored jar: URL can have unescaped characters, such as spaces: the URI constructor escapes them
+      url.startsWith("jar:") -> imageUrlIconDescriptor(URI("jar", URLUtil.unescapePercentSequences(url.removePrefix("jar:")), null))
+      else -> imageFileIconDescriptor(customIconFile(url))
+    }
+  }
+  catch (e: IllegalArgumentException) {
+    LOG.info(e.message)
+    null
+  }
+  catch (e: URISyntaxException) {
+    LOG.info(e.message)
+    null
+  }
+  catch (e: MalformedURLException) {
+    LOG.info(e.message)
+    null
+  }
+}
+
+/**
+ * The file of a custom icon at [urlString], a file path or a `file:` URL. Like [doLoadCustomIcon], a `file:` URL can have
+ * unescaped spaces.
+ *
+ * @throws IllegalArgumentException for a file on a network share, such as `file://server/share/icon.svg` or
+ * `\\server\share\icon.svg`. A custom icon is not loaded from the network, and its file is not read to check it.
+ */
+private fun customIconFile(urlString: String): Path {
+  val path = if (urlString.startsWith("file:")) {
+    val url = URL(null, urlString)
+    require(url.host.isNullOrEmpty()) { "A custom icon on a network share is not loaded: $urlString" }
+    URLUtil.unescapePercentSequences(url.path)
+  }
+  else {
+    urlString
+  }
+  require(!isNetworkPath(path)) { "A custom icon on a network share is not loaded: $urlString" }
+  return if (urlString.startsWith("file:")) File(path).toPath() else Path.of(path)
+}
+
+/**
+ * Whether [path] starts with two separators, each `/` or `\`. Windows reads such a path as a UNC path, for example
+ * `\\server\share`, `//server/share` or `/\server\share`.
+ */
+private fun isNetworkPath(path: String): Boolean = path.length >= 2 && path[0].isPathSeparator() && path[1].isPathSeparator()
+
+private fun Char.isPathSeparator(): Boolean = this == '/' || this == '\\'
+
+/**
+ * Whether the custom icon file at [urlString] does not exist. A [urlString] that is not a valid file path or `file:` URL
+ * is missing too. Whether a `jar:` resource exists is only known when it is rendered.
+ */
+private fun isMissingCustomIconFile(urlString: String): Boolean {
+  if (urlString.startsWith("jar:")) return false
+  return try {
+    Files.notExists(customIconFile(urlString))
+  }
+  catch (e: InvalidPathException) {
+    LOG.info("Invalid custom icon path: $urlString: ${e.message}")
+    true
+  }
+  catch (e: MalformedURLException) {
+    LOG.info("Invalid custom icon URL: $urlString: ${e.message}")
+    true
+  }
+  catch (e: IllegalArgumentException) {
+    LOG.info(e.message)
+    true
+  }
+}
+
 internal fun getIconForPath(actionSupplier: (String) -> AnAction?, iconPath: String): Icon? {
   val reuseFrom = actionSupplier(iconPath)
   if (reuseFrom != null) {
@@ -647,4 +797,18 @@ internal fun getIconForPath(actionSupplier: (String) -> AnAction?, iconPath: Str
 internal fun getOriginalIconFrom(reuseFrom: AnAction): Icon? {
   val presentation = reuseFrom.templatePresentation
   return presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON) ?: presentation.icon
+}
+
+/** Descriptor counterpart of [getIconForPath]. */
+private fun getIconDescriptorForPath(actionSupplier: (String) -> AnAction?, iconPath: String): IconDescriptor? {
+  val reuseFrom = actionSupplier(iconPath)
+  if (reuseFrom != null) {
+    return getOriginalIconDescriptorFrom(reuseFrom)
+  }
+  return getCustomIconDescriptor(iconPath)
+}
+
+private fun getOriginalIconDescriptorFrom(reuseFrom: AnAction): IconDescriptor? {
+  val presentation = reuseFrom.templatePresentation
+  return presentation.getClientProperty(CustomActionsSchema.ORIGINAL_ICON_DESCRIPTOR_KEY) ?: presentation.iconDescriptor
 }

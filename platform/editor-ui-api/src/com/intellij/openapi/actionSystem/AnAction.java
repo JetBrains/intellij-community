@@ -162,9 +162,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (description != null) {
       presentation.setDescription(description);
     }
-    presentation.setIconDescriptor(iconDescriptor);
+    // the icon first: a later icon replaces the descriptor
     if (icon != null) {
       presentation.setIcon(icon);
+    }
+    // without a descriptor, the bridge of the icon stays the descriptor
+    if (iconDescriptor != null) {
+      presentation.setIconDescriptor(iconDescriptor);
     }
   }
 

@@ -84,7 +84,8 @@ class SwingIcon(
   private fun withLayer(scaling: ResolvedScalingContext, g: Graphics, x: Int, y: Int, painting: (Graphics2D) -> Unit) {
     val w = scaling.finalDimensions.width
     val h = scaling.finalDimensions.height
-    if (w < 0 || h < 0) return
+    // nothing to paint, and BufferedImage rejects an empty size (e.g. an icon whose image is not available)
+    if (w <= 0 || h <= 0) return
     val img = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
     val sublayer = img.createGraphics()
     try {
@@ -114,4 +115,24 @@ class SwingIcon(
   override fun getIconHeight(): Int {
     return dimensions.height
   }
+
+  /**
+   * Icons of the same descriptor and scale render the same, so they are equal. For example, `Presentation.getIcon` creates
+   * an icon on each call, and its callers compare the icons of two calls. The identity scale `factor(1)` is equal to no scale.
+   */
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SwingIcon) return false
+    return iconDescriptor == other.iconDescriptor && effectiveScale() == other.effectiveScale()
+  }
+
+  override fun hashCode(): Int = 31 * iconDescriptor.hashCode() + (effectiveScale()?.hashCode() ?: 0)
+
+  private fun effectiveScale(): IconScale? = scale?.takeUnless { it is FactorScale && it.factor == 1.0 }
+
+  /**
+   * Shows the descriptor, with its layers and image paths, for example in the UI Inspector, the debugger and logs.
+   * It does not load or measure the icon.
+   */
+  override fun toString(): String = if (scale == null) "SwingIcon($iconDescriptor)" else "SwingIcon($iconDescriptor, scale=$scale)"
 }

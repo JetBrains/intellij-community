@@ -8,6 +8,8 @@ import com.intellij.platform.icons.design.IconAnimationDesigner
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.design.Shape
 import com.intellij.platform.icons.impl.DefaultLayeredIconDescriptor
+import com.intellij.platform.icons.impl.FileImageResourceLocation
+import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.layers.AnimatedIconLayer
 import com.intellij.platform.icons.impl.layers.ImageIconLayer
 import com.intellij.platform.icons.impl.layers.LayoutIconLayer
@@ -16,12 +18,24 @@ import com.intellij.platform.icons.impl.layers.ShapeIconLayer
 import com.intellij.platform.icons.impl.layers.SpacerIconLayer
 import com.intellij.platform.icons.layers.IconLayer
 import com.intellij.platform.icons.modifiers.IconModifier
+import java.net.URI
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 abstract class DefaultIconDesigner : IconDesigner {
     protected val layers: MutableList<IconLayer> = mutableListOf<IconLayer>()
 
     override fun image(resourceLoader: ImageResourceLocation, modifier: IconModifier) {
         layers.add(ImageIconLayer(resourceLoader, modifier))
+    }
+
+    override fun imageFile(path: Path, modifier: IconModifier) {
+        // `/` on each OS, so that the path means the same on a frontend of another OS
+        image(FileImageResourceLocation(path.invariantSeparatorsPathString), modifier)
+    }
+
+    override fun imageUrl(url: URI, modifier: IconModifier) {
+        image(UrlImageResourceLocation(url.toString()), modifier)
     }
 
     override fun icon(iconDescriptor: IconDescriptor, modifier: IconModifier) {

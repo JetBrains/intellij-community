@@ -6,7 +6,7 @@ import com.intellij.platform.icons.IconManager
 /**
  * Modifications that should be performed on the Layer, like sizing, margin, color filters etc. (order-dependant)
  *
- * Sample usage: ''' icon { image("icons/icon.svg", IconModifier.margin(20.px)) } '''
+ * Sample usage: ''' icon { image("icons/icon.svg", MyClass::class.java.classLoader, IconModifier.margin(20.px)) } '''
  *
  * @see align
  * @see margin
