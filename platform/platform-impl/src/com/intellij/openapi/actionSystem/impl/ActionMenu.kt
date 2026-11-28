@@ -242,10 +242,11 @@ class ActionMenu constructor(
       setToggledIcon()
       return
     }
-    var icon = presentation.icon ?: return
     if (!UISettings.getInstance().showIconsInMenus) {
       return
     }
+    val darkOverride = menuIconDarkOverride(place, useDarkIcons)
+    var icon = menuIcon(presentation, darkOverride) ?: return
 
     if (MacMenuSettings.isSystemMenu && ActionPlaces.MAIN_MENU == place) {
       // JDK can't correctly paint our HiDPI icons at the system menu bar
@@ -261,8 +262,7 @@ class ActionMenu constructor(
     }
     else {
       setIcon(icon)
-      val presentationDisabledIcon = presentation.disabledIcon
-      setDisabledIcon(presentationDisabledIcon ?: getDisabledIcon(icon))
+      setDisabledIcon(menuDisabledIcon(presentation, darkOverride) ?: getDisabledIcon(icon))
     }
   }
 

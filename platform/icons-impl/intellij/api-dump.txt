@@ -79,12 +79,14 @@ f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
 - f:getLegacyPatcherProvider():com.intellij.util.SVGLoader$SvgElementColorPatcherProvider
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 - com.intellij.platform.icons.swing.ScalableSwingIcon
+- com.intellij.ui.icons.MenuBarIconProvider
 - javax.swing.Icon
 - <init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale):V
 - b:<init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - getIconHeight():I
 - getIconWidth():I
+- getMenuBarIcon(Z):javax.swing.Icon
 - f:getScale():com.intellij.platform.icons.scale.IconScale
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - scaled(com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon

@@ -1992,6 +1992,7 @@ c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
 - getArrowGap():I
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - p:getDataContext():com.intellij.openapi.actionSystem.DataContext
+- getDisabledIcon():javax.swing.Icon
 - getFont():java.awt.Font
 - getPresentation():com.intellij.openapi.actionSystem.Presentation
 - getToolTipText():java.lang.String

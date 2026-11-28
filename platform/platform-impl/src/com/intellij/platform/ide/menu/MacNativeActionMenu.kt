@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.MenuCancelledControlFlowException
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
+import com.intellij.openapi.actionSystem.impl.menuIcon
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -118,7 +119,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
 
   if (!ExperimentalUI.isNewUI() && UISettings.getInstance().showIconsInMenus) {
     // JDK can't correctly paint our HiDPI icons at the system menu bar
-    presentation.icon?.let { icon ->
+    menuIcon(presentation, darkOverride = useDarkIcons)?.let { icon ->
       menuPeer.setIcon(getMenuBarIcon(icon = icon, dark = useDarkIcons))
     }
   }

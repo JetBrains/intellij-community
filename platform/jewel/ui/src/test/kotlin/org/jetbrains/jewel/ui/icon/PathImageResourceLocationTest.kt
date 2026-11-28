@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.icon
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -48,6 +49,24 @@ internal class PathImageResourceLocationTest {
 
         assertFalse(resolved.isAuthoredStrokeVariant)
         assertEquals(contentOf("icons/search_dark.svg"), resolved.data.decodeToString())
+    }
+
+    @Test
+    fun `a dark icon without a dark variant falls back to its base file`() {
+        val resolved = location("icons/strokeVariant.svg").resolve(stroked = false, isDark = true)
+
+        assertFalse(resolved.isAuthoredStrokeVariant)
+        assertEquals(contentOf("icons/strokeVariant.svg"), resolved.data.decodeToString())
+    }
+
+    @Test
+    fun `an icon without a base file is reported as missing`() {
+        val error =
+            assertThrows(IllegalStateException::class.java) {
+                location("icons/missing.svg").resolve(stroked = false, isDark = true)
+            }
+
+        assertEquals("Resource not found: icons/missing.svg", error.message)
     }
 
     @Test

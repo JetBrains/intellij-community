@@ -2,13 +2,17 @@
 package com.intellij.openapi.actionSystem
 
 import com.intellij.icons.AllIcons
+import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.ui.JBColor
+import java.awt.Color
 import java.awt.Component
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 import javax.swing.JPanel
+import javax.swing.UIManager
 import kotlin.math.abs
 
 /** Paints the icon at its own size into a transparent ARGB image. */
@@ -53,6 +57,22 @@ internal fun <T> withDarkTheme(action: () -> T): T {
     JBColor.setDark(!wasBright)
   }
 }
+
+/** Runs [action] in a bright theme whose menu background is dark. A menu then needs the dark artwork of its icons. */
+internal fun <T> withDarkMenuBackground(action: () -> T): T {
+  UIManager.put(MENU_BACKGROUND_KEY, Color(0x2B2B2B))
+  try {
+    return action()
+  } finally {
+    UIManager.put(MENU_BACKGROUND_KEY, null)
+  }
+}
+
+/** An icon with its own dark artwork: `inlaySettings_dark.svg` differs from `inlaySettings.svg`. */
+internal fun darkAwareDescriptor(modifier: IconModifier = IconModifier): IconDescriptor =
+  imageIconDescriptor("expui/codeInsight/inlaySettings.svg", AllIcons::class.java.classLoader, modifier)
+
+private const val MENU_BACKGROUND_KEY = "MenuItem.background"
 
 /** The pixels of the Unknown marker. An action with only a legacy icon must paint exactly these. */
 internal fun unknownMarkerPixels(): List<Int> {

@@ -24,6 +24,8 @@ object DefaultModifiersFactory : ModifiersFactory {
 
     override fun colorFilter(colorFilter: ColorFilter): IconModifier = ColorFilterModifier(colorFilter)
 
+    override fun forceDarkVariant(isDark: Boolean): IconModifier = ForceDarkVariantModifier(isDark)
+
     override fun cutoutMargin(size: IconUnit): IconModifier = CutoutMarginModifier(size)
 
     override fun margin(left: IconUnit, top: IconUnit, right: IconUnit, bottom: IconUnit): IconModifier =

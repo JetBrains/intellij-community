@@ -44,6 +44,8 @@ public class PathImageResourceLocation(public val path: String, public val class
      * it loads light artwork, matching the Swing frontend: the stroke palette describes the light variants, so a
      * `_dark` variant would come back with colors it does not know and would be left in its authored color instead of
      * being recolored.
+     *
+     * A dark icon prefers its `_dark` file and falls back to the base file for the icons that ship no dark artwork.
      */
     internal fun resolve(stroked: Boolean, isDark: Boolean): ResolvedImageResource {
         if (stroked) {
@@ -52,8 +54,9 @@ public class PathImageResourceLocation(public val path: String, public val class
             if (strokeData != null) return ResolvedImageResource(strokeData, isAuthoredStrokeVariant = true)
         }
 
-        val finalPath = applyPathModifiers(path, if (isDark && !stroked) "_dark" else "")
-        val data = readOrNull(finalPath) ?: error("Resource not found: $finalPath")
+        val basePath = applyPathModifiers(path, "")
+        val darkData = if (isDark && !stroked) readOrNull(applyPathModifiers(path, "_dark")) else null
+        val data = darkData ?: readOrNull(basePath) ?: error("Resource not found: $basePath")
         return ResolvedImageResource(data, isAuthoredStrokeVariant = false)
     }
 
