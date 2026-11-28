@@ -140,3 +140,23 @@ fn an_mcp_call_without_object_arguments_breaks_the_protocol() {
     proxy.close();
     server.join().unwrap();
 }
+
+#[test]
+fn an_air_ide_command_carries_its_arguments_and_one_that_is_no_string_breaks_the_protocol() {
+    let run = r#"{"type":"airIde","commandId":"c-1","args":["tool","call","air_ui","{\"action\":\"state\"}"]}"#.to_owned();
+    let broken = r#"{"type":"airIde","commandId":"c-2","args":["ui",1]}"#.to_owned();
+    let (url, server) = serve(vec![run, broken]);
+    let (proxy, mut commands) = connect(&endpoint(&url), "proc-1").unwrap();
+    assert_eq!(
+        commands.next(&proxy).unwrap(),
+        Command::AirIde {
+            id: "c-1".to_owned(),
+            args: ["tool", "call", "air_ui", r#"{"action":"state"}"#].map(str::to_owned).to_vec(),
+        }
+    );
+    let error = commands.next(&proxy).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+    assert!(error.to_string().contains("has no args of strings"), "{error}");
+    proxy.close();
+    server.join().unwrap();
+}

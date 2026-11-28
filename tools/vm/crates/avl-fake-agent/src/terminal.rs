@@ -9,9 +9,11 @@
 //!   `--session-id`, it writes the first line of the Claude history, as Claude Code does at the start of a session.
 //!   It turns on bracketed paste, writes [READY_LINE], and reports each line that the terminal types into it. It ends
 //!   on an exit command, on the typed line [EXIT_LINE], or at the end of its input.
+//!   An `airIde` command runs `air-ide` of its `PATH`, as an agent without the private MCP server does ([air_ide]).
 //!
 //! In both modes the command loop is the one writer of standard output, and every scripted line is a finished line.
 
+use std::ffi::OsStr;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -22,6 +24,7 @@ use std::{env, fs};
 use avl_control::proxy::{Command, Commands, Lifecycle};
 use serde_json::Value;
 
+use crate::air_ide;
 use crate::environment::Environment;
 use crate::json::{quote, quote_all};
 use crate::mcp::{self, Offer};
@@ -158,6 +161,11 @@ fn apply(agent: &Agent, command: Command) -> io::Result<Option<i64>> {
         Command::Mcp { id, request } => {
             drop(stdout);
             let outcome = agent.mcp.answer(&request);
+            proxy.mcp_result(&id, outcome.is_error, &outcome.text)?;
+        }
+        Command::AirIde { id, args } => {
+            drop(stdout);
+            let outcome = air_ide::run(OsStr::new(air_ide::AIR_IDE), &args);
             proxy.mcp_result(&id, outcome.is_error, &outcome.text)?;
         }
     }

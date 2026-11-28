@@ -18,6 +18,7 @@
 use std::ffi::OsString;
 use std::process::ExitCode;
 
+mod air_ide;
 mod controlled;
 mod deterministic;
 mod environment;

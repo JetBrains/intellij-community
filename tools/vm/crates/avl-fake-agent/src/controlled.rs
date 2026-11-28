@@ -10,16 +10,19 @@
 //! | `closeStdout` | closes standard output, reports `stdout_closed`, then acknowledges the command |
 //! | `exit` | acknowledges the command, reports `process_exit` with the code, and exits with the code. It does not wait for the MCP servers: an `http` server gets no `DELETE`, and a `stdio` process group gets a termination signal |
 //! | `mcpCall`, `mcpListTools` | asks the MCP server of the last `session/new`, and answers `mcpResult` |
+//! | `airIde` | runs `air-ide` of the `PATH` with the arguments, and answers `mcpResult` with its output ([air_ide]) |
 //!
 //! A write after the close of standard output, a failed write and a failure of the control connection report one
 //! `control_failure` and exit with 1.
 
+use std::ffi::OsStr;
 use std::io::{self, BufRead};
 use std::sync::Arc;
 use std::thread;
 
 use avl_control::proxy::{Command, Commands, Lifecycle};
 
+use crate::air_ide;
 use crate::environment::Environment;
 use crate::lines::read_line;
 use crate::process::{self, Agent, McpEnd, marker, say};
@@ -114,6 +117,10 @@ fn apply(agent: &Agent, stdout: &mut AgentStdout, command: Command) -> io::Resul
         }
         Command::Mcp { id, request } => {
             let outcome = agent.mcp.answer(&request);
+            proxy.mcp_result(&id, outcome.is_error, &outcome.text)?;
+        }
+        Command::AirIde { id, args } => {
+            let outcome = air_ide::run(OsStr::new(air_ide::AIR_IDE), &args);
             proxy.mcp_result(&id, outcome.is_error, &outcome.text)?;
         }
     }

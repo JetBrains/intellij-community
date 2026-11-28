@@ -109,6 +109,9 @@ pub enum Command {
     /// Calls a tool, or lists the tools, of an MCP server of the session. The proxy answers it with
     /// [Proxy::mcp_result] and sends no `writeAck`.
     Mcp { id: String, request: McpRequest },
+    /// Runs `air-ide` of the agent process with `args`, as an agent runs it from its shell. The proxy answers it with
+    /// [Proxy::mcp_result] and sends no `writeAck`.
+    AirIde { id: String, args: Vec<String> },
 }
 
 /// What an MCP command asks of the MCP server `server` of the current session.
@@ -233,8 +236,8 @@ impl Proxy {
         self.send("writeAck", json!({ "commandId": id }))
     }
 
-    /// Answers the MCP command `id` with `text`: the text of the tool, the JSON array of the tool names, or the error
-    /// text when `is_error`.
+    /// Answers the MCP or `air-ide` command `id` with `text`: the text of the tool, the JSON array of the tool names, the
+    /// output of `air-ide`, or the error text when `is_error`.
     pub fn mcp_result(&self, id: &str, is_error: bool, text: &str) -> io::Result<()> {
         self.send("mcpResult", json!({ "commandId": id, "isError": is_error, "text": text }))
     }
@@ -329,6 +332,13 @@ impl Commands {
                 request: McpRequest::ListTools {
                     server: field("server").unwrap_or_default().to_owned(),
                 },
+                id,
+            },
+            "airIde" => Command::AirIde {
+                args: envelope["args"]
+                    .as_array()
+                    .and_then(|args| args.iter().map(|arg| arg.as_str().map(str::to_owned)).collect())
+                    .ok_or_else(|| missing("args of strings"))?,
                 id,
             },
             "mcpCall" => return Err(missing("server, tool or arguments")),

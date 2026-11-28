@@ -51,6 +51,8 @@ pub(crate) const UNAUTHORIZED: u16 = 401;
 
 /// What an MCP command of the control server gets.
 const NO_MCP_SERVER: &str = "a remote spawner offers no MCP server";
+/// What an `air-ide` command of the control server gets.
+const NO_AIR_IDE: &str = "a remote spawner runs no air-ide";
 
 /// One dial of the IDE, in arrival order.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -368,6 +370,7 @@ fn apply_commands(index: usize, commands: &mut Commands, ide: &Sender, proxy: &P
                 .and_then(|()| proxy.ack(&id))
                 .map(|()| exit(ide, proxy, ends)),
             Command::Mcp { id, .. } => proxy.mcp_result(&id, true, NO_MCP_SERVER),
+            Command::AirIde { id, .. } => proxy.mcp_result(&id, true, NO_AIR_IDE),
         };
         if let Err(error) = applied {
             break error;
