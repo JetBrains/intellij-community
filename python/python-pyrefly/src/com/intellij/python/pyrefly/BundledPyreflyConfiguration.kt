@@ -21,9 +21,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil
   storages = [Storage(LSP_TOOLS_STORAGE_FILE)]
 )
 data class BundledPyreflyConfiguration(
-  override var inlayHints: Boolean? = false,
+  override var inlayHints: Boolean? = true,
   override var completions: Boolean? = true,
-  override var documentation: Boolean? = false,
+  override var documentation: Boolean? = true,
 ) : PyLspToolConfiguration<BundledPyreflyConfiguration>() {
   override fun loadState(state: BundledPyreflyConfiguration) {
     XmlSerializerUtil.copyBean(state, this)
