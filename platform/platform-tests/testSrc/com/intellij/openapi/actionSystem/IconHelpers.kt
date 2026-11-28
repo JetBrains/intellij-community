@@ -5,10 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.platform.icons.imageIconDescriptor
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.GrayFilter
 import java.awt.Component
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 import javax.swing.JPanel
+import javax.swing.UIManager
 import kotlin.math.abs
 
 /** Paints the icon at its own size into a transparent ARGB image. */
@@ -48,9 +50,20 @@ internal fun <T> withDarkTheme(action: () -> T): T {
   val wasBright = JBColor.isBright()
   JBColor.setDark(true)
   try {
-    return action()
+    return withGrayFilter(GrayFilter(-70, -70, 100), action)
   } finally {
     JBColor.setDark(!wasBright)
+  }
+}
+
+/** Runs [action] while the look and feel has [filter] as its `grayFilter`, which [com.intellij.util.ui.UIUtil.getGrayFilter] reads. */
+internal fun <T> withGrayFilter(filter: GrayFilter, action: () -> T): T {
+  val old = UIManager.get("grayFilter")
+  UIManager.put("grayFilter", filter)
+  try {
+    return action()
+  } finally {
+    UIManager.put("grayFilter", old)
   }
 }
 
