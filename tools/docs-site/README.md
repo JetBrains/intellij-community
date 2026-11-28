@@ -192,7 +192,9 @@ kernel holds the protocol, and the gate of each site calls its `runGate`:
 
 - The first stdout line is the sentinel, `docs-gate 1`. The gate prints it before any check module loads.
 - Exit 0: the docs are valid. The records follow the sentinel, one per line, with tab-separated fields.
-- Exit 3: a check failed. The report follows the sentinel, and no record follows.
+- Exit 3: a check failed. The report follows the sentinel, and no record follows. A gate that runs each check of its
+  site throws `GateChecksFailed` instead. Its lines follow the sentinel: the records that it could make and the result
+  of each check.
 - Exit 4: the gate could not finish, such as an OpenSpec CLI that gives no report. The report follows the sentinel.
 - Any other result, or no sentinel: an infrastructure failure, not a check failure.
 

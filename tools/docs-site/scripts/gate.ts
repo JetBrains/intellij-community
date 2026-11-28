@@ -3,7 +3,8 @@
 //   - stdout starts with the `docs-gate 1` sentinel line, printed before any check module loads, so wrapper or
 //     bootstrap noise cannot be mistaken for it.
 //   - exit 0: each check passed. The records of the site follow the sentinel, one per line.
-//   - exit 3: a check failed. The report follows the sentinel.
+//   - exit 3: a check failed. The report follows the sentinel. A site whose gate runs each check prints the records
+//     that it could make and the result of each check instead (`GateChecksFailed`).
 //   - exit 4: infrastructure past the sentinel, such as an OpenSpec CLI that gives no report. The report follows.
 //   - anything else, or no sentinel: the gate cannot run.
 //
@@ -19,9 +20,24 @@ export const CHECK_FAILED_EXIT_CODE = 3
 export const INFRASTRUCTURE_EXIT_CODE = 4
 
 /**
+ * The throw of a gate body that ran each check of its site, and a check failed. The gate writes `lines` in place of a
+ * report: the records that the body could make and the result of each check, in the format of the site.
+ */
+export class GateChecksFailed extends Error {
+  readonly lines: readonly string[]
+
+  constructor(lines: readonly string[], message: string) {
+    super(message)
+    this.name = 'GateChecksFailed'
+    this.lines = lines
+  }
+}
+
+/**
  * Writes the sentinel, then the record lines that `body` returns, and answers the exit code. A throw of `body` writes
- * its report instead of the records. An `OpenSpecInfrastructureError` gives the infrastructure exit, and each other
- * throw gives the exit of a failed check, because a failure past the sentinel is repo state or a bug in the checks.
+ * its report instead of the records. A `GateChecksFailed` writes its lines and gives the exit of a failed check. An
+ * `OpenSpecInfrastructureError` gives the infrastructure exit, and each other throw gives the exit of a failed check,
+ * because a failure past the sentinel is repo state or a bug in the checks.
  */
 export async function gateExitCode(body: () => Promise<readonly string[]>, write: (line: string) => void): Promise<number> {
   write(GATE_SENTINEL)
@@ -30,6 +46,10 @@ export async function gateExitCode(body: () => Promise<readonly string[]>, write
     return 0
   }
   catch (error) {
+    if (error instanceof GateChecksFailed) {
+      write(error.lines.join('\n'))
+      return CHECK_FAILED_EXIT_CODE
+    }
     write(error instanceof Error ? error.stack ?? error.message : String(error))
     const { OpenSpecInfrastructureError } = await import('./openspec.ts')
     return error instanceof OpenSpecInfrastructureError ? INFRASTRUCTURE_EXIT_CODE : CHECK_FAILED_EXIT_CODE

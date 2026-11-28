@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { CHECK_FAILED_EXIT_CODE, gateExitCode, GATE_SENTINEL, INFRASTRUCTURE_EXIT_CODE } from './gate.ts'
+import { CHECK_FAILED_EXIT_CODE, gateExitCode, GATE_SENTINEL, GateChecksFailed, INFRASTRUCTURE_EXIT_CODE } from './gate.ts'
 import { OpenSpecInfrastructureError } from './openspec.ts'
 
 /** Runs the gate over `body`, and answers the exit code and the written lines. */
@@ -28,6 +28,14 @@ describe('the gate protocol', () => {
     assert.equal(code, CHECK_FAILED_EXIT_CODE)
     assert.equal(lines[0], GATE_SENTINEL)
     assert.match(lines[1], /^Error: a\.md:4: broken link/)
+  })
+
+  it('writes the lines of the checks that failed in place of a report, and exits 3', async () => {
+    const { code, lines } = await run(async () => {
+      throw new GateChecksFailed(['spec\ta', 'check\tprose\tfailed\t"a.md:4: long sentence"'], 'prose failed')
+    })
+    assert.equal(code, CHECK_FAILED_EXIT_CODE)
+    assert.deepEqual(lines, [GATE_SENTINEL, 'spec\ta\ncheck\tprose\tfailed\t"a.md:4: long sentence"'])
   })
 
   it('exits 4 when the OpenSpec CLI gives no report', async () => {
