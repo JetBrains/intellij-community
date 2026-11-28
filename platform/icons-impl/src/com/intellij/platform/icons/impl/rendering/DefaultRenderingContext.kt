@@ -20,6 +20,7 @@ class DefaultRenderingContext(
     fun adjustTo(iconLayer: IconLayer): DefaultRenderingContext =
         DefaultRenderingContext(updateFlow, iconLayer.generateImageModifiers(this), theme, imageResourceProvider)
 
+    /** Loads the image with the theme inputs of [theme] (see [ImageResourceProvider.loadImage]). */
     override fun imageResource(loader: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource =
-        imageResourceProvider.loadImage(loader, imageModifiers)
+        imageResourceProvider.loadImage(loader, imageModifiers, theme)
 }

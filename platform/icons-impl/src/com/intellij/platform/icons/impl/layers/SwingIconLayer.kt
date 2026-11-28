@@ -6,4 +6,25 @@ import com.intellij.platform.icons.modifiers.IconModifier
 import javax.swing.Icon
 import kotlinx.serialization.Serializable
 
-@Serializable class SwingIconLayer(val legacyIcon: Icon, override val modifier: IconModifier) : IconLayer
+@Serializable
+class SwingIconLayer(val legacyIcon: Icon, override val modifier: IconModifier) : IconLayer {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SwingIconLayer
+
+        if (legacyIcon != other.legacyIcon) return false
+        if (modifier != other.modifier) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = legacyIcon.hashCode()
+        result = 31 * result + modifier.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "SwingIconLayer(legacyIcon=$legacyIcon, modifier=$modifier)"
+}

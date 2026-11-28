@@ -13,7 +13,23 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
     private fun createNestedRenderers(layer: LayoutIconLayer): List<IconLayerRenderer> =
         IconLayerManager.createRenderers(layer.nestedLayers, currentContext)
 
-    override val layout: LayerLayout = applyLayout()
+    /** The layouts of the nested layers that [cachedLayout] was computed from. */
+    private var cachedLayoutSource: List<Any?>? = null
+    private var cachedLayout: LayerLayout? = null
+
+    /**
+     * The layout for the current layouts of the nested layers. A nested layer can change its layout, for example a
+     * deferred icon in it when it resolves. So the layout is computed again when one of them changes.
+     */
+    override val layout: LayerLayout
+        get() {
+            val source = nestedRenderers.map { it.layout }
+            cachedLayout?.let { if (sameLayouts(source, cachedLayoutSource)) return it }
+            val layout = applyLayout()
+            cachedLayoutSource = source
+            cachedLayout = layout
+            return layout
+        }
 
     private fun applyLayout(): LayerLayout =
         when (layoutLayer.direction) {
@@ -46,7 +62,8 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
                             scale = base.scale,
                         )
                     nestedRenderer.render(nestedLayerContext)
-                    offset += nestedRenderer.layout.consumedSpace(paintingContext.scaling).width
+                    // the layer paints in the nested context, so it takes the space that it measures there
+                    offset += nestedRenderer.layout.consumedSpace(nestedLayerContext.scaling).width
                 }
             }
             LayoutIconLayer.LayoutDirection.Column -> {
@@ -60,7 +77,7 @@ class LayoutIconLayerRenderer(private val layoutLayer: LayoutIconLayer, renderin
                             scale = base.scale,
                         )
                     nestedRenderer.render(nestedLayerContext)
-                    offset += nestedRenderer.layout.consumedSpace(paintingContext.scaling).height
+                    offset += nestedRenderer.layout.consumedSpace(nestedLayerContext.scaling).height
                 }
             }
             else -> {

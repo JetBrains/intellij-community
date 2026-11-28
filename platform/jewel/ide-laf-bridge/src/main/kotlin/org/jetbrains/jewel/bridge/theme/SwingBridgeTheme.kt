@@ -21,6 +21,7 @@ import org.jetbrains.jewel.bridge.menuShortcut.BridgeMenuItemShortcutHintProvide
 import org.jetbrains.jewel.bridge.menuShortcut.BridgeMenuItemShortcutProvider
 import org.jetbrains.jewel.bridge.scaleDensityWithIdeScale
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.theme.LocalForcedIconVariant
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
@@ -65,6 +66,8 @@ public fun SwingBridgeTheme(content: @Composable () -> Unit) {
             LocalUriHandler provides BridgeUriHandler,
             LocalMessageResourceResolverProvider provides remember { BridgeMessageResourceResolver() },
             LocalPlatformCursorController provides BridgePlatformCursorController,
+            // the icons from icon descriptors follow the IDE theme, as the Swing icons around them do
+            LocalForcedIconVariant provides null,
         ) {
             content()
         }

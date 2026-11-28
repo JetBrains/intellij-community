@@ -118,7 +118,9 @@ fun loadSvgMaybeWithShape(
   }!!
 }
 
-internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): LongArray {
+/** The digest of [colorPatcherProvider], also for an older provider implementation that has no `digest`. */
+@Internal
+fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): LongArray {
   if (colorPatcherProvider == null) {
     return ArrayUtilRt.EMPTY_LONG_ARRAY
   }
@@ -449,9 +451,14 @@ private fun patchIconsWithColorPatcher(icon: Icon, colorPatcher: SVGLoader.SvgEl
 }
 
 /**
- * Creates a new icon with the low-level CachedImageIcon changing
+ * [icon] with each `CachedImageIcon` in it replaced by [cachedImageIconReplacer]; any other leaf icon by
+ * [otherIconReplacer], when it returns non-null.
  */
-internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (CachedImageIcon) -> Icon): Icon? {
+internal fun replaceCachedImageIcons(
+  icon: Icon,
+  otherIconReplacer: (Icon) -> Icon? = { null },
+  cachedImageIconReplacer: (CachedImageIcon) -> Icon,
+): Icon? {
   if (icon is CachedImageIcon) {
     return cachedImageIconReplacer(icon)
   }
@@ -464,7 +471,7 @@ internal fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (Cache
         icon is ReplaceableIcon -> icon.replaceBy(this)
         !checkIconSize(icon) -> EMPTY_ICON
         icon is CachedImageIcon -> cachedImageIconReplacer(icon)
-        else -> icon
+        else -> otherIconReplacer(icon) ?: icon
       }
     }
   }.replaceIcon(icon)

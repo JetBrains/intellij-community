@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import java.lang.ref.WeakReference
 import java.net.MalformedURLException
+import java.net.URI
+import java.net.URISyntaxException
 import java.net.URL
 
 private val UNRESOLVED_URL = URL("$FILE_SCHEME_PREFIX//unresolved")
@@ -27,6 +29,7 @@ internal class ImageDataByUrlLoader internal constructor(
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
+                     isStroke = parameters.isStroke,
                      useCache = false,
                      scaleContext = scaleContext)
   }
@@ -129,6 +132,19 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   return urlProvider(effectivePath)
 }
 
+/**
+ * The loader of the image at [url], a `file:` URL or a `jar:` URL of a local archive (`jar:file:`), as for user icons
+ * ([com.intellij.openapi.util.findUserIconByPath]) and icons found by URL ([com.intellij.openapi.util.IconLoader.findIcon]).
+ * An image is not loaded from the network. A `file:` URL with a host is not accepted: on Windows, it is a network share.
+ */
+@ApiStatus.Internal
+fun createImageDataLoaderByUrl(url: String): ImageDataLoader {
+  require(isLocalImageUrl(url)) {
+    "Image URL must be a file: URL without a host, or a jar: URL of such a file: URL: $url"
+  }
+  return if (url.startsWith(FILE_SCHEME_PREFIX)) ImageDataByFilePathLoader(url) else ImageDataByUrlLoader(url = URL(url))
+}
+
 internal class ImageDataByFilePathLoader(override val path: String) : PatchedImageDataLoader {
   override val url: URL
     get() = URL(path)
@@ -140,6 +156,7 @@ internal class ImageDataByFilePathLoader(override val path: String) : PatchedIma
                      resourceClass = null,
                      classLoader = null,
                      isDark = parameters.isDark,
+                     isStroke = parameters.isStroke,
                      useCache = false,
                      scaleContext = scaleContext)
   }
@@ -214,4 +231,45 @@ internal class EmptyImageDataLoader(
   override fun patch(transform: IconTransform): ImageDataLoader? = null
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
   override fun getCoords(): Pair<String, ClassLoader>? = null
+}
+
+/**
+ * Whether [url] is a valid `file:` URI without a host, or a `jar:` URI of an entry (`!/`) in an archive at such a `file:`
+ * URI.
+ */
+private fun isLocalImageUrl(url: String): Boolean {
+  val uri = parseUri(url) ?: return false
+  return when (uri.scheme) {
+    "file" -> isLocalFileUri(uri)
+    "jar" -> {
+      val archiveAndEntry = uri.rawSchemeSpecificPart
+      "!/" in archiveAndEntry &&
+      parseUri(archiveAndEntry.substringBefore("!/"))?.let { it.scheme == "file" && isLocalFileUri(it) } == true
+    }
+    else -> false
+  }
+}
+
+/**
+ * Whether the `file:` [uri] is a local file. A host is a network share on Windows, and so is a network path (see
+ * [isNetworkPath]), as in `file:////server/share` or `file:/%5C%5Cserver/share`. An opaque URI, such as `file:icon.svg`,
+ * has no path.
+ */
+private fun isLocalFileUri(uri: URI): Boolean = !uri.isOpaque && uri.authority.isNullOrEmpty() && !isNetworkPath(uri.path.orEmpty())
+
+/**
+ * Whether [path] starts with two separators, each `/` or `\`. Windows reads such a path as a UNC path, for example
+ * `\\server\share`, `//server/share` or `/\server\share`.
+ */
+private fun isNetworkPath(path: String): Boolean = path.length >= 2 && path[0].isPathSeparator() && path[1].isPathSeparator()
+
+private fun Char.isPathSeparator(): Boolean = this == '/' || this == '\\'
+
+private fun parseUri(text: String): URI? {
+  return try {
+    URI(text)
+  }
+  catch (_: URISyntaxException) {
+    null
+  }
 }

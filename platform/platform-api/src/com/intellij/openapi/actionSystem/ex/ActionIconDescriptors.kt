@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.platform.icons.AllIconDescriptors
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.design.BlendMode
 import com.intellij.platform.icons.design.Color
@@ -40,12 +39,11 @@ object ActionIconDescriptors {
   /**
    * The descriptor to render for [presentation].
    *
-   * @return the descriptor of [presentation], [AllIconDescriptors.Toolbar.Unknown] when only a legacy icon is set,
-   * or `null` when [presentation] has no icon
+   * @return the descriptor of [presentation]. When only a legacy icon is set, it is the descriptor that [Presentation] bridges from that icon.
+   * It is `null` when [presentation] has no icon.
    */
   @JvmStatic
-  fun effective(presentation: Presentation): IconDescriptor? =
-    presentation.iconDescriptor ?: if (presentation.icon != null) AllIconDescriptors.Toolbar.Unknown else null
+  fun effective(presentation: Presentation): IconDescriptor? = presentation.iconDescriptor
 
   /**
    * The disabled variant of [base]: gray and translucent, so it blends into the theme background.

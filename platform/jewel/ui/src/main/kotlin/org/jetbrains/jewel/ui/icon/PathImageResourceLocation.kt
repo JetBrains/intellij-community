@@ -66,6 +66,27 @@ public class PathImageResourceLocation(public val path: String, public val class
         append(path.substringAfterLast('.'))
     }
 
+    /**
+     * Resolves the file that [imageModifiers] call for, as [resolve] does. A dark image without its own `_dark` file
+     * takes the base file instead of failing, as the legacy icons do.
+     */
+    internal fun resolveOrBase(imageModifiers: ImageModifiers?): ResolvedImageResource {
+        val knownMods = imageModifiers as? DefaultImageModifiers ?: return resolve(imageModifiers)
+        if (knownMods.isDark && knownMods.stroke == null) {
+            readOrNull(applyPathModifiers(path, "_dark"))?.let {
+                return ResolvedImageResource(it, isAuthoredStrokeVariant = false)
+            }
+            return resolve(stroked = false, isDark = false)
+        }
+        return resolve(stroked = knownMods.stroke != null, isDark = knownMods.isDark)
+    }
+
+    /** Whether the base file of this location exists. A `_dark` or `_stroke` variant of it is not checked. */
+    internal fun exists(): Boolean {
+        val url = if (classLoader != null) classLoader.getResource(path) else ClassLoader.getSystemResource(path)
+        return url != null
+    }
+
     private fun readOrNull(path: String): ByteArray? {
         val resourceStream =
             if (classLoader != null) {

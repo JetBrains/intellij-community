@@ -12,6 +12,8 @@ import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import kotlinx.coroutines.CoroutineScope
+import java.net.URI
+import java.nio.file.Path
 import java.util.ServiceLoader
 import org.jetbrains.annotations.ApiStatus
 
@@ -96,6 +98,18 @@ fun deferredIconDescriptor(
   evaluator: suspend () -> IconDescriptor,
 ): IconDescriptor = IconManager.getInstance().deferredIconDescriptor(placeholder, evaluator)
 
-fun imageIconDescriptor(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
-    image(path, classLoader, modifier)
+/** An icon of the image resource at [path] in [classLoader], see [IconDesigner.image]. */
+fun imageIconDescriptor(path: String, classLoader: ClassLoader, modifier: IconModifier = IconModifier): IconDescriptor =
+    iconDescriptor {
+        image(path, classLoader, modifier)
+    }
+
+/** An icon of the image file at [path], see [IconDesigner.imageFile]. */
+fun imageFileIconDescriptor(path: Path, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
+    imageFile(path, modifier)
+}
+
+/** An icon of the image at [url], see [IconDesigner.imageUrl]. */
+fun imageUrlIconDescriptor(url: URI, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
+    imageUrl(url, modifier)
 }

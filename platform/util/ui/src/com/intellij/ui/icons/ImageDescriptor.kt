@@ -46,7 +46,8 @@ class ImageDescriptor(
 @Internal
 fun createImageDescriptorList(path: String, isDark: Boolean, isStroke: Boolean, pixScale: Float): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-  val result = if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
+  // a local file, also in an archive (`jar:file:/` and `jar:file:///`), has variants: only another URL has none
+  val result = if (!path.startsWith(FILE_SCHEME_PREFIX) && !path.startsWith("jar:$FILE_SCHEME_PREFIX") && path.contains("://")) {
     val qI = path.lastIndexOf('?')
     val isSvg = (if (qI == -1) path else path.substring(0, qI)).endsWith(".svg", ignoreCase = true)
     listOf(ImageDescriptor(SuffixPathTransform(""), scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))

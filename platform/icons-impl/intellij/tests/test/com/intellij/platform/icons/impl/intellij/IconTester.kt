@@ -18,6 +18,7 @@ import com.intellij.platform.icons.impl.rendering.DefaultIconRendererManager
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 import com.intellij.platform.icons.impl.rendering.DefaultScalingContext
+import com.intellij.platform.icons.impl.rendering.nested
 import com.intellij.platform.icons.impl.rendering.resolve
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.DrawMode
@@ -228,7 +229,7 @@ class TestPaintingContext(
     overrideColorFilter: ColorFilter?,
   ): LayerPaintingContext {
     return TestPaintingContext(
-      DefaultScalingContext(scaling.displayDensity, scaling.contextScale * scale),
+      scaling.nested(scale),
       result,
       x ?: offsetX,
       y ?: offsetY,
