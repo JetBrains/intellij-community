@@ -10,6 +10,8 @@
 //   - test-name: each test name in parentheses after a `[@test]` path is a test that the file declares (testNames.ts).
 //   - link, anchor: each relative `.md` link of a spec or a prose doc names an existing file, and its `#anchor` names
 //     a heading of that file by its GitHub slug.
+//   - proposal: a section whose heading ends with ` (Proposed)` holds no `[@test]` line, and a spec names it in quotes
+//     only with the mark (specProposals.ts). The rule reads each spec of the config, and no delta.
 //   - backlink: each `// @spec <path>` line of a Kotlin or Java file under `sourceRoots` names an existing file, by its
 //     path from the repository root. A config without `sourceRoots` reads no source.
 // The style rules apply when `specs.style` is `plain-1`, to each spec that declares `style: plain-1`:
@@ -43,6 +45,7 @@ import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import { contentDir, isMainModule, openspecArchiveDesigns, openspecDeltaFiles, posixRelative, repoRoot, runCheck, SPEC_SKIP_DIRS, specFiles, walkFiles } from './paths.ts'
 import { countWords, type LinedText, normalize, splitSentences } from './sentences.ts'
 import { readSourceFile } from './sourceCache.ts'
+import { proposalFindings } from './specProposals.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { OPENSPEC_SPEC_FILE, requirementGroup } from './sourcePaths.ts'
 import { declaresTest, testLinkNames } from './testNames.ts'
@@ -711,6 +714,8 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
       findings.push(`${path(file)}:${line}: ${rule}: ${message}`)
     }
   }
+
+  findings.push(...proposalFindings(files.map(({ file }) => ({ path: path(file), text: text(file) }))))
 
   for (const file of proseDocs) {
     markdownLinks(file)

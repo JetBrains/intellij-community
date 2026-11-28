@@ -137,6 +137,17 @@ describe('the spec reference check', () => {
     ])
   })
 
+  it('reports a test in a proposed section, and a pointer of another spec that drops the mark', () => {
+    const root = repo({
+      'spec/a.spec.md': spec('## Requirements\n\n### One way in (Proposed)\n\n- A prompt is a row.\n  [@test] ../src/A.kt\n'),
+      'spec/b.spec.md': spec('- See [a](a.spec.md), "One way in".\n'),
+    })
+    assert.deepEqual(specRefFindings(config(), root).findings.map(finding => finding.slice(0, finding.indexOf(';'))), [
+      'spec/a.spec.md:14: proposal: a [@test] link stands in the proposed section "One way in (Proposed)"',
+      `spec/b.spec.md:9: proposal: names the proposed section "One way in" without ' (Proposed)'`,
+    ])
+  })
+
   it('checks the budgets, the sections and the style of a plain-1 site, and only the references of a free site', () => {
     const long = Array.from({ length: 26 }, (_, i) => `w${i}`).join(' ')
     const requirement = Array.from({ length: 21 }, (_, i) => `r${i}`).join(' ')
