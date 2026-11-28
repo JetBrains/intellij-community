@@ -106,9 +106,10 @@ import org.junit.jupiter.api.condition.OS
 // windows, so a popup can be gone while Compose still believes it is showing, or the reverse: asserting on the
 // components' own visibility state alone would pass straight through the bug class these tests exist to catch.
 // The state is still checked, but only ever as a cross-check that it agrees with the screen.
+@Suppress("LargeClass")
 class CustomPopupRendererSpectreTest {
     @Test
-    fun `escape closes a hovered combo box`(): Unit = runSpectreTestWithCustomPopupRenderer {
+    fun `escape closes a hovered combo box`() = runSpectreTestWithCustomPopupRenderer {
         val app = SpectreTestApplication()
         app.start()
         try {
@@ -132,7 +133,7 @@ class CustomPopupRendererSpectreTest {
             "stuck. Needs a renderer-level signal. Enable once that exists."
     )
     @Test
-    fun `moving the pointer off a menu popup disarms its item`(): Unit = runSpectreTestWithCustomPopupRenderer {
+    fun `moving the pointer off a menu popup disarms its item`() = runSpectreTestWithCustomPopupRenderer {
         val app = SpectreTestApplication()
         app.start()
         try {
@@ -160,7 +161,7 @@ class CustomPopupRendererSpectreTest {
     }
 
     @Test
-    fun `escape closes a focusable menu when the owner window receives the key`(): Unit =
+    fun `escape closes a focusable menu when the owner window receives the key`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication()
             app.start()
@@ -184,7 +185,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `escape prioritizes speed search when dismiss on lose focus is disabled`(): Unit =
+    fun `escape prioritizes speed search when dismiss on lose focus is disabled`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication()
             app.start()
@@ -215,7 +216,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `clicking the chevron of an open combo box closes it without reopening it`(): Unit =
+    fun `clicking the chevron of an open combo box closes it without reopening it`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication()
             app.start()
@@ -244,7 +245,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `escape closes a hovered editable combo box`(): Unit = runSpectreTestWithCustomPopupRenderer {
+    fun `escape closes a hovered editable combo box`() = runSpectreTestWithCustomPopupRenderer {
         val app = SpectreTestApplication()
         app.start()
         try {
@@ -267,7 +268,7 @@ class CustomPopupRendererSpectreTest {
     }
 
     @Test
-    fun `popup window is never shown at screen origin or 1x1 size`(): Unit = runSpectreTestWithCustomPopupRenderer {
+    fun `popup window is never shown at screen origin or 1x1 size`() = runSpectreTestWithCustomPopupRenderer {
         val app = SpectreTestApplication()
         app.start()
         val observedVisibleBounds = CopyOnWriteArrayList<Rectangle>()
@@ -320,7 +321,7 @@ class CustomPopupRendererSpectreTest {
             "The non-blending Window.setShape fallback requires JBR.isRoundedCornersManagerSupported(), which is unavailable on Linux.",
     )
     @Test
-    fun `popup window applies window shape before becoming visible`(): Unit = runSpectreTestWithCustomPopupRenderer {
+    fun `popup window applies window shape before becoming visible`() = runSpectreTestWithCustomPopupRenderer {
         val previousBlending = System.getProperty("compose.interop.blending")
         System.setProperty("compose.interop.blending", "false")
         val firstShapeCallDialogVisible = AtomicReference<Boolean?>(null)
@@ -429,7 +430,7 @@ class CustomPopupRendererSpectreTest {
     }
 
     @Test
-    fun `non-focusable popup uses JWindow and does not dismiss an open focusable popup`(): Unit =
+    fun `non-focusable popup uses JWindow and does not dismiss an open focusable popup`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication {
                 var focusableVisible by remember { mutableStateOf(false) }
@@ -508,7 +509,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `focusable popup opened on mouse press stays open on the opening mouse release`(): Unit =
+    fun `focusable popup opened on mouse press stays open on the opening mouse release`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication {
                 var popupVisible by remember { mutableStateOf(false) }
@@ -560,7 +561,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `focusable popup routes owner window key events to popup content and ignores modified escape`(): Unit =
+    fun `focusable popup routes owner window key events to popup content and ignores modified escape`() =
         runSpectreTestWithCustomPopupRenderer {
             val ownerSawKeyDown = AtomicBoolean(false)
             val app = SpectreTestApplication {
@@ -571,6 +572,7 @@ class CustomPopupRendererSpectreTest {
 
                 LaunchedEffect(Unit) { ownerFocusRequester.requestFocus() }
 
+                @Suppress("ComplexCondition")
                 Column(
                     modifier =
                         Modifier.padding(24.dp).focusRequester(ownerFocusRequester).focusable().onPreviewKeyEvent {
@@ -675,7 +677,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `non-focusable popup with text field leaves typed keys to owner window and keeps popup field empty`(): Unit =
+    fun `non-focusable popup with text field leaves typed keys to owner window and keeps popup field empty`() =
         runSpectreTestWithCustomPopupRenderer {
             val ownerFieldState = TextFieldState("")
             val popupFieldState = TextFieldState("")
@@ -751,7 +753,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `inner popup content can consume escape before focusable popup dismisses`(): Unit =
+    fun `inner popup content can consume escape before focusable popup dismisses`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication {
                 var popupVisible by remember { mutableStateOf(false) }
@@ -828,7 +830,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `clicking a toggle button in the owner window closes an open focusable popup without reopening it`(): Unit =
+    fun `clicking a toggle button in the owner window closes an open focusable popup without reopening it`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication {
                 var popupVisible by remember { mutableStateOf(false) }
@@ -875,7 +877,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `clicking inside nested popups keeps ancestor popups open until owner toggle click`(): Unit =
+    fun `clicking inside nested popups keeps ancestor popups open until owner toggle click`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication {
                 var parentVisible by remember { mutableStateOf(false) }
@@ -999,7 +1001,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `popup preserves caller LocalDensity and provides its own ComposePanel as LocalComponent`(): Unit =
+    fun `popup preserves caller LocalDensity and provides its own ComposePanel as LocalComponent`() =
         runSpectreTestWithCustomPopupRenderer {
             val ownerComponentRef = AtomicReference<JComponent?>(null)
             val popupComponentRef = AtomicReference<JComponent?>(null)
@@ -1056,48 +1058,47 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `clicking a menu combo box with a selected item opens its popup`(): Unit =
-        runSpectreTestWithCustomPopupRenderer {
-            val items = listOf("Cat", "Elephant", "Sun")
-            val app = SpectreTestApplication {
-                var selectedItem by remember { mutableIntStateOf(0) }
+    fun `clicking a menu combo box with a selected item opens its popup`() = runSpectreTestWithCustomPopupRenderer {
+        val items = listOf("Cat", "Elephant", "Sun")
+        val app = SpectreTestApplication {
+            var selectedItem by remember { mutableIntStateOf(0) }
 
-                Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MenuComboBox(
-                        labelContent = { Text(items[selectedItem]) },
-                        modifier = Modifier.width(200.dp).testTag("spectre.menuComboBox"),
-                        content = {
-                            items.forEachIndexed { index, item ->
-                                selectableItem(selected = index == selectedItem, onClick = { selectedItem = index }) {
-                                    Text(item)
-                                }
+            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                MenuComboBox(
+                    labelContent = { Text(items[selectedItem]) },
+                    modifier = Modifier.width(200.dp).testTag("spectre.menuComboBox"),
+                    content = {
+                        items.forEachIndexed { index, item ->
+                            selectableItem(selected = index == selectedItem, onClick = { selectedItem = index }) {
+                                Text(item)
                             }
-                        },
-                    )
-                }
-            }
-            app.start()
-            try {
-                val automator = ComposeAutomator.inProcess(RobotDriver.synthetic(app.awaitWindow()))
-
-                val menuComboBox = automator.waitForNode(tag = "spectre.menuComboBox")
-                automator.click(menuComboBox)
-                automator.waitForNode(tag = COMBO_BOX_POPUP_TAG, timeout = 5.seconds)
-
-                automator.click(automator.waitForNode(text = "Elephant"))
-                automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 5.seconds)
-                automator.waitForNode(text = "Elephant")
-
-                // Reopen when a different item is selected.
-                automator.click(automator.waitForNode(tag = "spectre.menuComboBox"))
-                automator.waitForNode(tag = COMBO_BOX_POPUP_TAG, timeout = 5.seconds)
-            } finally {
-                app.stop()
+                        }
+                    },
+                )
             }
         }
+        app.start()
+        try {
+            val automator = ComposeAutomator.inProcess(RobotDriver.synthetic(app.awaitWindow()))
+
+            val menuComboBox = automator.waitForNode(tag = "spectre.menuComboBox")
+            automator.click(menuComboBox)
+            automator.waitForNode(tag = COMBO_BOX_POPUP_TAG, timeout = 5.seconds)
+
+            automator.click(automator.waitForNode(text = "Elephant"))
+            automator.waitUntilGone(tag = COMBO_BOX_POPUP_TAG, timeout = 5.seconds)
+            automator.waitForNode(text = "Elephant")
+
+            // Reopen when a different item is selected.
+            automator.click(automator.waitForNode(tag = "spectre.menuComboBox"))
+            automator.waitForNode(tag = COMBO_BOX_POPUP_TAG, timeout = 5.seconds)
+        } finally {
+            app.stop()
+        }
+    }
 
     @Test
-    fun `clicking a popup menu item does not make the popup dialog focusable or deactivate the owner window`(): Unit =
+    fun `clicking a popup menu item does not make the popup dialog focusable or deactivate the owner window`() =
         runSpectreTestWithCustomPopupRenderer {
             val app = SpectreTestApplication()
             app.start()
@@ -1143,7 +1144,7 @@ class CustomPopupRendererSpectreTest {
         }
 
     @Test
-    fun `keyboard navigation through nested popup menus and submenus routes to topmost menu and selects item`(): Unit =
+    fun `keyboard navigation through nested popup menus and submenus routes to topmost menu and selects item`() =
         runSpectreTestWithCustomPopupRenderer {
             val selectedItem = AtomicReference("None")
             val app = SpectreTestApplication {

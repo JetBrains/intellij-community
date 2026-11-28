@@ -70,7 +70,7 @@ public class MarkdownProcessor(
     private val markdownMode: MarkdownMode = MarkdownMode.Standalone,
     private val commonMarkParser: Parser =
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
-    private val parseEmbeddedHtml: Boolean = false,
+    parseEmbeddedHtml: Boolean = false,
 ) {
     @Suppress("UnusedPrivateProperty", "DEPRECATION") // languageRecognizer is only here for binary compat reasons
     @Deprecated(

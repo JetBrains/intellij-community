@@ -11,10 +11,19 @@ import java.io.StringReader
 import java.util.concurrent.CompletableFuture
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.system.exitProcess
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
 
 private const val JAVA_INFO_KEY = "@@rules_java+//java/private:java_info.bzl%JavaInfo"
+
+// The attribute of a `kt_kotlinc_options` target that holds the opt-in annotations.
+private const val OPT_IN_ATTRIBUTE = "x_optin"
+
+// `.idea/modules.xml` starts the `filepath` attribute of each module with this prefix.
+private const val PROJECT_DIR_PREFIX = "\$PROJECT_DIR\$/"
+
+private const val JEWEL_DIR = "platform/jewel/"
 
 // Run it like: bazel run //platform/jewel/build-scripts/bazel:detekt
 fun main(args: Array<String>) {
@@ -24,7 +33,7 @@ fun main(args: Array<String>) {
     // UnusedImport require full Analysis API type resolution to fire at all (they're silently skipped
     // under light mode). To match Gradle's behavior 1:1 rather than just approximating it, we scope both
     // --input and --classpath to exactly the same set of modules Gradle's jewel-linting convention plugin
-    // covers (derived from their _test_lib targets) — scanning wider than that (e.g. build-scripts/bazel or
+    // covers (the JPS modules under platform/jewel). Scanning wider than that (e.g. build-scripts/bazel or
     // detekt-plugin, neither of which are "jewel convention" modules) resolves against the wrong classpath
     // and produces bogus compiler errors that undermine the whole analysis.
     println("${"INFO: ".asWarning()}Resolving Jewel module scope and classpath for --analysis-mode full...")
@@ -87,31 +96,24 @@ internal class JewelBazelScope(val inputDirs: List<String>, val classpath: Strin
 private fun resolveJewelBazelScope(workspaceDir: File): JewelBazelScope {
     val bazelCmd = File(workspaceDir, "bazel.cmd").absolutePath
 
-    // The "_test_lib" suffix is a naming convention from the current JPS-to-Bazel generator, not a Jewel concept.
-    // It happens to match Gradle's own module list exactly today (verified: every module applying the `jewel`
-    // convention plugin has one, except detekt-plugin, which has no Bazel target at all). Once BUILD.bazel files
-    // stop being generated from the JPS model and become hand-authored, replace this with an explicit per-module
-    // tag instead -- that's unsafe today only because a generator rewrite would silently erase it.
-    val testLibTargets =
-        runBazelCommand(bazelCmd, workspaceDir, "query", """filter("_test_lib$", //platform/jewel/...)""")
-            .lineSequence()
-            .filter { it.startsWith("//") }
-            .toList()
+    // `.idea/modules.xml` lists the JPS modules, and Detekt checks the ones under platform/jewel. The file is part
+    // of the JPS model, like the `jps_module` records. If the monorepo drops that model, this list needs another
+    // source.
+    val moduleDirs = parseJewelModuleDirs(File(workspaceDir, ".idea/modules.xml").readText())
 
-    check(testLibTargets.isNotEmpty()) { "Could not find any Jewel _test_lib targets to scope input/classpath from." }
+    check(moduleDirs.isNotEmpty()) { "Could not find any Jewel module in .idea/modules.xml." }
 
-    val modulePackages = testLibTargets.map { it.substringBefore(':') }.distinct().sorted()
-    val inputDirs = modulePackages.map { "$workspaceDir/${it.removePrefix("//")}" }
+    val inputDirs = moduleDirs.map { "$workspaceDir/$it" }
 
-    // query/cquery only analyze the build graph, they never execute build actions themselves. Building just the
-    // _test_lib targets isn't enough either since Bazel only materializes a directly-requested target's own default
-    // outputs, and _test_lib wires its module in via runtime_deps - an edge Bazel does NOT build merely because
-    // the requesting target was built. Building the whole platform/jewel tree directly requests every module's own
-    // target too, forcing their outputs to exist and be current. It's a single  wildcard pattern (no argv-length
-    // risk from an explicit target list, unlike e.g. `deps(...)`, which for this tree expands to tens of thousands
-    // of individual labels) and a near-instant no-op when already warm. build-scripts is excluded because its
-    // targets never end in _test_lib, so they're never part of testLibTargets below; building them here would
-    // just be wasted work.
+    // Each module folder is a Bazel package. Detekt reads every Kotlin file in the folder, so the classpath comes
+    // from every library in the package. Some of them are outside the JPS model, for example the Spectre tests.
+    val modulePackageTargets = moduleDirs.joinToString(" + ") { "//$it:*" }
+    val libraryTargets = queryTargets(bazelCmd, workspaceDir, """kind("jvm_library", $modulePackageTargets)""")
+
+    // query and cquery only read the build graph, so the script builds the platform/jewel tree first. The jars of
+    // the classpath then exist and are current. One wildcard pattern keeps the command line short, and a warm
+    // build takes almost no time. The build skips build-scripts, because that folder has no JPS module and adds
+    // nothing to the classpath.
     println("${"INFO: ".asWarning()}Building platform/jewel before assembling classpath...")
     runBazelCommand(
         bazelCmd,
@@ -122,17 +124,17 @@ private fun resolveJewelBazelScope(workspaceDir: File): JewelBazelScope {
         "-//platform/jewel/build-scripts/...",
     )
 
-    // create_kotlinc_options(opt_in = [...]) is exposed as a structured "opt_in" attribute on the
+    // create_kotlinc_options(opt_in = [...]) is exposed as a structured "x_optin" attribute on the
     // "*_rules_kotlin_options" target the kt_kotlinc_options macro creates for each module, so it's read via
     // `bazel query --output=xml` rather than regexing BUILD.bazel text. This also correctly picks up the
     // macro's own default opt-in list for any module that ever omits opt_in explicitly, which a text-only scan
     // over BUILD.bazel could never see.
-    val optInQuery = """kind("kt_kotlinc_options", ${modulePackages.joinToString(" + ") { "$it:*" }})"""
+    val optInQuery = """kind("kt_kotlinc_options", $modulePackageTargets)"""
     val optInXml = runBazelCommand(bazelCmd, workspaceDir, "query", optInQuery, "--output=xml")
     val optInAnnotations = parseOptInAnnotations(optInXml)
 
     check(optInAnnotations.isNotEmpty()) {
-        "Could not find any opt_in annotations in the scoped modules' kt_kotlinc_options targets."
+        "Could not find any $OPT_IN_ATTRIBUTE annotations in the scoped modules' kt_kotlinc_options targets."
     }
 
     // "external/..." paths (fetched deps) live under output_base itself; only repos touched by the most
@@ -146,11 +148,8 @@ private fun resolveJewelBazelScope(workspaceDir: File): JewelBazelScope {
     val outputBase = infoByKey.getValue("output_base")
     val executionRoot = infoByKey.getValue("execution_root")
 
-    // Deliberately transitive_runtime_jars, not transitive_compile_time_jars: _test_lib targets wire their
-    // own module in via runtime_deps (not deps), so compile_time_jars misses everything reachable only
-    // through that edge (e.g. gfm-strikethrough's commonmark-ext-gfm-strikethrough dep). runtime_jars is a
-    // strict superset that's what we actually want here — full visibility for type resolution, not the
-    // stricter compile/runtime isolation Bazel enforces for the build graph itself.
+    // The classpath uses transitive_runtime_jars. The other list, transitive_compile_time_jars, leaves out what a
+    // library reaches only through runtime_deps, and Detekt needs the full classpath to resolve types.
     val starlarkExpr =
         """"\n".join([f.path for f in providers(target)["$JAVA_INFO_KEY"].transitive_runtime_jars.to_list()])"""
 
@@ -159,7 +158,7 @@ private fun resolveJewelBazelScope(workspaceDir: File): JewelBazelScope {
                 bazelCmd,
                 workspaceDir,
                 "cquery",
-                testLibTargets.joinToString(" + "),
+                libraryTargets.joinToString(" + "),
                 "--output=starlark",
                 "--starlark:expr=$starlarkExpr",
             )
@@ -176,13 +175,29 @@ private fun resolveJewelBazelScope(workspaceDir: File): JewelBazelScope {
     return JewelBazelScope(inputDirs, jarPaths.joinToString(File.pathSeparator), optInAnnotations)
 }
 
+/**
+ * Returns the folders of the JPS modules under platform/jewel, as paths from the workspace root.
+ *
+ * @param modulesXml The content of `.idea/modules.xml`. It registers each JPS module with the path of its `.iml` file.
+ */
+internal fun parseJewelModuleDirs(modulesXml: String): List<String> {
+    val modules = parseXml(modulesXml).getElementsByTagName("module")
+    return (0 until modules.length)
+        .asSequence()
+        .map { (modules.item(it) as Element).getAttribute("filepath").removePrefix(PROJECT_DIR_PREFIX) }
+        .filter { it.startsWith(JEWEL_DIR) }
+        .map { it.substringBeforeLast('/') }
+        .distinct()
+        .sorted()
+        .toList()
+}
+
 internal fun parseOptInAnnotations(xml: String): List<String> {
-    val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(xml)))
-    val lists = document.getElementsByTagName("list")
+    val lists = parseXml(xml).getElementsByTagName("list")
     return (0 until lists.length)
         .asSequence()
         .map { lists.item(it) as Element }
-        .filter { it.getAttribute("name") == "opt_in" }
+        .filter { it.getAttribute("name") == OPT_IN_ATTRIBUTE }
         .flatMap { listElement ->
             val strings = listElement.getElementsByTagName("string")
             (0 until strings.length).map { (strings.item(it) as Element).getAttribute("value") }
@@ -191,6 +206,12 @@ internal fun parseOptInAnnotations(xml: String): List<String> {
         .sorted()
         .toList()
 }
+
+private fun parseXml(xml: String): Document =
+    DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(xml)))
+
+private fun queryTargets(bazelCmd: String, workspaceDir: File, query: String): List<String> =
+    runBazelCommand(bazelCmd, workspaceDir, "query", query).lineSequence().filter { it.startsWith("//") }.toList()
 
 private fun runBazelCommand(bazelCmd: String, workspaceDir: File, vararg args: String): String {
     // Bazel writes progress noise (INFO:, Loading:, Analyzing:, ...) to stderr and the actual command result

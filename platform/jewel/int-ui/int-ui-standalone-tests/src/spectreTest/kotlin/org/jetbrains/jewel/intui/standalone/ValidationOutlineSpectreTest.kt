@@ -45,9 +45,9 @@ import org.junit.jupiter.api.Test
 // Assertions are on framebuffer pixels in each control's bounds. Compose state alone would not
 // catch a missing Error/Warning outline.
 class ValidationOutlineSpectreTest {
-    @Test fun `light Int UI paints checkbox and radio validation outlines`(): Unit = assertOutlines(isDark = false)
+    @Test fun `light Int UI paints checkbox and radio validation outlines`() = assertOutlines(isDark = false)
 
-    @Test fun `dark Int UI paints checkbox and radio validation outlines`(): Unit = assertOutlines(isDark = true)
+    @Test fun `dark Int UI paints checkbox and radio validation outlines`() = assertOutlines(isDark = true)
 }
 
 private fun assertOutlines(isDark: Boolean): Unit = runSpectreTest {
