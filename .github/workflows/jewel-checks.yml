@@ -368,12 +368,18 @@ jobs:
 
       - name: Run the Spectre headful UI tests
         # Not redundant: JDialogRenderer uses RenderSettings.SwingGraphics on Windows.
+        # windows-latest runners have no hardware GPU: DXGI exposes Microsoft Basic Render Driver (WARP) as an
+        # adapter without DXGI_ADAPTER_FLAG_SOFTWARE, so Skiko selects Direct3DRenderer, which intermittently
+        # stalls in flushFrame()/disposeDevice() and blocks frame ticks (JEWEL-1491). Setting
+        # SKIKO_RENDER_API=SOFTWARE_FAST forces software rendering (matching Linux CI where Skiko rejects llvmpipe
+        # and falls back to software) while still exercising JDialogRenderer's SwingGraphics and Win32 AWT behavior.
         # The IDE end-to-end test has its own job. Its build compiles the whole platform, and the standalone tests
         # time out when they run while that build is going on.
         run: >
           ./bazel.cmd test //platform/jewel/...
           --build_tests_only
           --test_tag_filters=requires-display,-jewel-ide-e2e
+          --test_env=SKIKO_RENDER_API=SOFTWARE_FAST
           --test_output=errors
 
       - name: Upload Bazel test logs
