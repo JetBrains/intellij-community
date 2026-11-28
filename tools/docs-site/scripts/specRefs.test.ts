@@ -112,6 +112,16 @@ describe('the spec reference check', () => {
     assert.throws(() => checkSpecRefs(config(), root), /^Error: specRefs: 6 finding\(s\)/)
   })
 
+  it('reports each test name of a [@test] link that the file does not declare', () => {
+    const root = repo({
+      'src/ATest.kt': '@Test fun `a sentence name`() {}\n@Test fun bareName() {}\n',
+      'spec/a.spec.md': spec('- The packer packs.\n  [@test] ../src/ATest.kt (`a sentence name`, `gone name`,\n  `bareName`)\n- The glob names no test.\n  [@test] ../src/*Test.kt (`gone too`)\n'),
+    })
+    assert.deepEqual(specRefFindings(config(), root).findings, [
+      `spec/a.spec.md:10: test-name: [@test] '../src/ATest.kt' names 'gone name', which that file declares nowhere; rename the link, or write the test`,
+    ])
+  })
+
   it('checks the budgets, the sections and the style of a plain-1 site, and only the references of a free site', () => {
     const long = Array.from({ length: 26 }, (_, i) => `w${i}`).join(' ')
     const requirement = Array.from({ length: 21 }, (_, i) => `r${i}`).join(' ')

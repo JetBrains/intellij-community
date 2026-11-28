@@ -7,6 +7,7 @@
 //     is relative to the folder of the spec, or to the repository root in an OpenSpec root. An entry with `*` or `?`
 //     is a glob.
 //   - test-link: each `[@test]` link of a spec names an existing file, on the same base as a target.
+//   - test-name: each test name in parentheses after a `[@test]` path is a test that the file declares (testNames.ts).
 //   - link, anchor: each relative `.md` link of a spec or a prose doc names an existing file, and its `#anchor` names
 //     a heading of that file by its GitHub slug.
 // The style rules apply when `specs.style` is `plain-1`, to each spec that declares `style: plain-1`:
@@ -41,6 +42,7 @@ import { contentDir, isMainModule, openspecArchiveDesigns, openspecDeltaFiles, p
 import { countWords, type LinedText, normalize, splitSentences } from './sentences.ts'
 import type { SiteConfig } from './siteConfig.ts'
 import { OPENSPEC_SPEC_FILE, requirementGroup } from './sourcePaths.ts'
+import { declaresTest, testLinkNames } from './testNames.ts'
 
 /** The part of the site config that the check reads. */
 export type SpecRefsConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>
@@ -596,6 +598,17 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
         seen.add(link)
         if (!resolvesReference(base, link)) {
           findings.push(`${path(file)}:${lineAt(source, match.index)}: test-link: [@test] '${link}' matches no existing file`)
+        }
+      }
+      const names = testLinkNames(source, match.index + match[0].length)
+      const target = resolve(base, link)
+      // a path that names no file, or a glob, has the test-link finding or names no test
+      if (names.length === 0 || !existsSync(target) || !statSync(target).isFile()) {
+        continue
+      }
+      for (const name of names) {
+        if (!declaresTest(target, text(target), name)) {
+          findings.push(`${path(file)}:${lineAt(source, match.index)}: test-name: [@test] '${link}' names '${name}', which that file declares nowhere; rename the link, or write the test`)
         }
       }
     }

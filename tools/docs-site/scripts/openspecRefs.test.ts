@@ -54,7 +54,7 @@ A CI build MUST write each result.
 
 /** A tree with one source file, one guide, and the given files. */
 function repo(files: Record<string, string>): string {
-  return temporaryTree('openspec-refs-', { 'src/A.kt': 'class A\n', 'docs/guides/guide.md': '# Guide\n\n## The first part\n', 'os/openspec/config.yaml': 'schema: spec-driven\n', ...files })
+  return temporaryTree('openspec-refs-', { 'src/A.kt': 'class A {\n  @Test fun `reads only`() {}\n}\n', 'docs/guides/guide.md': '# Guide\n\n## The first part\n', 'os/openspec/config.yaml': 'schema: spec-driven\n', ...files })
 }
 
 describe('the spec files of an OpenSpec root', () => {
