@@ -4,9 +4,12 @@ package com.intellij.platform.icons.impl.design
 import com.intellij.platform.icons.design.IconUnit
 import com.intellij.platform.icons.impl.modifiers.asFractionalPixels
 import com.intellij.platform.icons.impl.rendering.DefaultScalingContext
+import com.intellij.platform.icons.impl.rendering.iconScale
+import com.intellij.platform.icons.rendering.ScalingContext
 import com.intellij.platform.icons.scale.FactorScale
 import com.intellij.platform.icons.scale.FillAreaScale
 import com.intellij.platform.icons.scale.FitAreaScale
+import com.intellij.platform.icons.scale.IconScale
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,16 +30,35 @@ class DefaultFactorScale(override val factor: Double) : FactorScale {
 }
 
 @Serializable
-class DefaultFitAreaScale(override val width: IconUnit, override val height: IconUnit, override val relative: Boolean) :
-    FitAreaScale {
-    override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float {
+class DefaultFitAreaScale(
+    override val width: IconUnit,
+    override val height: IconUnit,
+    override val relative: Boolean,
+    override val upscale: Boolean = true,
+    override val downscale: Boolean = true,
+) : FitAreaScale {
+    /** The constructor without [upscale] and [downscale], kept for binary compatibility. */
+    constructor(
+        width: IconUnit,
+        height: IconUnit,
+        relative: Boolean,
+    ) : this(width, height, relative, upscale = true, downscale = true)
+
+    override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float =
+        toFactor(density, originalWidth, originalHeight, contextScale, iconScale = 1f)
+
+    /** [toFactor] in a context with the scale of the whole icon [iconScale]: an area with `relative = false` keeps it. */
+    internal fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float, iconScale: Float): Float {
         if (originalWidth <= 0 || originalHeight <= 0) return 0f
-        val scaling = DefaultScalingContext(density, if (relative) contextScale else 1f)
+        val scaling = DefaultScalingContext(density, if (relative) contextScale else iconScale)
         val realWidth = width.asFractionalPixels(scaling)
         val realHeight = height.asFractionalPixels(scaling)
         val widthFactor = realWidth / originalWidth
         val heightFactor = realHeight / originalHeight
-        return widthFactor.coerceAtMost(heightFactor)
+        var factor = widthFactor.coerceAtMost(heightFactor)
+        if (!upscale) factor = factor.coerceAtMost(1f)
+        if (!downscale) factor = factor.coerceAtLeast(1f)
+        return factor
     }
 
     override fun equals(other: Any?): Boolean {
@@ -46,6 +68,8 @@ class DefaultFitAreaScale(override val width: IconUnit, override val height: Ico
         other as DefaultFitAreaScale
 
         if (relative != other.relative) return false
+        if (upscale != other.upscale) return false
+        if (downscale != other.downscale) return false
         if (width != other.width) return false
         if (height != other.height) return false
 
@@ -54,12 +78,15 @@ class DefaultFitAreaScale(override val width: IconUnit, override val height: Ico
 
     override fun hashCode(): Int {
         var result = relative.hashCode()
+        result = 31 * result + upscale.hashCode()
+        result = 31 * result + downscale.hashCode()
         result = 31 * result + width.hashCode()
         result = 31 * result + height.hashCode()
         return result
     }
 
-    override fun toString(): String = "DefaultFitAreaScale(width=$width, height=$height, relative=$relative)"
+    override fun toString(): String =
+        "DefaultFitAreaScale(width=$width, height=$height, relative=$relative, upscale=$upscale, downscale=$downscale)"
 }
 
 @Serializable
@@ -68,9 +95,13 @@ class DefaultFillAreaScale(
     override val height: IconUnit,
     override val relative: Boolean,
 ) : FillAreaScale {
-    override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float {
+    override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float =
+        toFactor(density, originalWidth, originalHeight, contextScale, iconScale = 1f)
+
+    /** [toFactor] in a context with the scale of the whole icon [iconScale]: an area with `relative = false` keeps it. */
+    internal fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float, iconScale: Float): Float {
         if (originalWidth <= 0 || originalHeight <= 0) return 0f
-        val scaling = DefaultScalingContext(density, if (relative) contextScale else 1f)
+        val scaling = DefaultScalingContext(density, if (relative) contextScale else iconScale)
         val realWidth = width.asFractionalPixels(scaling)
         val realHeight = height.asFractionalPixels(scaling)
         val widthFactor = originalWidth / realWidth
@@ -100,3 +131,16 @@ class DefaultFillAreaScale(
 
     override fun toString(): String = "DefaultFillAreaScale(width=$width, height=$height, relative=$relative)"
 }
+
+/**
+ * The factor of this scale for the content [originalWidth] × [originalHeight] in [scaling]. An area with
+ * `relative = false` keeps the scale of the whole icon of [scaling], see [DefaultScalingContext.iconScale].
+ */
+internal fun IconScale.toFactor(scaling: ScalingContext, originalWidth: Int, originalHeight: Int): Float =
+    when (this) {
+        is DefaultFitAreaScale ->
+            toFactor(scaling.displayDensity, originalWidth, originalHeight, scaling.contextScale, scaling.iconScale)
+        is DefaultFillAreaScale ->
+            toFactor(scaling.displayDensity, originalWidth, originalHeight, scaling.contextScale, scaling.iconScale)
+        else -> toFactor(scaling.displayDensity, originalWidth, originalHeight, scaling.contextScale)
+    }

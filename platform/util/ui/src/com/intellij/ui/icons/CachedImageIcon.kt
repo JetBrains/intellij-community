@@ -131,6 +131,18 @@ open class CachedImageIcon private constructor(
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = loader.getCoords()
 
+  /**
+   * The coordinates of the original image before a path patch, when the icon paints that image as it is: without a filter,
+   * a color patcher, a scale or a fixed dark state. Otherwise `null`.
+   */
+  @Internal
+  fun getPlainImageCoords(): Pair<String, ClassLoader>? {
+    if (localFilterSupplier != null || colorPatcher !== GlobalColorPatcherStrategy || scaleContext != null || attributes.flags != 0) {
+      return null
+    }
+    return originalLoader.getCoords()
+  }
+
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
@@ -257,9 +269,8 @@ open class CachedImageIcon private constructor(
   @Internal
   fun getObjScale(): Double? = scaleContext?.getScale(ScaleType.OBJ_SCALE)
 
-  fun scale(scaleContext: ScaleContext): Icon {
-    return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
-  }
+  /** This icon at [scaleContext]. The current path patch of the theme applies, as for [getIconWidth] and a paint. */
+  fun scale(scaleContext: ScaleContext): Icon = resolveActualIcon(scaleContext)
 
   fun scale(scale: Float, ancestor: Component? = null, isDark: Boolean? = null): CachedImageIcon {
     if (scale == 1.0f && ancestor == null) {

@@ -12,6 +12,7 @@ import com.intellij.util.SVGLoader
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.minutes
@@ -69,6 +70,16 @@ private val strokeIconCache = Caffeine.newBuilder()
     registerIconCacheCleaner(it::invalidateAll)
   }
 
+/**
+ * An icon that [toStrokeIcon] cannot stroke by recoloring `CachedImageIcon`s, so it strokes itself, e.g. an icon rendered
+ * through the icons API.
+ */
+@ApiStatus.Internal
+interface StrokeIconProvider {
+  /** This icon as [toStrokeIcon] draws a `CachedImageIcon`: its stroke variant, or an outline, in [resultColor]. */
+  fun createStrokeIcon(resultColor: Color): Icon
+}
+
 fun toStrokeIcon(icon: Icon, resultColor: Color): Icon {
   return strokeIconCache.get(IconAndColorCacheKey(icon = icon, color = resultColor))
 }
@@ -76,7 +87,8 @@ fun toStrokeIcon(icon: Icon, resultColor: Color): Icon {
 private fun computeStrokeIcon(original: Icon, resultColor: Color): Icon {
   val palettePatcher = getStrokePatcher(resultColor = resultColor, strokeColors = strokeColors, backgroundColors = backgroundColors)
   val strokeReplacer = getStrokePatcher(resultColor = resultColor, strokeColors = strokeColorsForReplacer, backgroundColors = null)
-  return replaceCachedImageIcons(icon = original) { cachedImageIcon ->
+  val otherIconReplacer = { icon: Icon -> (icon as? StrokeIconProvider)?.createStrokeIcon(resultColor) }
+  return replaceCachedImageIcons(icon = original, otherIconReplacer = otherIconReplacer) { cachedImageIcon ->
     replaceCachedImageIcon(icon = cachedImageIcon,
                            palettePatcher = palettePatcher,
                            resultColor = resultColor,

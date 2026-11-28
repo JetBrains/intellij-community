@@ -52,6 +52,14 @@ object DefaultUnitsFactory : UnitsFactory {
     override fun fitAreaScale(width: IconUnit, height: IconUnit, relative: Boolean): FitAreaScale =
         DefaultFitAreaScale(width, height, relative)
 
+    override fun fitAreaScale(
+        width: IconUnit,
+        height: IconUnit,
+        relative: Boolean,
+        upscale: Boolean,
+        downscale: Boolean,
+    ): FitAreaScale = DefaultFitAreaScale(width, height, relative, upscale, downscale)
+
     override fun fillAreaScale(width: IconUnit, height: IconUnit, relative: Boolean): FillAreaScale =
         DefaultFillAreaScale(width, height, relative)
 

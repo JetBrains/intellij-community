@@ -28,4 +28,6 @@ interface ModifiersFactory {
     fun stroke(color: Color): IconModifier
 
     fun patchSvg(svgPatcher: SvgPatcher): IconModifier
+
+    fun sizeVariants(policy: SizeVariantPolicy): IconModifier
 }

@@ -24,6 +24,7 @@ import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.rendering.IconRendererManager
+import com.intellij.platform.icons.scale.FactorScale
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.ui.AnimatedIcon
@@ -77,7 +78,8 @@ class IntelliJIconManager : DefaultIconManager() {
   }
 
   override fun toIconDescriptor(swingIcon: Icon): IconDescriptor {
-    if (swingIcon is SwingIcon && swingIcon.scale == null) return swingIcon.iconDescriptor
+    // the identity scale is no scale: an update() that sets the icon of Presentation.getIcon() back keeps its descriptor
+    if (swingIcon is SwingIcon && swingIcon.iconScale.isIdentity()) return swingIcon.iconDescriptor
     return if (swingIcon is SwingIcon) {
       unpackSwingIcon(swingIcon)
     } else {
@@ -101,12 +103,12 @@ class IntelliJIconManager : DefaultIconManager() {
   }
 
   private fun unpackSwingIcon(swingIcon: SwingIcon): IconDescriptor {
-    return if (swingIcon.scale != null) {
+    return if (swingIcon.iconScale != null) {
       iconDescriptor {
         addSwingLayer(
           this,
           swingIcon,
-          IconModifier.scale(swingIcon.scale)
+          IconModifier.scale(swingIcon.iconScale)
         )
       }
     } else swingIcon.iconDescriptor
@@ -168,3 +170,5 @@ interface DeferredIconListener {
     val TOPIC: Topic<DeferredIconListener> = Topic(DeferredIconListener::class.java, BroadcastDirection.NONE)
   }
 }
+
+private fun IconScale?.isIdentity(): Boolean = this == null || (this is FactorScale && factor == 1.0)
