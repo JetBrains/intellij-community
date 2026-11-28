@@ -122,7 +122,6 @@
     "plugins/air/tests/integration/air_ui_daemon_runtime.bzl": [],
     "plugins/air/tests/integration/bridge_plugin_dir_test.bzl": [],
     "plugins/air/tests/integration/gui-chat": [],
-    "plugins/air/tests/integration/ide": [],
     "plugins/air/tests/integration/lanes.json": [],
     "plugins/air/tests/integration/testData": [],
     "plugins/air/tests/integration/ui": [],

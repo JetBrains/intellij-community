@@ -293,8 +293,7 @@ impl fmt::Display for GuestOs {
 /// runs the host's architecture for the same reason. The Docker backend's engine gate checks that the engine runs
 /// this architecture, so a mismatch (an amd64 engine on an Apple-silicon Mac, a remote `DOCKER_HOST` of another
 /// architecture) is a named refusal and never a lane built for the wrong guest. The
-/// Starlark side of the same rule is two keys: `//plugins/air/tests/integration/ide:air_lane_guest_linux_on_host_linux_x64` for a Linux x86_64
-/// host, whose own build is the guest's, and `//plugins/air/tests/integration/ide:air_lane_guest_linux_x64_cross` for another x86_64 host.
+/// Starlark side of the same rule is `linux_guest_platform` of `community/build/host_platforms.bzl`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum GuestArch {
     Arm64,

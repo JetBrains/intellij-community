@@ -409,9 +409,9 @@ route exists. No lane time is measured for this route.
 
 The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
 lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
-`//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//build:idea_dist_linux_aarch64` on
+`//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//build:idea_dist_linux_guest` on
 the default guest, and `//build:idea_dist` on a macOS one. The field `dist.config`
-of the descriptor names the file of that distribution's `_ide_config` companion target, not the distribution itself.
+of the descriptor names the config file of that distribution, not the distribution itself.
 The field `ide.flagsFile` names the IDE flags file. The guest agent reads both from these fields. Of the static flags,
 it reads only `-Dair.trace.recorder`, `-Dair.flow.trace=off`, `-Dair.flow.trace.screen=on` and
 `-Dair.test.<name>.runtime`. The IDE runs on `jbr/` of the distribution, the production JBR, and gets JCEF from the
@@ -493,7 +493,7 @@ Go to File and Find in Files of the accio plugin against the accio of the guest,
 
 The lane has two descriptors of its own: `//plugins/air/tests/integration/ui:ui_daemon_linux_guest_light` on the
 default guest and `:ui_daemon_light` on a macOS guest. They name the distribution
-`//build:jetbrains_light_dist_linux_aarch64` and `//build:jetbrains_light_dist`. JetBrains Light does not bundle the
+`//build:jetbrains_light_dist_linux_guest` and `//build:jetbrains_light_dist`. JetBrains Light does not bundle the
 performance plugin, which the bridge needs for its robot, the MCP server plugin, or the accio plugin, which JetBrains
 Light publishes. So the IDE context gets these three plugins beside the bridge. The descriptors
 declare the accio that `community/tools/accio.cmd` pins as a CLI runtime, so the guest puts it on the PATH of the IDE.

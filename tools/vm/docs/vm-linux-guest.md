@@ -56,9 +56,8 @@ server. Xvfb satisfies both.
 `//build:idea_dist_linux_aarch64`
 assembles on this macOS arm64 host and is a genuine Linux build: its `product-info.json` reports
 `Linux`/`aarch64` with launcher `bin/idea`, and `lib/native/linux-aarch64` where the macOS distribution
-has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon` builds under
-`--define=air_lane_guest_os=linux` with its stub naming `idea_dist_linux_aarch64` and
-`jbr_linux_aarch64`. This is piece 1 below, and it is done.
+has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon_linux_guest` reads it through
+`//build:idea_dist_linux_guest`. This is piece 1 below, and it is done.
 
 **A Linux worker is a cheap worker.** Measured on 2026-08-12 with `air-linux-1`, an
 `ghcr.io/cirruslabs/ubuntu:24.04` clone sized 8 vCPU / 16 GiB / 80 GB:
@@ -91,9 +90,9 @@ Three pieces, in the order they have to happen.
 
 The distribution fragment macros take one `target_platform` that selects both OS and architecture,
 `preloaded_downloads_for_platform` names that platform's archives without a host `select`, and
-`//build:idea_dist_linux_aarch64` puts the two together. `ui_lane_ide.bzl` selects the pair on
-`--define=air_lane_guest_os=linux` on a macOS host. On a Linux x86_64 host the same define selects the
-x86_64 Docker guest, whose distribution is the host build.
+`//build:idea_dist_linux_aarch64` puts the two together. `//build:idea_dist_linux_guest` gives it to the Linux guest
+of an arm64 host that is not Linux. On a Linux host the guest has the CPU of the host, and its distribution is the host
+build.
 
 Two things are worth remembering about it. Every distribution fragment now requires a non-empty download
 manifest, runs with `--preloaded-only`, and is network-blocked. The Linux manifest is therefore an enforced
@@ -428,7 +427,7 @@ bytes and of nothing else.
    displays in one, and that comparison did not exist when this note was written.
 
 The Linux preload set needed no work: a whole lane's guest run log carries not one `* Downloading` line, so
-`_LINUX_AARCH64_GUEST.exhaustive` is now `True` and the next undeclared URL fails the build instead of
+the Linux preload set is exhaustive, and the next undeclared URL fails the build instead of
 being fetched over the guest's NAT.
 
 ## Codex as a test runtime
